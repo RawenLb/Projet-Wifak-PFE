@@ -1,0 +1,296 @@
+<div class="user-management-container">
+  
+  <!-- HEADER -->
+  <div class="header">
+    <h1>👥 Gestion des Utilisateurs</h1>
+    <p class="subtitle">Administration des comptes et des rôles</p>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <!-- Search Bar -->
+    <div class="search-box">
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        (keyup.enter)="searchUsers()"
+        placeholder="🔍 Rechercher par nom ou email..."
+        class="search-input">
+      <button (click)="searchUsers()" class="btn-search">Rechercher</button>
+      <button (click)="searchQuery=''; loadUsers()" class="btn-clear">Réinitialiser</button>
+    </div>
+
+    <!-- Create User Button -->
+    <button (click)="openCreateModal()" class="btn-create">
+      ➕ Créer un utilisateur
+    </button>
+  </div>
+
+  <!-- LOADING SPINNER -->
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- USERS TABLE -->
+  <div class="table-container" *ngIf="!loading">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>👤 Utilisateur</th>
+          <th>📧 Email</th>
+          <th>🎭 Rôles</th>
+          <th>✅ Statut</th>
+          <th>📅 Créé le</th>
+          <th>⚙️ Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users" [class.disabled-row]="!user.enabled">
+          <!-- Username -->
+          <td>
+            <div class="user-info">
+              <strong>{{ user.username }}</strong>
+              <small>{{ user.firstName }} {{ user.lastName }}</small>
+            </div>
+          </td>
+
+          <!-- Email -->
+          <td>
+            {{ user.email }}
+            <span *ngIf="user.emailVerified" class="badge badge-verified">✓ Vérifié</span>
+          </td>
+
+          <!-- Roles -->
+          <td>
+            <div class="roles-container">
+              <span *ngFor="let role of user.roles" class="badge badge-role">
+                {{ role }}
+              </span>
+              <span *ngIf="!user.roles || user.roles.length === 0" class="text-muted">
+                Aucun rôle
+              </span>
+            </div>
+          </td>
+
+          <!-- Status -->
+          <td>
+            <span class="badge" [class.badge-active]="user.enabled" [class.badge-inactive]="!user.enabled">
+              {{ user.enabled ? '✅ Actif' : '🔴 Inactif' }}
+            </span>
+          </td>
+
+          <!-- Created Date -->
+          <td>
+            <span *ngIf="user.createdTimestamp">
+              {{ user.createdTimestamp | date:'dd/MM/yyyy' }}
+            </span>
+            <span *ngIf="!user.createdTimestamp" class="text-muted">-</span>
+          </td>
+
+          <!-- Actions -->
+          <td>
+            <div class="action-buttons">
+              <button (click)="openRoleModal(user)" class="btn-action btn-roles" title="Gérer les rôles">
+                🎭
+              </button>
+              <button (click)="openEditModal(user)" class="btn-action btn-edit" title="Modifier">
+                ✏️
+              </button>
+              <button (click)="toggleUserStatus(user)" class="btn-action btn-toggle" title="Activer/Désactiver">
+                {{ user.enabled ? '🔴' : '✅' }}
+              </button>
+              <button (click)="resetPassword(user)" class="btn-action btn-reset" title="Réinitialiser mot de passe">
+                🔐
+              </button>
+              <button (click)="deleteUser(user)" class="btn-action btn-delete" title="Supprimer">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Empty State -->
+        <tr *ngIf="users.length === 0">
+          <td colspan="6" class="empty-state">
+            <p>😕 Aucun utilisateur trouvé</p>
+            <button (click)="loadUsers()" class="btn-refresh">Rafraîchir</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- CREATE USER MODAL -->
+  <!-- ============================================ -->
+  <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>➕ Créer un nouvel utilisateur</h2>
+        <button class="btn-close" (click)="closeCreateModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nom d'utilisateur *</label>
+          <input type="text" [(ngModel)]="newUser.username" placeholder="Ex: jdupont" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" [(ngModel)]="newUser.email" placeholder="Ex: jdupont@wifak.tn" class="form-control">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Prénom</label>
+            <input type="text" [(ngModel)]="newUser.firstName" placeholder="Jean" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label>Nom</label>
+            <input type="text" [(ngModel)]="newUser.lastName" placeholder="Dupont" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Mot de passe *</label>
+          <input type="password" [(ngModel)]="newUser.password" placeholder="••••••••" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="newUser.enabled">
+            Compte activé
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>Rôles</label>
+          <div class="roles-selection">
+            <label *ngFor="let role of availableRoles" class="role-checkbox">
+              <input 
+                type="checkbox" 
+                [checked]="isRoleSelected(role.name)"
+                (change)="toggleRoleSelection(role.name)">
+              <span class="role-name">{{ role.name }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeCreateModal()" class="btn-secondary">Annuler</button>
+        <button (click)="createUser()" class="btn-primary">Créer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- EDIT USER MODAL -->
+  <!-- ============================================ -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>✏️ Modifier l'utilisateur</h2>
+        <button class="btn-close" (click)="closeEditModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nom d'utilisateur</label>
+          <input type="text" [(ngModel)]="editUser.username" class="form-control" disabled>
+          <small class="form-hint">Le nom d'utilisateur ne peut pas être modifié</small>
+        </div>
+
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" [(ngModel)]="editUser.email" class="form-control">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Prénom</label>
+            <input type="text" [(ngModel)]="editUser.firstName" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label>Nom</label>
+            <input type="text" [(ngModel)]="editUser.lastName" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="editUser.enabled">
+            Compte activé
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeEditModal()" class="btn-secondary">Annuler</button>
+        <button (click)="saveUser()" class="btn-primary">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- ROLE MANAGEMENT MODAL -->
+  <!-- ============================================ -->
+  <div class="modal-overlay" *ngIf="showRoleModal" (click)="closeRoleModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>🎭 Gérer les rôles - {{ selectedUser?.username }}</h2>
+        <button class="btn-close" (click)="closeRoleModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="info-text">
+          Cliquez sur un rôle pour l'ajouter ou le retirer de l'utilisateur
+        </p>
+
+        <div class="roles-grid">
+          <div 
+            *ngFor="let role of availableRoles" 
+            class="role-card"
+            [class.role-assigned]="hasRole(role.name)"
+            (click)="hasRole(role.name) ? removeRole(role.name) : assignRole(role.name)">
+            
+            <div class="role-icon">
+              {{ hasRole(role.name) ? '✅' : '➕' }}
+            </div>
+            
+            <div class="role-details">
+              <strong>{{ role.name }}</strong>
+              <small>{{ role.description || 'Aucune description' }}</small>
+            </div>
+
+            <div class="role-status">
+              {{ hasRole(role.name) ? 'Assigné' : 'Non assigné' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Roles Summary -->
+        <div class="current-roles-summary">
+          <h4>Rôles actuels :</h4>
+          <div class="roles-list">
+            <span *ngFor="let role of userCurrentRoles" class="badge badge-role">
+              {{ role.name }}
+            </span>
+            <span *ngIf="userCurrentRoles.length === 0" class="text-muted">
+              Aucun rôle assigné
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeRoleModal()" class="btn-primary">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+</div>

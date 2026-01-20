@@ -1,2 +1,182 @@
-<h2>Welcome 🎉</h2>
-<p>You are logged in via Keycloak</p>
+<div class="home-wrapper">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo-section">
+        <img src="assets/img/wifak-logo.png" alt="Wifak Bank" class="main-logo">
+        <span class="platform-name">Plateforme WIFAK</span>
+      </div>
+      <div *ngIf="isLoggedIn()">
+        <button class="btn-logout" (click)="logout()">Se déconnecter</button>
+         <a *ngIf="auth.isAdmin()" routerLink="/user-management" class="btn-admin">
+          👥 Gestion des utilisateurs
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- USER INFO (when logged in) -->
+  <div *ngIf="isLoggedIn()" style="background: #f8f9fa; padding: 15px; text-align: center; border-bottom: 2px solid #e9ecef;">
+    <h2 style="margin: 0; color: #495057;">
+      Bienvenue <strong>{{ auth.getUsername() }}</strong>
+    </h2>
+    <p style="margin: 5px 0; color: #6c757d;">
+      Rôles: <strong>{{ auth.getRoles().join(', ') }}</strong>
+    </p>
+    
+    <!-- Toggle Test Panel Button -->
+    <button 
+      (click)="toggleTests()" 
+      style="margin-top: 10px; background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
+      {{ showTests ? '🔼 Masquer les tests' : '🔽 Tester le backend' }}
+    </button>
+  </div>
+
+  <!-- BACKEND TEST PANEL (collapsible) -->
+  <div *ngIf="isLoggedIn() && showTests" style="background: white; padding: 20px; margin: 20px auto; max-width: 1200px; border: 2px solid #17a2b8; border-radius: 8px;">
+    <h3 style="margin-top: 0; color: #17a2b8;">🧪 Tests Backend API</h3>
+    <p style="color: #6c757d; margin-bottom: 20px;">
+      Cliquez sur les boutons pour tester les endpoints du backend. Surveillez la console du backend pour voir les logs !
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+      
+      <!-- Public Test -->
+      <div style="border: 2px solid #28a745; padding: 15px; border-radius: 8px; text-align: center;">
+        <h4 style="margin: 0 0 10px 0; color: #28a745;">🌍 Public</h4>
+        <button 
+          (click)="testPublic()" 
+          style="background: #28a745; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold;">
+          Tester
+        </button>
+        <p style="margin-top: 10px; font-size: 13px; min-height: 40px; color: #495057;">{{ publicResult }}</p>
+      </div>
+
+      <!-- Admin Test -->
+      <div style="border: 2px solid #dc3545; padding: 15px; border-radius: 8px; text-align: center;">
+        <h4 style="margin: 0 0 10px 0; color: #dc3545;">👑 Admin</h4>
+        <button 
+          (click)="testAdmin()" 
+          style="background: #dc3545; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold;">
+          Tester
+        </button>
+        <p style="margin-top: 10px; font-size: 13px; min-height: 40px; color: #495057;">{{ adminResult }}</p>
+      </div>
+
+      <!-- Agent Test -->
+      <div style="border: 2px solid #007bff; padding: 15px; border-radius: 8px; text-align: center;">
+        <h4 style="margin: 0 0 10px 0; color: #007bff;">🏦 Agent</h4>
+        <button 
+          (click)="testAgent()" 
+          style="background: #007bff; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold;">
+          Tester
+        </button>
+        <p style="margin-top: 10px; font-size: 13px; min-height: 40px; color: #495057;">{{ agentResult }}</p>
+      </div>
+
+      <!-- Manager Test -->
+      <div style="border: 2px solid #ffc107; padding: 15px; border-radius: 8px; text-align: center;">
+        <h4 style="margin: 0 0 10px 0; color: #f57c00;">📊 Manager</h4>
+        <button 
+          (click)="testManager()" 
+          style="background: #ffc107; color: #000; padding: 10px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold;">
+          Tester
+        </button>
+        <p style="margin-top: 10px; font-size: 13px; min-height: 40px; color: #495057;">{{ managerResult }}</p>
+      </div>
+
+      <!-- Auditor Test -->
+      <div style="border: 2px solid #6c757d; padding: 15px; border-radius: 8px; text-align: center;">
+        <h4 style="margin: 0 0 10px 0; color: #6c757d;">🔍 Auditor</h4>
+        <button 
+          (click)="testAuditor()" 
+          style="background: #6c757d; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold;">
+          Tester
+        </button>
+        <p style="margin-top: 10px; font-size: 13px; min-height: 40px; color: #495057;">{{ auditorResult }}</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 5px; border-left: 4px solid #ffc107;">
+      <strong>💡 Instructions:</strong>
+      <ul style="margin: 10px 0; padding-left: 20px;">
+        <li>✅ = Succès (vous avez le rôle requis)</li>
+        <li>❌ Error 403 = Accès refusé (rôle manquant)</li>
+        <li>Regardez la <strong>console du backend</strong> pour les logs détaillés</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero-section">
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+
+      <!-- LEFT -->
+      <div class="hero-text">
+        <span class="hero-tag">Conformité & Supervision Bancaire</span>
+
+        <h1 class="hero-title">
+          Plateforme <span class="gradient-text">WIFAK</span>
+        </h1>
+
+        <p class="hero-description">
+          Pilotage intelligent des déclarations réglementaires exigées par la
+          Banque Centrale de Tunisie avec traçabilité, sécurité et supervision complète.
+        </p>
+
+        <div class="hero-features">
+          <div class="feature-item"><span class="check-icon">✓</span> Sécurité bancaire</div>
+          <div class="feature-item"><span class="check-icon">✓</span> Conformité BCT</div>
+          <div class="feature-item"><span class="check-icon">✓</span> Audit & Traçabilité</div>
+          <div class="feature-item"><span class="check-icon">✓</span> Assistance IA</div>
+        </div>
+
+        <div class="cta-buttons" *ngIf="!isLoggedIn()">
+          <button class="btn-cta-primary" (click)="login()">
+            Se connecter →
+          </button>
+        </div>
+
+        <div class="cta-buttons" *ngIf="isLoggedIn()">
+          <button class="btn-cta-primary" (click)="goToDashboard()">
+            Accéder au tableau de bord →
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT : DASHBOARD -->
+      <div class="hero-visual">
+        <div class="dashboard-mockup">
+
+          <div class="mockup-header">
+            <img src="assets/img/wifak-logo.png" class="mockup-logo" alt="Wifak">
+            <span class="mockup-title">Dashboard réglementaire</span>
+          </div>
+
+          <div class="mockup-body">
+            <div class="chart-bar bar1"></div>
+            <div class="chart-bar bar2"></div>
+            <div class="chart-bar bar3"></div>
+            <div class="chart-bar bar4"></div>
+          </div>
+
+          <div class="mockup-footer">
+            Déclarations BCT • Validation • Audit
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>© 2025 Wifak Bank — Plateforme réglementaire conforme BCT</p>
+    <small>Sécurité • Gouvernance • Traçabilité</small>
+  </footer>
+
+</div>

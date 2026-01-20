@@ -9,21 +9,4 @@ import keycloak from './services/keycloak.service';
 export class AppComponent {
   title = 'bct-frontend';
 
-  login() {
-    keycloak.login();
-  }
-
-  logout() {
-    keycloak.logout({
-      redirectUri: 'http://localhost:4200'
-    });
-  }
-
-  register() {
-    keycloak.register();
-  }
-
-  isLoggedIn(): boolean {
-    return !!keycloak.authenticated;
-  }
 }

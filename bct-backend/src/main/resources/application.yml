@@ -1,12 +1,73 @@
+# ============================================
+# SERVER CONFIGURATION
+# ============================================
 server:
   port: 8082
 
+# ============================================
+# SPRING APPLICATION
+# ============================================
 spring:
   application:
     name: bct-backend
 
+  # ============================================
+  # SECURITY - OAuth2 Resource Server
+  # ============================================
   security:
     oauth2:
       resourceserver:
         jwt:
+          # Keycloak realm issuer URI
           issuer-uri: http://localhost:8081/realms/bct-realm
+          # JWK Set URI for JWT validation
+          jwk-set-uri: http://localhost:8081/realms/bct-realm/protocol/openid-connect/certs
+
+# ============================================
+# KEYCLOAK ADMIN CLIENT CONFIGURATION
+# ============================================
+keycloak:
+  # Keycloak server URL
+  auth-server-url: http://localhost:8081
+  
+  # Target realm for user management
+  realm: bct-realm
+  
+  # Admin credentials (for admin operations)
+  # These credentials are from the MASTER realm
+  admin-username: admin
+  admin-password: admin
+  
+  # Client ID for admin operations
+  # Use 'admin-cli' which is a default Keycloak client
+  admin-client-id: bct-backend
+  admin-client-secret: UQIUjf1lHznBjmmdUlNleh8N9yMwzBaG  # ← Remplace avec le secret copié
+
+# ============================================
+# LOGGING CONFIGURATION
+# ============================================
+logging:
+  level:
+    # Spring Security debug logs
+    org.springframework.security: DEBUG
+    
+    # Your application logs
+    com.example.bctbackend: INFO
+    
+    # Keycloak admin client logs (optional)
+    org.keycloak: INFO
+  
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# ============================================
+# OPTIONAL: Application-specific properties
+# ============================================
+app:
+  # CORS allowed origins
+  cors:
+    allowed-origins: http://localhost:4200
+
+  # Frontend client ID (for reference)
+  # This is YOUR client ID in bct-realm
+  frontend-client-id: bct-frontend
