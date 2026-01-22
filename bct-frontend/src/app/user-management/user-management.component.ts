@@ -18,6 +18,13 @@ export class UserManagementComponent implements OnInit {
   showRoleModal: boolean = false;
   
   searchQuery: string = '';
+  sidebarCollapsed: boolean = false;
+  showPassword: boolean = false;
+  formSubmitted: boolean = false;
+  
+  // Pagination
+  currentPage: number = 1;
+  itemsPerPage: number = 10;
   
   // New user form
   newUser: CreateUserRequest = {
@@ -48,6 +55,79 @@ export class UserManagementComponent implements OnInit {
   ngOnInit(): void {
     this.loadUsers();
     this.loadRoles();
+  }
+
+  // ========== SIDEBAR ==========
+  
+  toggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
+
+  // ========== STATS ==========
+  
+  getActiveUsersCount(): number {
+    return this.users.filter(u => u.enabled).length;
+  }
+
+  getInactiveUsersCount(): number {
+    return this.users.filter(u => !u.enabled).length;
+  }
+
+  getVerifiedEmailsCount(): number {
+    return this.users.filter(u => u.emailVerified).length;
+  }
+
+  // ========== UTILITY FUNCTIONS ==========
+  
+  getInitials(user: KeycloakUser): string {
+    const firstInitial = user.firstName?.charAt(0)?.toUpperCase() || '';
+    const lastInitial = user.lastName?.charAt(0)?.toUpperCase() || '';
+    return firstInitial + lastInitial || user.username?.charAt(0)?.toUpperCase() || '?';
+  }
+
+  getAvatarColor(username: string): string {
+    const colors = [
+      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+      'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+      'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+      'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+      'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+      'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
+    ];
+    
+    const hash = username?.split('').reduce((acc, char) => {
+      return char.charCodeAt(0) + ((acc << 5) - acc);
+    }, 0) || 0;
+    
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  formatRoleName(role: string): string {
+    return role.replace('ROLE_', '');
+  }
+
+  getRoleClass(role: string): string {
+    const roleMap: {[key: string]: string} = {
+      'ROLE_ADMIN': 'role-admin',
+      'ROLE_MANAGER': 'role-manager',
+      'ROLE_AGENT': 'role-agent',
+      'ROLE_AUDITOR': 'role-auditor'
+    };
+    return roleMap[role] || 'role-default';
+  }
+
+  // ========== PAGINATION ==========
+  
+  nextPage(): void {
+    this.currentPage++;
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
   }
 
   // ========== LOAD DATA ==========
@@ -100,9 +180,16 @@ export class UserManagementComponent implements OnInit {
     });
   }
 
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.loadUsers();
+  }
+
   // ========== CREATE USER ==========
 
   openCreateModal(): void {
+    this.formSubmitted = false;
+    this.showPassword = false;
     this.newUser = {
       username: '',
       email: '',
@@ -117,11 +204,27 @@ export class UserManagementComponent implements OnInit {
 
   closeCreateModal(): void {
     this.showCreateModal = false;
+    this.formSubmitted = false;
   }
 
   createUser(): void {
+    this.formSubmitted = true;
+
     if (!this.newUser.username || !this.newUser.email || !this.newUser.password) {
       alert('Veuillez remplir tous les champs obligatoires (username, email, password)');
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.newUser.email)) {
+      alert('Veuillez entrer une adresse email valide');
+      return;
+    }
+
+    // Password validation
+    if (this.newUser.password.length < 8) {
+      alert('Le mot de passe doit contenir au moins 8 caractères');
       return;
     }
 
@@ -168,6 +271,15 @@ export class UserManagementComponent implements OnInit {
 
   saveUser(): void {
     if (!this.editUser.id) return;
+
+    // Email validation
+    if (this.editUser.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(this.editUser.email)) {
+        alert('Veuillez entrer une adresse email valide');
+        return;
+      }
+    }
 
     this.loading = true;
     this.kcAdmin.updateUser(this.editUser.id, this.editUser).subscribe({
@@ -296,11 +408,11 @@ export class UserManagementComponent implements OnInit {
   removeRole(roleName: string): void {
     if (!this.selectedUser?.id) return;
 
-    const confirm = window.confirm(
+    const confirmRemove = confirm(
       `Retirer le rôle "${roleName}" de l'utilisateur "${this.selectedUser.username}"?`
     );
 
-    if (!confirm) return;
+    if (!confirmRemove) return;
 
     this.loading = true;
     this.kcAdmin.removeRoles(this.selectedUser.id, [roleName]).subscribe({
@@ -324,11 +436,11 @@ export class UserManagementComponent implements OnInit {
   resetPassword(user: KeycloakUser): void {
     if (!user.id) return;
 
-    const confirm = window.confirm(
+    const confirmReset = confirm(
       `Envoyer un email de réinitialisation de mot de passe à ${user.email}?`
     );
 
-    if (!confirm) return;
+    if (!confirmReset) return;
 
     this.loading = true;
     this.kcAdmin.sendPasswordResetEmail(user.id).subscribe({

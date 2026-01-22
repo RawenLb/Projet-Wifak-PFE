@@ -3,6 +3,7 @@ package com.example.bctbackend.controller;
 import com.example.bctbackend.dto.CreateUserRequest;
 import com.example.bctbackend.dto.RoleDTO;
 import com.example.bctbackend.dto.UserDTO;
+import com.example.bctbackend.entities.User;
 import com.example.bctbackend.service.KeycloakAdminService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -250,6 +251,75 @@ public class AdminController {
             return ResponseEntity.ok(users);
         } catch (Exception e) {
             log.error("❌ Error getting users by role {}: {}", roleName, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // ========== MYSQL SYNCHRONIZATION ENDPOINTS ==========
+
+    /**
+     * Synchronize all Keycloak users to MySQL
+     * This is useful for initial setup or after bulk changes
+     */
+    @PostMapping("/sync/all-users")
+    public ResponseEntity<Map<String, String>> syncAllUsers() {
+        log.info("🔄 Admin requesting full user synchronization to MySQL");
+        try {
+            keycloakAdminService.syncAllUsersToMySQL();
+            log.info("✅ All users synchronized successfully");
+            return ResponseEntity.ok(Map.of("message", "All users synchronized to MySQL successfully"));
+        } catch (Exception e) {
+            log.error("❌ Error synchronizing users: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Synchronize a specific user to MySQL
+     */
+    @PostMapping("/sync/user/{userId}")
+    public ResponseEntity<Map<String, String>> syncUser(@PathVariable String userId) {
+        log.info("🔄 Admin requesting sync for user: {}", userId);
+        try {
+            keycloakAdminService.syncUserToMySQL(userId);
+            log.info("✅ User synchronized successfully: {}", userId);
+            return ResponseEntity.ok(Map.of("message", "User synchronized to MySQL successfully"));
+        } catch (Exception e) {
+            log.error("❌ Error synchronizing user {}: {}", userId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get all users from MySQL database
+     */
+    @GetMapping("/mysql/users")
+    public ResponseEntity<List<User>> getMySQLUsers() {
+        log.info("📋 Admin requesting MySQL users");
+        try {
+            List<User> users = keycloakAdminService.getAllMySQLUsers();
+            log.info("✅ Retrieved {} users from MySQL", users.size());
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            log.error("❌ Error getting MySQL users: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Get MySQL user by Keycloak ID
+     */
+    @GetMapping("/mysql/users/{keycloakId}")
+    public ResponseEntity<User> getMySQLUser(@PathVariable String keycloakId) {
+        log.info("🔍 Admin requesting MySQL user: {}", keycloakId);
+        try {
+            return keycloakAdminService.getMySQLUser(keycloakId)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            log.error("❌ Error getting MySQL user {}: {}", keycloakId, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

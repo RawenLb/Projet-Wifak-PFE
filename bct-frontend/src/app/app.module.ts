@@ -45,7 +45,7 @@ export function kcFactory() {
   declarations: [
     AppComponent,
     HomeComponent,
-    UserManagementComponent
+    UserManagementComponent,
   ],
   imports: [
     BrowserModule,

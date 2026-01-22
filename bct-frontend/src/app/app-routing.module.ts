@@ -3,8 +3,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { RoleGuard } from './guards/role.guard';
 import { HomeComponent } from './home/home.component';
 import { UserManagementComponent } from './user-management/user-management.component';
-
 const routes: Routes = [
+
   { path: '', component: HomeComponent },
   { path: 'home', component: HomeComponent },
   
