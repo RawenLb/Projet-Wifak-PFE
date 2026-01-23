@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
+import keycloak from './keycloak.service';
 export interface KeycloakUser {
   id?: string;
   username: string;
@@ -34,103 +34,95 @@ export interface RoleDTO {
   providedIn: 'root'
 })
 export class KeycloakAdminService {
-  
+
   private readonly API_URL = 'http://localhost:8082/api/admin';
 
+  
   constructor(private http: HttpClient) {}
 
-  // ========== USER MANAGEMENT ==========
+  // ================= USER MANAGEMENT =================
 
-  /**
-   * Get all users
-   */
   getUsers(): Observable<KeycloakUser[]> {
     return this.http.get<KeycloakUser[]>(`${this.API_URL}/users`);
   }
 
-  /**
-   * Get user by ID
-   */
   getUserById(userId: string): Observable<KeycloakUser> {
     return this.http.get<KeycloakUser>(`${this.API_URL}/users/${userId}`);
   }
 
-  /**
-   * Search users by username or email
-   */
   searchUsers(query: string): Observable<KeycloakUser[]> {
-    return this.http.get<KeycloakUser[]>(`${this.API_URL}/users/search?query=${query}`);
+    return this.http.get<KeycloakUser[]>(
+      `${this.API_URL}/users/search?query=${query}`
+    );
   }
 
-  /**
-   * Create a new user
-   */
   createUser(user: CreateUserRequest): Observable<any> {
     return this.http.post(`${this.API_URL}/users`, user);
   }
 
-  /**
-   * Update user
-   */
   updateUser(userId: string, user: Partial<KeycloakUser>): Observable<any> {
     return this.http.put(`${this.API_URL}/users/${userId}`, user);
   }
 
-  /**
-   * Delete user
-   */
   deleteUser(userId: string): Observable<any> {
     return this.http.delete(`${this.API_URL}/users/${userId}`);
   }
 
-  /**
-   * Toggle user status (enable/disable)
-   */
   toggleUserStatus(userId: string, enabled: boolean): Observable<any> {
-    return this.http.patch(`${this.API_URL}/users/${userId}/status?enabled=${enabled}`, {});
+    return this.http.patch(
+      `${this.API_URL}/users/${userId}/status?enabled=${enabled}`,
+      {}
+    );
   }
 
-  /**
-   * Send password reset email
-   */
   sendPasswordResetEmail(userId: string): Observable<any> {
-    return this.http.post(`${this.API_URL}/users/${userId}/reset-password`, {});
+    return this.http.post(
+      `${this.API_URL}/users/${userId}/reset-password`,
+      {}
+    );
   }
 
-  // ========== ROLE MANAGEMENT ==========
+  // ================= ROLE MANAGEMENT =================
 
-  /**
-   * Get all realm roles
-   */
   getAllRoles(): Observable<RoleDTO[]> {
     return this.http.get<RoleDTO[]>(`${this.API_URL}/roles`);
   }
 
-  /**
-   * Get user's roles
-   */
   getUserRoles(userId: string): Observable<RoleDTO[]> {
-    return this.http.get<RoleDTO[]>(`${this.API_URL}/users/${userId}/roles`);
+    return this.http.get<RoleDTO[]>(
+      `${this.API_URL}/users/${userId}/roles`
+    );
   }
 
-  /**
-   * Assign roles to user
-   */
   assignRoles(userId: string, roleNames: string[]): Observable<any> {
-    return this.http.post(`${this.API_URL}/users/${userId}/roles`, roleNames);
+    return this.http.post(
+      `${this.API_URL}/users/${userId}/roles`,
+      roleNames
+    );
   }
 
-  /**
-   * Remove roles from user
-   */
   removeRoles(userId: string, roleNames: string[]): Observable<any> {
-    return this.http.delete(`${this.API_URL}/users/${userId}/roles`, { body: roleNames });
+    return this.http.delete(
+      `${this.API_URL}/users/${userId}/roles`,
+      { body: roleNames }
+    );
   }
 
-  /**
-   * Get users by role
-   */
   getUsersByRole(roleName: string): Observable<KeycloakUser[]> {
-    return this.http.get<KeycloakUser[]>(`${this.API_URL}/roles/${roleName}/users`);
+    return this.http.get<KeycloakUser[]>(
+      `${this.API_URL}/roles/${roleName}/users`
+    );
   }
+
+  // ================= LOGOUT =================
+
+    logout(): void {
+    localStorage.clear();
+    sessionStorage.clear();
+
+    keycloak.logout({
+      redirectUri: 'http://localhost:4200/login'
+    });
+  }
+
 }

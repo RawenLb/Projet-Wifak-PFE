@@ -120,8 +120,19 @@ export class UserManagementComponent implements OnInit {
 
   // ========== PAGINATION ==========
   
+   get paginatedUsers(): KeycloakUser[] {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return this.users.slice(start, start + this.itemsPerPage);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.users.length / this.itemsPerPage);
+  }
+
   nextPage(): void {
-    this.currentPage++;
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
   }
 
   previousPage(): void {
@@ -456,4 +467,12 @@ export class UserManagementComponent implements OnInit {
       }
     });
   }
+
+
+   logout(): void {
+    if (!confirm('Voulez-vous vous déconnecter ?')) return;
+    this.kcAdmin.logout();
+  }
 }
+
+

@@ -3,80 +3,139 @@
   <!-- SIDEBAR -->
   <!-- ============================================ -->
   <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
-    <!-- Logo Section -->
     <div class="logo-section">
       <div class="logo">
-        <div class="logo-icon">🏛️</div>
+        <div class="logo-icon">
+               <div class="logo-icon">🏛️</div>
+ 
+        </div>
         <div class="logo-text">
           <div class="bank-name">WIFAK BANK</div>
-          <div class="bank-subtitle">Admin Portal</div>
+          <div class="bank-subtitle">Portail d'Administration</div>
         </div>
       </div>
-      <button class="toggle-btn" (click)="toggleSidebar()">☰</button>
+      <button class="toggle-btn" (click)="toggleSidebar()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
     </div>
 
-    <!-- Navigation Menu -->
     <nav class="nav-menu">
       <a class="nav-item" [routerLink]="['/dashboard']">
-        <span class="nav-icon">📊</span>
-        <span class="nav-text">Dashboard</span>
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+        </span>
+        <span class="nav-text">Tableau de bord</span>
       </a>
 
       <a class="nav-item active">
-        <span class="nav-icon">👥</span>
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </span>
         <span class="nav-text">Utilisateurs</span>
       </a>
 
       <a class="nav-item" [routerLink]="['/declarations']">
-        <span class="nav-icon">📄</span>
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </span>
         <span class="nav-text">Déclarations</span>
       </a>
 
       <a class="nav-item" [routerLink]="['/settings']">
-        <span class="nav-icon">⚙️</span>
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 1v6m0 6v6m5.2-14.6l-4.2 4.2m0 6l-4.2 4.2m10.4-1.4l-4.2-4.2m-6 0l-4.2-4.2"></path>
+          </svg>
+        </span>
         <span class="nav-text">Paramètres</span>
       </a>
     </nav>
-
-    <!-- User Section -->
+ <button class="btn-logout" (click)="logout()">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+         fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    Logout
+  </button>
     
   </aside>
 
   <!-- ============================================ -->
   <!-- MAIN CONTENT -->
   <!-- ============================================ -->
-  <div class="main-content">
+  <div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
     <!-- TOP HEADER -->
     <header class="top-header">
-      <div class="header-top">
-        <div class="page-title-section">
-          <h1>
-            <span class="title-icon">👥</span>
-            Gestion des Utilisateurs
-          </h1>
-          <p class="subtitle">Administration des comptes et des rôles</p>
+      <div class="header-content">
+        <div class="header-left">
+          <div class="breadcrumb">
+            <span class="breadcrumb-item">Accueil</span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-item active">Gestion des Utilisateurs</span>
+          </div>
+          <h1 class="page-title">Gestion des Utilisateurs</h1>
+          <p class="page-subtitle">Gérez les comptes utilisateurs et leurs permissions</p>
         </div>
 
-        <button (click)="openCreateModal()" class="btn-create">
-          ➕ Créer un utilisateur
-        </button>
+        <div class="header-right">
+          <button (click)="openCreateModal()" class="btn-create">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Nouvel utilisateur</span>
+          </button>
+         
+        </div>
       </div>
 
-      <!-- Search Section -->
-      <div class="search-bar">
-  <span class="search-icon">🔍</span>
-
-  <input
-    type="text"
-    placeholder="Rechercher par nom, email ou rôle…"
-    [(ngModel)]="searchQuery"
-    (keyup.enter)="searchUsers()"
-  />
-
-  <button class="btn-icon" (click)="searchUsers()">↵</button>
-  <button class="btn-icon clear" *ngIf="searchQuery" (click)="clearSearch()">✕</button>
-</div>
-
+      <!-- Search Bar -->
+      <div class="search-section">
+        <div class="search-bar">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input
+            type="text"
+            placeholder="Rechercher par nom, email ou rôle..."
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="searchUsers()"
+          />
+          <button class="btn-search" (click)="searchUsers()" *ngIf="searchQuery">
+            Rechercher
+          </button>
+          <button class="btn-clear" *ngIf="searchQuery" (click)="clearSearch()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
     </header>
 
     <!-- CONTENT AREA -->
@@ -84,7 +143,14 @@
       <!-- Stats Cards -->
       <div class="stats-grid">
         <div class="stat-card stat-primary">
-          <div class="stat-icon">👥</div>
+          <div class="stat-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
           <div class="stat-info">
             <div class="stat-label">Total Utilisateurs</div>
             <div class="stat-value">{{ users.length }}</div>
@@ -92,23 +158,38 @@
         </div>
 
         <div class="stat-card stat-success">
-          <div class="stat-icon">✅</div>
+          <div class="stat-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
           <div class="stat-info">
-            <div class="stat-label">Actifs</div>
+            <div class="stat-label">Comptes Actifs</div>
             <div class="stat-value">{{ getActiveUsersCount() }}</div>
           </div>
         </div>
 
         <div class="stat-card stat-warning">
-          <div class="stat-icon">🔴</div>
+          <div class="stat-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+          </div>
           <div class="stat-info">
-            <div class="stat-label">Inactifs</div>
+            <div class="stat-label">Comptes Inactifs</div>
             <div class="stat-value">{{ getInactiveUsersCount() }}</div>
           </div>
         </div>
 
         <div class="stat-card stat-info">
-          <div class="stat-icon">✉️</div>
+          <div class="stat-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+          </div>
           <div class="stat-info">
             <div class="stat-label">Emails Vérifiés</div>
             <div class="stat-value">{{ getVerifiedEmailsCount() }}</div>
@@ -119,7 +200,7 @@
       <!-- LOADING SPINNER -->
       <div *ngIf="loading" class="loading-overlay">
         <div class="spinner"></div>
-        <p>Chargement...</p>
+        <p>Chargement des données...</p>
       </div>
 
       <!-- USERS TABLE -->
@@ -127,44 +208,20 @@
         <table class="users-table">
           <thead>
             <tr>
-              <th>
-                <div class="th-content">
-                  <span>UTILISATEUR</span>
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <span>EMAIL</span>
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <span>RÔLES</span>
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <span>STATUT</span>
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <span>CRÉÉ LE</span>
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <span>ACTIONS</span>
-                </div>
-              </th>
+              <th>UTILISATEUR</th>
+              <th>EMAIL</th>
+              <th>RÔLES</th>
+              <th>STATUT</th>
+              <th>DATE DE CRÉATION</th>
+              <th>ACTIONS</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let user of users" [class.disabled-row]="!user.enabled">
+            <tr *ngFor="let user of paginatedUsers" [class.disabled-row]="!user.enabled">
               <!-- Username -->
               <td>
                 <div class="user-cell">
-                  
+                 
                   <div class="user-details">
                     <div class="username">{{ user.username }}</div>
                     <div class="fullname">{{ user.firstName }} {{ user.lastName }}</div>
@@ -177,7 +234,10 @@
                 <div class="email-cell">
                   <div class="email">{{ user.email }}</div>
                   <span *ngIf="user.emailVerified" class="badge-verified">
-                    ✓ Vérifié
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Vérifié
                   </span>
                 </div>
               </td>
@@ -198,49 +258,59 @@
 
               <!-- Status -->
               <td>
-                <div class="status-cell">
-                  <span class="status-badge" 
-                        [class.status-active]="user.enabled" 
-                        [class.status-inactive]="!user.enabled">
-                    {{ user.enabled ? '✅ Actif' : '🔴 Inactif' }}
-                  </span>
-                </div>
+                <span class="status-badge" 
+                      [class.status-active]="user.enabled" 
+                      [class.status-inactive]="!user.enabled">
+                  <span class="status-dot"></span>
+                  {{ user.enabled ? 'Actif' : 'Inactif' }}
+                </span>
               </td>
 
               <!-- Created Date -->
               <td>
-                <span *ngIf="user.createdTimestamp">
+                <span class="date-text" *ngIf="user.createdTimestamp">
                   {{ user.createdTimestamp | date:'dd/MM/yyyy' }}
                 </span>
-                <span *ngIf="!user.createdTimestamp" class="no-roles">-</span>
+                <span *ngIf="!user.createdTimestamp" class="no-data">-</span>
               </td>
 
               <!-- Actions -->
               <td>
-                <div class="actions-cell">
-                  <div class="action-buttons">
-                    <button (click)="openRoleModal(user)" 
-                            class="btn-action btn-roles" 
-                            title="Gérer les rôles">
-                      🎭
-                    </button>
-                    <button (click)="openEditModal(user)" 
-                            class="btn-action btn-edit" 
-                            title="Modifier">
-                      ✏️
-                    </button>
-                   
-                    <button (click)="resetPassword(user)" 
-                            class="btn-action btn-reset" 
-                            title="Réinitialiser mot de passe">
-                      🔐
-                    </button>
-                    <button (click)="deleteUser(user)" 
-                            class="btn-action btn-delete" 
-                            title="Supprimer">
-                      🗑️
-                    </button>
-                  </div>
+                <div class="action-buttons">
+                  <button (click)="openRoleModal(user)" 
+                          class="btn-action btn-roles" 
+                          title="Gérer les rôles">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                  </button>
+                  <button (click)="openEditModal(user)" 
+                          class="btn-action btn-edit" 
+                          title="Modifier">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <button (click)="resetPassword(user)" 
+                          class="btn-action btn-reset" 
+                          title="Réinitialiser mot de passe">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                  </button>
+                  <button (click)="deleteUser(user)" 
+                          class="btn-action btn-delete" 
+                          title="Supprimer">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
                 </div>
               </td>
             </tr>
@@ -248,30 +318,49 @@
             <!-- Empty State -->
             <tr *ngIf="users.length === 0">
               <td colspan="6" class="empty-state">
-                <div class="empty-icon">😕</div>
-                <p>Aucun utilisateur trouvé</p>
-                <button (click)="loadUsers()" class="btn-refresh">Rafraîchir</button>
+                <div class="empty-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M16 16s-1.5-2-4-2-4 2-4 2"></path>
+                    <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                    <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                  </svg>
+                </div>
+                <p class="empty-message">Aucun utilisateur trouvé</p>
+                <button (click)="loadUsers()" class="btn-refresh">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                  </svg>
+                  Rafraîchir
+                </button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- Pagination -->
       <div class="pagination-section" *ngIf="users.length > 0 && !loading">
-        <div class="pagination-info">
-          Affichage de {{ users.length }} utilisateur(s)
-        </div>
-        <div class="pagination-controls">
-          <button class="btn-pagination" [disabled]="currentPage === 1" (click)="previousPage()">
-            ← Précédent
-          </button>
-          <span class="page-number">Page {{ currentPage }}</span>
-          <button class="btn-pagination" (click)="nextPage()">
-            Suivant →
-          </button>
-        </div>
-      </div>
+  <div class="pagination-info">
+    Page {{ currentPage }} / {{ totalPages }}
+  </div>
+
+  <div class="pagination-controls">
+    <button class="btn-pagination"
+            [disabled]="currentPage === 1"
+            (click)="previousPage()">
+      ◀ Précédent
+    </button>
+
+    <button class="btn-pagination"
+            [disabled]="currentPage === totalPages"
+            (click)="nextPage()">
+      Suivant ▶
+    </button>
+  </div>
+</div>
+
     </div>
   </div>
 
