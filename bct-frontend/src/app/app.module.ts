@@ -8,6 +8,8 @@ import { KeycloakInterceptor } from './interceptors/keycloak.interceptor';
 import keycloak from './services/keycloak.service';
 import { HomeComponent } from './home/home.component';
 import { UserManagementComponent } from './user-management/user-management.component';
+import { DeclarationTypeManagementComponent } from './declaration-type-management/declaration-type-management.component';
+import { DashboardLayoutComponent } from './dashboard-layout/dashboard-layout.component';
 
 export function kcFactory() {
   return () =>
@@ -46,6 +48,8 @@ export function kcFactory() {
     AppComponent,
     HomeComponent,
     UserManagementComponent,
+    DeclarationTypeManagementComponent,
+    DashboardLayoutComponent,
   ],
   imports: [
     BrowserModule,
