@@ -44,23 +44,20 @@ public class TemplateController {
     @PostMapping("/generate")
     public ResponseEntity<?> generateFile(@RequestBody GenerateFileRequest request) {
         try {
-            // ✅ Valider d'abord les données
             templateService.validateTemplateData(request.getDeclarationTypeId(), request.getData());
 
-            // ✅ Générer le fichier
             String fileContent = templateService.generateFile(
                     request.getDeclarationTypeId(),
                     request.getData()
             );
 
-            // ✅ Déterminer l'extension et le type MIME
-            String extension = determineFileExtension(request.getDeclarationTypeId());
+            // ✅ MODIFICATION ICI : Utiliser le service
+            String extension = templateService.getFileExtension(request.getDeclarationTypeId());
             MediaType mediaType = determineMediaType(extension);
 
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
             String filename = "declaration_" + timestamp + "." + extension;
 
-            // ✅ Retourner le fichier généré
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                     .contentType(mediaType)
@@ -209,9 +206,8 @@ public class TemplateController {
      * Déterminer l'extension du fichier selon le type de déclaration
      */
     private String determineFileExtension(Long declarationTypeId) {
-        // TODO: Récupérer le format depuis la base de données
-        // Pour l'instant, on retourne "xml" par défaut
-        return "xml";
+        // Cette méthode n'est plus nécessaire si tu utilises le service
+        return templateService.getFileExtension(declarationTypeId);
     }
 
     /**

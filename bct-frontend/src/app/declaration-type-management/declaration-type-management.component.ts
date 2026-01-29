@@ -526,24 +526,29 @@ export class DeclarationTypeManagementComponent implements OnInit {
   }
 
   downloadTemplate(declarationType: DeclarationType): void {
-    if (!declarationType.id) return;
+  if (!declarationType.id) return;
 
-    this.declarationTypeService.downloadTemplate(declarationType.id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `template_${declarationType.code}.xml`;
-        link.click();
-        window.URL.revokeObjectURL(url);
-        console.log('✅ Template downloaded');
-      },
-      error: (error) => {
-        console.error('❌ Error downloading template:', error);
-        alert('❌ Erreur lors du téléchargement du template');
-      }
-    });
-  }
+  this.declarationTypeService.downloadTemplate(declarationType.id).subscribe({
+    next: (blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // ✅ FIX: Utiliser le format dynamique (ex: csv, xml, json)
+      // On convertit en minuscule pour l'extension du fichier
+      const extension = declarationType.format.toLowerCase();
+      link.download = `template_${declarationType.code}.${extension}`;
+      
+      link.click();
+      window.URL.revokeObjectURL(url);
+      console.log(`✅ Template downloaded as ${extension}`);
+    },
+    error: (error) => {
+      console.error('❌ Error downloading template:', error);
+      alert('❌ Erreur lors du téléchargement du template');
+    }
+  });
+}
 
   getChampsObligatoiresArray(champsObligatoires?: string): string[] {
     if (!champsObligatoires) return [];

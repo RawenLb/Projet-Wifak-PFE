@@ -15,7 +15,7 @@ public class DeclarationTemplate {
     @JsonBackReference("declarationType-template")
     private DeclarationType declarationType;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "MEDIUMTEXT")  // Plus grand pour Base64
     private String templateContent;
 
     @Column(columnDefinition = "TEXT")

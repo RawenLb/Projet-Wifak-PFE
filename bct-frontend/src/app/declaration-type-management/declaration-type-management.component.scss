@@ -477,3 +477,108 @@ textarea {
     stroke: $primary-color;
   }
 }
+
+// ✅ Styles pour l'upload de fichiers
+.file-input {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: #4f46e5;
+    background: #f8f9ff;
+  }
+}
+
+.file-selected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #166534;
+  
+  svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+  
+  .file-size {
+    color: #6b7280;
+    font-size: 12px;
+  }
+  
+  .btn-clear-file {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: #dc2626;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 8px;
+    
+    &:hover {
+      color: #991b1b;
+    }
+  }
+}
+
+.current-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1e40af;
+  
+  svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+}
+
+.validation-errors {
+  margin-top: 20px;
+  padding: 15px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  
+  .error-item {
+    padding: 8px;
+    margin-bottom: 5px;
+    color: #dc2626;
+    font-size: 14px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.template-file-info {
+  padding: 15px;
+  background: #f8f9ff;
+  border-radius: 8px;
+  margin-top: 10px;
+  
+  p {
+    margin: 0;
+    color: #4f46e5;
+    font-weight: 500;
+  }
+}
