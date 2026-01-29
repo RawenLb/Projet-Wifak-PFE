@@ -1,9 +1,5 @@
 <div class="dashboard-container">
   <!-- ============================================ -->
-  <!-- SIDEBAR -->
-  <!-- ============================================ -->
- 
-  <!-- ============================================ -->
   <!-- MAIN CONTENT -->
   <!-- ============================================ -->
   <div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
@@ -180,6 +176,15 @@
               <!-- Actions -->
               <td>
                 <div class="action-buttons">
+                  <button (click)="openDetailsModal(type)" 
+                          class="btn-action btn-details" 
+                          title="Voir les détails">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+
                   <button (click)="toggleStatus(type)" 
                           class="btn-action btn-toggle" 
                           [title]="type.actif ? 'Désactiver' : 'Activer'">
@@ -190,6 +195,7 @@
                       <polyline points="20 6 9 17 4 12" *ngIf="!type.actif"></polyline>
                     </svg>
                   </button>
+
                   <button (click)="openEditModal(type)" 
                           class="btn-action btn-edit" 
                           title="Modifier">
@@ -198,6 +204,7 @@
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                   </button>
+
                   <button (click)="deleteDeclarationType(type)" 
                           class="btn-action btn-delete" 
                           title="Supprimer">
@@ -263,13 +270,14 @@
   <!-- CREATE MODAL -->
   <!-- ============================================ -->
   <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>➕ Créer un nouveau type de déclaration</h2>
         <button class="btn-close" (click)="closeCreateModal()">✕</button>
       </div>
 
       <div class="modal-body">
+        <!-- Code -->
         <div class="form-group">
           <label>Code *</label>
           <input type="text" 
@@ -281,6 +289,7 @@
           </span>
         </div>
 
+        <!-- Nom -->
         <div class="form-group">
           <label>Nom *</label>
           <input type="text" 
@@ -292,6 +301,17 @@
           </span>
         </div>
 
+        <!-- Description -->
+        <div class="form-group">
+          <label>Description</label>
+          <textarea 
+            [(ngModel)]="newDeclarationType.description" 
+            placeholder="Description détaillée du type de déclaration..."
+            rows="3"></textarea>
+          <small class="form-hint">Décrivez l'objectif et le contexte de cette déclaration</small>
+        </div>
+
+        <!-- Format et Fréquence -->
         <div class="form-row">
           <div class="form-group">
             <label>Format *</label>
@@ -312,6 +332,7 @@
           </div>
         </div>
 
+        <!-- Date limite -->
         <div class="form-group">
           <label>Date limite *</label>
           <input type="text" 
@@ -323,6 +344,104 @@
           </span>
         </div>
 
+        <!-- Champs obligatoires -->
+        <div class="form-group">
+          <label>Champs obligatoires</label>
+          <input type="text" 
+                 [(ngModel)]="newDeclarationType.champsObligatoires" 
+                 placeholder="Ex: montant,date,reference (séparés par des virgules)">
+          <small class="form-hint">Liste des champs requis dans la déclaration, séparés par des virgules</small>
+        </div>
+
+        <!-- ✅ NOUVEAU: Template Content -->
+        <div class="form-section">
+          <h3>📄 Configuration du Template</h3>
+          
+          <div class="form-group">
+            <label>Contenu du template</label>
+            <textarea 
+              [(ngModel)]="newDeclarationType.template!.templateContent" 
+              placeholder="Collez ici le contenu XML/TXT de votre template...
+Exemple (utilisez deux accolades ouvertes et fermées pour les variables):
+<?xml version='1.0' encoding='UTF-8'?>
+<Declaration>
+  <Code>{CODE}</Code>
+  <Date>{DATE}</Date>
+  <Montant>{MONTANT}</Montant>
+</Declaration>"
+              rows="10"></textarea>
+            <small class="form-hint">Contenu du fichier template (XML, TXT, CSV). Utilisez deux accolades ouvertes et fermées pour les champs dynamiques.</small>
+          </div>
+
+          <div class="form-group">
+            <label>Variables disponibles (JSON)</label>
+            <textarea 
+              [(ngModel)]="newDeclarationType.template!.variablesDisponibles" 
+              placeholder='{"CODE":"code_declaration", "DATE":"date", "MONTANT":"montant"}'
+              rows="3"></textarea>
+            <small class="form-hint">Variables du template au format JSON</small>
+          </div>
+        </div>
+
+        <!-- Section Règles de validation -->
+        <div class="form-section">
+          <h3>📋 Règles de validation</h3>
+          
+          <!-- Liste des règles ajoutées -->
+          <div class="validation-rules-list" *ngIf="newDeclarationType.validationRules && newDeclarationType.validationRules.length > 0">
+            <div class="validation-rule-item" *ngFor="let rule of newDeclarationType.validationRules; let i = index">
+              <div class="rule-info">
+                <strong>{{ rule.champConcerne }}</strong>
+                <span class="rule-type-badge">{{ rule.typeValidation }}</span>
+                <p class="rule-message">{{ rule.messageErreur }}</p>
+              </div>
+              <button type="button" (click)="removeValidationRule(i)" class="btn-remove-rule">✕</button>
+            </div>
+          </div>
+
+          <!-- Formulaire pour ajouter une nouvelle règle -->
+          <div class="add-validation-rule">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Champ concerné</label>
+                <input type="text" 
+                       [(ngModel)]="newValidationRule.champConcerne" 
+                       placeholder="Ex: montant">
+              </div>
+
+              <div class="form-group">
+                <label>Type de validation</label>
+                <select [(ngModel)]="newValidationRule.typeValidation">
+                  <option *ngFor="let type of validationTypeOptions" [value]="type">
+                    {{ type }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Message d'erreur</label>
+              <input type="text" 
+                     [(ngModel)]="newValidationRule.messageErreur" 
+                     placeholder="Ex: Le montant est obligatoire">
+            </div>
+
+            <div class="form-group">
+              <div class="checkbox-wrapper">
+                <input type="checkbox" 
+                       id="ruleObligatoire" 
+                       [(ngModel)]="newValidationRule.obligatoire">
+                <label for="ruleObligatoire">Champ obligatoire</label>
+              </div>
+            </div>
+
+            <button type="button" (click)="addValidationRule()" class="btn-add-rule">
+              ➕ Ajouter la règle
+            </button>
+          </div>
+        </div>
+
+        <!-- Actif checkbox -->
         <div class="form-group">
           <div class="checkbox-wrapper">
             <input type="checkbox" id="actifCheckbox" [(ngModel)]="newDeclarationType.actif">
@@ -342,24 +461,37 @@
   <!-- EDIT MODAL -->
   <!-- ============================================ -->
   <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>✏️ Modifier le type de déclaration</h2>
         <button class="btn-close" (click)="closeEditModal()">✕</button>
       </div>
 
       <div class="modal-body">
+        <!-- Code -->
         <div class="form-group">
           <label>Code</label>
           <input type="text" [(ngModel)]="editDeclarationType.code" disabled>
           <small class="form-hint">Le code ne peut pas être modifié</small>
         </div>
 
+        <!-- Nom -->
         <div class="form-group">
           <label>Nom *</label>
           <input type="text" [(ngModel)]="editDeclarationType.nom">
         </div>
 
+        <!-- Description -->
+        <div class="form-group">
+          <label>Description</label>
+          <textarea 
+            [(ngModel)]="editDeclarationType.description" 
+            placeholder="Description détaillée du type de déclaration..."
+            rows="3"></textarea>
+          <small class="form-hint">Décrivez l'objectif et le contexte de cette déclaration</small>
+        </div>
+
+        <!-- Format et Fréquence -->
         <div class="form-row">
           <div class="form-group">
             <label>Format *</label>
@@ -380,11 +512,103 @@
           </div>
         </div>
 
+        <!-- Date limite -->
         <div class="form-group">
           <label>Date limite *</label>
           <input type="text" [(ngModel)]="editDeclarationType.dateLimite">
         </div>
 
+        <!-- Champs obligatoires -->
+        <div class="form-group">
+          <label>Champs obligatoires</label>
+          <input type="text" 
+                 [(ngModel)]="editDeclarationType.champsObligatoires" 
+                 placeholder="Ex: montant,date,reference (séparés par des virgules)">
+          <small class="form-hint">Liste des champs requis dans la déclaration, séparés par des virgules</small>
+        </div>
+
+        <!-- ✅ NOUVEAU: Template Content -->
+        <div class="form-section">
+          <h3>📄 Configuration du Template</h3>
+          
+          <div class="form-group">
+            <label>Contenu du template</label>
+            <textarea 
+              [(ngModel)]="editDeclarationType.template!.templateContent" 
+              placeholder="Collez ici le contenu XML/TXT de votre template..."
+              rows="10"></textarea>
+            <small class="form-hint">Contenu du fichier template (XML, TXT, CSV). Utilisez deux accolades ouvertes et fermées pour les champs dynamiques.</small>
+          </div>
+
+          <div class="form-group">
+            <label>Variables disponibles (JSON)</label>
+            <textarea 
+              [(ngModel)]="editDeclarationType.template!.variablesDisponibles" 
+              placeholder='{"CODE":"code_declaration", "DATE":"date", "MONTANT":"montant"}'
+              rows="3"></textarea>
+            <small class="form-hint">Variables du template au format JSON</small>
+          </div>
+        </div>
+
+        <!-- Section Règles de validation -->
+        <div class="form-section">
+          <h3>📋 Règles de validation</h3>
+          
+          <!-- Liste des règles -->
+          <div class="validation-rules-list" *ngIf="editDeclarationType.validationRules && editDeclarationType.validationRules.length > 0">
+            <div class="validation-rule-item" *ngFor="let rule of editDeclarationType.validationRules; let i = index">
+              <div class="rule-info">
+                <strong>{{ rule.champConcerne }}</strong>
+                <span class="rule-type-badge">{{ rule.typeValidation }}</span>
+                <p class="rule-message">{{ rule.messageErreur }}</p>
+              </div>
+              <button type="button" (click)="editDeclarationType.validationRules!.splice(i, 1)" class="btn-remove-rule">✕</button>
+            </div>
+          </div>
+
+          <!-- Formulaire pour ajouter -->
+          <div class="add-validation-rule">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Champ concerné</label>
+                <input type="text" 
+                       [(ngModel)]="newValidationRule.champConcerne" 
+                       placeholder="Ex: montant">
+              </div>
+
+              <div class="form-group">
+                <label>Type de validation</label>
+                <select [(ngModel)]="newValidationRule.typeValidation">
+                  <option *ngFor="let type of validationTypeOptions" [value]="type">
+                    {{ type }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Message d'erreur</label>
+              <input type="text" 
+                     [(ngModel)]="newValidationRule.messageErreur" 
+                     placeholder="Ex: Le montant est obligatoire">
+            </div>
+
+            <div class="form-group">
+              <div class="checkbox-wrapper">
+                <input type="checkbox" 
+                       id="editRuleObligatoire" 
+                       [(ngModel)]="newValidationRule.obligatoire">
+                <label for="editRuleObligatoire">Champ obligatoire</label>
+              </div>
+            </div>
+
+            <button type="button" (click)="addValidationRule()" class="btn-add-rule">
+              ➕ Ajouter la règle
+            </button>
+          </div>
+        </div>
+
+        <!-- Actif checkbox -->
         <div class="form-group">
           <div class="checkbox-wrapper">
             <input type="checkbox" id="editActifCheckbox" [(ngModel)]="editDeclarationType.actif">
@@ -396,6 +620,167 @@
       <div class="modal-footer">
         <button (click)="closeEditModal()" class="btn-secondary">Annuler</button>
         <button (click)="saveDeclarationType()" class="btn-primary">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- DETAILS MODAL -->
+  <!-- ============================================ -->
+  <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>📋 Détails du type de déclaration</h2>
+        <button class="btn-close" (click)="closeDetailsModal()">✕</button>
+      </div>
+
+      <div class="modal-body" *ngIf="selectedDeclarationType">
+        <!-- Informations générales -->
+        <div class="details-section">
+          <h3>Informations générales</h3>
+          <div class="details-grid">
+            <div class="detail-item">
+              <span class="detail-label">Code:</span>
+              <span class="detail-value">{{ selectedDeclarationType.code }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Nom:</span>
+              <span class="detail-value">{{ selectedDeclarationType.nom }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Format:</span>
+              <span class="detail-value">
+                <span class="format-badge" [ngClass]="getFormatBadgeClass(selectedDeclarationType.format)">
+                  {{ selectedDeclarationType.format }}
+                </span>
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Fréquence:</span>
+              <span class="detail-value">
+                <span class="freq-badge" [ngClass]="getFrequenceBadgeClass(selectedDeclarationType.frequence)">
+                  {{ selectedDeclarationType.frequence }}
+                </span>
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Date limite:</span>
+              <span class="detail-value">{{ selectedDeclarationType.dateLimite }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Statut:</span>
+              <span class="detail-value">
+                <span class="status-badge" 
+                      [class.status-active]="selectedDeclarationType.actif" 
+                      [class.status-inactive]="!selectedDeclarationType.actif">
+                  <span class="status-dot"></span>
+                  {{ selectedDeclarationType.actif ? 'Actif' : 'Inactif' }}
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="detail-item full-width" *ngIf="selectedDeclarationType.description">
+            <span class="detail-label">Description:</span>
+            <p class="detail-description">{{ selectedDeclarationType.description }}</p>
+          </div>
+        </div>
+
+        <!-- Champs obligatoires -->
+        <div class="details-section" *ngIf="selectedDeclarationType.champsObligatoires">
+          <h3>Champs obligatoires</h3>
+          <div class="champs-list">
+            <span class="champ-badge" *ngFor="let champ of getChampsObligatoiresArray(selectedDeclarationType.champsObligatoires)">
+              {{ champ }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Règles de validation -->
+        <div class="details-section" *ngIf="selectedDeclarationType.validationRules && selectedDeclarationType.validationRules.length > 0">
+          <h3>Règles de validation ({{ selectedDeclarationType.validationRules.length }})</h3>
+          <div class="validation-rules-display">
+            <div class="validation-rule-card" *ngFor="let rule of selectedDeclarationType.validationRules">
+              <div class="rule-header">
+                <strong>{{ rule.champConcerne }}</strong>
+                <span class="rule-type-badge">{{ rule.typeValidation }}</span>
+              </div>
+              <p class="rule-message">{{ rule.messageErreur }}</p>
+              <span class="rule-required" *ngIf="rule.obligatoire">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                Obligatoire
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ✅ NOUVEAU: Template -->
+        <div class="details-section" *ngIf="selectedDeclarationType.template?.templateContent">
+          <h3>Template</h3>
+          <div class="template-info">
+            <div class="template-content">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span>Template {{ selectedDeclarationType.format }}</span>
+            </div>
+            <button (click)="downloadTemplate(selectedDeclarationType)" class="btn-download">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Télécharger
+            </button>
+          </div>
+          
+          <!-- Prévisualisation du template -->
+          <div class="template-preview">
+            <pre><code>{{ selectedDeclarationType.template?.templateContent }}</code></pre>
+          </div>
+
+          <!-- Variables disponibles -->
+          <div class="template-variables" *ngIf="selectedDeclarationType.template?.variablesDisponibles">
+            <h4>Variables disponibles:</h4>
+            <pre><code>{{ selectedDeclarationType.template?.variablesDisponibles }}</code></pre>
+          </div>
+        </div>
+
+        <!-- Métadonnées -->
+        <div class="details-section">
+          <h3>Métadonnées</h3>
+          <div class="details-grid">
+            <div class="detail-item" *ngIf="selectedDeclarationType.dateCreation">
+              <span class="detail-label">Créé le:</span>
+              <span class="detail-value">{{ selectedDeclarationType.dateCreation | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedDeclarationType.creePar">
+              <span class="detail-label">Créé par:</span>
+              <span class="detail-value">{{ selectedDeclarationType.creePar }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedDeclarationType.derniereModification">
+              <span class="detail-label">Modifié le:</span>
+              <span class="detail-value">{{ selectedDeclarationType.derniereModification | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedDeclarationType.modifiePar">
+              <span class="detail-label">Modifié par:</span>
+              <span class="detail-value">{{ selectedDeclarationType.modifiePar }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeDetailsModal()" class="btn-secondary">Fermer</button>
+        <button (click)="openEditModal(selectedDeclarationType!); closeDetailsModal()" class="btn-primary">
+          ✏️ Modifier
+        </button>
       </div>
     </div>
   </div>

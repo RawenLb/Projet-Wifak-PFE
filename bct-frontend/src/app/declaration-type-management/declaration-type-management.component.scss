@@ -138,3 +138,342 @@
     padding: 10px;
   }
 }
+
+// Modal plus large pour les formulaires étendus
+.modal-content.modal-large {
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+// Section dans les formulaires
+.form-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e9ecef;
+
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 16px;
+  }
+}
+
+// Textarea styling
+textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+  }
+}
+
+// Liste des règles de validation
+.validation-rules-list {
+  margin-bottom: 16px;
+}
+
+.validation-rule-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+
+  .rule-info {
+    flex: 1;
+
+    strong {
+      display: block;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .rule-type-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: rgba($primary-color, 0.1);
+      color: $primary-color;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .rule-message {
+      font-size: 13px;
+      color: #64748b;
+      margin: 4px 0 0 0;
+    }
+  }
+
+  .btn-remove-rule {
+    padding: 4px 8px;
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: rgba(#ef4444, 0.1);
+      border-radius: 4px;
+    }
+  }
+}
+
+// Bouton pour ajouter une règle
+.btn-add-rule {
+  padding: 10px 16px;
+  background: $primary-color;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background: darken($primary-color, 10%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba($primary-color, 0.3);
+  }
+}
+
+// Bouton détails dans le tableau
+.btn-action.btn-details {
+  color: #3b82f6;
+
+  &:hover {
+    background: rgba(#3b82f6, 0.1);
+    border-color: #3b82f6;
+  }
+}
+
+// Sections de détails
+.details-section {
+  margin-bottom: 24px;
+
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .detail-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .detail-value {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 500;
+  }
+
+  .detail-description {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.6;
+    margin: 8px 0 0 0;
+  }
+}
+
+// Liste des champs obligatoires
+.champs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .champ-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    background: rgba($primary-color, 0.1);
+    color: $primary-color;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+  }
+}
+
+// Affichage des règles de validation
+.validation-rules-display {
+  display: grid;
+  gap: 12px;
+}
+
+.validation-rule-card {
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+
+  .rule-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+
+    strong {
+      color: #1e293b;
+      font-size: 14px;
+    }
+
+    .rule-type-badge {
+      padding: 4px 8px;
+      background: rgba($primary-color, 0.1);
+      color: $primary-color;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+  }
+
+  .rule-message {
+    font-size: 13px;
+    color: #475569;
+    margin: 0 0 8px 0;
+  }
+
+  .rule-required {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+
+    svg {
+      stroke: #f59e0b;
+    }
+  }
+}
+
+// Template info
+.template-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+
+  .template-path {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: #475569;
+
+    svg {
+      stroke: $primary-color;
+    }
+  }
+
+  .btn-download {
+    padding: 8px 16px;
+    background: $primary-color;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s;
+
+    &:hover {
+      background: darken($primary-color, 10%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba($primary-color, 0.3);
+    }
+  }
+}
+
+// Form hint
+.form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
+  font-style: italic;
+}
+
+// Template preview
+.template-preview {
+  margin-top: 16px;
+  padding: 16px;
+  background: #1e293b;
+  border-radius: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+
+  pre {
+    margin: 0;
+    
+    code {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+  }
+}
+
+.template-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+
+  svg {
+    stroke: $primary-color;
+  }
+}
