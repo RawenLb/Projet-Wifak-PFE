@@ -5,7 +5,8 @@ import { HomeComponent } from './home/home.component';
 import { UserManagementComponent } from './user-management/user-management.component';
 import { DeclarationTypeManagementComponent } from './declaration-type-management/declaration-type-management.component';
 import { DashboardLayoutComponent } from './dashboard-layout/dashboard-layout.component';
-
+import { AgentLayoutComponent } from './agent-layout/agent-layout.component';
+import { DeclarationManagementComponent } from './declaration-management/declaration-management.component';
 const routes: Routes = [
   // Public routes WITHOUT dashboard layout
   { 
@@ -58,18 +59,17 @@ const routes: Routes = [
       }
     ]
   },
-  {
-    path: 'agent',
-    component: DashboardLayoutComponent,
-    canActivate: [RoleGuard],
-    data: { roles: ['ROLE_AGENT'] },
-    children: [
-      {
-        path: '',
-        component: HomeComponent
-      }
-    ]
-  },
+ {
+  path: 'agent',
+  component: AgentLayoutComponent,  // ✅ BON LAYOUT!
+  canActivate: [RoleGuard],
+  data: { roles: ['ROLE_AGENT'] },
+  children: [
+    { path: '', redirectTo: 'declarations', pathMatch: 'full' },
+    { path: 'declarations', component: DeclarationManagementComponent },
+    // ... autres routes agent
+  ]
+},
   {
     path: 'manager',
     component: DashboardLayoutComponent,

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import keycloak from '../services/keycloak.service';
@@ -9,7 +9,7 @@ import { AuthService } from '../services/auth.service';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   
   // Test results
   publicResult: string = '';
@@ -27,6 +27,41 @@ export class HomeComponent {
     private http: HttpClient
   ) {}
 
+  // ✅ NOUVEAU: Redirection automatique selon le rôle au chargement
+  ngOnInit(): void {
+    // Si l'utilisateur est déjà authentifié, rediriger vers son dashboard
+    if (this.isLoggedIn()) {
+      this.redirectBasedOnRole();
+    }
+  }
+
+  /**
+   * ✅ NOUVEAU: Rediriger l'utilisateur selon son rôle
+   */
+  redirectBasedOnRole(): void {
+    console.log('🔄 Vérification du rôle pour redirection...');
+    
+    if (this.auth.isAgent()) {
+      console.log('✅ Rôle: AGENT → Redirection vers /agent/declarations');
+      this.router.navigate(['/agent/declarations']);
+    } 
+    else if (this.auth.isAdmin()) {
+      console.log('✅ Rôle: ADMIN → Redirection vers /dashboard');
+      this.router.navigate(['/dashboard']);
+    } 
+    else if (this.auth.isManager()) {
+      console.log('✅ Rôle: MANAGER → Redirection vers /manager');
+      this.router.navigate(['/manager']);
+    } 
+    else if (this.auth.isAuditor()) {
+      console.log('✅ Rôle: AUDITOR → Redirection vers /auditor');
+      this.router.navigate(['/auditor']);
+    }
+    else {
+      console.log('⚠️ Rôle non reconnu, reste sur la page home');
+    }
+  }
+
   login() {
     keycloak.login();
   }
@@ -43,9 +78,10 @@ export class HomeComponent {
     return !!keycloak.authenticated;
   }
 
+  // ✅ MODIFIÉ: goToDashboard maintenant utilise redirectBasedOnRole
   goToDashboard() {
     if (this.isLoggedIn()) {
-      this.router.navigate(['/dashboard']);
+      this.redirectBasedOnRole();
     } else {
       this.login();
     }

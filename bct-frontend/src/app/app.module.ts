@@ -10,6 +10,8 @@ import { HomeComponent } from './home/home.component';
 import { UserManagementComponent } from './user-management/user-management.component';
 import { DeclarationTypeManagementComponent } from './declaration-type-management/declaration-type-management.component';
 import { DashboardLayoutComponent } from './dashboard-layout/dashboard-layout.component';
+import { DeclarationManagementComponent } from './declaration-management/declaration-management.component';
+import { AgentLayoutComponent } from './agent-layout/agent-layout.component';
 
 export function kcFactory() {
   return () =>
@@ -50,6 +52,8 @@ export function kcFactory() {
     UserManagementComponent,
     DeclarationTypeManagementComponent,
     DashboardLayoutComponent,
+    DeclarationManagementComponent,
+    AgentLayoutComponent,
   ],
   imports: [
     BrowserModule,

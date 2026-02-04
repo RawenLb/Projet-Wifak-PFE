@@ -1,0 +1,79 @@
+// ============================================
+// AGENT LAYOUT - Utilise les mêmes styles que l'admin
+// avec quelques personnalisations
+// ============================================
+
+// Import des styles de base
+@import '../user-management/user-management.component.scss';
+
+// ============================================
+// PERSONNALISATIONS AGENT
+// ============================================
+
+// Couleur légèrement différente pour la sidebar agent
+.sidebar {
+  .logo-text {
+    .bank-subtitle {
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 600;
+    }
+  }
+}
+
+// Accentuation du menu actif pour l'agent
+.nav-item {
+  &.active {
+    background: linear-gradient(90deg, $primary-color, $primary-dark);
+    box-shadow: inset 4px 0 0 #0065FF; // Bleu plus clair pour l'agent
+  }
+}
+
+// User profile avec couleur agent
+.user-profile {
+  .user-avatar {
+    background: linear-gradient(135deg, $primary-color 0%, $info-color 100%);
+  }
+}
+
+// Styles spécifiques aux cartes stats de l'agent
+.stat-card {
+  &.stat-agent-primary {
+    .stat-icon {
+      background: linear-gradient(135deg, $primary-color, $info-color);
+    }
+  }
+  
+  &.stat-agent-pending {
+    .stat-icon {
+      background: linear-gradient(135deg, $warning-color, #FF7043);
+    }
+  }
+  
+  &.stat-agent-validated {
+    .stat-icon {
+      background: linear-gradient(135deg, #00C853, #00E676);
+    }
+  }
+  
+  &.stat-agent-rejected {
+    .stat-icon {
+      background: linear-gradient(135deg, $danger-color, #D32F2F);
+    }
+  }
+}
+
+// Personnalisation du header pour l'agent
+.top-header {
+  .page-title {
+    color: $primary-color;
+  }
+}
+
+// Bouton de création adapté pour l'agent
+.btn-create {
+  background: linear-gradient(135deg, $primary-color 0%, $info-color 100%);
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba($primary-color, 0.4);
+  }
+}
