@@ -1,584 +1,519 @@
-// Import same variables and styles from user-management
-@import '../user-management/user-management.component.scss';
+// ============================================
+// VARIABLES — standalone
+// ============================================
+$primary-color:   #0052CC;
+$primary-dark:    #003D99;
+$danger-color:    #DE350B;
+$warning-color:   #FF5630;
+$info-color:      #0065FF;
+
+$text-primary:    #172B4D;
+$text-secondary:  #5E6C84;
+$text-muted:      #8993A4;
+
+$bg-primary:      #FFFFFF;
+$bg-secondary:    #F4F5F7;
+$bg-tertiary:     #FAFBFC;
+$border-color:    #DFE1E6;
+
+$shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+$shadow-md: 0 4px 12px rgba(0,0,0,.1);
 
 // ============================================
-// ADDITIONAL STYLES FOR DECLARATION TYPES
+// LAYOUT — main-content occupe tout l'espace
+// disponible après la sidebar (gérée par parent)
 // ============================================
-
-// Code Badge
-.code-cell {
-  .code-badge {
-    display: inline-block;
-    padding: 6px 12px;
-    background: rgba($primary-color, 0.1);
-    color: $primary-color;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 700;
-    font-family: 'Courier New', monospace;
-    letter-spacing: 0.5px;
-  }
-}
-
-// Nom Cell
-.nom-cell {
-  font-weight: 500;
-  color: $text-primary;
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-// Format Badges
-.format-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-
-  &.format-xml {
-    background: rgba(#FF6B6B, 0.1);
-    color: #C92A2A;
-  }
-
-  &.format-csv {
-    background: rgba(#51CF66, 0.1);
-    color: #2B8A3E;
-  }
-
-  &.format-json {
-    background: rgba(#339AF0, 0.1);
-    color: #1971C2;
-  }
-
-  &.format-pdf {
-    background: rgba(#FF922B, 0.1);
-    color: #D9480F;
-  }
-
-  &.format-default {
-    background: rgba($text-muted, 0.1);
-    color: $text-muted;
-  }
-}
-
-// Frequence Badges
-.freq-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-
-  &.freq-daily {
-    background: rgba(#E03131, 0.1);
-    color: #C92A2A;
-  }
-
-  &.freq-weekly {
-    background: rgba(#FD7E14, 0.1);
-    color: #D9480F;
-  }
-
-  &.freq-monthly {
-    background: rgba($primary-color, 0.1);
-    color: $primary-color;
-  }
-
-  &.freq-quarterly {
-    background: rgba(#7950F2, 0.1);
-    color: #5F3DC4;
-  }
-
-  &.freq-yearly {
-    background: rgba(#20C997, 0.1);
-    color: #0CA678;
-  }
-
-  &.freq-default {
-    background: rgba($text-muted, 0.1);
-    color: $text-muted;
-  }
-}
-
-// Toggle Button specific styling
-.btn-action.btn-toggle {
-  color: $warning-color;
-
-  &:hover {
-    background: rgba($warning-color, 0.1);
-    border-color: $warning-color;
-  }
-}
-
-// Form Select Styling
-.form-group select {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid $border-color;
-  border-radius: 8px;
-  font-size: 14px;
-  color: $text-primary;
-  background: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:focus {
-    outline: none;
-    border-color: $primary-color;
-    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
-  }
-
-  option {
-    padding: 10px;
-  }
-}
-
-// Modal plus large pour les formulaires étendus
-.modal-content.modal-large {
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-// Section dans les formulaires
-.form-section {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid #e9ecef;
-
-  h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1e293b;
-    margin-bottom: 16px;
-  }
-}
-
-// Textarea styling
-textarea {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 14px;
-  font-family: inherit;
-  resize: vertical;
-  transition: all 0.3s ease;
-
-  &:focus {
-    outline: none;
-    border-color: $primary-color;
-    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
-  }
-}
-
-// Liste des règles de validation
-.validation-rules-list {
-  margin-bottom: 16px;
-}
-
-.validation-rule-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  margin-bottom: 8px;
-
-  .rule-info {
-    flex: 1;
-
-    strong {
-      display: block;
-      color: #1e293b;
-      margin-bottom: 4px;
-    }
-
-    .rule-type-badge {
-      display: inline-block;
-      padding: 4px 8px;
-      background: rgba($primary-color, 0.1);
-      color: $primary-color;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .rule-message {
-      font-size: 13px;
-      color: #64748b;
-      margin: 4px 0 0 0;
-    }
-  }
-
-  .btn-remove-rule {
-    padding: 4px 8px;
-    background: transparent;
-    border: none;
-    color: #ef4444;
-    font-size: 18px;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-      background: rgba(#ef4444, 0.1);
-      border-radius: 4px;
-    }
-  }
-}
-
-// Bouton pour ajouter une règle
-.btn-add-rule {
-  padding: 10px 16px;
-  background: $primary-color;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-
-  &:hover {
-    background: darken($primary-color, 10%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba($primary-color, 0.3);
-  }
-}
-
-// Bouton détails dans le tableau
-.btn-action.btn-details {
-  color: #3b82f6;
-
-  &:hover {
-    background: rgba(#3b82f6, 0.1);
-    border-color: #3b82f6;
-  }
-}
-
-// Sections de détails
-.details-section {
-  margin-bottom: 24px;
-
-  h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1e293b;
-    margin-bottom: 16px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #e2e8f0;
-  }
-}
-
-.details-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.detail-item {
+.main-content {
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-
-  &.full-width {
-    grid-column: 1 / -1;
-  }
-
-  .detail-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .detail-value {
-    font-size: 14px;
-    color: #1e293b;
-    font-weight: 500;
-  }
-
-  .detail-description {
-    font-size: 14px;
-    color: #475569;
-    line-height: 1.6;
-    margin: 8px 0 0 0;
-  }
+  overflow: hidden;
+  background: $bg-secondary;
 }
 
-// Liste des champs obligatoires
-.champs-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+// ============================================
+// HEADER
+// ============================================
+.top-header {
+  background: $bg-primary;
+  border-bottom: 1px solid $border-color;
+  padding: 20px 28px;
+  flex-shrink: 0;
 
-  .champ-badge {
-    display: inline-block;
-    padding: 6px 12px;
-    background: rgba($primary-color, 0.1);
-    color: $primary-color;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: 'Courier New', monospace;
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
   }
+  .header-left  { flex: 1; }
+  .header-right { flex-shrink: 0; }
+
+  .breadcrumb {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; margin-bottom: 6px;
+    .breadcrumb-item { color: $text-secondary;
+      &.active { color: $text-primary; font-weight: 500; } }
+    .breadcrumb-separator { color: $border-color; }
+  }
+  .page-title    { font-size: 24px; font-weight: 700; color: $text-primary; margin-bottom: 4px; letter-spacing: -.5px; }
+  .page-subtitle { font-size: 13px; color: $text-secondary; }
 }
 
-// Affichage des règles de validation
-.validation-rules-display {
+.search-section { margin-top: 0; }
+
+.search-bar {
+  display: flex; align-items: center;
+  background: $bg-tertiary; border: 1px solid $border-color;
+  border-radius: 10px; padding: 0 16px; gap: 12px; transition: all .2s;
+  &:focus-within { background: $bg-primary; border-color: $primary-color; box-shadow: 0 0 0 3px rgba($primary-color,.1); }
+  .search-icon { width: 18px; height: 18px; color: $text-muted; flex-shrink: 0; }
+  input { flex: 1; border: none; outline: none; background: transparent; font-size: 14px; color: $text-primary; padding: 10px 0;
+    &::placeholder { color: $text-muted; } }
+  .btn-search { padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; background: $primary-color; color: #fff; &:hover { background: $primary-dark; } }
+  .btn-clear { background: transparent; color: $text-secondary; border: none; width: 30px; height: 30px; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 6px;
+    svg { width: 15px; height: 15px; }
+    &:hover { background: rgba($danger-color,.1); color: $danger-color; } }
+}
+
+.btn-create {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, $primary-color, $primary-dark);
+  color: #fff; border: none; padding: 10px 20px; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 2px 8px rgba($primary-color,.3); transition: all .2s;
+  svg { width: 16px; height: 16px; }
+  &:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba($primary-color,.4); }
+}
+
+// ============================================
+// CONTENT AREA — scroll ici seulement
+// ============================================
+.content-area {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 28px 40px;
+  background: $bg-secondary;
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: $border-color; border-radius: 3px; }
+}
+
+// ============================================
+// STATS — 4 cartes égales
+// ============================================
+.stats-grid {
   display: grid;
-  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
 }
+
+.stat-card {
+  background: $bg-primary; border: 1px solid $border-color;
+  border-radius: 10px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: $shadow-sm; transition: all .2s; overflow: hidden;
+  &:hover { transform: translateY(-2px); box-shadow: $shadow-md; }
+
+  .stat-icon {
+    width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    svg { width: 20px; height: 20px; color: #fff; }
+  }
+
+  &.stat-primary .stat-icon { background: linear-gradient(135deg, $primary-color, $primary-dark); }
+  &.stat-success .stat-icon { background: linear-gradient(135deg, #0065FF, #0052CC); }
+  &.stat-warning .stat-icon { background: linear-gradient(135deg, $danger-color, #BF2600); }
+  &.stat-info    .stat-icon { background: linear-gradient(135deg, $info-color, $primary-dark); }
+
+  .stat-info { flex: 1; min-width: 0; } // ← min-width:0 = clé contre le débordement
+
+  .stat-label {
+    font-size: 10px; font-weight: 700; color: $text-secondary;
+    margin-bottom: 4px; text-transform: uppercase; letter-spacing: .4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .stat-value { font-size: 24px; font-weight: 700; color: $text-primary; line-height: 1; }
+}
+
+// ============================================
+// LOADING
+// ============================================
+.loading-overlay {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px; background: $bg-primary; border: 1px solid $border-color; border-radius: 12px;
+  .spinner { width: 40px; height: 40px; border: 3px solid $bg-secondary; border-top: 3px solid $primary-color; border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 16px; }
+  p { color: $text-secondary; font-size: 14px; }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+// ============================================
+// ✅ TABLE — TOUTES LES 7 COLONNES VISIBLES
+// La clé: table-layout:fixed + largeurs px sur th
+// Le NOM prend ce qui reste (width:auto ne marche
+// pas avec fixed → on utilise une grande valeur)
+// ============================================
+.table-card {
+  background: $bg-primary; border: 1px solid $border-color;
+  border-radius: 12px; overflow: hidden; box-shadow: $shadow-sm; margin-bottom: 20px;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+
+  // ✅ Colonnes px fixes — NOM prend automatiquement le reste
+  thead {
+    background: $bg-tertiary;
+    border-bottom: 2px solid $border-color;
+
+    th {
+      padding: 12px 10px;
+      text-align: left;
+      font-size: 11px; font-weight: 700; color: $text-secondary;
+      text-transform: uppercase; letter-spacing: .5px; white-space: nowrap;
+    }
+
+    // ✅ Largeurs absolues — le navigateur calcule NOM = 100% - (sum autres)
+    th:nth-child(1) { width: 105px; }  // CODE
+    th:nth-child(2) { }                // NOM — prend le reste automatiquement
+    th:nth-child(3) { width: 75px;  }  // FORMAT
+    th:nth-child(4) { width: 115px; }  // FRÉQUENCE
+    th:nth-child(5) { width: 150px; }  // DATE LIMITE
+    th:nth-child(6) { width: 80px;  }  // STATUT
+    th:nth-child(7) { width: 148px; }  // ACTIONS ← 4 boutons de 30px + gaps
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid $border-color; transition: background .15s;
+      &:last-child { border-bottom: none; }
+      &:hover { background: $bg-tertiary; }
+      &.disabled-row { opacity: .5; background: $bg-secondary; }
+    }
+    td { padding: 14px 10px; font-size: 14px; vertical-align: middle; }
+
+    // NOM — overflow avec table-layout:fixed (max-width:0 est le trick)
+    td:nth-child(2) {
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      max-width: 0;    // ← OBLIGATOIRE pour que ellipsis fonctionne avec table-layout:fixed
+      font-weight: 500; color: $text-primary;
+    }
+
+    // DATE LIMITE — peut être longue, tronquer aussi
+    td:nth-child(5) {
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 0;
+      font-size: 12px; color: $text-secondary;
+    }
+  }
+}
+
+// ============================================
+// BADGES & CELLULES
+// ============================================
+.code-cell .code-badge {
+  display: inline-block; padding: 4px 8px;
+  background: rgba($primary-color,.08); color: $primary-color;
+  border-radius: 5px; font-size: 11px; font-weight: 700;
+  font-family: 'Courier New', monospace; letter-spacing: .5px;
+}
+
+.format-badge {
+  display: inline-block; padding: 3px 8px; border-radius: 5px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; white-space: nowrap;
+  &.format-xml     { background: rgba(#C92A2A,.08); color: #C92A2A; }
+  &.format-csv     { background: rgba(#2B8A3E,.08); color: #2B8A3E; }
+  &.format-json    { background: rgba(#1971C2,.08); color: #1971C2; }
+  &.format-pdf     { background: rgba(#D9480F,.08); color: #D9480F; }
+  &.format-txt     { background: rgba($text-muted,.08); color: $text-secondary; }
+  &.format-default { background: rgba($text-muted,.08); color: $text-muted; }
+}
+
+.freq-badge {
+  display: inline-block; padding: 3px 8px; border-radius: 5px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase; white-space: nowrap;
+  &.freq-daily      { background: rgba(#C92A2A,.08); color: #C92A2A; }
+  &.freq-weekly     { background: rgba(#D9480F,.08); color: #D9480F; }
+  &.freq-monthly    { background: rgba($primary-color,.08); color: $primary-color; }
+  &.freq-quarterly  { background: rgba(#5F3DC4,.08); color: #5F3DC4; }
+  &.freq-yearly     { background: rgba(#0CA678,.08); color: #0CA678; }
+  &.freq-default    { background: rgba($text-muted,.08); color: $text-muted; }
+}
+
+.status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 8px; border-radius: 5px;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  &.status-active   { background: rgba($primary-color,.08); color: $primary-color; .status-dot { background: $primary-color; } }
+  &.status-inactive { background: rgba($danger-color,.08);  color: $danger-color;  .status-dot { background: $danger-color; } }
+}
+
+// ============================================
+// ✅ ACTION BUTTONS — 4 boutons × 30px + 3 gaps × 4px = 132px < 148px ✓
+// ============================================
+.action-buttons {
+  display: flex; gap: 4px; flex-wrap: nowrap; align-items: center;
+}
+
+.btn-action {
+  width: 30px; height: 30px; flex-shrink: 0;
+  border: 1px solid $border-color; border-radius: 6px;
+  background: $bg-primary; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all .2s;
+  svg { width: 14px; height: 14px; }
+  &:hover { transform: translateY(-1px); box-shadow: $shadow-sm; }
+  &.btn-details { color: #1971C2; &:hover { background: rgba(#1971C2,.08); border-color: #1971C2; } }
+  &.btn-toggle  { color: $warning-color; &:hover { background: rgba($warning-color,.08); border-color: $warning-color; } }
+  &.btn-edit    { color: #974F0C; &:hover { background: rgba($warning-color,.08); border-color: $warning-color; } }
+  &.btn-delete  { color: $danger-color; &:hover { background: rgba($danger-color,.08); border-color: $danger-color; } }
+}
+
+// Empty State
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  .empty-icon { margin-bottom: 16px; svg { width: 56px; height: 56px; color: $text-muted; } }
+  .empty-message { color: $text-secondary; font-size: 15px; font-weight: 500; margin-bottom: 20px; }
+  .btn-refresh { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; background: $primary-color; color: #fff; border: none; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .2s;
+    svg { width: 14px; height: 14px; }
+    &:hover { background: $primary-dark; transform: translateY(-1px); } }
+}
+
+// ============================================
+// PAGINATION
+// ============================================
+.pagination-section {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px; background: $bg-primary;
+  border: 1px solid $border-color; border-radius: 10px; margin-bottom: 16px;
+  .pagination-info { color: $text-secondary; font-size: 13px; font-weight: 500; }
+  .pagination-controls { display: flex; gap: 10px; }
+  .btn-pagination {
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px;
+    background: $bg-primary; border: 1px solid $border-color; border-radius: 7px;
+    cursor: pointer; font-size: 13px; font-weight: 500; color: $text-primary; transition: all .2s;
+    &:hover:not(:disabled) { background: $bg-tertiary; border-color: $primary-color; color: $primary-color; }
+    &:disabled { opacity: .35; cursor: not-allowed; }
+  }
+}
+
+// ============================================
+// MODALS
+// ============================================
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+}
+
+.modal-content {
+  background: #fff; border-radius: 16px; width: 100%;
+  max-width: 580px; max-height: 88vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-thumb { background: $border-color; border-radius: 3px; }
+  &.modal-large { max-width: 760px; max-height: 90vh; }
+}
+
+.modal-header {
+  padding: 22px 24px; border-bottom: 1px solid $border-color;
+  display: flex; justify-content: space-between; align-items: center;
+  position: sticky; top: 0; background: #fff; z-index: 1;
+  h2 { font-size: 18px; font-weight: 700; color: $text-primary; }
+}
+
+.btn-close {
+  background: $bg-secondary; border: none; width: 30px; height: 30px;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; font-size: 16px; color: $text-secondary; transition: all .2s;
+  &:hover { background: $border-color; color: $text-primary; }
+}
+
+.modal-body { padding: 22px 24px; }
+
+.form-group {
+  margin-bottom: 18px;
+
+  label { display: block; font-size: 13px; font-weight: 600; color: $text-primary; margin-bottom: 7px; }
+
+  input[type="text"], input[type="email"] {
+    width: 100%; padding: 10px 14px; border: 1px solid $border-color;
+    border-radius: 8px; font-size: 14px; color: $text-primary; background: $bg-primary; transition: all .2s;
+    &:focus { outline: none; border-color: $primary-color; box-shadow: 0 0 0 3px rgba($primary-color,.1); }
+    &.input-error { border-color: $danger-color; }
+    &:disabled { background: $bg-secondary; cursor: not-allowed; color: $text-secondary; }
+  }
+
+  select {
+    width: 100%; padding: 10px 14px; border: 1px solid $border-color;
+    border-radius: 8px; font-size: 14px; color: $text-primary; background: $bg-primary;
+    cursor: pointer; transition: all .2s;
+    &:focus { outline: none; border-color: $primary-color; box-shadow: 0 0 0 3px rgba($primary-color,.1); }
+  }
+
+  textarea {
+    width: 100%; padding: 10px 14px; border: 1px solid $border-color;
+    border-radius: 8px; font-size: 13px; font-family: inherit; color: $text-primary;
+    resize: vertical; transition: all .2s; line-height: 1.5;
+    &:focus { outline: none; border-color: $primary-color; box-shadow: 0 0 0 3px rgba($primary-color,.1); }
+  }
+}
+
+.error-message { display: block; color: $danger-color; font-size: 12px; margin-top: 5px; }
+.form-hint     { display: block; color: $text-muted; font-size: 12px; margin-top: 5px; font-style: italic; }
+.form-row      { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.checkbox-wrapper {
+  display: flex; align-items: center; gap: 8px;
+  input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: $primary-color; }
+  label { font-size: 14px; font-weight: 500; cursor: pointer; margin: 0; }
+}
+
+.form-section {
+  margin-top: 20px; padding: 18px;
+  background: $bg-tertiary; border: 1px solid $border-color; border-radius: 10px;
+  h3 { font-size: 14px; font-weight: 700; color: $text-primary; margin-bottom: 14px; }
+}
+
+.modal-footer {
+  padding: 18px 24px; border-top: 1px solid $border-color;
+  display: flex; justify-content: flex-end; gap: 10px;
+  position: sticky; bottom: 0; background: #fff;
+}
+
+.btn-secondary {
+  padding: 9px 20px; background: $bg-secondary; border: 1px solid $border-color;
+  border-radius: 8px; font-size: 14px; font-weight: 600; color: $text-primary; cursor: pointer; transition: all .2s;
+  &:hover { background: $border-color; }
+}
+
+.btn-primary {
+  padding: 9px 20px; background: linear-gradient(135deg, $primary-color, $primary-dark);
+  color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s; box-shadow: 0 2px 8px rgba($primary-color,.3);
+  &:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba($primary-color,.4); }
+}
+
+// ============================================
+// VALIDATION RULES
+// ============================================
+.validation-rules-list { margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
+
+.validation-rule-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; background: $bg-primary; border: 1px solid $border-color; border-radius: 8px;
+  &:hover { background: $bg-tertiary; }
+  .rule-info { flex: 1;
+    strong { display: inline; color: $text-primary; font-size: 13px; margin-right: 8px; }
+    .rule-type-badge { display: inline-block; padding: 2px 8px; background: rgba($primary-color,.08); color: $primary-color; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .rule-message { font-size: 12px; color: $text-secondary; margin: 4px 0 0; }
+  }
+  .btn-remove-rule { padding: 4px 8px; background: transparent; border: none; color: $danger-color; font-size: 16px; cursor: pointer; border-radius: 4px; flex-shrink: 0;
+    &:hover { background: rgba($danger-color,.08); } }
+}
+
+.add-validation-rule { padding: 14px; background: $bg-primary; border: 1px dashed $border-color; border-radius: 8px; }
+
+.btn-add-rule {
+  padding: 8px 16px; background: $primary-color; color: #fff; border: none; border-radius: 7px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; transition: all .2s;
+  &:hover { background: $primary-dark; transform: translateY(-1px); }
+}
+
+// ============================================
+// DETAILS MODAL
+// ============================================
+.details-section {
+  margin-bottom: 22px;
+  h3 { font-size: 14px; font-weight: 700; color: $text-primary; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid $border-color; }
+}
+
+.details-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
+
+.detail-item {
+  display: flex; flex-direction: column; gap: 4px;
+  &.full-width { grid-column: 1 / -1; }
+  .detail-label { font-size: 11px; font-weight: 700; color: $text-muted; text-transform: uppercase; letter-spacing: .5px; }
+  .detail-value { font-size: 14px; color: $text-primary; font-weight: 500; }
+  .detail-description { font-size: 13px; color: $text-secondary; line-height: 1.6; margin: 6px 0 0; }
+}
+
+.champs-list {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  .champ-badge { display: inline-block; padding: 5px 10px; background: rgba($primary-color,.08); color: $primary-color; border-radius: 6px; font-size: 12px; font-weight: 600; font-family: 'Courier New', monospace; }
+}
+
+.validation-rules-display { display: grid; gap: 10px; }
 
 .validation-rule-card {
-  padding: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-
-  .rule-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-
-    strong {
-      color: #1e293b;
-      font-size: 14px;
-    }
-
-    .rule-type-badge {
-      padding: 4px 8px;
-      background: rgba($primary-color, 0.1);
-      color: $primary-color;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-  }
-
-  .rule-message {
-    font-size: 13px;
-    color: #475569;
-    margin: 0 0 8px 0;
-  }
-
-  .rule-required {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    color: #64748b;
-    font-weight: 500;
-
-    svg {
-      stroke: #f59e0b;
-    }
-  }
+  padding: 14px; background: $bg-tertiary; border: 1px solid $border-color; border-radius: 8px;
+  .rule-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+    strong { color: $text-primary; font-size: 13px; }
+    .rule-type-badge { padding: 2px 8px; background: rgba($primary-color,.08); color: $primary-color; border-radius: 4px; font-size: 11px; font-weight: 600; } }
+  .rule-message { font-size: 12px; color: $text-secondary; margin: 0 0 6px; }
+  .rule-required { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: $text-muted; font-weight: 600; svg { stroke: #F59E0B; } }
 }
 
-// Template info
+// ============================================
+// TEMPLATE
+// ============================================
 .template-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-
-  .template-path {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    color: #475569;
-
-    svg {
-      stroke: $primary-color;
-    }
-  }
-
-  .btn-download {
-    padding: 8px 16px;
-    background: $primary-color;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.3s;
-
-    &:hover {
-      background: darken($primary-color, 10%);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba($primary-color, 0.3);
-    }
-  }
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; background: $bg-tertiary; border: 1px solid $border-color; border-radius: 8px; margin-bottom: 12px;
+  .template-content { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: $text-primary; svg { stroke: $primary-color; } }
+  .btn-download { padding: 7px 14px; background: $primary-color; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all .2s;
+    &:hover { background: $primary-dark; transform: translateY(-1px); } }
 }
 
-// Form hint
-.form-hint {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  color: #64748b;
-  font-style: italic;
-}
-
-// Template preview
 .template-preview {
-  margin-top: 16px;
-  padding: 16px;
-  background: #1e293b;
-  border-radius: 8px;
-  max-height: 400px;
-  overflow-y: auto;
-
-  pre {
-    margin: 0;
-    
-    code {
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      color: #94a3b8;
-      line-height: 1.5;
-    }
-  }
+  padding: 16px; background: #1E293B; border-radius: 8px; max-height: 360px; overflow-y: auto; margin-bottom: 12px;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+  pre { margin: 0; code { font-family: 'Courier New', monospace; font-size: 12px; color: #94A3B8; line-height: 1.6; white-space: pre-wrap; word-break: break-word; } }
 }
 
-.template-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #475569;
-
-  svg {
-    stroke: $primary-color;
-  }
+.template-variables {
+  padding: 12px 14px; background: $bg-tertiary; border: 1px solid $border-color; border-radius: 8px;
+  h4 { font-size: 12px; font-weight: 700; color: $text-secondary; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+  pre { margin: 0; code { font-family: 'Courier New', monospace; font-size: 12px; color: $text-primary; line-height: 1.5; } }
 }
 
-// ✅ Styles pour l'upload de fichiers
-.file-input {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  border: 2px dashed #ddd;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    border-color: #4f46e5;
-    background: #f8f9ff;
-  }
-}
+// ============================================
+// FILE UPLOAD
+// ============================================
+.file-input { display: block; width: 100%; padding: 10px; border: 2px dashed $border-color; border-radius: 8px; cursor: pointer; font-size: 13px; color: $text-secondary; background: $bg-tertiary; transition: all .2s;
+  &:hover { border-color: $primary-color; } }
 
-.file-selected {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 10px;
-  background: #f0fdf4;
-  border: 1px solid #86efac;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #166534;
-  
-  svg {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-  }
-  
-  .file-size {
-    color: #6b7280;
-    font-size: 12px;
-  }
-  
-  .btn-clear-file {
-    margin-left: auto;
-    background: none;
-    border: none;
-    color: #dc2626;
-    cursor: pointer;
-    font-size: 16px;
-    padding: 0 8px;
-    
-    &:hover {
-      color: #991b1b;
-    }
-  }
-}
+.file-selected { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 10px 12px; background: rgba(#2B8A3E,.05); border: 1px solid rgba(#2B8A3E,.2); border-radius: 6px; font-size: 13px; color: #2B8A3E;
+  svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .file-size { color: $text-muted; font-size: 12px; }
+  .btn-clear-file { margin-left: auto; background: none; border: none; color: $danger-color; cursor: pointer; font-size: 15px; padding: 0 4px; &:hover { background: rgba($danger-color,.08); } } }
 
-.current-file {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 10px;
-  background: #eff6ff;
-  border: 1px solid #93c5fd;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #1e40af;
-  
-  svg {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-  }
-}
+.current-file { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 10px 12px; background: rgba($primary-color,.04); border: 1px solid rgba($primary-color,.2); border-radius: 6px; font-size: 13px; color: $primary-color;
+  svg { width: 15px; height: 15px; flex-shrink: 0; } }
 
-.validation-errors {
-  margin-top: 20px;
-  padding: 15px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  
-  .error-item {
-    padding: 8px;
-    margin-bottom: 5px;
-    color: #dc2626;
-    font-size: 14px;
-    
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-}
+.validation-errors { margin-top: 16px; padding: 14px; background: rgba($danger-color,.04); border: 1px solid rgba($danger-color,.2); border-radius: 8px;
+  .error-item { padding: 6px 0; color: $danger-color; font-size: 13px; border-bottom: 1px solid rgba($danger-color,.1); &:last-child { border-bottom: none; } } }
 
-.template-file-info {
-  padding: 15px;
-  background: #f8f9ff;
-  border-radius: 8px;
-  margin-top: 10px;
-  
-  p {
-    margin: 0;
-    color: #4f46e5;
-    font-weight: 500;
-  }
+.template-file-info { padding: 12px 14px; background: rgba($primary-color,.04); border: 1px solid rgba($primary-color,.15); border-radius: 8px; margin-top: 8px;
+  p { margin: 0; color: $primary-color; font-weight: 500; font-size: 13px; } }
+
+// ============================================
+// RESPONSIVE
+// ============================================
+@media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
+
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .top-header { padding: 16px 20px; }
+  .content-area { padding: 16px 20px 32px; }
+  .table-card { overflow-x: auto; }
+  .users-table { min-width: 700px; } // scroll horizontal sur mobile
+  .pagination-section { flex-direction: column; gap: 12px; }
+  .form-row { grid-template-columns: 1fr; }
 }

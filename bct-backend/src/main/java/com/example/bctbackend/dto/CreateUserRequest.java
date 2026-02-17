@@ -1,73 +1,38 @@
 package com.example.bctbackend.dto;
 
-import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ✅ MODIFIÉ : Le champ password est supprimé.
+ * L'admin crée le compte → Keycloak envoie un email à l'employé →
+ * l'employé clique sur le lien et définit lui-même son mot de passe.
+ */
 public class CreateUserRequest {
+
     private String username;
     private String email;
     private String firstName;
     private String lastName;
-    private String password;
     private boolean enabled = true;
-    private List<String> roles = new ArrayList<>();
+    private List<String> roles;
 
-    public CreateUserRequest() {}
+    // ========== Getters & Setters ==========
 
-    // Getters with validation/trimming
-    public String getUsername() {
-        return username != null ? username.trim() : null;
-    }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getEmail() {
-        return email != null ? email.trim().toLowerCase() : null;
-    }
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
 
-    public String getFirstName() {
-        return firstName != null ? firstName.trim() : "";
-    }
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName != null ? lastName.trim() : "";
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public List<String> getRoles() {
-        return roles != null ? roles : new ArrayList<>();
-    }
-
-    public void setRoles(List<String> roles) {
-        this.roles = roles;
-    }
+    public List<String> getRoles() { return roles; }
+    public void setRoles(List<String> roles) { this.roles = roles; }
 }

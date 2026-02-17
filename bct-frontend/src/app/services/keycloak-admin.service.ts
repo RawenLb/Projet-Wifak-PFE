@@ -15,12 +15,12 @@ export interface KeycloakUser {
   roles?: string[];
 }
 
+// ✅ MODIFIÉ : password supprimé — l'employé le définit lui-même via l'email d'activation
 export interface CreateUserRequest {
   username: string;
   email: string;
   firstName: string;
   lastName: string;
-  password: string;
   enabled: boolean;
   roles: string[];
 }
@@ -75,6 +75,9 @@ export class KeycloakAdminService {
     );
   }
 
+  /**
+   * ✅ Renvoyer l'email d'activation (si l'employé n'a pas reçu le premier email)
+   */
   sendPasswordResetEmail(userId: string): Observable<any> {
     return this.http.post(
       `${this.API_URL}/users/${userId}/reset-password`,
@@ -116,133 +119,87 @@ export class KeycloakAdminService {
 
   // ================= USER INFO =================
 
-  /**
-   * ✅ Récupérer le nom d'utilisateur depuis Keycloak
-   */
   getUsername(): string {
     try {
       const tokenParsed = keycloak.tokenParsed;
-return (
-  tokenParsed?.['preferred_username'] ||
-  tokenParsed?.['name'] ||
-  'Utilisateur'
-);
+      return (
+        tokenParsed?.['preferred_username'] ||
+        tokenParsed?.['name'] ||
+        'Utilisateur'
+      );
     } catch (error) {
-      console.error('Erreur lors de la récupération du username:', error);
       return 'Utilisateur';
     }
   }
 
-  /**
-   * ✅ Récupérer le nom complet de l'utilisateur
-   */
   getFullName(): string {
     try {
       const tokenParsed = keycloak.tokenParsed;
-    const firstName = tokenParsed?.['given_name'] || '';
-const lastName = tokenParsed?.['family_name'] || '';
-
-      
-      if (firstName && lastName) {
-        return `${firstName} ${lastName}`;
-      }
-      
-return tokenParsed?.['name'] || this.getUsername();
+      const firstName = tokenParsed?.['given_name'] || '';
+      const lastName = tokenParsed?.['family_name'] || '';
+      if (firstName && lastName) return `${firstName} ${lastName}`;
+      return tokenParsed?.['name'] || this.getUsername();
     } catch (error) {
-      console.error('Erreur lors de la récupération du nom complet:', error);
       return 'Utilisateur';
     }
   }
 
-  /**
-   * ✅ Récupérer l'email de l'utilisateur
-   */
   getEmail(): string {
     try {
-      const tokenParsed = keycloak.tokenParsed;
-return tokenParsed?.['email'] || '';
+      return keycloak.tokenParsed?.['email'] || '';
     } catch (error) {
-      console.error('Erreur lors de la récupération de l\'email:', error);
       return '';
     }
   }
 
-  /**
-   * ✅ Récupérer les rôles de l'utilisateur connecté
-   */
   getCurrentUserRoles(): string[] {
     try {
       const tokenParsed = keycloak.tokenParsed;
       const realmRoles = tokenParsed?.realm_access?.roles || [];
       const resourceRoles = tokenParsed?.resource_access?.['bct-app']?.roles || [];
-      
       return [...realmRoles, ...resourceRoles];
     } catch (error) {
-      console.error('Erreur lors de la récupération des rôles:', error);
       return [];
     }
   }
 
-  /**
-   * ✅ Vérifier si l'utilisateur a un rôle spécifique
-   */
   hasRole(roleName: string): boolean {
     try {
       return keycloak.hasRealmRole(roleName) || keycloak.hasResourceRole(roleName, 'bct-app');
     } catch (error) {
-      console.error('Erreur lors de la vérification du rôle:', error);
       return false;
     }
   }
 
-  /**
-   * ✅ Récupérer le rôle principal de l'utilisateur (pour l'affichage)
-   */
   getPrimaryRole(): string {
     const roles = this.getCurrentUserRoles();
-    
-    // Ordre de priorité des rôles
     if (roles.includes('ROLE_ADMIN')) return 'Administrateur';
     if (roles.includes('ROLE_MANAGER')) return 'Manager';
     if (roles.includes('ROLE_AGENT')) return 'Agent';
     if (roles.includes('ROLE_AUDITOR')) return 'Auditeur';
-    
     return 'Utilisateur';
   }
 
-  /**
-   * ✅ Récupérer l'ID utilisateur
-   */
   getUserId(): string {
     try {
-      const tokenParsed = keycloak.tokenParsed;
-      return tokenParsed?.sub || '';
+      return keycloak.tokenParsed?.sub || '';
     } catch (error) {
-      console.error('Erreur lors de la récupération de l\'ID utilisateur:', error);
       return '';
     }
   }
 
-  /**
-   * ✅ Vérifier si l'utilisateur est authentifié
-   */
   isAuthenticated(): boolean {
     try {
       return keycloak.authenticated || false;
     } catch (error) {
-      console.error('Erreur lors de la vérification de l\'authentification:', error);
       return false;
     }
   }
 
-  /**
-   * ✅ Récupérer le token
-   */
   getToken(): string | undefined {
     try {
       return keycloak.token;
     } catch (error) {
-      console.error('Erreur lors de la récupération du token:', error);
       return undefined;
     }
   }
@@ -252,9 +209,6 @@ return tokenParsed?.['email'] || '';
   logout(): void {
     localStorage.clear();
     sessionStorage.clear();
-
-    keycloak.logout({
-      redirectUri: 'http://localhost:4200/login'
-    });
+    keycloak.logout({ redirectUri: 'http://localhost:4200/login' });
   }
 }

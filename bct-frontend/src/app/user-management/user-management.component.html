@@ -281,7 +281,7 @@
   </div>
 
   <!-- ============================================ -->
-  <!-- CREATE USER MODAL -->
+  <!-- CREATE USER MODAL — ✅ MODIFIÉ : sans champ mot de passe -->
   <!-- ============================================ -->
   <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
     <div class="modal-content" (click)="$event.stopPropagation()">
@@ -291,10 +291,24 @@
       </div>
 
       <div class="modal-body">
+
+        <!-- ✅ Bandeau informatif : expliquer à l'admin ce qui va se passer -->
+        <div class="info-banner">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>
+            Un email d'activation sera automatiquement envoyé à l'employé.
+            Il devra cliquer sur le lien pour définir son propre mot de passe et accéder à la plateforme.
+          </span>
+        </div>
+
         <div class="form-group">
           <label>Nom d'utilisateur *</label>
-          <input type="text" 
-                 [(ngModel)]="newUser.username" 
+          <input type="text"
+                 [(ngModel)]="newUser.username"
                  placeholder="Ex: jdupont"
                  [class.input-error]="!newUser.username && formSubmitted">
           <span class="error-message" *ngIf="!newUser.username && formSubmitted">
@@ -304,13 +318,14 @@
 
         <div class="form-group">
           <label>Email *</label>
-          <input type="email" 
-                 [(ngModel)]="newUser.email" 
-                 placeholder="Ex: jdupont@wifak.tn"
+          <input type="email"
+                 [(ngModel)]="newUser.email"
+                 placeholder="Ex: jdupont@bct.tn"
                  [class.input-error]="!newUser.email && formSubmitted">
           <span class="error-message" *ngIf="!newUser.email && formSubmitted">
             Ce champ est obligatoire
           </span>
+          <small class="form-hint">L'email d'activation sera envoyé à cette adresse</small>
         </div>
 
         <div class="form-row">
@@ -325,23 +340,7 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Mot de passe *</label>
-          <div class="password-wrapper">
-            <input [type]="showPassword ? 'text' : 'password'" 
-                   [(ngModel)]="newUser.password" 
-                   placeholder="••••••••"
-                   [class.input-error]="!newUser.password && formSubmitted">
-            <button type="button" 
-                    class="toggle-password" 
-                    (click)="showPassword = !showPassword">
-              {{ showPassword ? '👁️' : '👁️‍🗨️' }}
-            </button>
-          </div>
-          <span class="error-message" *ngIf="!newUser.password && formSubmitted">
-            Ce champ est obligatoire
-          </span>
-        </div>
+        <!-- ✅ Champ mot de passe SUPPRIMÉ -->
 
         <div class="form-group">
           <div class="checkbox-wrapper">
@@ -353,7 +352,7 @@
         <div class="form-group">
           <label>Rôles</label>
           <div class="roles-grid">
-            <div *ngFor="let role of availableRoles" 
+            <div *ngFor="let role of availableRoles"
                  class="role-card"
                  [class.role-assigned]="isRoleSelected(role.name)"
                  (click)="toggleRoleSelection(role.name)">
@@ -374,11 +373,12 @@
 
       <div class="modal-footer">
         <button (click)="closeCreateModal()" class="btn-secondary">Annuler</button>
-        <button (click)="createUser()" class="btn-primary">Créer</button>
+        <button (click)="createUser()" class="btn-primary">
+          Créer et envoyer l'invitation
+        </button>
       </div>
     </div>
   </div>
-
   <!-- ============================================ -->
   <!-- EDIT USER MODAL -->
   <!-- ============================================ -->
