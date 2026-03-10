@@ -27,170 +27,97 @@ public class DeclarationController {
         this.declarationService = declarationService;
     }
 
-    /**
-     * ✅ Générer une nouvelle déclaration (Agent métier)
-     * BF4 - Génération automatique
-     */
     @PostMapping("/generate")
-    @PreAuthorize("hasAnyAuthority('ROLE_AGENT', 'ROLE_ADMIN')")
-    public ResponseEntity<Declaration> generateDeclaration(
-            @RequestBody GenerateDeclarationRequest request
-    ) {
-        log.info("🚀 Génération déclaration - Type: {}, Période: {}",
-                request.getDeclarationTypeId(),
-                request.getPeriode()
-        );
-
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
+    public ResponseEntity<Declaration> generateDeclaration(@RequestBody GenerateDeclarationRequest request) {
+        log.info("🚀 Génération déclaration - Type: {}, Période: {}", request.getDeclarationTypeId(), request.getPeriode());
         Declaration declaration = declarationService.generateDeclaration(
-                request.getDeclarationTypeId(),
-                request.getPeriode(),
-                request.getData()
+                request.getDeclarationTypeId(), request.getPeriode(),
+                request.getDateDebut(), request.getDateFin()
         );
-
-        log.info("✅ Déclaration générée avec succès - ID: {}", declaration.getId());
+        log.info("✅ Déclaration générée - ID: {}", declaration.getId());
         return ResponseEntity.ok(declaration);
     }
 
-    /**
-     * ✅ Récupérer toutes les déclarations de l'utilisateur connecté
-     */
     @GetMapping("/my")
-    @PreAuthorize("hasAnyAuthority('ROLE_AGENT', 'ROLE_MANAGER', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN')")
     public ResponseEntity<List<Declaration>> getMyDeclarations() {
-        log.info("📋 Récupération de mes déclarations");
-        List<Declaration> declarations = declarationService.getMyDeclarations();
-        return ResponseEntity.ok(declarations);
+        return ResponseEntity.ok(declarationService.getMyDeclarations());
     }
 
-    /**
-     * ✅ Récupérer toutes les déclarations (Admin/Manager)
-     */
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<List<Declaration>> getAllDeclarations() {
-        log.info("📋 Récupération de toutes les déclarations");
-        List<Declaration> declarations = declarationService.getAllDeclarations();
-        return ResponseEntity.ok(declarations);
+        return ResponseEntity.ok(declarationService.getAllDeclarations());
     }
 
-    /**
-     * ✅ Récupérer une déclaration par ID
-     */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_AGENT', 'ROLE_MANAGER', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN')")
     public ResponseEntity<Declaration> getDeclarationById(@PathVariable Long id) {
-        log.info("🔍 Récupération déclaration ID: {}", id);
-        Declaration declaration = declarationService.findById(id);
-        return ResponseEntity.ok(declaration);
+        return ResponseEntity.ok(declarationService.findById(id));
     }
 
-    /**
-     * ✅ Télécharger le fichier d'une déclaration
-     * BF7 - Consultation et téléchargement
-     */
     @GetMapping("/{id}/download")
-    @PreAuthorize("hasAnyAuthority('ROLE_AGENT', 'ROLE_MANAGER', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN')")
     public ResponseEntity<ByteArrayResource> downloadDeclaration(@PathVariable Long id) {
         log.info("📥 Téléchargement déclaration ID: {}", id);
-
         Declaration declaration = declarationService.findById(id);
-
         if (declaration.getContenuFichier() == null) {
             return ResponseEntity.notFound().build();
         }
-
         byte[] content = declaration.getContenuFichier().getBytes(StandardCharsets.UTF_8);
-        ByteArrayResource resource = new ByteArrayResource(content);
-
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + declaration.getNomFichier() + "\"")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + declaration.getNomFichier() + "\"")
+                .contentType(MediaType.APPLICATION_XML)
                 .contentLength(content.length)
-                .body(resource);
+                .body(new ByteArrayResource(content));
     }
 
-    /**
-     * ✅ Soumettre pour validation (Agent → Manager)
-     * BF5 - Workflow de validation
-     */
     @PatchMapping("/{id}/submit")
-    @PreAuthorize("hasAuthority('ROLE_AGENT')")
+    @PreAuthorize("hasRole('AGENT')")
     public ResponseEntity<Declaration> submitForValidation(@PathVariable Long id) {
         log.info("📤 Soumission pour validation - ID: {}", id);
-        Declaration declaration = declarationService.submitForValidation(id);
-        log.info("✅ Déclaration soumise avec succès");
-        return ResponseEntity.ok(declaration);
+        return ResponseEntity.ok(declarationService.submitForValidation(id));
     }
 
-    /**
-     * ✅ Valider une déclaration (Manager)
-     * BF5 - Workflow de validation
-     */
     @PatchMapping("/{id}/validate")
-    @PreAuthorize("hasAuthority('ROLE_MANAGER')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<Declaration> validateDeclaration(@PathVariable Long id) {
         log.info("✅ Validation déclaration - ID: {}", id);
-        Declaration declaration = declarationService.validateDeclaration(id);
-        log.info("✅ Déclaration validée avec succès");
-        return ResponseEntity.ok(declaration);
+        return ResponseEntity.ok(declarationService.validateDeclaration(id));
     }
 
-    /**
-     * ✅ Rejeter une déclaration avec commentaire (Manager)
-     * BF5 - Workflow de validation
-     */
     @PatchMapping("/{id}/reject")
-    @PreAuthorize("hasAuthority('ROLE_MANAGER')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<Declaration> rejectDeclaration(
-            @PathVariable Long id,
-            @RequestBody RejectRequest request
-    ) {
+            @PathVariable Long id, @RequestBody RejectRequest request) {
         log.info("❌ Rejet déclaration - ID: {}", id);
-        Declaration declaration = declarationService.rejectDeclaration(id, request.getCommentaire());
-        log.info("✅ Déclaration rejetée avec succès");
-        return ResponseEntity.ok(declaration);
+        return ResponseEntity.ok(declarationService.rejectDeclaration(id, request.getCommentaire()));
     }
 
-    /**
-     * ✅ Récupérer les déclarations en attente de validation (Manager)
-     */
     @GetMapping("/pending")
-    @PreAuthorize("hasAuthority('ROLE_MANAGER')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<List<Declaration>> getPendingDeclarations() {
-        log.info("📋 Récupération déclarations en attente");
-        List<Declaration> declarations = declarationService.getPendingDeclarations();
-        return ResponseEntity.ok(declarations);
+        return ResponseEntity.ok(declarationService.getPendingDeclarations());
     }
 
-    /**
-     * ✅ Marquer comme envoyée (Admin/Manager)
-     */
     @PatchMapping("/{id}/send")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<Declaration> markAsSent(@PathVariable Long id) {
         log.info("📨 Marquage comme envoyée - ID: {}", id);
-        Declaration declaration = declarationService.markAsSent(id);
-        log.info("✅ Déclaration marquée comme envoyée");
-        return ResponseEntity.ok(declaration);
+        return ResponseEntity.ok(declarationService.markAsSent(id));
     }
 
-    // ========== DTOs ==========
+    @GetMapping("/stats")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    public ResponseEntity<DeclarationService.DeclarationStats> getStats() {
+        return ResponseEntity.ok(declarationService.getStats());
+    }
 
-    /**
-     * DTO pour le rejet de déclaration
-     */
     public static class RejectRequest {
         private String commentaire;
-
         public RejectRequest() {}
-
-        public String getCommentaire() {
-            return commentaire;
-        }
-
-        public void setCommentaire(String commentaire) {
-            this.commentaire = commentaire;
-        }
+        public String getCommentaire() { return commentaire; }
+        public void setCommentaire(String commentaire) { this.commentaire = commentaire; }
     }
 }

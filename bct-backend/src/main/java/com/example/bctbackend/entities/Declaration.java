@@ -1,6 +1,7 @@
 package com.example.bctbackend.entities;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,10 +23,21 @@ public class Declaration {
     @Column(nullable = false)
     private String periode; // Ex: "2026-01" pour janvier 2026
 
+    // ✅ NOUVEAU — Période sous forme de dates pour la requête SQL
+    private LocalDate dateDebut;
+    private LocalDate dateFin;
+
     private String nomFichier;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String contenuFichier;
+
+    // ✅ NOUVEAU — Snapshot de la requête SQL utilisée lors de la génération
+    @Column(columnDefinition = "TEXT")
+    private String sqlQueryUsed;
+
+    // ✅ NOUVEAU — Snapshot du nom du XSD utilisé
+    private String xsdFileNameUsed;
 
     private LocalDateTime dateGeneration;
     private LocalDateTime dateValidation;
@@ -39,107 +51,62 @@ public class Declaration {
 
     public enum DeclarationStatut {
         BROUILLON,      // Agent vient de créer
-        GENEREE,        // Fichier généré
+        GENEREE,        // Fichier généré automatiquement
         EN_VALIDATION,  // Soumis au manager
         VALIDEE,        // Manager a validé
         REJETEE,        // Manager a rejeté
         ENVOYEE         // Envoyé à la BCT
     }
 
-    public Long getId() {
-        return id;
-    }
+    /* ================= GETTERS / SETTERS ================= */
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public DeclarationType getDeclarationType() {
-        return declarationType;
-    }
-
+    public DeclarationType getDeclarationType() { return declarationType; }
     public void setDeclarationType(DeclarationType declarationType) {
         this.declarationType = declarationType;
     }
 
-    public DeclarationStatut getStatut() {
-        return statut;
-    }
+    public DeclarationStatut getStatut() { return statut; }
+    public void setStatut(DeclarationStatut statut) { this.statut = statut; }
 
-    public void setStatut(DeclarationStatut statut) {
-        this.statut = statut;
-    }
+    public String getPeriode() { return periode; }
+    public void setPeriode(String periode) { this.periode = periode; }
 
-    public String getPeriode() {
-        return periode;
-    }
+    public LocalDate getDateDebut() { return dateDebut; }
+    public void setDateDebut(LocalDate dateDebut) { this.dateDebut = dateDebut; }
 
-    public void setPeriode(String periode) {
-        this.periode = periode;
-    }
+    public LocalDate getDateFin() { return dateFin; }
+    public void setDateFin(LocalDate dateFin) { this.dateFin = dateFin; }
 
-    public String getNomFichier() {
-        return nomFichier;
-    }
+    public String getNomFichier() { return nomFichier; }
+    public void setNomFichier(String nomFichier) { this.nomFichier = nomFichier; }
 
-    public void setNomFichier(String nomFichier) {
-        this.nomFichier = nomFichier;
-    }
+    public String getContenuFichier() { return contenuFichier; }
+    public void setContenuFichier(String contenuFichier) { this.contenuFichier = contenuFichier; }
 
-    public String getContenuFichier() {
-        return contenuFichier;
-    }
+    public String getSqlQueryUsed() { return sqlQueryUsed; }
+    public void setSqlQueryUsed(String sqlQueryUsed) { this.sqlQueryUsed = sqlQueryUsed; }
 
-    public void setContenuFichier(String contenuFichier) {
-        this.contenuFichier = contenuFichier;
-    }
+    public String getXsdFileNameUsed() { return xsdFileNameUsed; }
+    public void setXsdFileNameUsed(String xsdFileNameUsed) { this.xsdFileNameUsed = xsdFileNameUsed; }
 
-    public LocalDateTime getDateGeneration() {
-        return dateGeneration;
-    }
+    public LocalDateTime getDateGeneration() { return dateGeneration; }
+    public void setDateGeneration(LocalDateTime dateGeneration) { this.dateGeneration = dateGeneration; }
 
-    public void setDateGeneration(LocalDateTime dateGeneration) {
-        this.dateGeneration = dateGeneration;
-    }
+    public LocalDateTime getDateValidation() { return dateValidation; }
+    public void setDateValidation(LocalDateTime dateValidation) { this.dateValidation = dateValidation; }
 
-    public LocalDateTime getDateValidation() {
-        return dateValidation;
-    }
+    public LocalDateTime getDateEnvoi() { return dateEnvoi; }
+    public void setDateEnvoi(LocalDateTime dateEnvoi) { this.dateEnvoi = dateEnvoi; }
 
-    public void setDateValidation(LocalDateTime dateValidation) {
-        this.dateValidation = dateValidation;
-    }
+    public String getGenerePar() { return generePar; }
+    public void setGenerePar(String generePar) { this.generePar = generePar; }
 
-    public LocalDateTime getDateEnvoi() {
-        return dateEnvoi;
-    }
+    public String getValidePar() { return validePar; }
+    public void setValidePar(String validePar) { this.validePar = validePar; }
 
-    public void setDateEnvoi(LocalDateTime dateEnvoi) {
-        this.dateEnvoi = dateEnvoi;
-    }
-
-    public String getGenerePar() {
-        return generePar;
-    }
-
-    public void setGenerePar(String generePar) {
-        this.generePar = generePar;
-    }
-
-    public String getValidePar() {
-        return validePar;
-    }
-
-    public void setValidePar(String validePar) {
-        this.validePar = validePar;
-    }
-
-    public String getCommentaireRejet() {
-        return commentaireRejet;
-    }
-
-    public void setCommentaireRejet(String commentaireRejet) {
-        this.commentaireRejet = commentaireRejet;
-    }
-// Getters/Setters...
+    public String getCommentaireRejet() { return commentaireRejet; }
+    public void setCommentaireRejet(String commentaireRejet) { this.commentaireRejet = commentaireRejet; }
 }

@@ -1,8 +1,6 @@
 <div class="dashboard-container">
-  <!-- ============================================ -->
-  <!-- MAIN CONTENT -->
-  <!-- ============================================ -->
   <div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
+
     <!-- TOP HEADER -->
     <header class="top-header">
       <div class="header-content">
@@ -15,7 +13,6 @@
           <h1 class="page-title">Gestion des Déclarations</h1>
           <p class="page-subtitle">Générez et suivez vos déclarations réglementaires BCT</p>
         </div>
-
         <div class="header-right">
           <button (click)="openGenerateModal()" class="btn-create">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -27,7 +24,6 @@
         </div>
       </div>
 
-      <!-- Search Bar -->
       <div class="search-section">
         <div class="search-bar">
           <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -38,11 +34,8 @@
             type="text"
             placeholder="Rechercher par code, période, statut..."
             [(ngModel)]="searchQuery"
-            (keyup.enter)="searchDeclarations()"
+            (input)="applyFilters()"
           />
-          <button class="btn-search" (click)="searchDeclarations()" *ngIf="searchQuery">
-            Rechercher
-          </button>
           <button class="btn-clear" *ngIf="searchQuery" (click)="clearSearch()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -51,7 +44,6 @@
           </button>
         </div>
 
-        <!-- Filters -->
         <div class="filters-section">
           <select [(ngModel)]="filterStatut" (change)="applyFilters()" class="filter-select">
             <option value="ALL">Tous les statuts</option>
@@ -63,15 +55,10 @@
             <option value="ENVOYEE">Envoyée</option>
           </select>
 
-          <input 
-            type="month" 
-            [(ngModel)]="filterPeriode" 
-            (change)="applyFilters()"
-            class="filter-input"
-            placeholder="Filtrer par période"
-          />
+          <input type="month" [(ngModel)]="filterPeriode" (change)="applyFilters()" class="filter-input" />
 
-          <button (click)="clearFilters()" class="btn-clear-filters" *ngIf="filterStatut !== 'ALL' || filterPeriode">
+          <button (click)="clearFilters()" class="btn-clear-filters"
+                  *ngIf="filterStatut !== 'ALL' || filterPeriode || searchQuery">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -82,9 +69,15 @@
       </div>
     </header>
 
-    <!-- CONTENT AREA -->
     <div class="content-area">
-      <!-- Stats Cards -->
+
+      <!-- Spinner action globale -->
+      <div *ngIf="loadingAction" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Opération en cours...</p>
+      </div>
+
+      <!-- STATS -->
       <div class="stats-grid">
         <div class="stat-card stat-primary">
           <div class="stat-icon">
@@ -98,7 +91,6 @@
             <div class="stat-value">{{ declarations.length }}</div>
           </div>
         </div>
-
         <div class="stat-card stat-warning">
           <div class="stat-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -111,7 +103,6 @@
             <div class="stat-value">{{ getStatsByStatus('EN_VALIDATION') }}</div>
           </div>
         </div>
-
         <div class="stat-card stat-success">
           <div class="stat-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -123,7 +114,6 @@
             <div class="stat-value">{{ getStatsByStatus('VALIDEE') }}</div>
           </div>
         </div>
-
         <div class="stat-card stat-danger">
           <div class="stat-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -139,14 +129,77 @@
         </div>
       </div>
 
-      <!-- LOADING SPINNER -->
-      <div *ngIf="loading" class="loading-overlay">
-        <div class="spinner"></div>
-        <p>Chargement des données...</p>
+      <!-- TYPES DE DÉCLARATIONS -->
+      <div class="table-card" style="margin-bottom: 24px;">
+        <div class="table-header-section">
+          <h3>⚙️ Types de déclarations disponibles</h3>
+          <p class="table-subtitle">Configurez le XSD et la SQL avant de générer une déclaration</p>
+        </div>
+        <div *ngIf="loadingTypes" style="padding: 20px; text-align: center;">⏳ Chargement...</div>
+        <table class="users-table" *ngIf="!loadingTypes">
+          <thead>
+            <tr>
+              <th>CODE</th><th>NOM</th><th>FORMAT</th><th>XSD</th><th>SQL</th><th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let type of declarationTypes">
+              <td><span class="code-badge">{{ type.code }}</span></td>
+              <td><div class="nom-cell">{{ type.nom }}</div></td>
+              <td><span class="format-badge">{{ type.format }}</span></td>
+              <td>
+                <span class="config-status"
+                      [class.configured]="hasXsdConfigured(type)"
+                      [class.not-configured]="!hasXsdConfigured(type)">
+                  {{ hasXsdConfigured(type) ? '✅ ' + type.xsdFileName : '⚠️ Non configuré' }}
+                </span>
+              </td>
+              <td>
+                <span class="config-status"
+                      [class.configured]="hasSqlConfigured(type)"
+                      [class.not-configured]="!hasSqlConfigured(type)">
+                  {{ hasSqlConfigured(type) ? '✅ Configurée' : '⚠️ Non configurée' }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button (click)="openConfigModal(type)" class="btn-action btn-config" title="Configurer XSD et SQL">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="3"></circle>
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"></path>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="declarationTypes.length === 0">
+              <td colspan="6" class="empty-state"><p class="empty-message">Aucun type actif</p></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <!-- DECLARATIONS TABLE -->
-      <div class="table-card" *ngIf="!loading">
+      <!-- ✅ MES DÉCLARATIONS — TABLE TOUJOURS VISIBLE -->
+      <div class="table-card">
+        <div class="table-header-section">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>📋 Mes déclarations</h3>
+            <button (click)="loadDeclarations()" class="btn-refresh-small" title="Rafraîchir">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" width="16" height="16">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="loadingDeclarations" style="padding: 20px; text-align: center;">
+          ⏳ Chargement des déclarations...
+        </div>
+
+        <!-- ✅ TABLE sans ngIf bloquant — toujours rendue -->
         <table class="users-table">
           <thead>
             <tr>
@@ -159,78 +212,60 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let declaration of paginatedDeclarations">
-              <!-- Code -->
-              <td>
-                <div class="code-cell">
+
+            <!-- ✅ ng-container pour filtrer sans wrapper div -->
+            <ng-container *ngFor="let declaration of declarations">
+              <tr *ngIf="matchesFilters(declaration)">
+                <td>
                   <span class="code-badge">{{ declaration.declarationType?.code }}</span>
-                </div>
-              </td>
+                </td>
+                <td>
+                  <div class="type-cell">{{ declaration.declarationType?.nom }}</div>
+                </td>
+                <td>
+                  <span class="periode-text">{{ declaration.periode }}</span>
+                </td>
+                <td>
+                  <span class="date-text">{{ formatDate(declaration.dateGeneration) }}</span>
+                </td>
+                <td>
+                  <span class="status-badge" [ngClass]="getStatusBadgeClass(declaration.statut)">
+                    <span class="status-dot"></span>
+                    {{ getStatusLabel(declaration.statut) }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button (click)="openDetailsModal(declaration)"
+                            class="btn-action btn-details" title="Voir les détails">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    </button>
+                    <button (click)="downloadDeclaration(declaration)"
+                            class="btn-action btn-download" title="Télécharger">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                      </svg>
+                    </button>
+                    <button *ngIf="canSubmit(declaration)"
+                            (click)="submitForValidation(declaration)"
+                            class="btn-action btn-submit" title="Soumettre">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 11 12 14 22 4"></polyline>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
 
-              <!-- Type -->
-              <td>
-                <div class="type-cell">{{ declaration.declarationType?.nom }}</div>
-              </td>
-
-              <!-- Période -->
-              <td>
-                <span class="periode-text">{{ declaration.periode }}</span>
-              </td>
-
-              <!-- Date génération -->
-              <td>
-                <span class="date-text">{{ formatDate(declaration.dateGeneration) }}</span>
-              </td>
-
-              <!-- Statut -->
-              <td>
-                <span class="status-badge" [ngClass]="getStatusBadgeClass(declaration.statut)">
-                  <span class="status-dot"></span>
-                  {{ getStatusLabel(declaration.statut) }}
-                </span>
-              </td>
-
-              <!-- Actions -->
-              <td>
-                <div class="action-buttons">
-                  <button 
-                    (click)="openDetailsModal(declaration)" 
-                    class="btn-action btn-details" 
-                    title="Voir les détails">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  </button>
-
-                  <button 
-                    *ngIf="canDownload(declaration)"
-                    (click)="downloadDeclaration(declaration)" 
-                    class="btn-action btn-download" 
-                    title="Télécharger">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="7 10 12 15 17 10"></polyline>
-                      <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                  </button>
-
-                  <button 
-                    *ngIf="canSubmit(declaration)"
-                    (click)="submitForValidation(declaration)" 
-                    class="btn-action btn-submit" 
-                    title="Soumettre pour validation">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="9 11 12 14 22 4"></polyline>
-                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                    </svg>
-                  </button>
-                </div>
-              </td>
-            </tr>
-
-            <!-- Empty State -->
-            <tr *ngIf="filteredDeclarations.length === 0">
+            <!-- Vide -->
+            <tr *ngIf="!loadingDeclarations && declarations.length === 0">
               <td colspan="6" class="empty-state">
                 <div class="empty-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -241,45 +276,19 @@
                   </svg>
                 </div>
                 <p class="empty-message">Aucune déclaration trouvée</p>
-                <button (click)="loadDeclarations()" class="btn-refresh">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="23 4 23 10 17 10"></polyline>
-                    <polyline points="1 20 1 14 7 14"></polyline>
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                  </svg>
-                  Rafraîchir
-                </button>
+                <button (click)="loadDeclarations()" class="btn-refresh">🔄 Rafraîchir</button>
               </td>
             </tr>
+
           </tbody>
         </table>
       </div>
 
-      <!-- Pagination -->
-      <div class="pagination-section" *ngIf="filteredDeclarations.length > 0 && !loading">
-        <div class="pagination-info">
-          Page {{ currentPage }} / {{ totalPages }} - {{ filteredDeclarations.length }} déclaration(s)
-        </div>
-
-        <div class="pagination-controls">
-          <button class="btn-pagination"
-                  [disabled]="currentPage === 1"
-                  (click)="previousPage()">
-            ◀ Précédent
-          </button>
-
-          <button class="btn-pagination"
-                  [disabled]="currentPage === totalPages"
-                  (click)="nextPage()">
-            Suivant ▶
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 
   <!-- ============================================ -->
-  <!-- GENERATE MODAL -->
+  <!-- GENERATE MODAL                              -->
   <!-- ============================================ -->
   <div class="modal-overlay" *ngIf="showGenerateModal" (click)="closeGenerateModal()">
     <div class="modal-content modal-large" (click)="$event.stopPropagation()">
@@ -287,18 +296,15 @@
         <h2>➕ Générer une nouvelle déclaration</h2>
         <button class="btn-close" (click)="closeGenerateModal()">✕</button>
       </div>
-
       <div class="modal-body">
-        <!-- Type de déclaration -->
         <div class="form-group">
           <label>Type de déclaration *</label>
-          <select 
-            [(ngModel)]="generateRequest.declarationTypeId" 
-            (change)="onDeclarationTypeChange()"
-            [class.input-error]="!generateRequest.declarationTypeId && formSubmitted">
+          <select [(ngModel)]="generateRequest.declarationTypeId"
+                  (change)="onDeclarationTypeChange()"
+                  [class.input-error]="!generateRequest.declarationTypeId && formSubmitted">
             <option [ngValue]="0" disabled>Sélectionnez un type</option>
             <option *ngFor="let type of declarationTypes" [ngValue]="type.id">
-              {{ type.code }} - {{ type.nom }}
+              {{ type.code }} — {{ type.nom }}
             </option>
           </select>
           <span class="error-message" *ngIf="!generateRequest.declarationTypeId && formSubmitted">
@@ -306,77 +312,195 @@
           </span>
         </div>
 
-        <!-- Période -->
+        <div class="alert-warning"
+             *ngIf="selectedDeclarationType && (!hasSqlConfigured(selectedDeclarationType) || !hasXsdConfigured(selectedDeclarationType))">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div>
+            <p *ngIf="!hasXsdConfigured(selectedDeclarationType!)">⚠️ Fichier XSD non configuré.</p>
+            <p *ngIf="!hasSqlConfigured(selectedDeclarationType!)">⚠️ Requête SQL non configurée.</p>
+            <p>Veuillez d'abord configurer via ⚙️.</p>
+          </div>
+        </div>
+
         <div class="form-group">
           <label>Période *</label>
-          <input 
-            type="month" 
-            [(ngModel)]="generateRequest.periode"
-            [class.input-error]="!generateRequest.periode && formSubmitted"
-          />
-          <small class="form-hint">Sélectionnez le mois concerné par la déclaration</small>
+          <input type="month" [(ngModel)]="generateRequest.periode"
+                 (change)="onPeriodeChange()"
+                 [class.input-error]="!generateRequest.periode && formSubmitted" />
+          <small class="form-hint">Les dates début/fin seront calculées automatiquement</small>
           <span class="error-message" *ngIf="!generateRequest.periode && formSubmitted">
             Ce champ est obligatoire
           </span>
         </div>
 
-        <!-- Variables du template -->
-        <div class="form-section" *ngIf="selectedDeclarationType">
-          <h3>📋 Données de la déclaration</h3>
-          <p class="section-description">Remplissez les champs requis pour générer le fichier</p>
-
-          <div class="form-group" *ngFor="let variable of getTemplateVariables()">
-            <label>{{ variable }} *</label>
-            <input 
-              type="text" 
-              [(ngModel)]="generateRequest.data[variable]"
-              [placeholder]="'Saisissez ' + variable"
-              [class.input-error]="!generateRequest.data[variable] && formSubmitted"
-            />
+        <div class="dates-info" *ngIf="generateRequest.dateDebut && generateRequest.dateFin">
+          <div class="dates-grid">
+            <div class="date-item">
+              <span class="date-label">📅 Date début:</span>
+              <span class="date-value">{{ generateRequest.dateDebut }}</span>
+            </div>
+            <div class="date-item">
+              <span class="date-label">📅 Date fin:</span>
+              <span class="date-value">{{ generateRequest.dateFin }}</span>
+            </div>
           </div>
+          <small class="form-hint">Ces dates seront utilisées dans la requête SQL</small>
+        </div>
 
-          <div class="alert-info" *ngIf="getTemplateVariables().length === 0">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="16" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-            <p>Aucune variable n'est définie pour ce type de déclaration</p>
+        <div class="info-box" *ngIf="selectedDeclarationType">
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Format:</span>
+              <span class="format-badge">{{ selectedDeclarationType.format }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Fréquence:</span>
+              <span>{{ selectedDeclarationType.frequence }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Date limite:</span>
+              <span>{{ selectedDeclarationType.dateLimite }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">XSD:</span>
+              <span [class.text-success]="hasXsdConfigured(selectedDeclarationType)"
+                    [class.text-warning]="!hasXsdConfigured(selectedDeclarationType)">
+                {{ selectedDeclarationType.xsdFileName || '⚠️ Non configuré' }}
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">SQL:</span>
+              <span [class.text-success]="hasSqlConfigured(selectedDeclarationType)"
+                    [class.text-warning]="!hasSqlConfigured(selectedDeclarationType)">
+                {{ hasSqlConfigured(selectedDeclarationType) ? '✅ Configurée' : '⚠️ Non configurée' }}
+              </span>
+            </div>
           </div>
         </div>
 
-        <!-- Info box -->
-        <div class="info-box" *ngIf="selectedDeclarationType">
-          <div class="info-item">
-            <span class="info-label">Format:</span>
-            <span class="format-badge">{{ selectedDeclarationType.format }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Fréquence:</span>
-            <span>{{ selectedDeclarationType.frequence }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Date limite:</span>
-            <span>{{ selectedDeclarationType.dateLimite }}</span>
-          </div>
+        <div class="alert-info"
+             *ngIf="selectedDeclarationType && hasSqlConfigured(selectedDeclarationType) && hasXsdConfigured(selectedDeclarationType)">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <p>Le système va récupérer les données automatiquement et générer le fichier XML.</p>
         </div>
       </div>
-
       <div class="modal-footer">
         <button (click)="closeGenerateModal()" class="btn-secondary">Annuler</button>
-        <button (click)="generateDeclaration()" class="btn-primary">
+        <button (click)="generateDeclaration()" class="btn-primary"
+                [disabled]="loadingAction || (!!selectedDeclarationType && (!hasSqlConfigured(selectedDeclarationType) || !hasXsdConfigured(selectedDeclarationType)))">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
           </svg>
-          Générer
+          {{ loadingAction ? 'Génération...' : 'Générer' }}
         </button>
       </div>
     </div>
   </div>
 
   <!-- ============================================ -->
-  <!-- DETAILS MODAL -->
+  <!-- CONFIG XSD/SQL MODAL                        -->
+  <!-- ============================================ -->
+  <div class="modal-overlay" *ngIf="showConfigModal" (click)="closeConfigModal()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>⚙️ Configurer XSD & SQL — {{ configDeclarationType?.code }}</h2>
+        <button class="btn-close" (click)="closeConfigModal()">✕</button>
+      </div>
+      <div class="modal-body" *ngIf="configDeclarationType">
+
+        <div class="form-section">
+          <h3>📄 Fichier XSD</h3>
+          <p class="section-description">Le fichier XSD définit la structure XML attendue par la BCT</p>
+          <div class="current-config" *ngIf="hasXsdConfigured(configDeclarationType)">
+            <span class="configured-label">✅ XSD actuel:</span>
+            <span class="configured-value">{{ configDeclarationType.xsdFileName }}</span>
+            <button (click)="downloadXsd()" class="btn-download-small">📥 Télécharger</button>
+          </div>
+          <div class="current-config warning" *ngIf="!hasXsdConfigured(configDeclarationType)">
+            <span class="not-configured-label">⚠️ Aucun XSD configuré</span>
+          </div>
+          <div class="form-group" style="margin-top: 16px;">
+            <label>{{ hasXsdConfigured(configDeclarationType) ? 'Remplacer le XSD' : 'Uploader le XSD *' }}</label>
+            <div class="file-upload-area" [class.has-file]="xsdFile" (click)="xsdInput.click()">
+              <input #xsdInput type="file" accept=".xsd" (change)="onXsdFileChange($event)" hidden />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span *ngIf="!xsdFile">Cliquez pour sélectionner un fichier .xsd</span>
+              <span *ngIf="xsdFile" class="file-name">✅ {{ xsdFile.name }}</span>
+            </div>
+          </div>
+          <button *ngIf="xsdFile" (click)="uploadXsd()" class="btn-primary" [disabled]="uploadingXsd">
+            {{ uploadingXsd ? '⏳ Upload en cours...' : '📤 Uploader le XSD' }}
+          </button>
+        </div>
+
+        <div class="form-section">
+          <h3>🗃️ Requête SQL</h3>
+          <p class="section-description">
+            Utilisez <strong>:dateDebut</strong> et <strong>:dateFin</strong> comme paramètres.
+          </p>
+          <div class="sql-example">
+            <small>Exemple:</small>
+            <pre><code>SELECT devise_code, montant_actifs, date_valeur
+FROM position_change
+WHERE date_valeur BETWEEN :dateDebut AND :dateFin</code></pre>
+          </div>
+          <div class="form-group">
+            <label>Requête SQL *</label>
+            <textarea [(ngModel)]="sqlQuery"
+                      placeholder="SELECT ... FROM ... WHERE date BETWEEN :dateDebut AND :dateFin"
+                      rows="8" class="sql-editor"></textarea>
+          </div>
+          <div class="sql-test-section">
+            <h4>🧪 Tester la requête</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Date début</label>
+                <input type="date" [(ngModel)]="testDateDebut" />
+              </div>
+              <div class="form-group">
+                <label>Date fin</label>
+                <input type="date" [(ngModel)]="testDateFin" />
+              </div>
+            </div>
+            <button (click)="testSql()" class="btn-secondary" [disabled]="testingSQL || !sqlQuery">
+              {{ testingSQL ? '⏳ Test en cours...' : '🧪 Tester la requête' }}
+            </button>
+            <div class="test-result-success" *ngIf="sqlTestResult?.success">
+              <p>✅ Requête valide!</p>
+              <p>Colonnes: <strong>{{ sqlTestResult.colonnesDisponibles?.join(', ') }}</strong></p>
+            </div>
+            <div class="test-result-error" *ngIf="sqlTestResult && !sqlTestResult.success">
+              <p>❌ {{ sqlTestResult.error }}</p>
+            </div>
+          </div>
+          <button (click)="saveSql()" class="btn-primary"
+                  [disabled]="savingSQL || !sqlQuery" style="margin-top: 16px;">
+            {{ savingSQL ? '⏳ Sauvegarde...' : '💾 Sauvegarder la requête SQL' }}
+          </button>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button (click)="closeConfigModal()" class="btn-secondary">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- DETAILS MODAL                               -->
   <!-- ============================================ -->
   <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
     <div class="modal-content modal-large" (click)="$event.stopPropagation()">
@@ -384,9 +508,8 @@
         <h2>📋 Détails de la déclaration</h2>
         <button class="btn-close" (click)="closeDetailsModal()">✕</button>
       </div>
-
       <div class="modal-body" *ngIf="selectedDeclaration">
-        <!-- Informations générales -->
+
         <div class="details-section">
           <h3>Informations générales</h3>
           <div class="details-grid">
@@ -424,7 +547,20 @@
           </div>
         </div>
 
-        <!-- Dates et traçabilité -->
+        <div class="details-section" *ngIf="selectedDeclaration.dateDebut || selectedDeclaration.dateFin">
+          <h3>Dates utilisées</h3>
+          <div class="details-grid">
+            <div class="detail-item" *ngIf="selectedDeclaration.dateDebut">
+              <span class="detail-label">Date début:</span>
+              <span class="detail-value">{{ selectedDeclaration.dateDebut }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedDeclaration.dateFin">
+              <span class="detail-label">Date fin:</span>
+              <span class="detail-value">{{ selectedDeclaration.dateFin }}</span>
+            </div>
+          </div>
+        </div>
+
         <div class="details-section">
           <h3>Traçabilité</h3>
           <div class="details-grid">
@@ -436,8 +572,12 @@
               <span class="detail-label">Généré par:</span>
               <span class="detail-value">{{ selectedDeclaration.generePar || '-' }}</span>
             </div>
+            <div class="detail-item" *ngIf="selectedDeclaration.xsdFileNameUsed">
+              <span class="detail-label">XSD utilisé:</span>
+              <span class="detail-value">{{ selectedDeclaration.xsdFileNameUsed }}</span>
+            </div>
             <div class="detail-item" *ngIf="selectedDeclaration.dateValidation">
-              <span class="detail-label">Date de validation:</span>
+              <span class="detail-label">Date validation:</span>
               <span class="detail-value">{{ formatDate(selectedDeclaration.dateValidation) }}</span>
             </div>
             <div class="detail-item" *ngIf="selectedDeclaration.validePar">
@@ -451,7 +591,6 @@
           </div>
         </div>
 
-        <!-- Commentaire de rejet -->
         <div class="details-section" *ngIf="selectedDeclaration.commentaireRejet">
           <h3>Commentaire de rejet</h3>
           <div class="alert-danger">
@@ -463,14 +602,13 @@
             <p>{{ selectedDeclaration.commentaireRejet }}</p>
           </div>
         </div>
-      </div>
 
+      </div>
       <div class="modal-footer">
         <button (click)="closeDetailsModal()" class="btn-secondary">Fermer</button>
-        <button 
-          *ngIf="canDownload(selectedDeclaration!)"
-          (click)="downloadDeclaration(selectedDeclaration!); closeDetailsModal()" 
-          class="btn-primary">
+        <button *ngIf="selectedDeclaration && canDownload(selectedDeclaration)"
+                (click)="downloadDeclaration(selectedDeclaration!); closeDetailsModal()"
+                class="btn-primary">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
@@ -481,4 +619,5 @@
       </div>
     </div>
   </div>
+
 </div>

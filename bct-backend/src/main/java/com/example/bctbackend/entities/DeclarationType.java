@@ -38,6 +38,17 @@ public class DeclarationType {
     @Column(columnDefinition = "TEXT")
     private String champsObligatoires;
 
+    // ✅ NOUVEAU — XSD fourni par la BCT
+    @Column(columnDefinition = "MEDIUMTEXT")
+    private String xsdContent;          // Contenu du fichier XSD
+
+    @Column(length = 255)
+    private String xsdFileName;         // Nom du fichier XSD (ex: depot.xsd)
+
+    // ✅ NOUVEAU — Requête SQL pour récupérer les données
+    @Column(columnDefinition = "TEXT")
+    private String sqlQuery;            // SELECT ... FROM ... WHERE date BETWEEN :dateDebut AND :dateFin
+
     @OneToOne(mappedBy = "declarationType", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("declarationType-template")
     private DeclarationTemplate template;
@@ -53,7 +64,7 @@ public class DeclarationType {
     @Column(nullable = false)
     private LocalDateTime dateCreation;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDateTime derniereModification;
 
     private String creePar;
@@ -114,6 +125,17 @@ public class DeclarationType {
         this.champsObligatoires = champsObligatoires;
     }
 
+    // ✅ NOUVEAU getters/setters XSD
+    public String getXsdContent() { return xsdContent; }
+    public void setXsdContent(String xsdContent) { this.xsdContent = xsdContent; }
+
+    public String getXsdFileName() { return xsdFileName; }
+    public void setXsdFileName(String xsdFileName) { this.xsdFileName = xsdFileName; }
+
+    // ✅ NOUVEAU getters/setters SQL
+    public String getSqlQuery() { return sqlQuery; }
+    public void setSqlQuery(String sqlQuery) { this.sqlQuery = sqlQuery; }
+
     public DeclarationTemplate getTemplate() { return template; }
     public void setTemplate(DeclarationTemplate template) {
         this.template = template;
@@ -125,10 +147,7 @@ public class DeclarationType {
     public List<ValidationRule> getValidationRules() { return validationRules; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
-
-    public void setDateCreation(LocalDateTime dateCreation) {
-        this.dateCreation = dateCreation;
-    }
+    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public LocalDateTime getDerniereModification() { return derniereModification; }
     public void setDerniereModification(LocalDateTime derniereModification) {
@@ -147,5 +166,7 @@ public class DeclarationType {
         TXT, XML, CSV, JSON, PDF
     }
 
-    public enum DeclarationFrequence { QUOTIDIENNE, JOURNALIERE, HEBDOMADAIRE, MENSUELLE, TRIMESTRIELLE, ANNUELLE }
+    public enum DeclarationFrequence {
+        QUOTIDIENNE, JOURNALIERE, HEBDOMADAIRE, MENSUELLE, TRIMESTRIELLE, ANNUELLE
+    }
 }
