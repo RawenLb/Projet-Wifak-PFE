@@ -5,9 +5,9 @@ import { Observable } from 'rxjs';
 // ✅ Aligné avec GenerateDeclarationRequest.java (LocalDate → string "yyyy-MM-dd")
 export interface GenerateDeclarationRequest {
   declarationTypeId: number;
-  periode: string;          // format: "2025-01"
-  dateDebut: string;        // format: "2025-01-01" → désérialisé en LocalDate côté Spring
-  dateFin: string;          // format: "2025-01-31"
+  periode: string;    // format: "2025-01"
+  dateDebut: string;  // format: "2025-01-01"
+  dateFin: string;    // format: "2025-01-31"
 }
 
 export interface Declaration {
@@ -63,12 +63,19 @@ export class DeclarationService {
     return new HttpHeaders({ 'Content-Type': 'application/json' });
   }
 
-  // ✅ Génère une déclaration — body aligné avec GenerateDeclarationRequest.java
+  // ══════════════════════════════════════════════════════
+  // GENERATE
+  // ══════════════════════════════════════════════════════
+
   generateDeclaration(request: GenerateDeclarationRequest): Observable<Declaration> {
     return this.http.post<Declaration>(`${this.apiUrl}/generate`, request, {
       headers: this.getHeaders()
     });
   }
+
+  // ══════════════════════════════════════════════════════
+  // READ
+  // ══════════════════════════════════════════════════════
 
   getMyDeclarations(): Observable<Declaration[]> {
     return this.http.get<Declaration[]>(`${this.apiUrl}/my`, {
@@ -88,9 +95,30 @@ export class DeclarationService {
     });
   }
 
+  // ══════════════════════════════════════════════════════
+  // DOWNLOAD — ✅ CORRIGÉ : MIME type déduit depuis nomFichier
+  // ══════════════════════════════════════════════════════
+
   downloadDeclaration(id: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/${id}/download`, { responseType: 'blob' });
   }
+
+  /**
+   * ✅ Résout le MIME type selon l'extension du fichier.
+   * Utilisé côté frontend pour créer le Blob avec le bon type.
+   */
+  resolveMimeType(filename: string): string {
+    const lower = (filename || '').toLowerCase();
+    if (lower.endsWith('.csv'))  return 'text/csv;charset=UTF-8';
+    if (lower.endsWith('.txt'))  return 'text/plain;charset=UTF-8';
+    if (lower.endsWith('.json')) return 'application/json';
+    if (lower.endsWith('.pdf'))  return 'application/pdf';
+    return 'application/xml';   // défaut XML
+  }
+
+  // ══════════════════════════════════════════════════════
+  // WORKFLOW
+  // ══════════════════════════════════════════════════════
 
   submitForValidation(id: number): Observable<Declaration> {
     return this.http.patch<Declaration>(`${this.apiUrl}/${id}/submit`, {}, {
