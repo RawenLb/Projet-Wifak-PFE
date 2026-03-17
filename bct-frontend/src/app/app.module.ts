@@ -12,6 +12,7 @@ import { DeclarationTypeManagementComponent } from './declaration-type-managemen
 import { DashboardLayoutComponent } from './dashboard-layout/dashboard-layout.component';
 import { DeclarationManagementComponent } from './declaration-management/declaration-management.component';
 import { AgentLayoutComponent } from './agent-layout/agent-layout.component';
+import { DeclarationCalendarComponent } from './declaration-calendar/declaration-calendar.component';
 
 export function kcFactory() {
   return () =>
@@ -54,6 +55,7 @@ export function kcFactory() {
     DashboardLayoutComponent,
     DeclarationManagementComponent,
     AgentLayoutComponent,
+    DeclarationCalendarComponent,
   ],
   imports: [
     BrowserModule,

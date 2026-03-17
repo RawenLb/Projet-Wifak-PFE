@@ -1,16 +1,57 @@
 // ============================================
-// AGENT LAYOUT - Utilise les mêmes styles que l'admin
-// avec quelques personnalisations
+// AGENT LAYOUT
 // ============================================
 
 // Import des styles de base
 @import '../user-management/user-management.component.scss';
 
 // ============================================
-// PERSONNALISATIONS AGENT
+// VARIABLES LOCALES (remplacent $primary-color etc.)
 // ============================================
+$agent-primary:  #2563eb;
+$agent-dark:     #1d4ed8;
+$agent-info:     #0284c7;
+$agent-warning:  #d97706;
+$agent-danger:   #dc2626;
 
-// Couleur légèrement différente pour la sidebar agent
+// ============================================
+// ANIMATIONS (redéfinies ici pour éviter les problèmes d'import)
+// ============================================
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .4; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ============================================
+// FIX SCROLL GLOBAL
+// ============================================
+.dashboard-container {
+  min-height: unset !important;
+  height: 100vh !important;
+  overflow: hidden !important;
+}
+
+.main-content {
+  flex: 1;
+  height: 100vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+// ============================================
+// SIDEBAR PERSONNALISATIONS
+// ============================================
 .sidebar {
   .logo-text {
     .bank-subtitle {
@@ -20,60 +61,87 @@
   }
 }
 
-// Accentuation du menu actif pour l'agent
+// ── Nav items ─────────────────────────────────────────────────
 .nav-item {
+  position: relative;        // ← nécessaire pour le badge
+  display: flex;
+  align-items: center;
+
   &.active {
-    background: linear-gradient(90deg, $primary-color, $primary-dark);
-    box-shadow: inset 4px 0 0 #0065FF; // Bleu plus clair pour l'agent
+    background: linear-gradient(90deg, $agent-primary, $agent-dark);
+    box-shadow: inset 4px 0 0 #0065FF;
   }
 }
 
-// User profile avec couleur agent
+// ── Badge rejetées ────────────────────────────────────────────
+.nav-badge {
+  margin-left: auto;
+  background: #dc2626;
+  color: #fff;
+  font-size: .625rem;
+  font-weight: 800;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  flex-shrink: 0;
+  animation: pulse 2s ease infinite;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, .4);
+  line-height: 1;
+}
+
+// Badge blanc quand le nav-item est actif
+.nav-item.active .nav-badge {
+  background: rgba(255, 255, 255, .95);
+  color: #dc2626;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .15);
+  animation: none;  // pas de clignotement sur fond actif
+}
+
+// ============================================
+// USER PROFILE
+// ============================================
 .user-profile {
   .user-avatar {
-    background: linear-gradient(135deg, $primary-color 0%, $info-color 100%);
+    background: linear-gradient(135deg, $agent-primary 0%, $agent-info 100%);
   }
 }
 
-// Styles spécifiques aux cartes stats de l'agent
+// ============================================
+// STAT CARDS — variantes agent
+// ============================================
 .stat-card {
-  &.stat-agent-primary {
-    .stat-icon {
-      background: linear-gradient(135deg, $primary-color, $info-color);
-    }
+  &.stat-agent-primary .stat-icon {
+    background: linear-gradient(135deg, $agent-primary, $agent-info);
   }
-  
-  &.stat-agent-pending {
-    .stat-icon {
-      background: linear-gradient(135deg, $warning-color, #FF7043);
-    }
+  &.stat-agent-pending .stat-icon {
+    background: linear-gradient(135deg, $agent-warning, #FF7043);
   }
-  
-  &.stat-agent-validated {
-    .stat-icon {
-      background: linear-gradient(135deg, #00C853, #00E676);
-    }
+  &.stat-agent-validated .stat-icon {
+    background: linear-gradient(135deg, #00C853, #00E676);
   }
-  
-  &.stat-agent-rejected {
-    .stat-icon {
-      background: linear-gradient(135deg, $danger-color, #D32F2F);
-    }
+  &.stat-agent-rejected .stat-icon {
+    background: linear-gradient(135deg, $agent-danger, #D32F2F);
   }
 }
 
-// Personnalisation du header pour l'agent
-.top-header {
-  .page-title {
-    color: $primary-color;
-  }
+// ============================================
+// HEADER AGENT
+// ============================================
+.top-header .page-title {
+  color: $agent-primary;
 }
 
-// Bouton de création adapté pour l'agent
+// ============================================
+// BOUTON CRÉER
+// ============================================
 .btn-create {
-  background: linear-gradient(135deg, $primary-color 0%, $info-color 100%);
-  
+  background: linear-gradient(135deg, $agent-primary 0%, $agent-info 100%);
+
   &:hover {
-    box-shadow: 0 4px 12px rgba($primary-color, 0.4);
+    box-shadow: 0 4px 12px rgba($agent-primary, 0.4);
   }
 }

@@ -514,4 +514,27 @@ export class DeclarationManagementComponent implements OnInit {
       return d;
     }
   }
+
+  canSendToBCT(d: Declaration): boolean {
+  return d.statut === 'VALIDEE';
+}
+
+sendToBCT(declaration: Declaration): void {
+  if (!declaration.id) return;
+  if (!confirm(
+    `Envoyer à la BCT ?\n\nType : ${declaration.declarationType?.nom}\nPériode : ${declaration.periode}\n\n⚠️ Action irréversible.`
+  )) return;
+
+  this.loadingAction = true;
+this.declarationService.markAsSent(declaration.id).subscribe({    next: () => {
+      alert(`✅ Déclaration ${declaration.declarationType?.code} envoyée à la BCT !`);
+      this.loadDeclarations();
+      this.loadingAction = false;
+    },
+    error: (err) => {
+      alert('Erreur : ' + (err.error?.message || err.message));
+      this.loadingAction = false;
+    }
+  });
+}
 }

@@ -7,6 +7,7 @@ import { DeclarationTypeManagementComponent } from './declaration-type-managemen
 import { DashboardLayoutComponent } from './dashboard-layout/dashboard-layout.component';
 import { AgentLayoutComponent } from './agent-layout/agent-layout.component';
 import { DeclarationManagementComponent } from './declaration-management/declaration-management.component';
+import { DeclarationCalendarComponent } from './declaration-calendar/declaration-calendar.component';
 const routes: Routes = [
   // Public routes WITHOUT dashboard layout
   { 
@@ -67,6 +68,8 @@ const routes: Routes = [
   children: [
     { path: '', redirectTo: 'declarations', pathMatch: 'full' },
     { path: 'declarations', component: DeclarationManagementComponent },
+ { path: 'calendar', component: DeclarationCalendarComponent }
+
     // ... autres routes agent
   ]
 },

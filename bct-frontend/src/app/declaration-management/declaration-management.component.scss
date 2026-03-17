@@ -935,3 +935,92 @@ $sh-glow: 0 0 0 3px rgba($primary,.15);
   .users-table { font-size: .8125rem; }
   .users-table thead th, .users-table tbody td { padding: .75rem 1rem; }
 }
+
+.btn-send {
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  border-color: #c4b5fd;
+  color: #5b21b6;
+
+  &:hover {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: #fff;
+    transform: scale(1.1);
+  }
+}
+.btn-send-bct {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, .4) !important;
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(124, 58, 237, .5) !important;
+  }
+}
+
+// ── Bannière déclarations rejetées ────────────────────────────
+.alert-rejected-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border: 1.5px solid #fca5a5;
+  border-left: 4px solid #dc2626;
+  border-radius: $r-lg;
+  padding: .875rem 1.25rem;
+  margin-bottom: 1.5rem;
+  cursor: pointer;
+  transition: all .2s ease;
+  animation: slideIn .3s ease both;
+
+  &:hover {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    transform: translateX(2px);
+    box-shadow: $sh-sm;
+  }
+
+  .alert-rejected-left {
+    display: flex;
+    align-items: center;
+    gap: .875rem;
+    color: #991b1b;
+
+    strong {
+      display: block;
+      font-size: .9375rem;
+      font-weight: 700;
+      margin-bottom: 1px;
+    }
+
+    span {
+      font-size: .8125rem;
+      color: #b91c1c;
+    }
+  }
+
+  .alert-rejected-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(220, 38, 38, .12);
+    border-radius: $r-md;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    svg {
+      width: 20px;
+      height: 20px;
+      color: #dc2626;
+    }
+  }
+
+  .alert-rejected-right {
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+    font-size: .8125rem;
+    font-weight: 600;
+    color: #991b1b;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}

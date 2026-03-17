@@ -149,7 +149,8 @@ public class DeclarationController {
     }
 
     @PatchMapping("/{id}/send")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+
+    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN')")
     public ResponseEntity<Declaration> markAsSent(@PathVariable Long id) {
         log.info("📨 Marquage comme envoyée — ID: {}", id);
         return ResponseEntity.ok(declarationService.markAsSent(id));

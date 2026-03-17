@@ -1,0 +1,422 @@
+<div class="calendar-page">
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- PAGE HEADER                                               -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <header class="cal-header">
+    <div class="cal-header-left">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Accueil</span>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-item active">Calendrier des Échéances</span>
+      </div>
+      <h1 class="page-title">Calendrier des Échéances</h1>
+      <p class="page-subtitle">Visualisez et suivez toutes vos échéances déclaratives BCT</p>
+    </div>
+    <div class="cal-header-right">
+      <button class="btn-today" (click)="goToToday()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+          <circle cx="12" cy="16" r="2" fill="currentColor" stroke="none"/>
+        </svg>
+        Aujourd'hui
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- LÉGENDE + STATS RAPIDES                                   -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="cal-meta-bar">
+    <div class="legend-group">
+      <span class="legend-item">
+        <span class="legend-dot dot-validated"></span>Validée
+      </span>
+      <span class="legend-item">
+        <span class="legend-dot dot-sent"></span>Envoyée
+      </span>
+      <span class="legend-item">
+        <span class="legend-dot dot-pending"></span>En validation
+      </span>
+      <span class="legend-item">
+        <span class="legend-dot dot-generated"></span>Générée
+      </span>
+      <span class="legend-item">
+        <span class="legend-dot dot-overdue"></span>En retard
+      </span>
+      <span class="legend-item">
+        <span class="legend-dot dot-draft"></span>Brouillon
+      </span>
+    </div>
+    <div class="quick-stats">
+      <span class="qs-item qs-overdue" *ngIf="getOverdueCount() > 0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        {{ getOverdueCount() }} en retard
+      </span>
+      <span class="qs-item qs-upcoming">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        {{ getUpcomingCount() }} à venir (7j)
+      </span>
+      <span class="qs-item qs-total">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        {{ declarations.length }} total
+      </span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- CONTRÔLES DE NAVIGATION + VUE                             -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="cal-controls">
+    <div class="cal-nav">
+      <button class="nav-btn" (click)="prevMonth()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <div class="cal-month-display">
+        <span class="cal-month-name">{{ getMonthName(currentYear, currentMonth) }}</span>
+        <span class="cal-year">{{ currentYear }}</span>
+      </div>
+      <button class="nav-btn" (click)="nextMonth()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="view-toggle">
+      <button [class.active]="currentView === 'month'" (click)="setView('month')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        Mois
+      </button>
+      <button [class.active]="currentView === 'list'" (click)="setView('list')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+          <line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+        Liste
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- VUE CALENDRIER MENSUEL                                     -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="calendar-grid-wrapper" *ngIf="currentView === 'month'">
+    <div *ngIf="loadingDeclarations" class="cal-loading">
+      <div class="cal-spinner"></div>
+      <p>Chargement des déclarations...</p>
+    </div>
+
+    <div class="calendar-grid" *ngIf="!loadingDeclarations">
+      <!-- Jours de la semaine -->
+      <div class="day-header" *ngFor="let day of weekDays">{{ day }}</div>
+
+      <!-- Cellules du calendrier -->
+      <div
+        *ngFor="let cell of calendarCells"
+        class="cal-cell"
+        [class.other-month]="cell.isOtherMonth"
+        [class.today]="cell.isToday"
+        [class.has-events]="cell.declarations.length > 0"
+        (click)="onDayClick(cell)">
+
+        <!-- Numéro du jour -->
+        <div class="day-number">
+          <span [class.today-bubble]="cell.isToday">{{ cell.day }}</span>
+        </div>
+
+        <!-- Événements (max 3 visibles + overflow) -->
+        <div class="day-events">
+          <div
+            *ngFor="let decl of cell.declarations | slice:0:3"
+            class="cal-event"
+            [ngClass]="getEventClass(decl)"
+            (click)="openDetailModal(decl); $event.stopPropagation()"
+            [title]="decl.declarationType?.code + ' - ' + decl.declarationType?.nom">
+            <span class="event-dot"></span>
+            <span class="event-text">{{ decl.declarationType?.code }}</span>
+          </div>
+          <div
+            *ngIf="cell.declarations.length > 3"
+            class="cal-event-more"
+            (click)="openDayModal(cell); $event.stopPropagation()">
+            +{{ cell.declarations.length - 3 }} autres
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- VUE LISTE MENSUELLE                                        -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="list-view-wrapper" *ngIf="currentView === 'list'">
+    <div *ngIf="loadingDeclarations" class="cal-loading">
+      <div class="cal-spinner"></div>
+      <p>Chargement...</p>
+    </div>
+
+    <div *ngIf="!loadingDeclarations">
+      <div *ngIf="getDeclarationsForCurrentMonth().length === 0" class="empty-list">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <p>Aucune déclaration pour {{ getMonthName(currentYear, currentMonth) }} {{ currentYear }}</p>
+      </div>
+
+      <div class="list-group" *ngFor="let group of getGroupedDeclarationsForMonth()">
+        <div class="list-group-header">
+          <span class="list-group-date">{{ group.dateLabel }}</span>
+          <span class="list-group-count">{{ group.items.length }} déclaration(s)</span>
+        </div>
+        <div
+          class="list-item"
+          *ngFor="let decl of group.items"
+          [ngClass]="getListItemClass(decl)"
+          (click)="openDetailModal(decl)">
+          <div class="list-item-status-bar"></div>
+          <div class="list-item-content">
+            <div class="list-item-left">
+              <span class="list-code-badge">{{ decl.declarationType?.code }}</span>
+              <div class="list-item-info">
+                <span class="list-item-name">{{ decl.declarationType?.nom }}</span>
+                <span class="list-item-period">Période : {{ decl.periode }}</span>
+              </div>
+            </div>
+            <div class="list-item-right">
+              <span class="status-badge" [ngClass]="getStatusBadgeClass(decl.statut)">
+                <span class="status-dot"></span>{{ getStatusLabel(decl.statut) }}
+              </span>
+              <span class="list-item-deadline" [class.overdue]="isOverdue(decl)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     width="13" height="13">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                {{ getDeadlineLabel(decl) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- MODAL DÉTAIL DÉCLARATION                                       -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showDetailModal" (click)="closeDetailModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-icon" [ngClass]="getIconClass(selectedDeclaration?.statut)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div>
+          <h2>{{ selectedDeclaration?.declarationType?.code }}</h2>
+          <p class="modal-subtitle">{{ selectedDeclaration?.declarationType?.nom }}</p>
+        </div>
+      </div>
+      <button class="btn-close" (click)="closeDetailModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedDeclaration">
+
+      <!-- Statut + format -->
+      <div class="detail-badges-row">
+        <span class="status-badge" [ngClass]="getStatusBadgeClass(selectedDeclaration.statut)">
+          <span class="status-dot"></span>{{ getStatusLabel(selectedDeclaration.statut) }}
+        </span>
+        <span class="format-badge fmt-{{ selectedDeclaration.declarationType?.format?.toLowerCase() }}">
+          {{ selectedDeclaration.declarationType?.format }}
+        </span>
+        <span class="overdue-badge" *ngIf="isOverdue(selectedDeclaration)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+               width="12" height="12">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          En retard
+        </span>
+      </div>
+
+      <!-- Infos principales -->
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Période</span>
+          <span class="detail-value">{{ selectedDeclaration.periode }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Fréquence</span>
+          <span class="detail-value">{{ selectedDeclaration.declarationType?.frequence || '—' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Date limite</span>
+          <span class="detail-value deadline-value"
+                [class.overdue-text]="isOverdue(selectedDeclaration)">
+            {{ selectedDeclaration.declarationType?.dateLimite || '—' }}
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Date génération</span>
+          <span class="detail-value">{{ formatDate(selectedDeclaration.dateGeneration) }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Généré par</span>
+          <span class="detail-value">{{ selectedDeclaration.generePar || '—' }}</span>
+        </div>
+        <div class="detail-item" *ngIf="selectedDeclaration.dateValidation">
+          <span class="detail-label">Validé le</span>
+          <span class="detail-value">{{ formatDate(selectedDeclaration.dateValidation) }}</span>
+        </div>
+      </div>
+
+      <!-- Timeline du statut -->
+      <div class="status-timeline">
+        <div class="timeline-title">Workflow de la déclaration</div>
+        <div class="timeline-steps">
+          <div class="t-step" *ngFor="let step of getWorkflowSteps(selectedDeclaration)"
+               [ngClass]="step.cssClass">
+            <div class="t-step-circle">
+              <svg *ngIf="step.done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <svg *ngIf="step.current && !step.done" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="3">
+                <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/>
+              </svg>
+              <svg *ngIf="step.error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </div>
+            <span class="t-step-label">{{ step.label }}</span>
+            <div class="t-step-line" *ngIf="!step.last"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Commentaire de rejet -->
+      <div class="reject-alert" *ngIf="selectedDeclaration.commentaireRejet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <div>
+          <strong>Motif de rejet :</strong>
+          <p>{{ selectedDeclaration.commentaireRejet }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeDetailModal()">Fermer</button>
+      <button class="btn-download"
+              *ngIf="selectedDeclaration?.nomFichier"
+              (click)="downloadDeclaration(selectedDeclaration!)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Télécharger
+      </button>
+      <button class="btn-submit"
+              *ngIf="canSubmit(selectedDeclaration)"
+              (click)="submitForValidation(selectedDeclaration!); closeDetailModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+          <polyline points="9 11 12 14 22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        Soumettre
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- MODAL JOUR (plusieurs événements)                              -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showDayModal" (click)="closeDayModal()">
+  <div class="modal-content modal-day" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-icon modal-icon-day">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <div>
+          <h2>{{ selectedDayCell?.fullDate | date:'dd MMMM yyyy':'':'fr' }}</h2>
+          <p class="modal-subtitle">{{ selectedDayCell?.declarations?.length }} déclaration(s)</p>
+        </div>
+      </div>
+      <button class="btn-close" (click)="closeDayModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div
+        class="day-modal-item"
+        *ngFor="let decl of selectedDayCell?.declarations"
+        [ngClass]="getListItemClass(decl)"
+        (click)="closeDayModal(); openDetailModal(decl)">
+        <div class="day-modal-status-bar"></div>
+        <div class="day-modal-content">
+          <span class="list-code-badge">{{ decl.declarationType?.code }}</span>
+          <div class="day-modal-info">
+            <span class="list-item-name">{{ decl.declarationType?.nom }}</span>
+            <span class="list-item-period">{{ decl.periode }}</span>
+          </div>
+          <span class="status-badge" [ngClass]="getStatusBadgeClass(decl.statut)">
+            <span class="status-dot"></span>{{ getStatusLabel(decl.statut) }}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeDayModal()">Fermer</button>
+    </div>
+  </div>
+</div>
