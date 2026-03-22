@@ -1,0 +1,44 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      routes:
+        - id: bct-backend
+          uri: lb://bct-backend
+          predicates:
+            - Path=/api/**
+          filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+    loadbalancer:
+      cache:
+        ttl: 5s
+        capacity: 256
+
+    inetutils:
+      preferred-networks:
+        - 127.0.0
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/bct-realm
+          jwk-set-uri: http://localhost:8081/realms/bct-realm/protocol/openid-connect/certs
+
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+    instance-id: api-gateway:8088
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

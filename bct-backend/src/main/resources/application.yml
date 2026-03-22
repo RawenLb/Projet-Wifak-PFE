@@ -20,7 +20,6 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
 
-
   servlet:
     multipart:
       enabled: true
@@ -28,13 +27,17 @@ spring:
       max-request-size: 10MB
       file-size-threshold: 2KB
 
-
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8081/realms/bct-realm
           jwk-set-uri: http://localhost:8081/realms/bct-realm/protocol/openid-connect/certs
+
+  cloud:
+    inetutils:
+      preferred-networks:
+        - 127.0.0        # ← force localhost
 
 keycloak:
   auth-server-url: http://localhost:8081
@@ -52,7 +55,6 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 
-
 app:
   cors:
     allowed-origins: http://localhost:4200
@@ -61,4 +63,15 @@ app:
 file:
   upload-dir: uploads/templates
 
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+    instance-id: bct-backend:8082
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+  client:
+    registry-fetch-interval-seconds: 5   # ← au niveau client, pas sous service-url
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
 

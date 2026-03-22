@@ -24,6 +24,8 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/test/public/**").permitAll()  // ← ajouter cette ligne
+
                         // ✅ Toute la gestion des rôles est déléguée à @PreAuthorize
                         .anyRequest().authenticated()
                 )
