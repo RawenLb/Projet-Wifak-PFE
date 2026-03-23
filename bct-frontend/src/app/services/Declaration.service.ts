@@ -55,7 +55,7 @@ export interface DeclarationStats {
 })
 export class DeclarationService {
 
-  private apiUrl = 'http://localhost:8082/api/declarations';
+  private apiUrl = 'http://localhost:8088/api/declarations';
 
   constructor(private http: HttpClient) {}
 

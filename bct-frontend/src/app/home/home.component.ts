@@ -177,4 +177,47 @@ export class HomeComponent implements OnInit {
         }
       });
   }
+
+  
+  activeTab: 'overview' | 'declarations' | 'alerts' = 'overview';
+  searchQuery = '';
+ 
+  recentDeclarations = [
+    { code: 'BCT_01', type: 'Hebdomadaire', statut: 'En attente', echeance: 'J-1', urgent: true },
+    { code: 'BCT_03', type: 'Mensuelle',    statut: 'Validée',    echeance: '10/04', urgent: false },
+    { code: 'BCT_07', type: 'Trimestrielle',statut: 'Rejetée',    echeance: 'En retard', urgent: true },
+    { code: 'BCT_02', type: 'Mensuelle',    statut: 'Générée',    echeance: '15/04', urgent: false },
+    { code: 'BCT_05', type: 'Hebdomadaire', statut: 'Envoyée',    echeance: '24/03', urgent: false },
+  ];
+ 
+  allDeclarations = [
+    { code: 'BCT_01', nom: 'Déclaration hebdomadaire positions', frequence: 'Hebdo',    format: 'XML', statut: 'En attente', agent: 'A. Ben Ali',        echeance: '25/03', urgent: true  },
+    { code: 'BCT_03', nom: 'Rapport mensuel portefeuille',       frequence: 'Mensuel',  format: 'TXT', statut: 'Validée',    agent: 'S. Tlili',          echeance: '10/04', urgent: false },
+    { code: 'BCT_07', nom: 'Déclaration trimestrielle crédits',  frequence: 'Trimestr.',format: 'XML', statut: 'Rejetée',    agent: 'M. Hamdi',          echeance: 'Retard', urgent: true  },
+    { code: 'BCT_02', nom: 'Déclaration mensuelle dépôts',       frequence: 'Mensuel',  format: 'TXT', statut: 'Générée',    agent: 'A. Ben Ali',        echeance: '15/04', urgent: false },
+    { code: 'BCT_05', nom: 'Déclaration hebdomadaire liquidité', frequence: 'Hebdo',    format: 'XML', statut: 'Envoyée',    agent: 'S. Tlili',          echeance: '24/03', urgent: false },
+  ];
+ 
+  recentUsers = [
+    { initials: 'AK', name: 'Admin Karim',        email: 'a.karim@wifak.tn',       role: 'Administrateur',  active: true,  color: '#1E40AF' },
+    { initials: 'ST', name: 'Sarra Tlili',         email: 's.tlili@wifak.tn',        role: 'Agent Déclarant', active: true,  color: '#15803D' },
+    { initials: 'MK', name: 'Mohamed Kameleddine', email: 'm.kameleddine@wifak.tn', role: 'Responsable',     active: true,  color: '#B45309' },
+    { initials: 'RB', name: 'Rim Ben Amor',        email: 'r.benamor@wifak.tn',     role: 'Auditeur',        active: true,  color: '#6B7280' },
+    { initials: 'AB', name: 'Aymen Ben Ali',       email: 'a.benali@wifak.tn',      role: 'Agent Déclarant', active: false, color: '#9CA3AF' },
+  ];
+ 
+  iaAlerts = [
+    { level: 'high',   levelLabel: 'Élevé',  text: '<b>BCT_07</b> — Anomalie détectée : variation +58% vs historique 12 mois',  time: 'Il y a 2h' },
+    { level: 'medium', levelLabel: 'Moyen',  text: '<b>BCT_01</b> — Risque de retard estimé 72%. Échéance demain.',              time: 'Il y a 4h' },
+    { level: 'medium', levelLabel: 'Moyen',  text: '<b>BCT_03</b> — Champ obligatoire manquant détecté avant envoi',             time: 'Hier' },
+    { level: 'info',   levelLabel: 'Info',   text: '<b>BCT_09</b> — Rappel automatique J-5 envoyé à 3 agents',                  time: 'Hier' },
+  ];
+ 
+  allAlerts = [
+    { level: 'high',   text: '<b>BCT_07 — Anomalie critique</b> : variation de +58% détectée par rapport à la moyenne des 12 derniers mois. Validation bloquée.', time: '25/03/2025 à 09:14', score: '92/100' },
+    { level: 'medium', text: '<b>BCT_01 — Risque de retard élevé</b> : probabilité 72%. Échéance demain à 17h00. Déclaration en attente de validation.',           time: '25/03/2025 à 08:30', score: '72/100' },
+    { level: 'medium', text: '<b>BCT_03 — Champ obligatoire</b> : le champ "Code_ISIN" est manquant dans la ligne 47 du fichier TXT. Blocage conformité BCT.',     time: '24/03/2025 à 14:52', score: '55/100' },
+    { level: 'info',   text: '<b>BCT_09 — Rappel J-5</b> : notification envoyée à 3 agents déclarants pour l\'échéance du 30/03.',                                 time: '24/03/2025 à 08:00', score: '—' },
+  ];
+ 
 }

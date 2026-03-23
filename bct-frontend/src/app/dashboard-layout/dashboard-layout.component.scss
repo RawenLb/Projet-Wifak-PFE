@@ -1,1 +1,248 @@
-@import '../user-management/user-management.component.scss';
+$navy: #002855;
+$blue: #0052CC;
+$blue-dark: #003D99;
+$red: #DE350B;
+$t1: #172B4D;
+$t2: #5E6C84;
+$t3: #8993A4;
+$bg1: #FFFFFF;
+$bg2: #F4F5F7;
+$bd: #DFE1E6;
+$sidebar-w: 255px;
+$sidebar-col: 68px;
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: $bg2;
+}
+
+// ── Sidebar ──────────────────────────────────────────────────
+.sidebar {
+  width: $sidebar-w;
+  min-width: $sidebar-w;
+  height: 100vh;
+  background: $navy;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: width .27s cubic-bezier(.4,0,.2,1), min-width .27s cubic-bezier(.4,0,.2,1);
+
+  &.collapsed {
+    width: $sidebar-col;
+    min-width: $sidebar-col;
+
+    .logo-text, .nav-text, .nav-badge, .nav-label,
+    .user-info, .bank-subtitle { opacity: 0; width: 0; overflow: hidden; pointer-events: none; }
+    .logo { justify-content: center; }
+    .toggle-btn { display: none; }
+    .nav-item { justify-content: center; padding: 10px 0; }
+    .nav-icon { margin: 0; }
+    .user-profile { justify-content: center; padding: 8px; }
+    .user-avatar { margin: 0; }
+    .sidebar-footer { padding: 8px; }
+    .btn-logout { justify-content: center; padding: 8px; }
+  }
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  min-height: 68px;
+  flex-shrink: 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex: 1;
+  min-width: 0;
+}
+
+.logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #1565C0, #003875);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+
+.logo-text { overflow: hidden; transition: opacity .2s, width .27s; white-space: nowrap; }
+
+.bank-name {
+  font-size: 12px; font-weight: 800; color: #FFF;
+  letter-spacing: 0.6px; line-height: 1.2;
+}
+
+.bank-subtitle {
+  font-size: 10px; color: rgba(255,255,255,.45);
+  font-weight: 500; margin-top: 1px;
+  transition: opacity .2s, width .27s;
+}
+
+.toggle-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.14);
+  width: 28px; height: 28px;
+  border-radius: 7px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .2s;
+
+  svg { color: rgba(255,255,255,.55); }
+  &:hover { background: rgba(255,255,255,.1); svg { color: white; } }
+}
+
+// ── Nav ──────────────────────────────────────────────────────
+.nav-menu {
+  flex: 1;
+  padding: 10px 9px;
+  overflow-y: auto; overflow-x: hidden;
+  &::-webkit-scrollbar { width: 3px; }
+  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 2px; }
+}
+
+.nav-label {
+  display: block;
+  font-size: 9px; font-weight: 700;
+  color: rgba(255,255,255,.28);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  padding: 10px 10px 4px;
+  white-space: nowrap; overflow: hidden;
+  transition: opacity .2s, width .27s;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  margin-bottom: 1px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,.6);
+  text-decoration: none;
+  transition: all .15s;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+
+  &:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.9); }
+
+  &.active {
+    background: rgba(255,255,255,.12);
+    color: #FFF; font-weight: 600;
+
+    &::before {
+      content: '';
+      position: absolute; left: 0; top: 5px; bottom: 5px;
+      width: 3px; background: #DC2626;
+      border-radius: 0 3px 3px 0;
+    }
+  }
+}
+
+.nav-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; flex-shrink: 0;
+  svg { stroke: currentColor; }
+}
+
+.nav-text {
+  flex: 1; overflow: hidden;
+  transition: opacity .2s, width .27s;
+}
+
+.nav-badge {
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px; font-weight: 700;
+  flex-shrink: 0;
+  transition: opacity .2s, width .27s;
+
+  &.nav-badge-blue  { background: rgba(0,101,255,.25);    color: #93C5FD; }
+  &.nav-badge-amber { background: rgba(245,158,11,.2);    color: #FCD34D; }
+  &.nav-badge-red   { background: rgba(222, 53, 11, .2);  color: #FCA5A5; }
+}
+
+// ── Footer ───────────────────────────────────────────────────
+.sidebar-footer {
+  padding: 10px 9px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 7px;
+}
+
+.user-profile {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 10px;
+  background: rgba(255,255,255,.06);
+  border-radius: 8px; cursor: pointer;
+  overflow: hidden; transition: background .15s;
+  &:hover { background: rgba(255,255,255,.1); }
+}
+
+.user-avatar {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, #1565C0, #0052CC);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: white; flex-shrink: 0;
+}
+
+.user-info { overflow: hidden; transition: opacity .2s, width .27s; white-space: nowrap; min-width: 0; }
+
+.user-name { font-size: 12px; font-weight: 600; color: white; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+
+.user-role { font-size: 10px; color: rgba(255,255,255,.4); margin-top: 1px; }
+
+.btn-logout {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 8px 10px;
+  background: transparent;
+  border: 1px solid rgba(220,38,38,.3);
+  border-radius: 7px;
+  color: rgba(252,165,165,.85);
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; overflow: hidden;
+  white-space: nowrap; transition: all .2s;
+
+  svg { flex-shrink: 0; }
+
+  &:hover { background: rgba(220,38,38,.14); border-color: rgba(220,38,38,.55); color: #FCA5A5; }
+}
+
+// ── Main ─────────────────────────────────────────────────────
+.main-content {
+  flex: 1; min-width: 0;
+  height: 100vh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  background: $bg2;
+}
+
+// ── Responsive ───────────────────────────────────────────────
+@media (max-width: 768px) {
+  .sidebar {
+    width: $sidebar-col; min-width: $sidebar-col;
+    .logo-text, .nav-text, .nav-badge, .nav-label, .user-info, .bank-subtitle {
+      opacity: 0; width: 0; overflow: hidden;
+    }
+    .logo { justify-content: center; }
+    .toggle-btn { display: none; }
+    .nav-item { justify-content: center; padding: 10px 0; }
+    .user-profile { justify-content: center; padding: 8px; }
+    .user-avatar { margin: 0; }
+    .btn-logout { justify-content: center; padding: 8px; }
+  }
+}

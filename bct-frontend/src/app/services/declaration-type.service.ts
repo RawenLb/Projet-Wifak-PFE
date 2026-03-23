@@ -65,7 +65,7 @@ export interface SqlTestResult {
 })
 export class DeclarationTypeService {
 
-  private apiUrl = 'http://localhost:8082/api/admin/declaration-types';
+  private apiUrl = 'http://localhost:8088/api/admin/declaration-types';
 
   constructor(private http: HttpClient) {}
 

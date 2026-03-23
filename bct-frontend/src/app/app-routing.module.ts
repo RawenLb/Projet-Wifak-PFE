@@ -49,17 +49,14 @@ const routes: Routes = [
     ]
   },
   {
-    path: 'dashboard',
-    component: DashboardLayoutComponent,
-    canActivate: [RoleGuard],
-    data: { roles: ['ROLE_AGENT', 'ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_AUDITOR'] },
-    children: [
-      {
-        path: '',
-        component: HomeComponent
-      }
-    ]
-  },
+  path: 'dashboard',
+  component: DashboardLayoutComponent,
+  canActivate: [RoleGuard],
+  data: { roles: ['ROLE_AGENT', 'ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_AUDITOR'] },
+  children: [
+    { path: '', component: HomeComponent }  // ← ici
+  ]
+},
  {
   path: 'agent',
   component: AgentLayoutComponent,  // ✅ BON LAYOUT!

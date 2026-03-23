@@ -36,7 +36,7 @@ export interface RoleDTO {
 })
 export class KeycloakAdminService {
 
-  private readonly API_URL = 'http://localhost:8082/api/admin';
+  private readonly API_URL = 'http://localhost:8088/api/admin';
 
   constructor(private http: HttpClient) {}
 
