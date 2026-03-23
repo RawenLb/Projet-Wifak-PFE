@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { DeclarationTypeService, DeclarationType, CreateDeclarationTypeRequest } from '../services/declaration-type.service';
 
 @Component({
@@ -13,6 +14,8 @@ export class DeclarationTypeManagementComponent implements OnInit {
   sidebarCollapsed: boolean = false;
   searchQuery: string = '';
 
+  activeTab: 'overview' | 'types' | 'byFrequence' | 'inactifs' = 'overview';
+
   // Pagination
   currentPage: number = 1;
   itemsPerPage: number = 10;
@@ -25,7 +28,6 @@ export class DeclarationTypeManagementComponent implements OnInit {
 
   selectedDeclarationType: DeclarationType | null = null;
 
-  // ✅ Simplifié — plus de template ni validationRules
   newDeclarationType: CreateDeclarationTypeRequest = {
     code: '',
     nom: '',
@@ -45,11 +47,13 @@ export class DeclarationTypeManagementComponent implements OnInit {
     actif: true
   };
 
-  // ✅ Options simplifiées selon sujet BCT
   formatOptions = ['XML', 'TXT', 'CSV', 'PDF'];
   frequenceOptions = ['QUOTIDIENNE', 'HEBDOMADAIRE', 'MENSUELLE', 'TRIMESTRIELLE', 'ANNUELLE'];
 
-  constructor(private declarationTypeService: DeclarationTypeService) {}
+  constructor(
+    private declarationTypeService: DeclarationTypeService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadDeclarationTypes();
@@ -67,6 +71,39 @@ export class DeclarationTypeManagementComponent implements OnInit {
 
   getMonthlyCount(): number {
     return this.declarationTypes.filter(d => d.frequence === 'MENSUELLE').length;
+  }
+
+  // ========== OVERVIEW COMPUTED ==========
+
+  get freqDistribution() {
+    const freqs = [
+      { key: 'MENSUELLE',     label: 'Mensuelle',     colorClass: 'fill-blue'   },
+      { key: 'TRIMESTRIELLE', label: 'Trimestrielle', colorClass: 'fill-amber'  },
+      { key: 'QUOTIDIENNE',   label: 'Quotidienne',   colorClass: 'fill-green'  },
+      { key: 'HEBDOMADAIRE',  label: 'Hebdomadaire',  colorClass: 'fill-purple' },
+      { key: 'ANNUELLE',      label: 'Annuelle',      colorClass: 'fill-gray'   },
+    ];
+    const counts = freqs.map(f => ({
+      ...f,
+      count: this.declarationTypes.filter(d => d.frequence === f.key).length
+    }));
+    const max = Math.max(1, ...counts.map(c => c.count));
+    return counts.map(c => ({
+      ...c,
+      pct: Math.round((c.count / max) * 100)
+    }));
+  }
+
+  get inactifTypes(): DeclarationType[] {
+    return this.declarationTypes.filter(d => !d.actif);
+  }
+
+  get upcomingDeadlines(): DeclarationType[] {
+    return this.declarationTypes.filter(d => d.actif).slice(0, 4);
+  }
+
+  getTypesByFreq(freq: string): DeclarationType[] {
+    return this.declarationTypes.filter(d => d.frequence === freq);
   }
 
   // ========== PAGINATION ==========
@@ -98,7 +135,7 @@ export class DeclarationTypeManagementComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        console.error('❌ Erreur chargement types:', err);
+        console.error('Erreur chargement types:', err);
         this.loading = false;
         alert('Erreur lors du chargement des types de déclaration.');
       }
@@ -124,6 +161,10 @@ export class DeclarationTypeManagementComponent implements OnInit {
     this.loadDeclarationTypes();
   }
 
+  navigateTo(route: string): void {
+    this.router.navigate([route]);
+  }
+
   // ========== CREATE ==========
 
   openCreateModal(): void {
@@ -146,26 +187,20 @@ export class DeclarationTypeManagementComponent implements OnInit {
 
   createDeclarationType(): void {
     this.formSubmitted = true;
-
-    if (
-      !this.newDeclarationType.code ||
-      !this.newDeclarationType.nom ||
-      !this.newDeclarationType.dateLimite
-    ) {
+    if (!this.newDeclarationType.code || !this.newDeclarationType.nom || !this.newDeclarationType.dateLimite) {
       return;
     }
-
     this.loading = true;
     this.declarationTypeService.create(this.newDeclarationType).subscribe({
       next: () => {
-        alert('✅ Type de déclaration créé avec succès!');
+        alert('Type de déclaration créé avec succès !');
         this.closeCreateModal();
         this.loadDeclarationTypes();
         this.loading = false;
       },
       error: (err) => {
         const msg = err.error?.message || err.message || 'Erreur inconnue';
-        alert('❌ Erreur lors de la création:\n\n' + msg);
+        alert('Erreur lors de la création:\n\n' + msg);
         this.loading = false;
       }
     });
@@ -184,23 +219,21 @@ export class DeclarationTypeManagementComponent implements OnInit {
 
   saveDeclarationType(): void {
     if (!this.editDeclarationType.id) return;
-
     if (!this.editDeclarationType.nom || !this.editDeclarationType.dateLimite) {
-      alert('⚠️ Veuillez remplir tous les champs obligatoires');
+      alert('Veuillez remplir tous les champs obligatoires');
       return;
     }
-
     this.loading = true;
     this.declarationTypeService.update(this.editDeclarationType.id, this.editDeclarationType).subscribe({
       next: () => {
-        alert('✅ Type de déclaration modifié avec succès!');
+        alert('Type de déclaration modifié avec succès !');
         this.closeEditModal();
         this.loadDeclarationTypes();
         this.loading = false;
       },
       error: (err) => {
         const msg = err.error?.message || err.message || 'Erreur inconnue';
-        alert('❌ Erreur lors de la modification:\n\n' + msg);
+        alert('Erreur lors de la modification:\n\n' + msg);
         this.loading = false;
       }
     });
@@ -210,18 +243,17 @@ export class DeclarationTypeManagementComponent implements OnInit {
 
   deleteDeclarationType(type: DeclarationType): void {
     if (!type.id) return;
-    if (!confirm(`⚠️ Supprimer le type "${type.nom}"?\n\nCette action est irréversible!`)) return;
-
+    if (!confirm(`Supprimer le type "${type.nom}" ?\n\nCette action est irréversible !`)) return;
     this.loading = true;
     this.declarationTypeService.delete(type.id).subscribe({
       next: () => {
-        alert('✅ Type supprimé avec succès!');
+        alert('Type supprimé avec succès !');
         this.loadDeclarationTypes();
         this.loading = false;
       },
       error: (err) => {
         const msg = err.error?.message || err.message;
-        alert('❌ Erreur lors de la suppression:\n\n' + msg);
+        alert('Erreur lors de la suppression:\n\n' + msg);
         this.loading = false;
       }
     });
@@ -232,17 +264,16 @@ export class DeclarationTypeManagementComponent implements OnInit {
   toggleStatus(type: DeclarationType): void {
     if (!type.id) return;
     const action = type.actif ? 'désactiver' : 'activer';
-    if (!confirm(`Voulez-vous ${action} le type "${type.nom}"?`)) return;
-
+    if (!confirm(`Voulez-vous ${action} le type "${type.nom}" ?`)) return;
     this.loading = true;
     this.declarationTypeService.toggleStatus(type.id).subscribe({
       next: () => {
-        alert(`✅ Type ${action} avec succès!`);
+        alert(`Type ${action} avec succès !`);
         this.loadDeclarationTypes();
         this.loading = false;
       },
-      error: (err) => {
-        alert(`❌ Erreur lors de l'${action}tion`);
+      error: () => {
+        alert(`Erreur lors de l'opération`);
         this.loading = false;
       }
     });
@@ -264,11 +295,8 @@ export class DeclarationTypeManagementComponent implements OnInit {
 
   getFormatBadgeClass(format: string): string {
     const map: { [k: string]: string } = {
-      'XML': 'format-xml',
-      'CSV': 'format-csv',
-      'JSON': 'format-json',
-      'PDF': 'format-pdf',
-      'TXT': 'format-txt'
+      'XML': 'format-xml', 'CSV': 'format-csv',
+      'JSON': 'format-json', 'PDF': 'format-pdf', 'TXT': 'format-txt'
     };
     return map[format] || 'format-default';
   }
@@ -282,5 +310,16 @@ export class DeclarationTypeManagementComponent implements OnInit {
       'ANNUELLE':      'freq-yearly'
     };
     return map[frequence] || 'freq-default';
+  }
+
+  getFreqUrgencyClass(frequence: string): string {
+    const map: { [k: string]: string } = {
+      'QUOTIDIENNE':  'chip-red',
+      'HEBDOMADAIRE': 'chip-amber',
+      'MENSUELLE':    'chip-blue',
+      'TRIMESTRIELLE':'chip-gray',
+      'ANNUELLE':     'chip-gray'
+    };
+    return map[frequence] || 'chip-gray';
   }
 }

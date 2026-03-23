@@ -14,13 +14,17 @@ export class DashboardLayoutComponent implements OnInit {
   pageSubtitle = 'Vue d\'ensemble de votre espace d\'administration';
   currentRoute = '';
 
+  // User connecté
+  currentUserName = '';
+  currentUserRole = '';
+  currentUserInitials = '';
+
   constructor(
     private router: Router,
     private kcAdmin: KeycloakAdminService
   ) {}
 
   ngOnInit(): void {
-    // Update page title based on route
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
@@ -28,8 +32,13 @@ export class DashboardLayoutComponent implements OnInit {
         this.updatePageInfo(event.url);
       });
 
-    // Set initial page info
     this.updatePageInfo(this.router.url);
+
+    // Charger les infos du user connecté depuis le token Keycloak
+    this.currentUserName = this.kcAdmin.getFullName();
+    this.currentUserRole = this.kcAdmin.getPrimaryRole();
+    const parts = this.currentUserName.split(' ');
+    this.currentUserInitials = parts.map(p => p.charAt(0).toUpperCase()).slice(0, 2).join('');
   }
 
   updatePageInfo(url: string): void {

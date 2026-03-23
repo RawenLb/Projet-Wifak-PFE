@@ -21,11 +21,12 @@ export class UserManagementComponent implements OnInit {
   sidebarCollapsed: boolean = false;
   formSubmitted: boolean = false;
 
+  activeTab: 'overview' | 'users' | 'roles' | 'activity' = 'overview';
+
   // Pagination
   currentPage: number = 1;
   itemsPerPage: number = 10;
 
-  // ✅ MODIFIÉ : plus de champ password
   newUser: CreateUserRequest = {
     username: '',
     email: '',
@@ -73,11 +74,59 @@ export class UserManagementComponent implements OnInit {
     return this.users.filter(u => u.emailVerified).length;
   }
 
+  getVerifiedPct(): number {
+    if (!this.users.length) return 0;
+    return Math.round((this.getVerifiedEmailsCount() / this.users.length) * 100);
+  }
+
+  getNewThisMonth(): number {
+    const now = Date.now();
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+    return this.users.filter(u =>
+      u.createdTimestamp && (now - u.createdTimestamp) < thirtyDays
+    ).length;
+  }
+
+  getUserCountByRole(roleName: string): number {
+    return this.users.filter(u => u.roles?.includes(roleName)).length;
+  }
+
+  get roleDistribution() {
+    const roles = [
+      { name: 'ROLE_ADMIN',   label: 'Administrateur', colorClass: 'fill-red' },
+      { name: 'ROLE_MANAGER', label: 'Manager',         colorClass: 'fill-amber' },
+      { name: 'ROLE_AGENT',   label: 'Agent déclarant', colorClass: 'fill-blue' },
+      { name: 'ROLE_AUDITOR', label: 'Auditeur',        colorClass: 'fill-green' },
+    ];
+    const counts = roles.map(r => ({
+      ...r,
+      count: this.getUserCountByRole(r.name)
+    }));
+    const max = Math.max(1, ...counts.map(c => c.count));
+    return counts.map(c => ({
+      ...c,
+      pct: Math.round((c.count / max) * 100)
+    }));
+  }
+
+  get recentActivity() {
+    const types = [
+      { description: 'Compte créé',                   label: 'Nouveau',  dotClass: 'dot-green', chipClass: 'chip-green' },
+      { description: 'Rôle modifié',                  label: 'Modifié',  dotClass: 'dot-amber', chipClass: 'chip-amber' },
+      { description: 'Compte désactivé',              label: 'Inactif',  dotClass: 'dot-red',   chipClass: 'chip-red'   },
+      { description: "Email d'activation renvoyé",    label: 'Email',    dotClass: 'dot-blue',  chipClass: 'chip-blue'  },
+    ];
+    return this.users.slice(0, 5).map((u, i) => ({
+      username: u.username,
+      ...types[i % types.length]
+    }));
+  }
+
   // ========== UTILITY FUNCTIONS ==========
 
   getInitials(user: KeycloakUser): string {
     const firstInitial = user.firstName?.charAt(0)?.toUpperCase() || '';
-    const lastInitial = user.lastName?.charAt(0)?.toUpperCase() || '';
+    const lastInitial  = user.lastName?.charAt(0)?.toUpperCase() || '';
     return firstInitial + lastInitial || user.username?.charAt(0)?.toUpperCase() || '?';
   }
 
@@ -89,8 +138,6 @@ export class UserManagementComponent implements OnInit {
       'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
       'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
       'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
-      'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-      'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
     ];
     const hash = username?.split('').reduce((acc, char) => {
       return char.charCodeAt(0) + ((acc << 5) - acc);
@@ -104,9 +151,9 @@ export class UserManagementComponent implements OnInit {
 
   getRoleClass(role: string): string {
     const roleMap: { [key: string]: string } = {
-      'ROLE_ADMIN': 'role-admin',
+      'ROLE_ADMIN':   'role-admin',
       'ROLE_MANAGER': 'role-manager',
-      'ROLE_AGENT': 'role-agent',
+      'ROLE_AGENT':   'role-agent',
       'ROLE_AUDITOR': 'role-auditor'
     };
     return roleMap[role] || 'role-default';
@@ -120,7 +167,7 @@ export class UserManagementComponent implements OnInit {
   }
 
   get totalPages(): number {
-    return Math.ceil(this.users.length / this.itemsPerPage);
+    return Math.max(1, Math.ceil(this.users.length / this.itemsPerPage));
   }
 
   nextPage(): void {
@@ -141,7 +188,7 @@ export class UserManagementComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('❌ Error loading users:', error);
+        console.error('Erreur chargement utilisateurs:', error);
         this.loading = false;
         alert('Erreur lors du chargement des utilisateurs.');
       }
@@ -151,7 +198,7 @@ export class UserManagementComponent implements OnInit {
   loadRoles(): void {
     this.kcAdmin.getAllRoles().subscribe({
       next: (roles) => { this.availableRoles = roles; },
-      error: (error) => { console.error('❌ Error loading roles:', error); }
+      error: (error) => { console.error('Erreur chargement rôles:', error); }
     });
   }
 
@@ -163,7 +210,7 @@ export class UserManagementComponent implements OnInit {
     this.loading = true;
     this.kcAdmin.searchUsers(this.searchQuery).subscribe({
       next: (users) => { this.users = users; this.loading = false; },
-      error: (error) => { console.error('❌ Error searching users:', error); this.loading = false; }
+      error: (error) => { console.error('Erreur recherche:', error); this.loading = false; }
     });
   }
 
@@ -176,7 +223,6 @@ export class UserManagementComponent implements OnInit {
 
   openCreateModal(): void {
     this.formSubmitted = false;
-    // ✅ MODIFIÉ : pas de password dans l'initialisation
     this.newUser = {
       username: '',
       email: '',
@@ -195,31 +241,24 @@ export class UserManagementComponent implements OnInit {
 
   createUser(): void {
     this.formSubmitted = true;
-
-    // ✅ MODIFIÉ : validation sans mot de passe
     if (!this.newUser.username || !this.newUser.email) {
-      alert('Veuillez remplir tous les champs obligatoires (nom d\'utilisateur, email)');
+      alert("Veuillez remplir tous les champs obligatoires (nom d'utilisateur, email)");
       return;
     }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(this.newUser.email)) {
       alert('Veuillez entrer une adresse email valide');
       return;
     }
-
     this.loading = true;
     this.kcAdmin.createUser(this.newUser).subscribe({
-      next: (response) => {
-        console.log('✅ User created:', response);
-        // ✅ Message clair pour l'admin
-        alert(`✅ Compte créé avec succès !\n\nUn email d'activation a été envoyé à ${this.newUser.email}.\nL'employé devra cliquer sur le lien pour définir son mot de passe et accéder à la plateforme.`);
+      next: () => {
+        alert(`Compte créé avec succès !\n\nUn email d'activation a été envoyé à ${this.newUser.email}.`);
         this.closeCreateModal();
         this.loadUsers();
         this.loading = false;
       },
       error: (error) => {
-        console.error('❌ Error creating user:', error);
         alert('Erreur lors de la création: ' + (error.error?.error || error.message));
         this.loading = false;
       }
@@ -252,7 +291,6 @@ export class UserManagementComponent implements OnInit {
 
   saveUser(): void {
     if (!this.editUser.id) return;
-
     if (this.editUser.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(this.editUser.email)) {
@@ -260,7 +298,6 @@ export class UserManagementComponent implements OnInit {
         return;
       }
     }
-
     this.loading = true;
     this.kcAdmin.updateUser(this.editUser.id, this.editUser).subscribe({
       next: () => {
@@ -270,7 +307,7 @@ export class UserManagementComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('❌ Error updating user:', error);
+        console.error('Erreur modification:', error);
         alert('Erreur lors de la modification');
         this.loading = false;
       }
@@ -281,8 +318,7 @@ export class UserManagementComponent implements OnInit {
 
   deleteUser(user: KeycloakUser): void {
     if (!user.id) return;
-    if (!confirm(`⚠️ Supprimer l'utilisateur "${user.username}" ?\n\nCette action est irréversible !`)) return;
-
+    if (!confirm(`Supprimer l'utilisateur "${user.username}" ?\n\nCette action est irréversible !`)) return;
     this.loading = true;
     this.kcAdmin.deleteUser(user.id).subscribe({
       next: () => {
@@ -291,7 +327,7 @@ export class UserManagementComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('❌ Error deleting user:', error);
+        console.error('Erreur suppression:', error);
         alert('Erreur lors de la suppression');
         this.loading = false;
       }
@@ -305,7 +341,6 @@ export class UserManagementComponent implements OnInit {
     const newStatus = !user.enabled;
     const action = newStatus ? 'activer' : 'désactiver';
     if (!confirm(`Voulez-vous ${action} l'utilisateur "${user.username}" ?`)) return;
-
     this.loading = true;
     this.kcAdmin.toggleUserStatus(user.id, newStatus).subscribe({
       next: () => {
@@ -313,9 +348,8 @@ export class UserManagementComponent implements OnInit {
         this.loadUsers();
         this.loading = false;
       },
-      error: (error) => {
-        console.error(`❌ Error toggling status:`, error);
-        alert(`Erreur lors de l'opération`);
+      error: () => {
+        alert("Erreur lors de l'opération");
         this.loading = false;
       }
     });
@@ -329,7 +363,7 @@ export class UserManagementComponent implements OnInit {
     this.showRoleModal = true;
     this.kcAdmin.getUserRoles(user.id).subscribe({
       next: (roles) => { this.userCurrentRoles = roles; },
-      error: (error) => { console.error('❌ Error loading user roles:', error); }
+      error: (error) => { console.error('Erreur chargement rôles utilisateur:', error); }
     });
   }
 
@@ -353,9 +387,8 @@ export class UserManagementComponent implements OnInit {
         this.loadUsers();
         this.loading = false;
       },
-      error: (error) => {
-        console.error('❌ Error assigning role:', error);
-        alert('Erreur lors de l\'assignation du rôle');
+      error: () => {
+        alert("Erreur lors de l'assignation du rôle");
         this.loading = false;
       }
     });
@@ -364,7 +397,6 @@ export class UserManagementComponent implements OnInit {
   removeRole(roleName: string): void {
     if (!this.selectedUser?.id) return;
     if (!confirm(`Retirer le rôle "${roleName}" de "${this.selectedUser.username}" ?`)) return;
-
     this.loading = true;
     this.kcAdmin.removeRoles(this.selectedUser.id, [roleName]).subscribe({
       next: () => {
@@ -373,29 +405,26 @@ export class UserManagementComponent implements OnInit {
         this.loadUsers();
         this.loading = false;
       },
-      error: (error) => {
-        console.error('❌ Error removing role:', error);
+      error: () => {
         alert('Erreur lors du retrait du rôle');
         this.loading = false;
       }
     });
   }
 
-  // ========== PASSWORD RESET (RENVOYER L'EMAIL D'ACTIVATION) ==========
+  // ========== PASSWORD RESET ==========
 
   resetPassword(user: KeycloakUser): void {
     if (!user.id) return;
     if (!confirm(`Renvoyer l'email d'activation à ${user.email} ?`)) return;
-
     this.loading = true;
     this.kcAdmin.sendPasswordResetEmail(user.id).subscribe({
       next: () => {
-        alert(`✅ Email d'activation renvoyé à ${user.email} !\nL'employé peut maintenant définir son mot de passe.`);
+        alert(`Email d'activation renvoyé à ${user.email} !`);
         this.loading = false;
       },
-      error: (error) => {
-        console.error('❌ Error sending activation email:', error);
-        alert('Erreur lors de l\'envoi de l\'email');
+      error: () => {
+        alert("Erreur lors de l'envoi de l'email");
         this.loading = false;
       }
     });

@@ -3,20 +3,20 @@
   <!-- TOP HEADER -->
   <header class="top-header">
     <div class="header-left">
-      <p class="page-subtitle">Lundi 23 mars 2025 — Banque Wifak</p>
+      <p class="page-subtitle">{{ today }} — Wifak Bank</p>
       <h1 class="page-title">Vue d'ensemble</h1>
     </div>
     <div class="header-right">
       <div class="header-search">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" placeholder="Rechercher..."/>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" placeholder="Rechercher..." [(ngModel)]="searchQuery"/>
       </div>
-      <div class="notif-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        <span class="notif-dot"></span>
-      </div>
-      <button class="btn-new" routerLink="/declaration-type-management">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <button class="btn-new" (click)="navigateTo('/declaration-type-management')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
         Nouveau
       </button>
     </div>
@@ -26,287 +26,263 @@
   <div class="tab-bar">
     <button class="tab" [class.active]="activeTab==='overview'" (click)="activeTab='overview'">Aperçu</button>
     <button class="tab" [class.active]="activeTab==='declarations'" (click)="activeTab='declarations'">Déclarations</button>
-    <button class="tab" [class.active]="activeTab==='alerts'" (click)="activeTab='alerts'">
-      Alertes
-      <span class="tab-badge">4</span>
-    </button>
+    <button class="tab" [class.active]="activeTab==='types'" (click)="activeTab='types'">Types BCT</button>
   </div>
 
-  <!-- CONTENT -->
   <div class="content-area">
 
-    <!-- ══════════════════════════════════════════
-         TAB: APERÇU
-    ══════════════════════════════════════════ -->
+    <!-- ══════ TAB: APERÇU ══════ -->
     <div *ngIf="activeTab==='overview'">
 
-      <!-- Metric cards -->
+      <!-- Metric cards (stats réelles) -->
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-label">Déclarations ce mois</div>
-          <div class="metric-val">24</div>
+          <div class="metric-label">Total déclarations</div>
+          <div class="metric-val">{{ stats.total }}</div>
           <div class="metric-sub">
-            <span class="chip chip-green">+3</span>
-            vs mois dernier
+            <span class="chip chip-blue">{{ stats.generees }} générées</span>
           </div>
         </div>
         <div class="metric-card">
           <div class="metric-label">En attente validation</div>
-          <div class="metric-val metric-amber">7</div>
+          <div class="metric-val metric-amber">{{ stats.enValidation }}</div>
           <div class="metric-sub">
-            <span class="chip chip-amber">Urgent</span>
-            2 avant J-1
+            <span class="chip chip-amber" *ngIf="stats.enValidation > 0">À traiter</span>
+            <span class="chip chip-green" *ngIf="stats.enValidation === 0">Aucune</span>
           </div>
         </div>
         <div class="metric-card">
           <div class="metric-label">Envoyées BCT</div>
-          <div class="metric-val metric-green">14</div>
+          <div class="metric-val metric-green">{{ stats.envoyees }}</div>
           <div class="metric-sub">
-            <span class="chip chip-green">À jour</span>
+            <span class="chip chip-green">{{ stats.validees }} validées</span>
           </div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">En retard</div>
-          <div class="metric-val metric-red">2</div>
+          <div class="metric-label">Rejetées</div>
+          <div class="metric-val metric-red">{{ stats.rejetees }}</div>
           <div class="metric-sub">
-            <span class="chip chip-red">Action requise</span>
+            <span class="chip chip-red" *ngIf="stats.rejetees > 0">Action requise</span>
+            <span class="chip chip-green" *ngIf="stats.rejetees === 0">Aucune</span>
           </div>
         </div>
       </div>
 
-      <!-- Two-col grid -->
       <div class="two-col">
 
-        <!-- Déclarations récentes -->
+        <!-- Déclarations récentes (réelles) -->
         <div class="card">
           <div class="card-head">
             <span class="card-title">Déclarations récentes</span>
             <button class="card-link" (click)="activeTab='declarations'">Voir tout →</button>
           </div>
-          <table class="data-table">
+
+          <div *ngIf="loadingDeclarations" class="mini-loader">
+            <div class="spinner-sm"></div>
+          </div>
+
+          <table class="data-table" *ngIf="!loadingDeclarations">
             <thead>
               <tr>
                 <th>Code</th>
                 <th>Type</th>
                 <th>Statut</th>
-                <th>Échéance</th>
+                <th>Période</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let d of recentDeclarations">
-                <td><span class="code-badge">{{d.code}}</span></td>
-                <td class="text-muted">{{d.type}}</td>
+                <td><span class="code-badge">{{ d.declarationType?.code || '—' }}</span></td>
+                <td class="text-muted">{{ d.declarationType?.frequence || '—' }}</td>
                 <td>
-                  <span class="status-chip"
-                    [class.chip-amber]="d.statut==='En attente'"
-                    [class.chip-green]="d.statut==='Validée' || d.statut==='Envoyée'"
-                    [class.chip-red]="d.statut==='Rejetée'"
-                    [class.chip-blue]="d.statut==='Générée'">
-                    {{d.statut}}
+                  <span class="status-chip" [ngClass]="getStatutClass(d.statut)">
+                    {{ d.statut }}
                   </span>
                 </td>
-                <td [class.text-red]="d.urgent" [class.text-muted]="!d.urgent" class="text-sm">{{d.echeance}}</td>
+                <td class="text-sm text-muted">{{ d.periode }}</td>
+              </tr>
+              <tr *ngIf="recentDeclarations.length === 0">
+                <td colspan="4" class="empty-row">Aucune déclaration</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Alertes IA -->
+        <!-- Types de déclarations actifs (réels) -->
         <div class="card">
           <div class="card-head">
-            <span class="card-title">Alertes intelligentes IA</span>
-            <span class="chip chip-red">4 actives</span>
+            <span class="card-title">Types de déclarations BCT</span>
+            <button class="card-link" (click)="navigateTo('/declaration-type-management')">Gérer →</button>
           </div>
-          <div class="alert-list">
-            <div class="alert-item" *ngFor="let a of iaAlerts">
-              <div class="alert-dot" [class.dot-red]="a.level==='high'" [class.dot-amber]="a.level==='medium'" [class.dot-blue]="a.level==='info'"></div>
-              <div class="alert-body">
-                <div class="alert-text" [innerHTML]="a.text"></div>
-                <div class="alert-meta">{{a.time}} · Niveau : {{a.levelLabel}}</div>
+
+          <div *ngIf="loadingTypes" class="mini-loader">
+            <div class="spinner-sm"></div>
+          </div>
+
+          <div class="types-list" *ngIf="!loadingTypes">
+            <div class="type-row" *ngFor="let t of recentDeclarationTypes">
+              <span class="code-badge">{{ t.code }}</span>
+              <div class="type-info">
+                <div class="type-name">{{ t.nom }}</div>
+                <div class="type-meta">
+                  <span class="fmt-chip" [ngClass]="getFormatClass(t.format)">{{ t.format }}</span>
+                  <span class="freq-chip" [ngClass]="getFreqClass(t.frequence)">{{ t.frequence }}</span>
+                </div>
               </div>
+              <span class="status-dot-sm" [class.dot-green]="t.actif" [class.dot-gray]="!t.actif"></span>
+            </div>
+            <div *ngIf="recentDeclarationTypes.length === 0" class="empty-row">
+              Aucun type configuré
             </div>
           </div>
         </div>
 
       </div>
 
-      <!-- Second two-col: Users + Calendar -->
       <div class="two-col">
 
-        <!-- Utilisateurs récents -->
+        <!-- Utilisateurs récents (réels) -->
         <div class="card">
           <div class="card-head">
             <span class="card-title">Utilisateurs récents</span>
-            <button class="card-link" routerLink="/user-management">Gérer →</button>
+            <button class="card-link" (click)="navigateTo('/user-management')">Gérer →</button>
           </div>
-          <div class="user-list">
+
+          <div *ngIf="loadingUsers" class="mini-loader">
+            <div class="spinner-sm"></div>
+          </div>
+
+          <div class="user-list" *ngIf="!loadingUsers">
             <div class="user-row" *ngFor="let u of recentUsers">
-              <div class="user-av" [style.background]="u.color">{{u.initials}}</div>
-              <div class="user-info">
-                <div class="user-name">{{u.name}}</div>
-                <div class="user-email">{{u.email}}</div>
+              <div class="user-av" [style.background]="getAvatarColor(u.username)">
+                {{ getInitials(u) }}
               </div>
-              <span class="role-chip"
-                [class.role-admin]="u.role==='Administrateur'"
-                [class.role-agent]="u.role==='Agent Déclarant'"
-                [class.role-manager]="u.role==='Responsable'"
-                [class.role-auditor]="u.role==='Auditeur'">
-                {{u.role}}
+              <div class="user-info">
+                <div class="user-name">{{ u.firstName }} {{ u.lastName }}</div>
+                <div class="user-email">{{ u.email }}</div>
+              </div>
+              <span class="role-chip" [ngClass]="getRoleClass(u)">
+                {{ getPrimaryRole(u) }}
               </span>
-              <span class="status-dot-sm" [class.dot-green]="u.active" [class.dot-gray]="!u.active"></span>
+              <span class="status-dot-sm"
+                    [class.dot-green]="u.enabled"
+                    [class.dot-gray]="!u.enabled">
+              </span>
+            </div>
+            <div *ngIf="recentUsers.length === 0" class="empty-row">
+              Aucun utilisateur
             </div>
           </div>
         </div>
 
-        <!-- Mini calendrier échéances -->
+        <!-- Échéances à venir (depuis les types actifs) -->
         <div class="card">
           <div class="card-head">
             <span class="card-title">Prochaines échéances</span>
-            <button class="card-link">Mars 2025</button>
+            <button class="card-link" (click)="navigateTo('/agent/calendar')">Calendrier →</button>
           </div>
           <div class="echeances-list">
-            <div class="ech-item ech-red">
-              <div class="ech-date">
-                <span class="ech-day">20</span>
-                <span class="ech-month">Mar</span>
+            <div class="ech-item ech-blue" *ngFor="let t of upcomingDeadlines">
+              <div class="ech-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
               </div>
               <div class="ech-body">
-                <div class="ech-code">BCT_07</div>
-                <div class="ech-name">Trimestrielle crédits</div>
-                <div class="ech-status">Rejetée · En retard</div>
+                <div class="ech-code">{{ t.code }}</div>
+                <div class="ech-name">{{ t.nom }}</div>
+                <div class="ech-status">{{ t.dateLimite }}</div>
               </div>
-              <span class="chip chip-red">En retard</span>
+              <span class="freq-chip" [ngClass]="getFreqClass(t.frequence)">
+                {{ t.frequence }}
+              </span>
             </div>
-            <div class="ech-item ech-amber">
-              <div class="ech-date">
-                <span class="ech-day">25</span>
-                <span class="ech-month">Mar</span>
-              </div>
-              <div class="ech-body">
-                <div class="ech-code">BCT_01</div>
-                <div class="ech-name">Déclaration hebdomadaire</div>
-                <div class="ech-status">En attente de validation</div>
-              </div>
-              <span class="chip chip-amber">J-1</span>
-            </div>
-            <div class="ech-item ech-amber">
-              <div class="ech-date">
-                <span class="ech-day">28</span>
-                <span class="ech-month">Mar</span>
-              </div>
-              <div class="ech-body">
-                <div class="ech-code">BCT_04</div>
-                <div class="ech-name">Rapport liquidité</div>
-                <div class="ech-status">En cours de génération</div>
-              </div>
-              <span class="chip chip-amber">J-4</span>
-            </div>
-            <div class="ech-item ech-blue">
-              <div class="ech-date">
-                <span class="ech-day">31</span>
-                <span class="ech-month">Mar</span>
-              </div>
-              <div class="ech-body">
-                <div class="ech-code">BCT_03</div>
-                <div class="ech-name">Mensuelle dépôts</div>
-                <div class="ech-status">Non démarrée</div>
-              </div>
-              <span class="chip chip-blue">J-7</span>
+            <div *ngIf="upcomingDeadlines.length === 0" class="empty-row">
+              Aucune échéance configurée
             </div>
           </div>
         </div>
 
       </div>
-
     </div>
 
-    <!-- ══════════════════════════════════════════
-         TAB: DÉCLARATIONS
-    ══════════════════════════════════════════ -->
+    <!-- ══════ TAB: DÉCLARATIONS ══════ -->
     <div *ngIf="activeTab==='declarations'">
       <div class="filter-row">
         <div class="search-box">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
           <input type="text" placeholder="Rechercher une déclaration..." [(ngModel)]="searchQuery"/>
         </div>
-        <select class="sel">
-          <option>Tous les types</option>
-          <option>BCT_01</option><option>BCT_03</option><option>BCT_07</option>
-        </select>
-        <select class="sel">
-          <option>Tous les statuts</option>
-          <option>Brouillon</option><option>Générée</option><option>Validée</option>
-          <option>Rejetée</option><option>Envoyée</option>
-        </select>
-        <select class="sel">
-          <option>Ce mois</option><option>Ce trimestre</option><option>Cette année</option>
-        </select>
       </div>
-      <div class="card" style="padding:0">
+
+      <div *ngIf="loadingDeclarations" class="mini-loader">
+        <div class="spinner-sm"></div>
+      </div>
+
+      <div class="card" style="padding:0" *ngIf="!loadingDeclarations">
         <table class="data-table full-table">
           <thead>
             <tr>
               <th>Code</th><th>Nom</th><th>Fréquence</th><th>Format</th>
-              <th>Statut</th><th>Généré par</th><th>Échéance</th><th>Actions</th>
+              <th>Statut</th><th>Période</th><th>Généré par</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let d of allDeclarations">
-              <td><span class="code-badge">{{d.code}}</span></td>
-              <td class="text-sm" style="font-weight:500">{{d.nom}}</td>
-              <td><span class="freq-chip">{{d.frequence}}</span></td>
-              <td><span class="fmt-chip">{{d.format}}</span></td>
-              <td>
-                <span class="status-chip"
-                  [class.chip-amber]="d.statut==='En attente'"
-                  [class.chip-green]="d.statut==='Validée' || d.statut==='Envoyée'"
-                  [class.chip-red]="d.statut==='Rejetée'"
-                  [class.chip-blue]="d.statut==='Générée'">
-                  {{d.statut}}
-                </span>
-              </td>
-              <td class="text-muted text-sm">{{d.agent}}</td>
-              <td [class.text-red]="d.urgent" [class.text-muted]="!d.urgent" class="text-sm">{{d.echeance}}</td>
-              <td>
-                <div class="action-btns">
-                  <button class="act-btn act-view" title="Voir">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  </button>
-                  <button class="act-btn act-dl" title="Télécharger">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  </button>
-                  <button *ngIf="d.statut==='Rejetée'" class="act-btn act-edit" title="Corriger">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
-                </div>
-              </td>
+            <tr *ngFor="let d of filteredDeclarations">
+              <td><span class="code-badge">{{ d.declarationType?.code }}</span></td>
+              <td class="text-sm" style="font-weight:500">{{ d.declarationType?.nom }}</td>
+              <td><span class="freq-chip" [ngClass]="getFreqClass(d.declarationType?.frequence || '')">{{ d.declarationType?.frequence }}</span></td>
+              <td><span class="fmt-chip" [ngClass]="getFormatClass(d.declarationType?.format || '')">{{ d.declarationType?.format }}</span></td>
+              <td><span class="status-chip" [ngClass]="getStatutClass(d.statut)">{{ d.statut }}</span></td>
+              <td class="text-muted text-sm">{{ d.periode }}</td>
+              <td class="text-muted text-sm">{{ d.generePar || '—' }}</td>
+            </tr>
+            <tr *ngIf="filteredDeclarations.length === 0">
+              <td colspan="7" class="empty-row">Aucune déclaration trouvée</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════
-         TAB: ALERTES
-    ══════════════════════════════════════════ -->
-    <div *ngIf="activeTab==='alerts'">
-      <div class="card">
-        <div class="card-head">
-          <span class="card-title">Toutes les alertes IA</span>
-          <span class="chip chip-red">4 non traitées</span>
-        </div>
-        <div class="alert-list alert-list-full">
-          <div class="alert-item alert-item-full" *ngFor="let a of allAlerts"
-            [class.alert-high]="a.level==='high'"
-            [class.alert-medium]="a.level==='medium'">
-            <div class="alert-dot alert-dot-lg" [class.dot-red]="a.level==='high'" [class.dot-amber]="a.level==='medium'" [class.dot-blue]="a.level==='info'"></div>
-            <div class="alert-body" style="flex:1">
-              <div class="alert-text" [innerHTML]="a.text"></div>
-              <div class="alert-meta">{{a.time}} · Score de risque : {{a.score}}</div>
-            </div>
-            <button class="btn-treat">Traiter</button>
-          </div>
-        </div>
+    <!-- ══════ TAB: TYPES BCT ══════ -->
+    <div *ngIf="activeTab==='types'">
+      <div class="card" style="padding:0">
+        <table class="data-table full-table">
+          <thead>
+            <tr>
+              <th>Code</th><th>Nom</th><th>Format</th>
+              <th>Fréquence</th><th>Date limite</th><th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of recentDeclarationTypes">
+              <td><span class="code-badge">{{ t.code }}</span></td>
+              <td style="font-weight:500">{{ t.nom }}</td>
+              <td><span class="fmt-chip" [ngClass]="getFormatClass(t.format)">{{ t.format }}</span></td>
+              <td><span class="freq-chip" [ngClass]="getFreqClass(t.frequence)">{{ t.frequence }}</span></td>
+              <td class="text-muted text-sm">{{ t.dateLimite }}</td>
+              <td>
+                <span class="status-chip" [class.chip-green]="t.actif" [class.chip-gray]="!t.actif">
+                  {{ t.actif ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="recentDeclarationTypes.length === 0">
+              <td colspan="6" class="empty-row">Aucun type configuré</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px; text-align:right">
+        <button class="btn-new" (click)="navigateTo('/declaration-type-management')">
+          Gérer tous les types →
+        </button>
       </div>
     </div>
 

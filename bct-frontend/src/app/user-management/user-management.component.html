@@ -1,62 +1,174 @@
+<div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
 
-  <!-- ============================================ -->
-  <!-- MAIN CONTENT -->
-  <!-- ============================================ -->
-  <div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
-    <!-- TOP HEADER -->
-    <header class="top-header">
-      <div class="header-content">
-        <div class="header-left">
-          <div class="breadcrumb">
-            <span class="breadcrumb-item">Accueil</span>
-            <span class="breadcrumb-separator">/</span>
-            <span class="breadcrumb-item active">Gestion des Utilisateurs</span>
-          </div>
-          <h1 class="page-title">Gestion des Utilisateurs</h1>
-          <p class="page-subtitle">Gérez les comptes utilisateurs et leurs permissions</p>
+  <!-- TOP HEADER -->
+  <header class="top-header">
+    <div class="header-content">
+      <div class="header-left">
+        <div class="breadcrumb">
+          <span class="breadcrumb-item">Accueil</span>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-item active">Gestion des Utilisateurs</span>
         </div>
-
-        <div class="header-right">
-          <button (click)="openCreateModal()" class="btn-create">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>Nouvel utilisateur</span>
-          </button>
-         
-        </div>
+        <h1 class="page-title">Gestion des Utilisateurs</h1>
+        <p class="page-subtitle">Gérez les comptes utilisateurs et leurs permissions</p>
       </div>
-
-      <!-- Search Bar -->
-      <div class="search-section">
-        <div class="search-bar">
-          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
+      <div class="header-right">
+        <button (click)="openCreateModal()" class="btn-create">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          <input
-            type="text"
-            placeholder="Rechercher par nom, email ou rôle..."
-            [(ngModel)]="searchQuery"
-            (keyup.enter)="searchUsers()"
-          />
-          <button class="btn-search" (click)="searchUsers()" *ngIf="searchQuery">
-            Rechercher
-          </button>
-          <button class="btn-clear" *ngIf="searchQuery" (click)="clearSearch()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
+          <span>Nouvel utilisateur</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-section">
+      <div class="search-bar">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input
+          type="text"
+          placeholder="Rechercher par nom, email ou rôle..."
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="searchUsers()"
+        />
+        <button class="btn-search" (click)="searchUsers()" *ngIf="searchQuery">Rechercher</button>
+        <button class="btn-clear" *ngIf="searchQuery" (click)="clearSearch()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab" [class.active]="activeTab==='overview'" (click)="activeTab='overview'">Aperçu</button>
+    <button class="tab" [class.active]="activeTab==='users'" (click)="activeTab='users'">
+      Utilisateurs <span class="nav-badge nav-badge-blue" *ngIf="users.length > 0">{{ users.length }}</span>
+    </button>
+    <button class="tab" [class.active]="activeTab==='roles'" (click)="activeTab='roles'">Rôles & Permissions</button>
+    <button class="tab" [class.active]="activeTab==='activity'" (click)="activeTab='activity'">
+      Activité
+      <span class="nav-badge nav-badge-red" *ngIf="getInactiveUsersCount() > 0">{{ getInactiveUsersCount() }}</span>
+    </button>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div class="content-area">
+
+    <!-- LOADING SPINNER -->
+    <div *ngIf="loading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Chargement des données...</p>
+    </div>
+
+    <!-- ══════ TAB: APERÇU ══════ -->
+    <div *ngIf="activeTab==='overview' && !loading">
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Total utilisateurs</div>
+          <div class="metric-val">{{ users.length }}</div>
+          <div class="metric-sub"><span class="chip chip-blue">{{ getActiveUsersCount() }} actifs</span></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Comptes inactifs</div>
+          <div class="metric-val metric-amber">{{ getInactiveUsersCount() }}</div>
+          <div class="metric-sub">
+            <span class="chip chip-amber" *ngIf="getInactiveUsersCount() > 0">À réviser</span>
+            <span class="chip chip-green" *ngIf="getInactiveUsersCount() === 0">Aucun</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Emails vérifiés</div>
+          <div class="metric-val metric-green">{{ getVerifiedEmailsCount() }}</div>
+          <div class="metric-sub"><span class="chip chip-green">{{ getVerifiedPct() }} %</span></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Créés ce mois</div>
+          <div class="metric-val">{{ getNewThisMonth() }}</div>
+          <div class="metric-sub"><span class="chip chip-gray">30 derniers jours</span></div>
         </div>
       </div>
-    </header>
 
-    <!-- CONTENT AREA -->
-    <div class="content-area">
-      <!-- Stats Cards -->
+      <div class="two-col">
+
+        <!-- Répartition par rôle -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Répartition par rôle</span>
+            <button class="card-link" (click)="activeTab='roles'">Détails →</button>
+          </div>
+          <div class="role-dist-list">
+            <div class="role-dist-row" *ngFor="let r of roleDistribution">
+              <span class="role-dist-label">{{ r.label }}</span>
+              <div class="role-dist-bar">
+                <div class="role-dist-fill" [style.width.%]="r.pct" [ngClass]="r.colorClass"></div>
+              </div>
+              <span class="role-dist-count">{{ r.count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activité récente -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Activité récente</span>
+            <button class="card-link" (click)="activeTab='activity'">Voir tout →</button>
+          </div>
+          <div class="activity-list">
+            <div class="activity-row" *ngFor="let a of recentActivity">
+              <div class="act-dot" [ngClass]="a.dotClass"></div>
+              <div class="act-body">
+                <div class="act-user">{{ a.username }}</div>
+                <div class="act-desc">{{ a.description }}</div>
+              </div>
+              <span class="chip" [ngClass]="a.chipClass" style="margin-left:auto">{{ a.label }}</span>
+            </div>
+            <div class="empty-row" *ngIf="recentActivity.length === 0">Aucune activité récente</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Utilisateurs récents -->
+      <div class="card" style="margin-top: 14px">
+        <div class="card-head">
+          <span class="card-title">Utilisateurs récents</span>
+          <button class="card-link" (click)="activeTab='users'">Voir tout →</button>
+        </div>
+        <div class="user-list">
+          <div class="user-row" *ngFor="let u of users.slice(0,5)">
+            <div class="user-av" [style.background]="getAvatarColor(u.username)">
+              {{ getInitials(u) }}
+            </div>
+            <div class="user-info-block">
+              <div class="user-name-text">{{ u.firstName }} {{ u.lastName }}</div>
+              <div class="user-email-text">{{ u.email }}</div>
+            </div>
+            <span class="role-badge" [ngClass]="getRoleClass((u.roles && u.roles[0]) || '')">
+              {{ formatRoleName((u.roles && u.roles[0]) || 'Aucun rôle') }}
+            </span>
+            <span class="status-dot-sm"
+                  [class.dot-green]="u.enabled"
+                  [class.dot-gray]="!u.enabled">
+            </span>
+          </div>
+          <div *ngIf="users.length === 0" class="empty-row">Aucun utilisateur</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════ TAB: UTILISATEURS ══════ -->
+    <div *ngIf="activeTab==='users' && !loading">
       <div class="stats-grid">
         <div class="stat-card stat-primary">
           <div class="stat-icon">
@@ -72,7 +184,6 @@
             <div class="stat-value">{{ users.length }}</div>
           </div>
         </div>
-
         <div class="stat-card stat-success">
           <div class="stat-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -84,7 +195,6 @@
             <div class="stat-value">{{ getActiveUsersCount() }}</div>
           </div>
         </div>
-
         <div class="stat-card stat-warning">
           <div class="stat-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -98,7 +208,6 @@
             <div class="stat-value">{{ getInactiveUsersCount() }}</div>
           </div>
         </div>
-
         <div class="stat-card stat-info">
           <div class="stat-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -113,14 +222,7 @@
         </div>
       </div>
 
-      <!-- LOADING SPINNER -->
-      <div *ngIf="loading" class="loading-overlay">
-        <div class="spinner"></div>
-        <p>Chargement des données...</p>
-      </div>
-
-      <!-- USERS TABLE -->
-      <div class="table-card" *ngIf="!loading">
+      <div class="table-card">
         <table class="users-table">
           <thead>
             <tr>
@@ -134,18 +236,14 @@
           </thead>
           <tbody>
             <tr *ngFor="let user of paginatedUsers" [class.disabled-row]="!user.enabled">
-              <!-- Username -->
               <td>
                 <div class="user-cell">
-                 
                   <div class="user-details">
                     <div class="username">{{ user.username }}</div>
                     <div class="fullname">{{ user.firstName }} {{ user.lastName }}</div>
                   </div>
                 </div>
               </td>
-
-              <!-- Email -->
               <td>
                 <div class="email-cell">
                   <div class="email">{{ user.email }}</div>
@@ -157,45 +255,27 @@
                   </span>
                 </div>
               </td>
-
-              <!-- Roles -->
               <td>
                 <div class="roles-cell">
-                  <span *ngFor="let role of user.roles" 
-                        class="role-badge"
-                        [ngClass]="getRoleClass(role)">
+                  <span *ngFor="let role of user.roles" class="role-badge" [ngClass]="getRoleClass(role)">
                     {{ formatRoleName(role) }}
                   </span>
-                  <span *ngIf="!user.roles || user.roles.length === 0" class="no-roles">
-                    Aucun rôle
-                  </span>
+                  <span *ngIf="!user.roles || user.roles.length === 0" class="no-roles">Aucun rôle</span>
                 </div>
               </td>
-
-              <!-- Status -->
               <td>
-                <span class="status-badge" 
-                      [class.status-active]="user.enabled" 
-                      [class.status-inactive]="!user.enabled">
+                <span class="status-badge" [class.status-active]="user.enabled" [class.status-inactive]="!user.enabled">
                   <span class="status-dot"></span>
                   {{ user.enabled ? 'Actif' : 'Inactif' }}
                 </span>
               </td>
-
-              <!-- Created Date -->
               <td>
-                <span class="date-text" *ngIf="user.createdTimestamp">
-                  {{ user.createdTimestamp | date:'dd/MM/yyyy' }}
-                </span>
+                <span class="date-text" *ngIf="user.createdTimestamp">{{ user.createdTimestamp | date:'dd/MM/yyyy' }}</span>
                 <span *ngIf="!user.createdTimestamp" class="no-data">-</span>
               </td>
-
-              <!-- Actions -->
               <td>
                 <div class="action-buttons">
-                  <button (click)="openRoleModal(user)" 
-                          class="btn-action btn-roles" 
-                          title="Gérer les rôles">
+                  <button (click)="openRoleModal(user)" class="btn-action btn-roles" title="Gérer les rôles">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                       <circle cx="9" cy="7" r="4"></circle>
@@ -203,25 +283,19 @@
                       <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
                   </button>
-                  <button (click)="openEditModal(user)" 
-                          class="btn-action btn-edit" 
-                          title="Modifier">
+                  <button (click)="openEditModal(user)" class="btn-action btn-edit" title="Modifier">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                   </button>
-                  <button (click)="resetPassword(user)" 
-                          class="btn-action btn-reset" 
-                          title="Réinitialiser mot de passe">
+                  <button (click)="resetPassword(user)" class="btn-action btn-reset" title="Renvoyer email d'activation">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                       <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                     </svg>
                   </button>
-                  <button (click)="deleteUser(user)" 
-                          class="btn-action btn-delete" 
-                          title="Supprimer">
+                  <button (click)="deleteUser(user)" class="btn-action btn-delete" title="Supprimer">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="3 6 5 6 21 6"></polyline>
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -230,8 +304,6 @@
                 </div>
               </td>
             </tr>
-
-            <!-- Empty State -->
             <tr *ngIf="users.length === 0">
               <td colspan="6" class="empty-state">
                 <div class="empty-icon">
@@ -243,243 +315,287 @@
                   </svg>
                 </div>
                 <p class="empty-message">Aucun utilisateur trouvé</p>
-                <button (click)="loadUsers()" class="btn-refresh">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="23 4 23 10 17 10"></polyline>
-                    <polyline points="1 20 1 14 7 14"></polyline>
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                  </svg>
-                  Rafraîchir
-                </button>
+                <button (click)="loadUsers()" class="btn-refresh">Rafraîchir</button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="pagination-section" *ngIf="users.length > 0 && !loading">
-  <div class="pagination-info">
-    Page {{ currentPage }} / {{ totalPages }}
-  </div>
+      <div class="pagination-section" *ngIf="users.length > 0">
+        <div class="pagination-info">Page {{ currentPage }} / {{ totalPages }}</div>
+        <div class="pagination-controls">
+          <button class="btn-pagination" [disabled]="currentPage === 1" (click)="previousPage()">◀ Précédent</button>
+          <button class="btn-pagination" [disabled]="currentPage === totalPages" (click)="nextPage()">Suivant ▶</button>
+        </div>
+      </div>
+    </div>
 
-  <div class="pagination-controls">
-    <button class="btn-pagination"
-            [disabled]="currentPage === 1"
-            (click)="previousPage()">
-      ◀ Précédent
-    </button>
+    <!-- ══════ TAB: RÔLES & PERMISSIONS ══════ -->
+    <div *ngIf="activeTab==='roles' && !loading">
 
-    <button class="btn-pagination"
-            [disabled]="currentPage === totalPages"
-            (click)="nextPage()">
-      Suivant ▶
-    </button>
+      <div class="metrics-grid">
+        <div class="metric-card" *ngFor="let r of roleDistribution">
+          <div class="metric-label">{{ r.label }}</div>
+          <div class="metric-val">{{ r.count }}</div>
+          <div class="metric-sub"><span class="chip chip-gray">utilisateur(s)</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Rôles disponibles</span>
+        </div>
+        <div class="roles-overview-list">
+          <div class="role-overview-row" *ngFor="let role of availableRoles">
+            <span class="role-badge" [ngClass]="getRoleClass(role.name)">{{ formatRoleName(role.name) }}</span>
+            <span class="role-overview-desc">{{ role.description || 'Aucune description' }}</span>
+            <span class="role-overview-count">{{ getUserCountByRole(role.name) }} utilisateur(s)</span>
+          </div>
+          <div class="empty-row" *ngIf="availableRoles.length === 0">Aucun rôle configuré</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 14px">
+        <div class="card-head">
+          <span class="card-title">Répartition par rôle</span>
+        </div>
+        <div class="role-dist-list">
+          <div class="role-dist-row" *ngFor="let r of roleDistribution">
+            <span class="role-dist-label">{{ r.label }}</span>
+            <div class="role-dist-bar">
+              <div class="role-dist-fill" [style.width.%]="r.pct" [ngClass]="r.colorClass"></div>
+            </div>
+            <span class="role-dist-count">{{ r.count }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════ TAB: ACTIVITÉ ══════ -->
+    <div *ngIf="activeTab==='activity' && !loading">
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Comptes actifs</div>
+          <div class="metric-val metric-green">{{ getActiveUsersCount() }}</div>
+          <div class="metric-sub"><span class="chip chip-green">En service</span></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Comptes inactifs</div>
+          <div class="metric-val metric-amber">{{ getInactiveUsersCount() }}</div>
+          <div class="metric-sub">
+            <span class="chip chip-amber" *ngIf="getInactiveUsersCount() > 0">Action requise</span>
+            <span class="chip chip-green" *ngIf="getInactiveUsersCount() === 0">Aucun</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Créés ce mois</div>
+          <div class="metric-val">{{ getNewThisMonth() }}</div>
+          <div class="metric-sub"><span class="chip chip-blue">Nouveaux</span></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Emails non vérifiés</div>
+          <div class="metric-val metric-red">{{ users.length - getVerifiedEmailsCount() }}</div>
+          <div class="metric-sub">
+            <span class="chip chip-red" *ngIf="users.length - getVerifiedEmailsCount() > 0">En attente</span>
+            <span class="chip chip-green" *ngIf="users.length - getVerifiedEmailsCount() === 0">Tous vérifiés</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Journal d'activité</span>
+        </div>
+        <div class="activity-list">
+          <div class="activity-row" *ngFor="let a of recentActivity">
+            <div class="act-dot" [ngClass]="a.dotClass"></div>
+            <div class="act-body">
+              <div class="act-user">{{ a.username }}</div>
+              <div class="act-desc">{{ a.description }}</div>
+            </div>
+            <span class="chip" [ngClass]="a.chipClass" style="margin-left:auto">{{ a.label }}</span>
+          </div>
+          <div class="empty-row" *ngIf="recentActivity.length === 0">Aucune activité récente</div>
+        </div>
+      </div>
+
+      <!-- Utilisateurs inactifs -->
+      <div class="card" style="margin-top: 14px" *ngIf="getInactiveUsersCount() > 0">
+        <div class="card-head">
+          <span class="card-title">Comptes inactifs</span>
+          <button class="card-link" (click)="activeTab='users'">Gérer →</button>
+        </div>
+        <div class="user-list">
+          <div class="user-row" *ngFor="let u of users | slice:0:10" [style.display]="u.enabled ? 'none' : 'flex'">
+            <div class="user-av" [style.background]="getAvatarColor(u.username)">{{ getInitials(u) }}</div>
+            <div class="user-info-block">
+              <div class="user-name-text">{{ u.firstName }} {{ u.lastName }}</div>
+              <div class="user-email-text">{{ u.email }}</div>
+            </div>
+            <span class="chip chip-red" style="margin-left:auto">Inactif</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
   </div>
 </div>
 
+<!-- ============================================ -->
+<!-- CREATE USER MODAL                           -->
+<!-- ============================================ -->
+<div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>➕ Créer un nouvel utilisateur</h2>
+      <button class="btn-close" (click)="closeCreateModal()">✕</button>
     </div>
-  </div>
-
-  <!-- ============================================ -->
-  <!-- CREATE USER MODAL — ✅ MODIFIÉ : sans champ mot de passe -->
-  <!-- ============================================ -->
-  <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>➕ Créer un nouvel utilisateur</h2>
-        <button class="btn-close" (click)="closeCreateModal()">✕</button>
+    <div class="modal-body">
+      <div class="info-banner">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>Un email d'activation sera automatiquement envoyé à l'employé. Il devra cliquer sur le lien pour définir son propre mot de passe.</span>
       </div>
 
-      <div class="modal-body">
+      <div class="form-group">
+        <label>Nom d'utilisateur *</label>
+        <input type="text" [(ngModel)]="newUser.username" placeholder="Ex: jdupont"
+               [class.input-error]="!newUser.username && formSubmitted">
+        <span class="error-message" *ngIf="!newUser.username && formSubmitted">Ce champ est obligatoire</span>
+      </div>
 
-        <!-- ✅ Bandeau informatif : expliquer à l'admin ce qui va se passer -->
-        <div class="info-banner">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
-          <span>
-            Un email d'activation sera automatiquement envoyé à l'employé.
-            Il devra cliquer sur le lien pour définir son propre mot de passe et accéder à la plateforme.
-          </span>
-        </div>
+      <div class="form-group">
+        <label>Email *</label>
+        <input type="email" [(ngModel)]="newUser.email" placeholder="Ex: jdupont@bct.tn"
+               [class.input-error]="!newUser.email && formSubmitted">
+        <span class="error-message" *ngIf="!newUser.email && formSubmitted">Ce champ est obligatoire</span>
+        <small class="form-hint">L'email d'activation sera envoyé à cette adresse</small>
+      </div>
 
+      <div class="form-row">
         <div class="form-group">
-          <label>Nom d'utilisateur *</label>
-          <input type="text"
-                 [(ngModel)]="newUser.username"
-                 placeholder="Ex: jdupont"
-                 [class.input-error]="!newUser.username && formSubmitted">
-          <span class="error-message" *ngIf="!newUser.username && formSubmitted">
-            Ce champ est obligatoire
-          </span>
+          <label>Prénom</label>
+          <input type="text" [(ngModel)]="newUser.firstName" placeholder="Jean">
         </div>
-
         <div class="form-group">
-          <label>Email *</label>
-          <input type="email"
-                 [(ngModel)]="newUser.email"
-                 placeholder="Ex: jdupont@bct.tn"
-                 [class.input-error]="!newUser.email && formSubmitted">
-          <span class="error-message" *ngIf="!newUser.email && formSubmitted">
-            Ce champ est obligatoire
-          </span>
-          <small class="form-hint">L'email d'activation sera envoyé à cette adresse</small>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Prénom</label>
-            <input type="text" [(ngModel)]="newUser.firstName" placeholder="Jean">
-          </div>
-
-          <div class="form-group">
-            <label>Nom</label>
-            <input type="text" [(ngModel)]="newUser.lastName" placeholder="Dupont">
-          </div>
-        </div>
-
-        <!-- ✅ Champ mot de passe SUPPRIMÉ -->
-
-        <div class="form-group">
-          <div class="checkbox-wrapper">
-            <input type="checkbox" id="enabledCheckbox" [(ngModel)]="newUser.enabled">
-            <label for="enabledCheckbox">Compte activé</label>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Rôles</label>
-          <div class="roles-grid">
-            <div *ngFor="let role of availableRoles"
-                 class="role-card"
-                 [class.role-assigned]="isRoleSelected(role.name)"
-                 (click)="toggleRoleSelection(role.name)">
-              <div class="role-icon">
-                {{ isRoleSelected(role.name) ? '✅' : '➕' }}
-              </div>
-              <div class="role-details">
-                <span class="role-name">{{ role.name }}</span>
-                <span class="role-description">{{ role.description || 'Aucune description' }}</span>
-              </div>
-              <div class="role-status-badge">
-                {{ isRoleSelected(role.name) ? 'Assigné' : 'Non assigné' }}
-              </div>
-            </div>
-          </div>
+          <label>Nom</label>
+          <input type="text" [(ngModel)]="newUser.lastName" placeholder="Dupont">
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button (click)="closeCreateModal()" class="btn-secondary">Annuler</button>
-        <button (click)="createUser()" class="btn-primary">
-          Créer et envoyer l'invitation
-        </button>
-      </div>
-    </div>
-  </div>
-  <!-- ============================================ -->
-  <!-- EDIT USER MODAL -->
-  <!-- ============================================ -->
-  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>✏️ Modifier l'utilisateur</h2>
-        <button class="btn-close" (click)="closeEditModal()">✕</button>
-      </div>
-
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Nom d'utilisateur</label>
-          <input type="text" [(ngModel)]="editUser.username" disabled>
-          <small class="form-hint">Le nom d'utilisateur ne peut pas être modifié</small>
-        </div>
-
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" [(ngModel)]="editUser.email">
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Prénom</label>
-            <input type="text" [(ngModel)]="editUser.firstName">
-          </div>
-
-          <div class="form-group">
-            <label>Nom</label>
-            <input type="text" [(ngModel)]="editUser.lastName">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <div class="checkbox-wrapper">
-            <input type="checkbox" id="editEnabledCheckbox" [(ngModel)]="editUser.enabled">
-            <label for="editEnabledCheckbox">Compte activé</label>
-          </div>
+      <div class="form-group">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="enabledCheckbox" [(ngModel)]="newUser.enabled">
+          <label for="enabledCheckbox">Compte activé</label>
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button (click)="closeEditModal()" class="btn-secondary">Annuler</button>
-        <button (click)="saveUser()" class="btn-primary">Enregistrer</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============================================ -->
-  <!-- ROLE MANAGEMENT MODAL -->
-  <!-- ============================================ -->
-  <div class="modal-overlay" *ngIf="showRoleModal" (click)="closeRoleModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>🎭 Gérer les rôles - {{ selectedUser?.username }}</h2>
-        <button class="btn-close" (click)="closeRoleModal()">✕</button>
-      </div>
-
-      <div class="modal-body">
-        <p class="info-text">
-          Cliquez sur un rôle pour l'ajouter ou le retirer de l'utilisateur
-        </p>
-
+      <div class="form-group">
+        <label>Rôles</label>
         <div class="roles-grid">
-          <div *ngFor="let role of availableRoles" 
-               class="role-card"
-               [class.role-assigned]="hasRole(role.name)"
-               (click)="hasRole(role.name) ? removeRole(role.name) : assignRole(role.name)">
-            
-            <div class="role-icon">
-              {{ hasRole(role.name) ? '✅' : '➕' }}
-            </div>
-            
+          <div *ngFor="let role of availableRoles"
+               class="role-card" [class.role-assigned]="isRoleSelected(role.name)"
+               (click)="toggleRoleSelection(role.name)">
+            <div class="role-icon">{{ isRoleSelected(role.name) ? '✅' : '➕' }}</div>
             <div class="role-details">
               <span class="role-name">{{ role.name }}</span>
               <span class="role-description">{{ role.description || 'Aucune description' }}</span>
             </div>
-
-            <div class="role-status-badge">
-              {{ hasRole(role.name) ? 'Assigné' : 'Non assigné' }}
-            </div>
+            <div class="role-status-badge">{{ isRoleSelected(role.name) ? 'Assigné' : 'Non assigné' }}</div>
           </div>
         </div>
-
-        <!-- Current Roles Summary -->
-        <div class="current-roles-summary">
-          <h4>Rôles actuels :</h4>
-          <div class="roles-list">
-            <span *ngFor="let role of userCurrentRoles" class="role-badge">
-              {{ role.name }}
-            </span>
-            <span *ngIf="userCurrentRoles.length === 0" class="no-roles">
-              Aucun rôle assigné
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button (click)="closeRoleModal()" class="btn-primary">Fermer</button>
       </div>
     </div>
+    <div class="modal-footer">
+      <button (click)="closeCreateModal()" class="btn-secondary">Annuler</button>
+      <button (click)="createUser()" class="btn-primary">Créer et envoyer l'invitation</button>
+    </div>
   </div>
+</div>
+
+<!-- ============================================ -->
+<!-- EDIT USER MODAL                             -->
+<!-- ============================================ -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>✏️ Modifier l'utilisateur</h2>
+      <button class="btn-close" (click)="closeEditModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nom d'utilisateur</label>
+        <input type="text" [(ngModel)]="editUser.username" disabled>
+        <small class="form-hint">Le nom d'utilisateur ne peut pas être modifié</small>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" [(ngModel)]="editUser.email">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prénom</label>
+          <input type="text" [(ngModel)]="editUser.firstName">
+        </div>
+        <div class="form-group">
+          <label>Nom</label>
+          <input type="text" [(ngModel)]="editUser.lastName">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="editEnabledCheckbox" [(ngModel)]="editUser.enabled">
+          <label for="editEnabledCheckbox">Compte activé</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button (click)="closeEditModal()" class="btn-secondary">Annuler</button>
+      <button (click)="saveUser()" class="btn-primary">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- ROLE MANAGEMENT MODAL                       -->
+<!-- ============================================ -->
+<div class="modal-overlay" *ngIf="showRoleModal" (click)="closeRoleModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>🎭 Gérer les rôles — {{ selectedUser?.username }}</h2>
+      <button class="btn-close" (click)="closeRoleModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="info-text">Cliquez sur un rôle pour l'ajouter ou le retirer de l'utilisateur</p>
+      <div class="roles-grid">
+        <div *ngFor="let role of availableRoles" class="role-card"
+             [class.role-assigned]="hasRole(role.name)"
+             (click)="hasRole(role.name) ? removeRole(role.name) : assignRole(role.name)">
+          <div class="role-icon">{{ hasRole(role.name) ? '✅' : '➕' }}</div>
+          <div class="role-details">
+            <span class="role-name">{{ role.name }}</span>
+            <span class="role-description">{{ role.description || 'Aucune description' }}</span>
+          </div>
+          <div class="role-status-badge">{{ hasRole(role.name) ? 'Assigné' : 'Non assigné' }}</div>
+        </div>
+      </div>
+      <div class="current-roles-summary">
+        <h4>Rôles actuels :</h4>
+        <div class="roles-list">
+          <span *ngFor="let role of userCurrentRoles" class="role-badge">{{ role.name }}</span>
+          <span *ngIf="userCurrentRoles.length === 0" class="no-roles">Aucun rôle assigné</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button (click)="closeRoleModal()" class="btn-primary">Fermer</button>
+    </div>
+  </div>
+</div>

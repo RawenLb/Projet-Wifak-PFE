@@ -8,6 +8,7 @@ import { DashboardLayoutComponent } from './dashboard-layout/dashboard-layout.co
 import { AgentLayoutComponent } from './agent-layout/agent-layout.component';
 import { DeclarationManagementComponent } from './declaration-management/declaration-management.component';
 import { DeclarationCalendarComponent } from './declaration-calendar/declaration-calendar.component';
+import { AgentDashboardComponent } from './agent-dashboard/agent-dashboard.component';
 const routes: Routes = [
   // Public routes WITHOUT dashboard layout
   { 
@@ -57,19 +58,25 @@ const routes: Routes = [
     { path: '', component: HomeComponent }  // ← ici
   ]
 },
- {
-  path: 'agent',
-  component: AgentLayoutComponent,  // ✅ BON LAYOUT!
-  canActivate: [RoleGuard],
-  data: { roles: ['ROLE_AGENT'] },
-  children: [
-    { path: '', redirectTo: 'declarations', pathMatch: 'full' },
-    { path: 'declarations', component: DeclarationManagementComponent },
- { path: 'calendar', component: DeclarationCalendarComponent }
-
-    // ... autres routes agent
-  ]
-},
+  {
+    path: 'agent',
+    component: AgentLayoutComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['ROLE_AGENT'] },
+    children: [
+      // Redirection par défaut → tableau de bord
+      { path: '',            redirectTo: 'dashboard', pathMatch: 'full' },
+ 
+      // ✅ Tableau de bord agent
+      { path: 'dashboard',   component: AgentDashboardComponent },
+ 
+      // Mes déclarations
+      { path: 'declarations', component: DeclarationManagementComponent },
+ 
+      // Calendrier des échéances
+      { path: 'calendar',    component: DeclarationCalendarComponent },
+    ]
+  },
   {
     path: 'manager',
     component: DashboardLayoutComponent,

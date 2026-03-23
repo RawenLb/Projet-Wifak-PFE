@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { DeclarationService, Declaration, GenerateDeclarationRequest } from '../services/Declaration.service';
+import { DeclarationService, Declaration, GenerateDeclarationRequest } from '../services/declaration.service';
 import { DeclarationTypeService, DeclarationType } from '../services/declaration-type.service';
 
 @Component({

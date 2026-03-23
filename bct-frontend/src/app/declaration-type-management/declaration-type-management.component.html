@@ -1,56 +1,180 @@
-<div class="dashboard-container">
-  <div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
+<div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
 
-    <!-- TOP HEADER -->
-    <header class="top-header">
-      <div class="header-content">
-        <div class="header-left">
-          <div class="breadcrumb">
-            <span class="breadcrumb-item">Accueil</span>
-            <span class="breadcrumb-separator">/</span>
-            <span class="breadcrumb-item active">Types de Déclarations BCT</span>
-          </div>
-          <h1 class="page-title">Gestion des Types de Déclarations</h1>
-          <p class="page-subtitle">Configurez les types de déclarations réglementaires BCT</p>
+  <!-- TOP HEADER -->
+  <header class="top-header">
+    <div class="header-content">
+      <div class="header-left">
+        <div class="breadcrumb">
+          <span class="breadcrumb-item">Accueil</span>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-item active">Types de Déclarations BCT</span>
         </div>
-        <div class="header-right">
-          <button (click)="openCreateModal()" class="btn-create">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>Nouveau type</span>
-          </button>
-        </div>
+        <h1 class="page-title">Gestion des Types de Déclarations</h1>
+        <p class="page-subtitle">Configurez les types de déclarations réglementaires BCT</p>
       </div>
-
-      <div class="search-section">
-        <div class="search-bar">
-          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
+      <div class="header-right">
+        <button (click)="openCreateModal()" class="btn-create">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          <input
-            type="text"
-            placeholder="Rechercher par code, nom, format ou fréquence..."
-            [(ngModel)]="searchQuery"
-            (keyup.enter)="searchDeclarationTypes()"
-          />
-          <button class="btn-search" (click)="searchDeclarationTypes()" *ngIf="searchQuery">Rechercher</button>
-          <button class="btn-clear" *ngIf="searchQuery" (click)="clearSearch()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
+          <span>Nouveau type</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-section">
+      <div class="search-bar">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input
+          type="text"
+          placeholder="Rechercher par code, nom, format ou fréquence..."
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="searchDeclarationTypes()"
+        />
+        <button class="btn-search" (click)="searchDeclarationTypes()" *ngIf="searchQuery">Rechercher</button>
+        <button class="btn-clear" *ngIf="searchQuery" (click)="clearSearch()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab" [class.active]="activeTab==='overview'" (click)="activeTab='overview'">Aperçu</button>
+    <button class="tab" [class.active]="activeTab==='types'" (click)="activeTab='types'">
+      Types BCT <span class="nav-badge nav-badge-blue" *ngIf="declarationTypes.length > 0">{{ declarationTypes.length }}</span>
+    </button>
+    <button class="tab" [class.active]="activeTab==='byFrequence'" (click)="activeTab='byFrequence'">Par fréquence</button>
+    <button class="tab" [class.active]="activeTab==='inactifs'" (click)="activeTab='inactifs'">
+      Inactifs
+      <span class="nav-badge nav-badge-red" *ngIf="getInactiveCount() > 0">{{ getInactiveCount() }}</span>
+    </button>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div class="content-area">
+
+    <!-- LOADING -->
+    <div *ngIf="loading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Chargement des données...</p>
+    </div>
+
+    <!-- ══════ TAB: APERÇU ══════ -->
+    <div *ngIf="activeTab==='overview' && !loading">
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Total types</div>
+          <div class="metric-val">{{ declarationTypes.length }}</div>
+          <div class="metric-sub"><span class="chip chip-blue">Configurés</span></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Types actifs</div>
+          <div class="metric-val metric-green">{{ getActiveCount() }}</div>
+          <div class="metric-sub">
+            <span class="chip chip-green">{{ getActiveCount() }} / {{ declarationTypes.length }}</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Types inactifs</div>
+          <div class="metric-val metric-amber">{{ getInactiveCount() }}</div>
+          <div class="metric-sub">
+            <span class="chip chip-amber" *ngIf="getInactiveCount() > 0">À vérifier</span>
+            <span class="chip chip-green" *ngIf="getInactiveCount() === 0">Aucun</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Mensuels</div>
+          <div class="metric-val">{{ getMonthlyCount() }}</div>
+          <div class="metric-sub"><span class="chip chip-gray">déclarations / mois</span></div>
         </div>
       </div>
-    </header>
 
-    <!-- CONTENT AREA -->
-    <div class="content-area">
+      <div class="two-col">
 
-      <!-- STATS -->
+        <!-- Répartition par fréquence -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Répartition par fréquence</span>
+            <button class="card-link" (click)="activeTab='byFrequence'">Détails →</button>
+          </div>
+          <div class="role-dist-list">
+            <div class="role-dist-row" *ngFor="let f of freqDistribution">
+              <span class="role-dist-label">{{ f.label }}</span>
+              <div class="role-dist-bar">
+                <div class="role-dist-fill" [style.width.%]="f.pct" [ngClass]="f.colorClass"></div>
+              </div>
+              <span class="role-dist-count">{{ f.count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prochaines échéances -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Prochaines échéances</span>
+            <button class="card-link" (click)="navigateTo('/agent/calendar')">Calendrier →</button>
+          </div>
+          <div class="echeances-list">
+            <div class="ech-item ech-blue" *ngFor="let t of upcomingDeadlines">
+              <div class="ech-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </div>
+              <div class="ech-body">
+                <div class="ech-code">{{ t.code }}</div>
+                <div class="ech-name">{{ t.nom }}</div>
+                <div class="ech-status">{{ t.dateLimite }}</div>
+              </div>
+              <span class="freq-badge" [ngClass]="getFrequenceBadgeClass(t.frequence)">{{ t.frequence }}</span>
+            </div>
+            <div *ngIf="upcomingDeadlines.length === 0" class="empty-row">Aucune échéance configurée</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tous les types actifs -->
+      <div class="card" style="margin-top: 14px">
+        <div class="card-head">
+          <span class="card-title">Types BCT actifs</span>
+          <button class="card-link" (click)="activeTab='types'">Gérer →</button>
+        </div>
+        <div class="types-list">
+          <div class="type-row" *ngFor="let t of declarationTypes.slice(0,6)">
+            <span class="code-badge">{{ t.code }}</span>
+            <div class="type-info">
+              <div class="type-name">{{ t.nom }}</div>
+              <div class="type-meta">
+                <span class="format-badge" [ngClass]="getFormatBadgeClass(t.format)">{{ t.format }}</span>
+                <span class="freq-badge" [ngClass]="getFrequenceBadgeClass(t.frequence)">{{ t.frequence }}</span>
+              </div>
+            </div>
+            <span class="status-dot-sm" [class.dot-green]="t.actif" [class.dot-gray]="!t.actif"></span>
+          </div>
+          <div *ngIf="declarationTypes.length === 0" class="empty-row">Aucun type configuré</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════ TAB: TYPES BCT ══════ -->
+    <div *ngIf="activeTab==='types' && !loading">
+
       <div class="stats-grid">
         <div class="stat-card stat-primary">
           <div class="stat-icon">
@@ -102,14 +226,7 @@
         </div>
       </div>
 
-      <!-- LOADING -->
-      <div *ngIf="loading" class="loading-overlay">
-        <div class="spinner"></div>
-        <p>Chargement des données...</p>
-      </div>
-
-      <!-- TABLE -->
-      <div class="table-card" *ngIf="!loading">
+      <div class="table-card">
         <table class="users-table">
           <colgroup>
             <col style="width: 105px">
@@ -186,15 +303,14 @@
                   </svg>
                 </div>
                 <p class="empty-message">Aucun type de déclaration trouvé</p>
-                <button (click)="loadDeclarationTypes()" class="btn-refresh">🔄 Rafraîchir</button>
+                <button (click)="loadDeclarationTypes()" class="btn-refresh">Rafraîchir</button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- PAGINATION -->
-      <div class="pagination-section" *ngIf="declarationTypes.length > 0 && !loading">
+      <div class="pagination-section" *ngIf="declarationTypes.length > 0">
         <div class="pagination-info">Page {{ currentPage }} / {{ totalPages }}</div>
         <div class="pagination-controls">
           <button class="btn-pagination" [disabled]="currentPage === 1" (click)="previousPage()">◀ Précédent</button>
@@ -202,223 +318,350 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ============================================ -->
-  <!-- CREATE MODAL — simplifié                    -->
-  <!-- ============================================ -->
-  <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>➕ Nouveau type de déclaration</h2>
-        <button class="btn-close" (click)="closeCreateModal()">✕</button>
+    <!-- ══════ TAB: PAR FRÉQUENCE ══════ -->
+    <div *ngIf="activeTab==='byFrequence' && !loading">
+
+      <div class="metrics-grid">
+        <div class="metric-card" *ngFor="let f of freqDistribution">
+          <div class="metric-label">{{ f.label }}</div>
+          <div class="metric-val">{{ f.count }}</div>
+          <div class="metric-sub">
+            <span class="chip chip-gray">type(s)</span>
+          </div>
+        </div>
       </div>
-      <div class="modal-body">
 
-        <div class="form-group">
-          <label>Code *</label>
-          <input type="text"
-                 [(ngModel)]="newDeclarationType.code"
-                 placeholder="Ex: BCT_001"
-                 [class.input-error]="!newDeclarationType.code && formSubmitted"/>
-          <span class="error-message" *ngIf="!newDeclarationType.code && formSubmitted">Ce champ est obligatoire</span>
-        </div>
-
-        <div class="form-group">
-          <label>Nom *</label>
-          <input type="text"
-                 [(ngModel)]="newDeclarationType.nom"
-                 placeholder="Ex: Déclaration mensuelle des positions de change"
-                 [class.input-error]="!newDeclarationType.nom && formSubmitted"/>
-          <span class="error-message" *ngIf="!newDeclarationType.nom && formSubmitted">Ce champ est obligatoire</span>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Format *</label>
-            <select [(ngModel)]="newDeclarationType.format">
-              <option *ngFor="let f of formatOptions" [value]="f">{{ f }}</option>
-            </select>
+      <div *ngFor="let f of freqDistribution">
+        <div class="card" *ngIf="f.count > 0" style="margin-bottom: 14px">
+          <div class="card-head">
+            <span class="card-title">{{ f.label }}</span>
+            <span class="freq-badge" [ngClass]="getFrequenceBadgeClass(f.key)">{{ f.count }} type(s)</span>
           </div>
-          <div class="form-group">
-            <label>Fréquence *</label>
-            <select [(ngModel)]="newDeclarationType.frequence">
-              <option *ngFor="let f of frequenceOptions" [value]="f">{{ f }}</option>
-            </select>
+          <div class="types-list">
+            <div class="type-row" *ngFor="let t of getTypesByFreq(f.key)">
+              <span class="code-badge">{{ t.code }}</span>
+              <div class="type-info">
+                <div class="type-name">{{ t.nom }}</div>
+                <div class="type-meta">
+                  <span class="format-badge" [ngClass]="getFormatBadgeClass(t.format)">{{ t.format }}</span>
+                  <span class="date-text text-sm">{{ t.dateLimite }}</span>
+                </div>
+              </div>
+              <div class="action-buttons">
+                <button (click)="openEditModal(t)" class="btn-action btn-edit" title="Modifier">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+              </div>
+              <span class="status-dot-sm" [class.dot-green]="t.actif" [class.dot-gray]="!t.actif"></span>
+            </div>
           </div>
         </div>
-
-        <div class="form-group">
-          <label>Date limite *</label>
-          <input type="text"
-                 [(ngModel)]="newDeclarationType.dateLimite"
-                 placeholder="Ex: Dernier jour ouvrable du mois"
-                 [class.input-error]="!newDeclarationType.dateLimite && formSubmitted"/>
-          <span class="error-message" *ngIf="!newDeclarationType.dateLimite && formSubmitted">Ce champ est obligatoire</span>
-        </div>
-
-        <div class="form-group">
-          <div class="checkbox-wrapper">
-            <input type="checkbox" id="actifCheckbox" [(ngModel)]="newDeclarationType.actif"/>
-            <label for="actifCheckbox">Type actif</label>
-          </div>
-        </div>
-
       </div>
-      <div class="modal-footer">
-        <button (click)="closeCreateModal()" class="btn-secondary">Annuler</button>
-        <button (click)="createDeclarationType()" class="btn-primary" [disabled]="loading">
-          {{ loading ? 'Création...' : 'Créer' }}
-        </button>
+
+      <div class="empty-row" *ngIf="declarationTypes.length === 0">Aucun type configuré</div>
+    </div>
+
+    <!-- ══════ TAB: INACTIFS ══════ -->
+    <div *ngIf="activeTab==='inactifs' && !loading">
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Types inactifs</div>
+          <div class="metric-val metric-amber">{{ getInactiveCount() }}</div>
+          <div class="metric-sub">
+            <span class="chip chip-amber" *ngIf="getInactiveCount() > 0">À vérifier</span>
+            <span class="chip chip-green" *ngIf="getInactiveCount() === 0">Aucun</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Types actifs</div>
+          <div class="metric-val metric-green">{{ getActiveCount() }}</div>
+          <div class="metric-sub"><span class="chip chip-green">En service</span></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total</div>
+          <div class="metric-val">{{ declarationTypes.length }}</div>
+          <div class="metric-sub"><span class="chip chip-blue">Configurés</span></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Taux d'activité</div>
+          <div class="metric-val metric-green">
+            {{ declarationTypes.length ? (getActiveCount() / declarationTypes.length * 100 | number:'1.0-0') : 0 }} %
+          </div>
+          <div class="metric-sub"><span class="chip chip-green">Actifs</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0">
+        <div class="card-head" style="padding: 14px 16px">
+          <span class="card-title">Types inactifs</span>
+        </div>
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>CODE</th>
+              <th>NOM</th>
+              <th>FORMAT</th>
+              <th>FRÉQUENCE</th>
+              <th>DATE LIMITE</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of inactifTypes" class="disabled-row">
+              <td><span class="code-badge">{{ t.code }}</span></td>
+              <td style="font-weight:500">{{ t.nom }}</td>
+              <td><span class="format-badge" [ngClass]="getFormatBadgeClass(t.format)">{{ t.format }}</span></td>
+              <td><span class="freq-badge" [ngClass]="getFrequenceBadgeClass(t.frequence)">{{ t.frequence }}</span></td>
+              <td class="text-muted">{{ t.dateLimite }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button (click)="toggleStatus(t)" class="btn-action btn-toggle" title="Réactiver">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </button>
+                  <button (click)="openEditModal(t)" class="btn-action btn-edit" title="Modifier">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <button (click)="deleteDeclarationType(t)" class="btn-action btn-delete" title="Supprimer">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="inactifTypes.length === 0">
+              <td colspan="6" class="empty-state">
+                <p class="empty-message">Aucun type inactif — tout est en service !</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
+
   </div>
+</div>
 
-  <!-- ============================================ -->
-  <!-- EDIT MODAL — simplifié                      -->
-  <!-- ============================================ -->
-  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>✏️ Modifier le type de déclaration</h2>
-        <button class="btn-close" (click)="closeEditModal()">✕</button>
+<!-- ============================================ -->
+<!-- CREATE MODAL                                -->
+<!-- ============================================ -->
+<div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>➕ Nouveau type de déclaration</h2>
+      <button class="btn-close" (click)="closeCreateModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-group">
+        <label>Code *</label>
+        <input type="text" [(ngModel)]="newDeclarationType.code" placeholder="Ex: BCT_001"
+               [class.input-error]="!newDeclarationType.code && formSubmitted"/>
+        <span class="error-message" *ngIf="!newDeclarationType.code && formSubmitted">Ce champ est obligatoire</span>
       </div>
-      <div class="modal-body">
 
-        <div class="form-group">
-          <label>Code</label>
-          <input type="text" [(ngModel)]="editDeclarationType.code" disabled/>
-          <small class="form-hint">Le code ne peut pas être modifié</small>
-        </div>
-
-        <div class="form-group">
-          <label>Nom *</label>
-          <input type="text" [(ngModel)]="editDeclarationType.nom"/>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Format *</label>
-            <select [(ngModel)]="editDeclarationType.format">
-              <option *ngFor="let f of formatOptions" [value]="f">{{ f }}</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Fréquence *</label>
-            <select [(ngModel)]="editDeclarationType.frequence">
-              <option *ngFor="let f of frequenceOptions" [value]="f">{{ f }}</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Date limite *</label>
-          <input type="text" [(ngModel)]="editDeclarationType.dateLimite"/>
-        </div>
-
-        <div class="form-group">
-          <div class="checkbox-wrapper">
-            <input type="checkbox" id="editActifCheckbox" [(ngModel)]="editDeclarationType.actif"/>
-            <label for="editActifCheckbox">Type actif</label>
-          </div>
-        </div>
-
+      <div class="form-group">
+        <label>Nom *</label>
+        <input type="text" [(ngModel)]="newDeclarationType.nom"
+               placeholder="Ex: Déclaration mensuelle des positions de change"
+               [class.input-error]="!newDeclarationType.nom && formSubmitted"/>
+        <span class="error-message" *ngIf="!newDeclarationType.nom && formSubmitted">Ce champ est obligatoire</span>
       </div>
-      <div class="modal-footer">
-        <button (click)="closeEditModal()" class="btn-secondary">Annuler</button>
-        <button (click)="saveDeclarationType()" class="btn-primary" [disabled]="loading">
-          {{ loading ? 'Enregistrement...' : 'Enregistrer' }}
-        </button>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Format *</label>
+          <select [(ngModel)]="newDeclarationType.format">
+            <option *ngFor="let f of formatOptions" [value]="f">{{ f }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fréquence *</label>
+          <select [(ngModel)]="newDeclarationType.frequence">
+            <option *ngFor="let f of frequenceOptions" [value]="f">{{ f }}</option>
+          </select>
+        </div>
       </div>
+
+      <div class="form-group">
+        <label>Date limite *</label>
+        <input type="text" [(ngModel)]="newDeclarationType.dateLimite"
+               placeholder="Ex: Dernier jour ouvrable du mois"
+               [class.input-error]="!newDeclarationType.dateLimite && formSubmitted"/>
+        <span class="error-message" *ngIf="!newDeclarationType.dateLimite && formSubmitted">Ce champ est obligatoire</span>
+      </div>
+
+      <div class="form-group">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="actifCheckbox" [(ngModel)]="newDeclarationType.actif"/>
+          <label for="actifCheckbox">Type actif</label>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button (click)="closeCreateModal()" class="btn-secondary">Annuler</button>
+      <button (click)="createDeclarationType()" class="btn-primary" [disabled]="loading">
+        {{ loading ? 'Création...' : 'Créer' }}
+      </button>
     </div>
   </div>
+</div>
 
-  <!-- ============================================ -->
-  <!-- DETAILS MODAL                               -->
-  <!-- ============================================ -->
-  <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
-    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>📋 Détails du type de déclaration</h2>
-        <button class="btn-close" (click)="closeDetailsModal()">✕</button>
+<!-- ============================================ -->
+<!-- EDIT MODAL                                  -->
+<!-- ============================================ -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>✏️ Modifier le type de déclaration</h2>
+      <button class="btn-close" (click)="closeEditModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-group">
+        <label>Code</label>
+        <input type="text" [(ngModel)]="editDeclarationType.code" disabled/>
+        <small class="form-hint">Le code ne peut pas être modifié</small>
       </div>
-      <div class="modal-body" *ngIf="selectedDeclarationType">
 
-        <div class="details-section">
-          <h3>Informations générales</h3>
-          <div class="details-grid">
-            <div class="detail-item">
-              <span class="detail-label">Code:</span>
-              <span class="detail-value">{{ selectedDeclarationType.code }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Nom:</span>
-              <span class="detail-value">{{ selectedDeclarationType.nom }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Format:</span>
-              <span class="detail-value">
-                <span class="format-badge" [ngClass]="getFormatBadgeClass(selectedDeclarationType.format)">
-                  {{ selectedDeclarationType.format }}
-                </span>
-              </span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Fréquence:</span>
-              <span class="detail-value">
-                <span class="freq-badge" [ngClass]="getFrequenceBadgeClass(selectedDeclarationType.frequence)">
-                  {{ selectedDeclarationType.frequence }}
-                </span>
-              </span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Date limite:</span>
-              <span class="detail-value">{{ selectedDeclarationType.dateLimite }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Statut:</span>
-              <span class="detail-value">
-                <span class="status-badge"
-                      [class.status-active]="selectedDeclarationType.actif"
-                      [class.status-inactive]="!selectedDeclarationType.actif">
-                  <span class="status-dot"></span>
-                  {{ selectedDeclarationType.actif ? 'Actif' : 'Inactif' }}
-                </span>
-              </span>
-            </div>
-          </div>
+      <div class="form-group">
+        <label>Nom *</label>
+        <input type="text" [(ngModel)]="editDeclarationType.nom"/>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Format *</label>
+          <select [(ngModel)]="editDeclarationType.format">
+            <option *ngFor="let f of formatOptions" [value]="f">{{ f }}</option>
+          </select>
         </div>
-
-        <div class="details-section">
-          <h3>Métadonnées</h3>
-          <div class="details-grid">
-            <div class="detail-item" *ngIf="selectedDeclarationType.dateCreation">
-              <span class="detail-label">Créé le:</span>
-              <span class="detail-value">{{ selectedDeclarationType.dateCreation | date:'dd/MM/yyyy HH:mm' }}</span>
-            </div>
-            <div class="detail-item" *ngIf="selectedDeclarationType.creePar">
-              <span class="detail-label">Créé par:</span>
-              <span class="detail-value">{{ selectedDeclarationType.creePar }}</span>
-            </div>
-            <div class="detail-item" *ngIf="selectedDeclarationType.derniereModification">
-              <span class="detail-label">Modifié le:</span>
-              <span class="detail-value">{{ selectedDeclarationType.derniereModification | date:'dd/MM/yyyy HH:mm' }}</span>
-            </div>
-            <div class="detail-item" *ngIf="selectedDeclarationType.modifiePar">
-              <span class="detail-label">Modifié par:</span>
-              <span class="detail-value">{{ selectedDeclarationType.modifiePar }}</span>
-            </div>
-          </div>
+        <div class="form-group">
+          <label>Fréquence *</label>
+          <select [(ngModel)]="editDeclarationType.frequence">
+            <option *ngFor="let f of frequenceOptions" [value]="f">{{ f }}</option>
+          </select>
         </div>
+      </div>
 
+      <div class="form-group">
+        <label>Date limite *</label>
+        <input type="text" [(ngModel)]="editDeclarationType.dateLimite"/>
       </div>
-      <div class="modal-footer">
-        <button (click)="closeDetailsModal()" class="btn-secondary">Fermer</button>
-        <button (click)="openEditModal(selectedDeclarationType!); closeDetailsModal()" class="btn-primary">
-          ✏️ Modifier
-        </button>
+
+      <div class="form-group">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="editActifCheckbox" [(ngModel)]="editDeclarationType.actif"/>
+          <label for="editActifCheckbox">Type actif</label>
+        </div>
       </div>
+
+    </div>
+    <div class="modal-footer">
+      <button (click)="closeEditModal()" class="btn-secondary">Annuler</button>
+      <button (click)="saveDeclarationType()" class="btn-primary" [disabled]="loading">
+        {{ loading ? 'Enregistrement...' : 'Enregistrer' }}
+      </button>
     </div>
   </div>
+</div>
 
+<!-- ============================================ -->
+<!-- DETAILS MODAL                               -->
+<!-- ============================================ -->
+<div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
+  <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>📋 Détails du type de déclaration</h2>
+      <button class="btn-close" (click)="closeDetailsModal()">✕</button>
+    </div>
+    <div class="modal-body" *ngIf="selectedDeclarationType">
+
+      <div class="details-section">
+        <h3>Informations générales</h3>
+        <div class="details-grid">
+          <div class="detail-item">
+            <span class="detail-label">Code:</span>
+            <span class="detail-value">{{ selectedDeclarationType.code }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Nom:</span>
+            <span class="detail-value">{{ selectedDeclarationType.nom }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Format:</span>
+            <span class="detail-value">
+              <span class="format-badge" [ngClass]="getFormatBadgeClass(selectedDeclarationType.format)">
+                {{ selectedDeclarationType.format }}
+              </span>
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Fréquence:</span>
+            <span class="detail-value">
+              <span class="freq-badge" [ngClass]="getFrequenceBadgeClass(selectedDeclarationType.frequence)">
+                {{ selectedDeclarationType.frequence }}
+              </span>
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Date limite:</span>
+            <span class="detail-value">{{ selectedDeclarationType.dateLimite }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Statut:</span>
+            <span class="detail-value">
+              <span class="status-badge"
+                    [class.status-active]="selectedDeclarationType.actif"
+                    [class.status-inactive]="!selectedDeclarationType.actif">
+                <span class="status-dot"></span>
+                {{ selectedDeclarationType.actif ? 'Actif' : 'Inactif' }}
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="details-section">
+        <h3>Métadonnées</h3>
+        <div class="details-grid">
+          <div class="detail-item" *ngIf="selectedDeclarationType.dateCreation">
+            <span class="detail-label">Créé le:</span>
+            <span class="detail-value">{{ selectedDeclarationType.dateCreation | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedDeclarationType.creePar">
+            <span class="detail-label">Créé par:</span>
+            <span class="detail-value">{{ selectedDeclarationType.creePar }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedDeclarationType.derniereModification">
+            <span class="detail-label">Modifié le:</span>
+            <span class="detail-value">{{ selectedDeclarationType.derniereModification | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedDeclarationType.modifiePar">
+            <span class="detail-label">Modifié par:</span>
+            <span class="detail-value">{{ selectedDeclarationType.modifiePar }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button (click)="closeDetailsModal()" class="btn-secondary">Fermer</button>
+      <button (click)="openEditModal(selectedDeclarationType!); closeDetailsModal()" class="btn-primary">
+        ✏️ Modifier
+      </button>
+    </div>
+  </div>
 </div>

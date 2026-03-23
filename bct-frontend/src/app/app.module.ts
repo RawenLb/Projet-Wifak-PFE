@@ -13,6 +13,7 @@ import { DashboardLayoutComponent } from './dashboard-layout/dashboard-layout.co
 import { DeclarationManagementComponent } from './declaration-management/declaration-management.component';
 import { AgentLayoutComponent } from './agent-layout/agent-layout.component';
 import { DeclarationCalendarComponent } from './declaration-calendar/declaration-calendar.component';
+import { AgentDashboardComponent } from './agent-dashboard/agent-dashboard.component';
 export function kcFactory() {
   return () =>
     keycloak.init({
@@ -55,6 +56,7 @@ export function kcFactory() {
     DeclarationManagementComponent,
     AgentLayoutComponent,
     DeclarationCalendarComponent,
+    AgentDashboardComponent,
   ],
   imports: [
     BrowserModule,

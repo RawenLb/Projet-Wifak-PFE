@@ -22,10 +22,18 @@
     
     <nav class="nav-menu">
       <!-- Dashboard -->
-<a class="nav-item" 
-   [routerLink]="['/agent/declarations']" 
-   [class.active]="isActive('/agent/declarations')">
-  <span class="nav-icon">...</span>
+<a class="nav-item"
+   [routerLink]="['/agent/dashboard']"
+   [class.active]="isActive('/agent/dashboard')">
+  <span class="nav-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="7" height="7"/>
+      <rect x="14" y="3" width="7" height="7"/>
+      <rect x="3" y="14" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/>
+    </svg>
+  </span>
   <span class="nav-text">Tableau de bord</span>
 </a>
 

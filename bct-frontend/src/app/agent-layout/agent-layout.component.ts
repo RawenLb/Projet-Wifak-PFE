@@ -2,8 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { KeycloakAdminService } from '../services/keycloak-admin.service';
-import { DeclarationService } from '../services/Declaration.service';
-
+import { DeclarationService } from '../services/declaration.service';
 @Component({
   selector: 'app-agent-layout',
   templateUrl: './agent-layout.component.html',

@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { DeclarationService, Declaration } from '../services/Declaration.service';
-
+import { DeclarationService, Declaration } from '../services/declaration.service';
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
 export interface CalendarCell {

@@ -1,223 +1,169 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import keycloak from '../services/keycloak.service';
-import { AuthService } from '../services/auth.service';
-
+import { KeycloakAdminService, KeycloakUser } from '../services/keycloak-admin.service';
+import { DeclarationTypeService, DeclarationType } from '../services/declaration-type.service';
+import { DeclarationService, Declaration, DeclarationStats } from '../services/declaration.service';
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  
-  // Test results
-  publicResult: string = '';
-  adminResult: string = '';
-  agentResult: string = '';
-  managerResult: string = '';
-  auditorResult: string = '';
-  
-  // Show/hide test panel
-  showTests: boolean = false;
+
+activeTab: 'overview' | 'declarations' | 'types' = 'overview';  // ← remplace 'alerts' par 'types'
+
+today = new Date().toLocaleDateString('fr-FR', { 
+  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+});
+  searchQuery = '';
+
+  // Real data
+  recentUsers: KeycloakUser[] = [];
+  recentDeclarationTypes: DeclarationType[] = [];
+  allDeclarations: Declaration[] = [];
+  stats: DeclarationStats = {
+    total: 0, generees: 0, enValidation: 0,
+    validees: 0, rejetees: 0, envoyees: 0
+  };
+
+  loadingUsers = false;
+  loadingTypes = false;
+  loadingDeclarations = false;
+
+  // Upcoming deadlines (from declaration types with dateLimite)
+  upcomingDeadlines: DeclarationType[] = [];
 
   constructor(
-    private router: Router, 
-    public auth: AuthService,
-    private http: HttpClient
+    private router: Router,
+    private kcAdmin: KeycloakAdminService,
+    private declarationTypeService: DeclarationTypeService,
+    private declarationService: DeclarationService
   ) {}
 
-  // ✅ NOUVEAU: Redirection automatique selon le rôle au chargement
   ngOnInit(): void {
-    // Si l'utilisateur est déjà authentifié, rediriger vers son dashboard
-    if (this.isLoggedIn()) {
-      this.redirectBasedOnRole();
-    }
+    this.loadUsers();
+    this.loadDeclarationTypes();
+    this.loadDeclarations();
+    this.loadStats();
   }
 
-  /**
-   * ✅ NOUVEAU: Rediriger l'utilisateur selon son rôle
-   */
-  redirectBasedOnRole(): void {
-    console.log('🔄 Vérification du rôle pour redirection...');
-    
-    if (this.auth.isAgent()) {
-      console.log('✅ Rôle: AGENT → Redirection vers /agent/declarations');
-      this.router.navigate(['/agent/declarations']);
-    } 
-    else if (this.auth.isAdmin()) {
-      console.log('✅ Rôle: ADMIN → Redirection vers /dashboard');
-      this.router.navigate(['/dashboard']);
-    } 
-    else if (this.auth.isManager()) {
-      console.log('✅ Rôle: MANAGER → Redirection vers /manager');
-      this.router.navigate(['/manager']);
-    } 
-    else if (this.auth.isAuditor()) {
-      console.log('✅ Rôle: AUDITOR → Redirection vers /auditor');
-      this.router.navigate(['/auditor']);
-    }
-    else {
-      console.log('⚠️ Rôle non reconnu, reste sur la page home');
-    }
+  loadUsers(): void {
+    this.loadingUsers = true;
+    this.kcAdmin.getUsers().subscribe({
+      next: (users) => {
+        this.recentUsers = users.slice(0, 5); // 5 most recent
+        this.loadingUsers = false;
+      },
+      error: () => { this.loadingUsers = false; }
+    });
   }
 
-  login() {
-    keycloak.login();
+  loadDeclarationTypes(): void {
+    this.loadingTypes = true;
+    this.declarationTypeService.getAll().subscribe({
+      next: (types) => {
+        this.recentDeclarationTypes = types.slice(0, 5);
+        this.upcomingDeadlines = types.filter(t => t.actif).slice(0, 4);
+        this.loadingTypes = false;
+      },
+      error: () => { this.loadingTypes = false; }
+    });
   }
 
-  logout() {
-    keycloak.logout({ redirectUri: 'http://localhost:4200' });
+  loadDeclarations(): void {
+    this.loadingDeclarations = true;
+    this.declarationService.getAllDeclarations().subscribe({
+      next: (declarations) => {
+        this.allDeclarations = declarations;
+        this.loadingDeclarations = false;
+      },
+      error: () => { this.loadingDeclarations = false; }
+    });
   }
 
-  register() {
-    keycloak.register();
+  loadStats(): void {
+    this.declarationService.getStats().subscribe({
+      next: (stats) => { this.stats = stats; },
+      error: () => {}
+    });
   }
 
-  isLoggedIn(): boolean {
-    return !!keycloak.authenticated;
+  // Declarations filtered for tab
+  get filteredDeclarations(): Declaration[] {
+    if (!this.searchQuery.trim()) return this.allDeclarations;
+    const q = this.searchQuery.toLowerCase();
+    return this.allDeclarations.filter(d =>
+      d.declarationType?.code?.toLowerCase().includes(q) ||
+      d.declarationType?.nom?.toLowerCase().includes(q) ||
+      d.statut?.toLowerCase().includes(q)
+    );
   }
 
-  // ✅ MODIFIÉ: goToDashboard maintenant utilise redirectBasedOnRole
-  goToDashboard() {
-    if (this.isLoggedIn()) {
-      this.redirectBasedOnRole();
-    } else {
-      this.login();
-    }
+  get recentDeclarations(): Declaration[] {
+    return this.allDeclarations.slice(0, 5);
   }
 
-  toggleTests() {
-    this.showTests = !this.showTests;
+  // Helpers
+  getInitials(user: KeycloakUser): string {
+    const f = user.firstName?.charAt(0)?.toUpperCase() || '';
+    const l = user.lastName?.charAt(0)?.toUpperCase() || '';
+    return f + l || user.username?.charAt(0)?.toUpperCase() || '?';
   }
 
-  // ========== BACKEND API TESTS ==========
-
-  testPublic(): void {
-    console.log('📡 Testing PUBLIC endpoint...');
-    this.publicResult = '⏳ Loading...';
-    
-    this.http.get('http://localhost:8082/api/test/public/hello', { responseType: 'text' })
-      .subscribe({
-        next: (response) => {
-          this.publicResult = '✅ ' + response;
-          console.log('✅ Public endpoint response:', response);
-        },
-        error: (error) => {
-          this.publicResult = '❌ Error: ' + error.message;
-          console.error('❌ Public endpoint error:', error);
-        }
-      });
+  getAvatarColor(username: string): string {
+    const colors = ['#1E40AF','#15803D','#B45309','#6B7280','#7C3AED','#DC2626'];
+    const hash = (username || '').split('').reduce((acc, c) => c.charCodeAt(0) + ((acc << 5) - acc), 0);
+    return colors[Math.abs(hash) % colors.length];
   }
 
-  testAdmin(): void {
-    console.log('📡 Testing ADMIN endpoint...');
-    this.adminResult = '⏳ Loading...';
-    
-    this.http.get('http://localhost:8082/api/test/admin', { responseType: 'text' })
-      .subscribe({
-        next: (response) => {
-          this.adminResult = '✅ ' + response;
-          console.log('✅ Admin endpoint response:', response);
-        },
-        error: (error) => {
-          this.adminResult = '❌ Error ' + error.status + ': Access Denied';
-          console.error('❌ Admin endpoint error:', error);
-        }
-      });
+  getPrimaryRole(user: KeycloakUser): string {
+    const roles = user.roles || [];
+    if (roles.includes('ROLE_ADMIN')) return 'Administrateur';
+    if (roles.includes('ROLE_MANAGER')) return 'Responsable';
+    if (roles.includes('ROLE_AGENT')) return 'Agent Déclarant';
+    if (roles.includes('ROLE_AUDITOR')) return 'Auditeur';
+    return 'Utilisateur';
   }
 
-  testAgent(): void {
-    console.log('📡 Testing AGENT endpoint...');
-    this.agentResult = '⏳ Loading...';
-    
-    this.http.get('http://localhost:8082/api/test/agent', { responseType: 'text' })
-      .subscribe({
-        next: (response) => {
-          this.agentResult = '✅ ' + response;
-          console.log('✅ Agent endpoint response:', response);
-        },
-        error: (error) => {
-          this.agentResult = '❌ Error ' + error.status + ': Access Denied';
-          console.error('❌ Agent endpoint error:', error);
-        }
-      });
+  getRoleClass(user: KeycloakUser): string {
+    const roles = user.roles || [];
+    if (roles.includes('ROLE_ADMIN')) return 'role-admin';
+    if (roles.includes('ROLE_MANAGER')) return 'role-manager';
+    if (roles.includes('ROLE_AGENT')) return 'role-agent';
+    if (roles.includes('ROLE_AUDITOR')) return 'role-auditor';
+    return '';
   }
 
-  testManager(): void {
-    console.log('📡 Testing MANAGER endpoint...');
-    this.managerResult = '⏳ Loading...';
-    
-    this.http.get('http://localhost:8082/api/test/manager', { responseType: 'text' })
-      .subscribe({
-        next: (response) => {
-          this.managerResult = '✅ ' + response;
-          console.log('✅ Manager endpoint response:', response);
-        },
-        error: (error) => {
-          this.managerResult = '❌ Error ' + error.status + ': Access Denied';
-          console.error('❌ Manager endpoint error:', error);
-        }
-      });
+  getStatutClass(statut: string): string {
+    const map: Record<string, string> = {
+      'EN_VALIDATION': 'chip-amber',
+      'VALIDEE': 'chip-green',
+      'ENVOYEE': 'chip-green',
+      'REJETEE': 'chip-red',
+      'GENEREE': 'chip-blue',
+      'BROUILLON': 'chip-gray'
+    };
+    return map[statut] || 'chip-gray';
   }
 
-  testAuditor(): void {
-    console.log('📡 Testing AUDITOR endpoint...');
-    this.auditorResult = '⏳ Loading...';
-    
-    this.http.get('http://localhost:8082/api/test/auditor', { responseType: 'text' })
-      .subscribe({
-        next: (response) => {
-          this.auditorResult = '✅ ' + response;
-          console.log('✅ Auditor endpoint response:', response);
-        },
-        error: (error) => {
-          this.auditorResult = '❌ Error ' + error.status + ': Access Denied';
-          console.error('❌ Auditor endpoint error:', error);
-        }
-      });
+  getFormatClass(format: string): string {
+    const map: Record<string, string> = {
+      'XML': 'format-xml', 'CSV': 'format-csv',
+      'TXT': 'format-txt', 'PDF': 'format-pdf'
+    };
+    return map[format] || '';
   }
 
-  
-  activeTab: 'overview' | 'declarations' | 'alerts' = 'overview';
-  searchQuery = '';
- 
-  recentDeclarations = [
-    { code: 'BCT_01', type: 'Hebdomadaire', statut: 'En attente', echeance: 'J-1', urgent: true },
-    { code: 'BCT_03', type: 'Mensuelle',    statut: 'Validée',    echeance: '10/04', urgent: false },
-    { code: 'BCT_07', type: 'Trimestrielle',statut: 'Rejetée',    echeance: 'En retard', urgent: true },
-    { code: 'BCT_02', type: 'Mensuelle',    statut: 'Générée',    echeance: '15/04', urgent: false },
-    { code: 'BCT_05', type: 'Hebdomadaire', statut: 'Envoyée',    echeance: '24/03', urgent: false },
-  ];
- 
-  allDeclarations = [
-    { code: 'BCT_01', nom: 'Déclaration hebdomadaire positions', frequence: 'Hebdo',    format: 'XML', statut: 'En attente', agent: 'A. Ben Ali',        echeance: '25/03', urgent: true  },
-    { code: 'BCT_03', nom: 'Rapport mensuel portefeuille',       frequence: 'Mensuel',  format: 'TXT', statut: 'Validée',    agent: 'S. Tlili',          echeance: '10/04', urgent: false },
-    { code: 'BCT_07', nom: 'Déclaration trimestrielle crédits',  frequence: 'Trimestr.',format: 'XML', statut: 'Rejetée',    agent: 'M. Hamdi',          echeance: 'Retard', urgent: true  },
-    { code: 'BCT_02', nom: 'Déclaration mensuelle dépôts',       frequence: 'Mensuel',  format: 'TXT', statut: 'Générée',    agent: 'A. Ben Ali',        echeance: '15/04', urgent: false },
-    { code: 'BCT_05', nom: 'Déclaration hebdomadaire liquidité', frequence: 'Hebdo',    format: 'XML', statut: 'Envoyée',    agent: 'S. Tlili',          echeance: '24/03', urgent: false },
-  ];
- 
-  recentUsers = [
-    { initials: 'AK', name: 'Admin Karim',        email: 'a.karim@wifak.tn',       role: 'Administrateur',  active: true,  color: '#1E40AF' },
-    { initials: 'ST', name: 'Sarra Tlili',         email: 's.tlili@wifak.tn',        role: 'Agent Déclarant', active: true,  color: '#15803D' },
-    { initials: 'MK', name: 'Mohamed Kameleddine', email: 'm.kameleddine@wifak.tn', role: 'Responsable',     active: true,  color: '#B45309' },
-    { initials: 'RB', name: 'Rim Ben Amor',        email: 'r.benamor@wifak.tn',     role: 'Auditeur',        active: true,  color: '#6B7280' },
-    { initials: 'AB', name: 'Aymen Ben Ali',       email: 'a.benali@wifak.tn',      role: 'Agent Déclarant', active: false, color: '#9CA3AF' },
-  ];
- 
-  iaAlerts = [
-    { level: 'high',   levelLabel: 'Élevé',  text: '<b>BCT_07</b> — Anomalie détectée : variation +58% vs historique 12 mois',  time: 'Il y a 2h' },
-    { level: 'medium', levelLabel: 'Moyen',  text: '<b>BCT_01</b> — Risque de retard estimé 72%. Échéance demain.',              time: 'Il y a 4h' },
-    { level: 'medium', levelLabel: 'Moyen',  text: '<b>BCT_03</b> — Champ obligatoire manquant détecté avant envoi',             time: 'Hier' },
-    { level: 'info',   levelLabel: 'Info',   text: '<b>BCT_09</b> — Rappel automatique J-5 envoyé à 3 agents',                  time: 'Hier' },
-  ];
- 
-  allAlerts = [
-    { level: 'high',   text: '<b>BCT_07 — Anomalie critique</b> : variation de +58% détectée par rapport à la moyenne des 12 derniers mois. Validation bloquée.', time: '25/03/2025 à 09:14', score: '92/100' },
-    { level: 'medium', text: '<b>BCT_01 — Risque de retard élevé</b> : probabilité 72%. Échéance demain à 17h00. Déclaration en attente de validation.',           time: '25/03/2025 à 08:30', score: '72/100' },
-    { level: 'medium', text: '<b>BCT_03 — Champ obligatoire</b> : le champ "Code_ISIN" est manquant dans la ligne 47 du fichier TXT. Blocage conformité BCT.',     time: '24/03/2025 à 14:52', score: '55/100' },
-    { level: 'info',   text: '<b>BCT_09 — Rappel J-5</b> : notification envoyée à 3 agents déclarants pour l\'échéance du 30/03.',                                 time: '24/03/2025 à 08:00', score: '—' },
-  ];
- 
+  getFreqClass(freq: string): string {
+    const map: Record<string, string> = {
+      'MENSUELLE': 'freq-monthly', 'HEBDOMADAIRE': 'freq-weekly',
+      'QUOTIDIENNE': 'freq-daily', 'TRIMESTRIELLE': 'freq-quarterly',
+      'ANNUELLE': 'freq-yearly'
+    };
+    return map[freq] || '';
+  }
+
+  navigateTo(route: string): void {
+    this.router.navigate([route]);
+  }
 }
