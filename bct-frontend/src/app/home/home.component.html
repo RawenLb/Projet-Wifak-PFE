@@ -142,11 +142,12 @@
       <div class="two-col">
 
         <!-- Utilisateurs récents (réels) -->
-        <div class="card">
-          <div class="card-head">
-            <span class="card-title">Utilisateurs récents</span>
-            <button class="card-link" (click)="navigateTo('/user-management')">Gérer →</button>
-          </div>
+<!-- then in template -->
+<div class="card" *ngIf="isAdmin()">
+    <div class="card-head">
+    <span class="card-title">Utilisateurs récents</span>
+    <button class="card-link" (click)="navigateTo('/user-management')">Gérer →</button>
+  </div>
 
           <div *ngIf="loadingUsers" class="mini-loader">
             <div class="spinner-sm"></div>

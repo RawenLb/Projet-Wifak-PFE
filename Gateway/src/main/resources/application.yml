@@ -8,12 +8,22 @@ spring:
   cloud:
     gateway:
       routes:
+        # ── declaration-service (génération, lecture, download) ──
         - id: bct-backend
-          uri: lb://bct-backend
+          uri: lb://bct-backend          # nom Eureka du bct-backend existant
           predicates:
-            - Path=/api/**
+            - Path=/api/declarations/**, /api/admin/**
           filters:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+        # ── validation-service (workflow) ── NOUVEAU ──────────────
+        - id: validation-service
+          uri: lb://validation-service   # nom Eureka du nouveau service
+          predicates:
+            - Path=/api/validation/**
+          filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 

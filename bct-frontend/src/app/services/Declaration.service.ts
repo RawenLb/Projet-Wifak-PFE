@@ -1,13 +1,16 @@
+// src/app/services/declaration.service.ts
+// ✅ Ne contient PLUS les méthodes workflow (submit/validate/reject/send/pending)
+// ✅ Ces méthodes sont maintenant dans ValidationService → /api/validation/**
+
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-// ✅ Aligné avec GenerateDeclarationRequest.java (LocalDate → string "yyyy-MM-dd")
 export interface GenerateDeclarationRequest {
   declarationTypeId: number;
-  periode: string;    // format: "2025-01"
-  dateDebut: string;  // format: "2025-01-01"
-  dateFin: string;    // format: "2025-01-31"
+  periode: string;    // "2025-01"
+  dateDebut: string;  // "2025-01-01"
+  dateFin: string;    // "2025-01-31"
 }
 
 export interface Declaration {
@@ -24,15 +27,10 @@ export interface Declaration {
   periode: string;
   nomFichier?: string;
   contenuFichier?: string;
-
-  // Dates SQL utilisées à la génération
   dateDebut?: string;
   dateFin?: string;
-
-  // Traçabilité
   sqlQueryUsed?: string;
   xsdFileNameUsed?: string;
-
   dateGeneration?: string;
   dateValidation?: string;
   dateEnvoi?: string;
@@ -55,105 +53,49 @@ export interface DeclarationStats {
 })
 export class DeclarationService {
 
-  private apiUrl = 'http://localhost:8088/api/declarations';
+  // /api/declarations/** → routé vers bct-backend (8082) par l'API Gateway
+  private readonly apiUrl = 'http://localhost:8088/api/declarations';
 
   constructor(private http: HttpClient) {}
 
-  private getHeaders(): HttpHeaders {
+  private headers(): HttpHeaders {
     return new HttpHeaders({ 'Content-Type': 'application/json' });
   }
 
-  // ══════════════════════════════════════════════════════
-  // GENERATE
-  // ══════════════════════════════════════════════════════
-
+  // ─── Génération ───────────────────────────────────────────────
   generateDeclaration(request: GenerateDeclarationRequest): Observable<Declaration> {
-    return this.http.post<Declaration>(`${this.apiUrl}/generate`, request, {
-      headers: this.getHeaders()
-    });
+    return this.http.post<Declaration>(`${this.apiUrl}/generate`, request, { headers: this.headers() });
   }
 
-  // ══════════════════════════════════════════════════════
-  // READ
-  // ══════════════════════════════════════════════════════
-
+  // ─── Lecture ──────────────────────────────────────────────────
   getMyDeclarations(): Observable<Declaration[]> {
-    return this.http.get<Declaration[]>(`${this.apiUrl}/my`, {
-      headers: this.getHeaders()
-    });
+    return this.http.get<Declaration[]>(`${this.apiUrl}/my`, { headers: this.headers() });
   }
 
   getAllDeclarations(): Observable<Declaration[]> {
-    return this.http.get<Declaration[]>(this.apiUrl, {
-      headers: this.getHeaders()
-    });
+    return this.http.get<Declaration[]>(this.apiUrl, { headers: this.headers() });
   }
 
   getDeclarationById(id: number): Observable<Declaration> {
-    return this.http.get<Declaration>(`${this.apiUrl}/${id}`, {
-      headers: this.getHeaders()
-    });
+    return this.http.get<Declaration>(`${this.apiUrl}/${id}`, { headers: this.headers() });
   }
 
-  // ══════════════════════════════════════════════════════
-  // DOWNLOAD — ✅ CORRIGÉ : MIME type déduit depuis nomFichier
-  // ══════════════════════════════════════════════════════
-
+  // ─── Téléchargement ───────────────────────────────────────────
   downloadDeclaration(id: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/${id}/download`, { responseType: 'blob' });
   }
 
-  /**
-   * ✅ Résout le MIME type selon l'extension du fichier.
-   * Utilisé côté frontend pour créer le Blob avec le bon type.
-   */
   resolveMimeType(filename: string): string {
     const lower = (filename || '').toLowerCase();
     if (lower.endsWith('.csv'))  return 'text/csv;charset=UTF-8';
     if (lower.endsWith('.txt'))  return 'text/plain;charset=UTF-8';
     if (lower.endsWith('.json')) return 'application/json';
     if (lower.endsWith('.pdf'))  return 'application/pdf';
-    return 'application/xml';   // défaut XML
+    return 'application/xml';
   }
 
-  // ══════════════════════════════════════════════════════
-  // WORKFLOW
-  // ══════════════════════════════════════════════════════
-
-  submitForValidation(id: number): Observable<Declaration> {
-    return this.http.patch<Declaration>(`${this.apiUrl}/${id}/submit`, {}, {
-      headers: this.getHeaders()
-    });
-  }
-
-  validateDeclaration(id: number): Observable<Declaration> {
-    return this.http.patch<Declaration>(`${this.apiUrl}/${id}/validate`, {}, {
-      headers: this.getHeaders()
-    });
-  }
-
-  rejectDeclaration(id: number, commentaire: string): Observable<Declaration> {
-    return this.http.patch<Declaration>(`${this.apiUrl}/${id}/reject`, { commentaire }, {
-      headers: this.getHeaders()
-    });
-  }
-
-  getPendingDeclarations(): Observable<Declaration[]> {
-    return this.http.get<Declaration[]>(`${this.apiUrl}/pending`, {
-      headers: this.getHeaders()
-    });
-  }
-
-  markAsSent(id: number): Observable<Declaration> {
-    return this.http.patch<Declaration>(`${this.apiUrl}/${id}/send`, {}, {
-      headers: this.getHeaders()
-    });
-  }
-
+  // ─── Stats (lecture seule depuis declaration-service) ─────────
   getStats(): Observable<DeclarationStats> {
-    return this.http.get<DeclarationStats>(`${this.apiUrl}/stats`, {
-      headers: this.getHeaders()
-    });
+    return this.http.get<DeclarationStats>(`${this.apiUrl}/stats`, { headers: this.headers() });
   }
- 
 }

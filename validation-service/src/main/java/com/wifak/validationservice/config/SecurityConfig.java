@@ -1,4 +1,4 @@
-package com.example.bctbackend.security;
+package com.wifak.validationservice.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -44,8 +44,9 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setPrincipalClaimName("preferred_username"); // ✅ cohérence avec validation-service
-        converter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter()); // ✅ bon package
+        // ✅ FIX 1 : utilise preferred_username comme principal (même valeur dans les deux services)
+        converter.setPrincipalClaimName("preferred_username");
+        converter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
         return converter;
     }
 
@@ -55,7 +56,6 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(allowedOrigins));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 

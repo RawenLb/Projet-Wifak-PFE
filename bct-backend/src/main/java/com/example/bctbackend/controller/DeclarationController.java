@@ -70,7 +70,7 @@ public class DeclarationController {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // DOWNLOAD — ✅ CORRIGÉ : ContentType dynamique selon l'extension
+    // DOWNLOAD
     // ══════════════════════════════════════════════════════════════
 
     @GetMapping("/{id}/download")
@@ -89,7 +89,6 @@ public class DeclarationController {
                 ? declaration.getNomFichier()
                 : "declaration";
 
-        // ✅ Déduire le ContentType depuis l'extension du fichier
         MediaType mediaType = resolveMediaType(filename);
 
         log.info("📦 Envoi fichier: {} — ContentType: {}", filename, mediaType);
@@ -102,65 +101,53 @@ public class DeclarationController {
                 .body(new ByteArrayResource(content));
     }
 
-    /**
-     * ✅ Résout le MediaType selon l'extension du fichier.
-     */
     private MediaType resolveMediaType(String filename) {
         String lower = filename.toLowerCase();
         if (lower.endsWith(".csv"))  return MediaType.parseMediaType("text/csv; charset=UTF-8");
         if (lower.endsWith(".txt"))  return MediaType.parseMediaType("text/plain; charset=UTF-8");
         if (lower.endsWith(".json")) return MediaType.APPLICATION_JSON;
         if (lower.endsWith(".pdf"))  return MediaType.APPLICATION_PDF;
-        return MediaType.APPLICATION_XML; // défaut XML
+        return MediaType.APPLICATION_XML;
     }
 
     // ══════════════════════════════════════════════════════════════
-    // WORKFLOW
+    // STATS (lecture seule — la logique workflow est dans validation-service)
     // ══════════════════════════════════════════════════════════════
-
-    @PatchMapping("/{id}/submit")
-    @PreAuthorize("hasRole('AGENT')")
-    public ResponseEntity<Declaration> submitForValidation(@PathVariable Long id) {
-        log.info("📤 Soumission pour validation — ID: {}", id);
-        return ResponseEntity.ok(declarationService.submitForValidation(id));
-    }
-
-    @PatchMapping("/{id}/validate")
-    @PreAuthorize("hasRole('MANAGER')")
-    public ResponseEntity<Declaration> validateDeclaration(@PathVariable Long id) {
-        log.info("✅ Validation déclaration — ID: {}", id);
-        return ResponseEntity.ok(declarationService.validateDeclaration(id));
-    }
-
-    @PatchMapping("/{id}/reject")
-    @PreAuthorize("hasRole('MANAGER')")
-    public ResponseEntity<Declaration> rejectDeclaration(
-            @PathVariable Long id,
-            @RequestBody RejectRequest request) {
-        log.info("❌ Rejet déclaration — ID: {}", id);
-        return ResponseEntity.ok(
-                declarationService.rejectDeclaration(id, request.getCommentaire()));
-    }
-
-    @GetMapping("/pending")
-    @PreAuthorize("hasRole('MANAGER')")
-    public ResponseEntity<List<Declaration>> getPendingDeclarations() {
-        return ResponseEntity.ok(declarationService.getPendingDeclarations());
-    }
-
-    @PatchMapping("/{id}/send")
-
-    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN')")
-    public ResponseEntity<Declaration> markAsSent(@PathVariable Long id) {
-        log.info("📨 Marquage comme envoyée — ID: {}", id);
-        return ResponseEntity.ok(declarationService.markAsSent(id));
-    }
 
     @GetMapping("/stats")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<DeclarationService.DeclarationStats> getStats() {
         return ResponseEntity.ok(declarationService.getStats());
     }
+
+    // ══════════════════════════════════════════════════════════════
+    // ENDPOINT INTERNE — appelé par validation-service via Feign
+    // NE PAS exposer directement côté Angular
+    // ══════════════════════════════════════════════════════════════
+
+    /**
+     * Met à jour le statut d'une déclaration.
+     * Invoqué exclusivement par le validation-service via Feign Client.
+     *
+     * @param id          ID de la déclaration
+     * @param statut      Nouveau statut : EN_VALIDATION | VALIDEE | REJETEE | ENVOYEE
+     * @param commentaire Commentaire de rejet (obligatoire si statut = REJETEE)
+     * @param validePar   Username du manager (obligatoire si statut = VALIDEE | REJETEE)
+     */
+    @PostMapping("/{id}/statut")
+    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN')")
+    public ResponseEntity<Declaration> updateStatut(
+            @PathVariable Long id,
+            @RequestParam String statut,
+            @RequestParam(required = false) String commentaire,
+            @RequestParam(required = false) String validePar) {
+
+        log.info("🔄 [INTERNE] Mise à jour statut — ID: {} → statut: {}", id, statut);
+        Declaration updated = declarationService.updateStatut(id, statut, commentaire, validePar);
+        log.info("✅ [INTERNE] Statut mis à jour — ID: {}", id);
+        return ResponseEntity.ok(updated);
+    }
+
 
     // ══════════════════════════════════════════════════════════════
     // INNER CLASS
@@ -171,7 +158,17 @@ public class DeclarationController {
 
         public RejectRequest() {}
 
-        public String getCommentaire()               { return commentaire; }
-        public void setCommentaire(String c)         { this.commentaire = c; }
+        public String getCommentaire()           { return commentaire; }
+        public void setCommentaire(String c)     { this.commentaire = c; }
     }
+
+    // ══════════════════════════════════════════════════════════════
+    // WORKFLOW — SUPPRIMÉ (migré vers validation-service)
+    // Les endpoints suivants ont été retirés :
+    //   PATCH /{id}/submit   → POST /api/validation/{id}/submit
+    //   PATCH /{id}/validate → POST /api/validation/{id}/validate
+    //   PATCH /{id}/reject   → POST /api/validation/{id}/reject
+    //   PATCH /{id}/send     → POST /api/validation/{id}/send
+    //   GET   /pending       → GET  /api/validation/pending
+    // ══════════════════════════════════════════════════════════════
 }

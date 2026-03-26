@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { DeclarationService, Declaration, GenerateDeclarationRequest } from '../services/declaration.service';
+import { DeclarationService, Declaration, GenerateDeclarationRequest } from '../services/Declaration.service';
 import { DeclarationTypeService, DeclarationType } from '../services/declaration-type.service';
+import { ValidationService } from '../services/Validation.service'; // ✅ Ajouter cette importation
 
 @Component({
   selector: 'app-declaration-management',
@@ -84,7 +85,9 @@ export class DeclarationManagementComponent implements OnInit {
 
   constructor(
     private declarationService:     DeclarationService,
-    private declarationTypeService: DeclarationTypeService
+    private declarationTypeService: DeclarationTypeService,
+        private validationService:      ValidationService  // ✅ Ajouter ValidationService
+
   ) {}
 
   ngOnInit(): void {
@@ -459,7 +462,7 @@ export class DeclarationManagementComponent implements OnInit {
       `Soumettre pour validation ?\n\nType : ${declaration.declarationType?.nom}\nPériode : ${declaration.periode}`
     )) return;
     this.loadingAction = true;
-    this.declarationService.submitForValidation(declaration.id).subscribe({
+    this.validationService.submitForValidation(declaration.id).subscribe({
       next:  () => { alert('Soumis pour validation !'); this.loadDeclarations(); this.loadingAction = false; },
       error: (err) => {
         alert('Erreur : ' + (err.error?.message || err.message));
@@ -526,7 +529,7 @@ sendToBCT(declaration: Declaration): void {
   )) return;
 
   this.loadingAction = true;
-this.declarationService.markAsSent(declaration.id).subscribe({    next: () => {
+this.validationService.markAsSent(declaration.id).subscribe({    next: () => {
       alert(`✅ Déclaration ${declaration.declarationType?.code} envoyée à la BCT !`);
       this.loadDeclarations();
       this.loadingAction = false;

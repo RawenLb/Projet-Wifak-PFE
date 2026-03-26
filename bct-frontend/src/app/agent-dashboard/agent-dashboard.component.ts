@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { DeclarationService, Declaration } from '../services/declaration.service';
+import { DeclarationService, Declaration } from '../services/Declaration.service';
 
 @Component({
   selector: 'app-agent-dashboard',

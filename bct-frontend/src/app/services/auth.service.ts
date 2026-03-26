@@ -1,3 +1,6 @@
+// src/app/services/auth.service.ts
+// ✅ Fix : lire depuis tokenParsed.realm_access au lieu de keycloak.realmAccess
+
 import { Injectable } from '@angular/core';
 import keycloak from './keycloak.service';
 
@@ -14,31 +17,34 @@ export class AuthService {
     return keycloak.tokenParsed?.['preferred_username'];
   }
 
-  // ===== Roles (WITH "ROLE_" prefix to match Keycloak) =====
+  // ===== Roles =====
   isAdmin(): boolean {
-    return keycloak.hasRealmRole('ROLE_ADMIN');
+    return this.getRoles().includes('ROLE_ADMIN');
   }
 
   isAgent(): boolean {
-    return keycloak.hasRealmRole('ROLE_AGENT');
+    return this.getRoles().includes('ROLE_AGENT');
   }
 
   isManager(): boolean {
-    return keycloak.hasRealmRole('ROLE_MANAGER');
+    return this.getRoles().includes('ROLE_MANAGER');
   }
 
   isAuditor(): boolean {
-    return keycloak.hasRealmRole('ROLE_AUDITOR');
+    return this.getRoles().includes('ROLE_AUDITOR');
   }
 
-  hasAnyRole(roles: string[]): boolean {
-    // ✅ Roles include "ROLE_" prefix
-    return roles.some(role => keycloak.hasRealmRole(role));
-  }
-
-  // ===== Debug helper =====
+  // ✅ FIX : tokenParsed.realm_access.roles (snake_case) est toujours disponible
+  //    keycloak.realmAccess (camelCase, API JS) peut être undefined au runtime
   getRoles(): string[] {
-    return keycloak.realmAccess?.roles || [];
+    const token = keycloak.tokenParsed as any;
+    return token?.realm_access?.roles ?? [];
+  }
+
+  // ✅ FIX : utilise getRoles() au lieu de hasRealmRole() pour la même raison
+  hasAnyRole(roles: string[]): boolean {
+    const userRoles = this.getRoles();
+    return roles.some(role => userRoles.includes(role));
   }
 
   // ===== Auth actions =====

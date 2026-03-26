@@ -24,15 +24,15 @@ public class DeclarationService {
     private final DeclarationRepository declarationRepository;
     private final DeclarationTypeRepository typeRepository;
     private final XmlGenerationService xmlGenerationService;
-    private final CsvGenerationService csvGenerationService;   // ✅ NOUVEAU
-    private final TxtGenerationService txtGenerationService;   // ✅ NOUVEAU
+    private final CsvGenerationService csvGenerationService;
+    private final TxtGenerationService txtGenerationService;
 
     public DeclarationService(
             DeclarationRepository declarationRepository,
             DeclarationTypeRepository typeRepository,
             XmlGenerationService xmlGenerationService,
-            CsvGenerationService csvGenerationService,         // ✅ NOUVEAU
-            TxtGenerationService txtGenerationService          // ✅ NOUVEAU
+            CsvGenerationService csvGenerationService,
+            TxtGenerationService txtGenerationService
     ) {
         this.declarationRepository = declarationRepository;
         this.typeRepository        = typeRepository;
@@ -51,13 +51,9 @@ public class DeclarationService {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // GENERATE — ✅ CORRIGÉ : dispatche selon le format du type
+    // GENERATE
     // ══════════════════════════════════════════════════════════════
 
-    /**
-     * Génère une déclaration en choisissant le bon service selon le format
-     * (XML, CSV, TXT, JSON, PDF).
-     */
     public Declaration generateDeclaration(
             Long typeId,
             String periode,
@@ -66,47 +62,39 @@ public class DeclarationService {
     ) {
         log.info("🚀 Début génération déclaration — Type: {}, Période: {}", typeId, periode);
 
-        // 1. Récupérer le type de déclaration
         DeclarationType type = typeRepository.findById(typeId)
                 .orElseThrow(() -> new RuntimeException("Type de déclaration introuvable: " + typeId));
 
         log.info("📋 Type trouvé: {} ({}) — Format: {}", type.getNom(), type.getCode(), type.getFormat());
 
-        // 2. Vérifier que le type est actif
         if (!type.isActif()) {
             throw new RuntimeException("Ce type de déclaration est inactif");
         }
 
-        // 3. Vérifier que la requête SQL est configurée
         if (type.getSqlQuery() == null || type.getSqlQuery().trim().isEmpty()) {
             throw new RuntimeException(
                     "La requête SQL n'est pas configurée pour ce type de déclaration. " +
-                            "Veuillez contacter l'administrateur."
-            );
+                            "Veuillez contacter l'administrateur.");
         }
 
-        // ✅ 4. Générer le contenu selon le FORMAT
         String fileContent;
         String fileExtension;
 
         DeclarationType.DeclarationFormat format = type.getFormat();
 
         switch (format) {
-
             case CSV:
                 log.info("⚙️ Génération CSV via SQL...");
                 fileContent   = csvGenerationService.generateCsvFromSql(
                         type.getSqlQuery(), dateDebut, dateFin, type.getCode(), periode);
                 fileExtension = "csv";
                 break;
-
             case TXT:
                 log.info("⚙️ Génération TXT via SQL...");
                 fileContent   = txtGenerationService.generateTxtFromSql(
                         type.getSqlQuery(), dateDebut, dateFin, type.getCode(), periode);
                 fileExtension = "txt";
                 break;
-
             case XML:
             default:
                 log.info("⚙️ Génération XML via XSD + SQL...");
@@ -117,7 +105,6 @@ public class DeclarationService {
                 break;
         }
 
-        // 5. Créer l'entité Declaration
         Declaration declaration = new Declaration();
         declaration.setDeclarationType(type);
         declaration.setPeriode(periode);
@@ -127,17 +114,13 @@ public class DeclarationService {
         declaration.setContenuFichier(fileContent);
         declaration.setDateGeneration(LocalDateTime.now());
         declaration.setGenerePar(getCurrentUsername());
-
-        // Snapshot pour traçabilité
         declaration.setSqlQueryUsed(type.getSqlQuery());
         declaration.setXsdFileNameUsed(type.getXsdFileName());
 
-        // ✅ 6. Nom du fichier avec la bonne extension selon le format
         String filename = String.format("declaration_%s_%s.%s",
                 type.getCode(), periode.replace("-", ""), fileExtension);
         declaration.setNomFichier(filename);
 
-        // 7. Sauvegarder
         Declaration saved = declarationRepository.save(declaration);
         log.info("✅ Déclaration générée avec succès — ID: {}, Fichier: {}", saved.getId(), filename);
 
@@ -166,85 +149,77 @@ public class DeclarationService {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // WORKFLOW
+    // UPDATE STATUT — appelé par validation-service via Feign
     // ══════════════════════════════════════════════════════════════
 
-    public Declaration submitForValidation(Long id) {
-        log.info("📤 Soumission pour validation — ID: {}", id);
-
-        Declaration declaration = findById(id);
-        String currentUser = getCurrentUsername();
-
-        if (!declaration.getGenerePar().equals(currentUser)) {
-            throw new RuntimeException("Vous ne pouvez soumettre que vos propres déclarations");
-        }
-
-        if (declaration.getStatut() != Declaration.DeclarationStatut.GENEREE &&
-                declaration.getStatut() != Declaration.DeclarationStatut.REJETEE) {
-            throw new RuntimeException(
-                    "Seules les déclarations générées ou rejetées peuvent être soumises");
-        }
-
-        declaration.setStatut(Declaration.DeclarationStatut.EN_VALIDATION);
-        return declarationRepository.save(declaration);
-    }
-
-    public Declaration validateDeclaration(Long id) {
-        log.info("✅ Validation déclaration — ID: {}", id);
+    /**
+     * Met à jour le statut d'une déclaration.
+     * Cette méthode est le seul point d'écriture du statut dans ce service.
+     * Elle est appelée exclusivement par le validation-service via l'endpoint interne
+     * PATCH /api/declarations/{id}/statut
+     *
+     * @param id            ID de la déclaration
+     * @param nouveauStatut Valeur de l'enum DeclarationStatut en String
+     * @param commentaire   Commentaire de rejet (si REJETEE)
+     * @param validePar     Username du valideur (si VALIDEE ou REJETEE)
+     */
+    public Declaration updateStatut(Long id, String nouveauStatut,
+                                    String commentaire, String validePar) {
+        log.info("🔄 updateStatut — ID: {}, nouveauStatut: {}", id, nouveauStatut);
 
         Declaration declaration = findById(id);
 
-        if (declaration.getStatut() != Declaration.DeclarationStatut.EN_VALIDATION) {
-            throw new RuntimeException("Cette déclaration n'est pas en attente de validation");
+        // Convertir le String en enum (lève IllegalArgumentException si invalide)
+        Declaration.DeclarationStatut statut;
+        try {
+            statut = Declaration.DeclarationStatut.valueOf(nouveauStatut.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Statut invalide : " + nouveauStatut +
+                    ". Valeurs acceptées : GENEREE, EN_VALIDATION, VALIDEE, REJETEE, ENVOYEE");
         }
 
-        declaration.setStatut(Declaration.DeclarationStatut.VALIDEE);
-        declaration.setDateValidation(LocalDateTime.now());
-        declaration.setValidePar(getCurrentUsername());
+        declaration.setStatut(statut);
+
+        switch (statut) {
+            case EN_VALIDATION:
+                // Pas de champs supplémentaires nécessaires
+                log.info("📤 Déclaration {} soumise pour validation", id);
+                break;
+
+            case VALIDEE:
+                declaration.setDateValidation(LocalDateTime.now());
+                declaration.setValidePar(validePar != null ? validePar : getCurrentUsername());
+                log.info("✅ Déclaration {} validée par {}", id, declaration.getValidePar());
+                break;
+
+            case REJETEE:
+                if (commentaire == null || commentaire.trim().isEmpty()) {
+                    throw new RuntimeException(
+                            "Un commentaire est obligatoire pour rejeter une déclaration");
+                }
+                declaration.setCommentaireRejet(commentaire.trim());
+                declaration.setValidePar(validePar != null ? validePar : getCurrentUsername());
+                declaration.setDateValidation(LocalDateTime.now());
+                log.info("❌ Déclaration {} rejetée par {} — motif: {}",
+                        id, declaration.getValidePar(), commentaire);
+                break;
+
+            case ENVOYEE:
+                declaration.setDateEnvoi(LocalDateTime.now());
+                log.info("📨 Déclaration {} marquée comme envoyée", id);
+                break;
+
+            default:
+                log.warn("⚠️ updateStatut appelé avec statut inattendu: {}", statut);
+                break;
+        }
+
         return declarationRepository.save(declaration);
     }
 
-    public Declaration rejectDeclaration(Long id, String commentaire) {
-        log.info("❌ Rejet déclaration — ID: {}", id);
-
-        Declaration declaration = findById(id);
-
-        if (declaration.getStatut() != Declaration.DeclarationStatut.EN_VALIDATION) {
-            throw new RuntimeException("Cette déclaration n'est pas en attente de validation");
-        }
-
-        if (commentaire == null || commentaire.trim().isEmpty()) {
-            throw new RuntimeException(
-                    "Un commentaire est obligatoire pour rejeter une déclaration");
-        }
-
-        declaration.setStatut(Declaration.DeclarationStatut.REJETEE);
-        declaration.setCommentaireRejet(commentaire);
-        declaration.setValidePar(getCurrentUsername());
-        declaration.setDateValidation(LocalDateTime.now());
-        return declarationRepository.save(declaration);
-    }
-
-    public List<Declaration> getPendingDeclarations() {
-        return declarationRepository.findByStatut(Declaration.DeclarationStatut.EN_VALIDATION);
-    }
-
-    public Declaration markAsSent(Long id) {
-        log.info("📨 Marquage comme envoyée — ID: {}", id);
-
-        Declaration declaration = findById(id);
-
-        if (declaration.getStatut() != Declaration.DeclarationStatut.VALIDEE) {
-            throw new RuntimeException("Seules les déclarations validées peuvent être envoyées");
-        }
-
-        declaration.setStatut(Declaration.DeclarationStatut.ENVOYEE);
-        declaration.setDateEnvoi(LocalDateTime.now());
-        return declarationRepository.save(declaration);
-    }
 
     // ══════════════════════════════════════════════════════════════
-    // STATS — Dashboard
+    // STATS — Dashboard (lecture seule, utilisée par validation-service aussi)
     // ══════════════════════════════════════════════════════════════
 
     public DeclarationStats getStats() {
@@ -270,17 +245,27 @@ public class DeclarationService {
         private long rejetees;
         private long envoyees;
 
-        public long getTotal()           { return total; }
-        public void setTotal(long v)     { total = v; }
-        public long getGenerees()        { return generees; }
-        public void setGenerees(long v)  { generees = v; }
-        public long getEnValidation()    { return enValidation; }
+        public long getTotal()              { return total; }
+        public void setTotal(long v)        { total = v; }
+        public long getGenerees()           { return generees; }
+        public void setGenerees(long v)     { generees = v; }
+        public long getEnValidation()       { return enValidation; }
         public void setEnValidation(long v) { enValidation = v; }
-        public long getValidees()        { return validees; }
-        public void setValidees(long v)  { validees = v; }
-        public long getRejetees()        { return rejetees; }
-        public void setRejetees(long v)  { rejetees = v; }
-        public long getEnvoyees()        { return envoyees; }
-        public void setEnvoyees(long v)  { envoyees = v; }
+        public long getValidees()           { return validees; }
+        public void setValidees(long v)     { validees = v; }
+        public long getRejetees()           { return rejetees; }
+        public void setRejetees(long v)     { rejetees = v; }
+        public long getEnvoyees()           { return envoyees; }
+        public void setEnvoyees(long v)     { envoyees = v; }
     }
+
+
+    // ══════════════════════════════════════════════════════════════
+    // MÉTHODES SUPPRIMÉES — migrées vers validation-service
+    // ══════════════════════════════════════════════════════════════
+    // submitForValidation()  → ValidationService.submitForValidation()
+    // validateDeclaration()  → ValidationService.validateDeclaration()
+    // rejectDeclaration()    → ValidationService.rejectDeclaration()
+    // markAsSent()           → ValidationService.markAsSent()
+    // getPendingDeclarations() → ValidationService.getPendingDeclarations()
 }

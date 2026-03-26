@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { KeycloakAdminService, KeycloakUser } from '../services/keycloak-admin.service';
 import { DeclarationTypeService, DeclarationType } from '../services/declaration-type.service';
-import { DeclarationService, Declaration, DeclarationStats } from '../services/declaration.service';
+import { DeclarationService, Declaration, DeclarationStats } from '../services/Declaration.service';
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
@@ -41,12 +41,17 @@ today = new Date().toLocaleDateString('fr-FR', {
   ) {}
 
   ngOnInit(): void {
+     if (this.kcAdmin.hasRole('ROLE_ADMIN')) {
     this.loadUsers();
+  }
     this.loadDeclarationTypes();
     this.loadDeclarations();
     this.loadStats();
   }
-
+// home.component.ts
+isAdmin(): boolean {
+  return this.kcAdmin.hasRole('ROLE_ADMIN');
+}
   loadUsers(): void {
     this.loadingUsers = true;
     this.kcAdmin.getUsers().subscribe({

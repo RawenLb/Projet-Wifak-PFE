@@ -1,6 +1,10 @@
+// src/app/app-routing.module.ts
+// ✅ Route '/' utilise RoleRedirectGuard → redirige vers le bon espace selon rôle
+
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { RoleGuard } from './guards/role.guard';
+import { RoleRedirectGuard } from './guards/Role-redirect.guard';
 import { HomeComponent } from './home/home.component';
 import { UserManagementComponent } from './user-management/user-management.component';
 import { DeclarationTypeManagementComponent } from './declaration-type-management/declaration-type-management.component';
@@ -9,104 +13,89 @@ import { AgentLayoutComponent } from './agent-layout/agent-layout.component';
 import { DeclarationManagementComponent } from './declaration-management/declaration-management.component';
 import { DeclarationCalendarComponent } from './declaration-calendar/declaration-calendar.component';
 import { AgentDashboardComponent } from './agent-dashboard/agent-dashboard.component';
+import { ManagerDashboardComponent } from './manager-dashboard/manager-dashboard.component';
+import { ManagerLayoutComponent } from './manager-layout/manager-layout.component';
+
 const routes: Routes = [
-  // Public routes WITHOUT dashboard layout
-  { 
-    path: '', 
-    component: DashboardLayoutComponent 
-  },
-  { 
-    path: 'home', 
-    component: HomeComponent 
-  },
-  { 
-    path: 'unauthorized', 
-    component: HomeComponent 
+
+  // ── Root : redirige selon le rôle ──────────────────────────
+  // ✅ Manager → /manager/dashboard, Admin → /dashboard, Agent → /agent/dashboard
+  {
+    path: '',
+    canActivate: [RoleRedirectGuard],
+    component: HomeComponent  // jamais affiché, le guard redirige toujours
   },
 
-  // Protected routes WITH dashboard layout
-  { 
-    path: 'user-management', 
+  // ── Pages publiques ─────────────────────────────────────────
+  { path: 'home',         component: HomeComponent },
+  { path: 'unauthorized', component: HomeComponent },
+
+  // ── Admin Dashboard ─────────────────────────────────────────
+  {
+    path: 'dashboard',
     component: DashboardLayoutComponent,
     canActivate: [RoleGuard],
     data: { roles: ['ROLE_ADMIN'] },
     children: [
-      {
-        path: '',
-        component: UserManagementComponent
-      }
+      { path: '', component: HomeComponent }
     ]
   },
-  { 
-    path: 'declaration-type-management', 
+
+  // ── User Management ─────────────────────────────────────────
+  {
+    path: 'user-management',
+    component: DashboardLayoutComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['ROLE_ADMIN'] },
+    children: [{ path: '', component: UserManagementComponent }]
+  },
+
+  // ── Declaration Types ───────────────────────────────────────
+  {
+    path: 'declaration-type-management',
     component: DashboardLayoutComponent,
     canActivate: [RoleGuard],
     data: { roles: ['ROLE_ADMIN', 'ROLE_MANAGER'] },
-    children: [
-      {
-        path: '',
-        component: DeclarationTypeManagementComponent
-      }
-    ]
+    children: [{ path: '', component: DeclarationTypeManagementComponent }]
   },
-  {
-  path: 'dashboard',
-  component: DashboardLayoutComponent,
-  canActivate: [RoleGuard],
-  data: { roles: ['ROLE_AGENT', 'ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_AUDITOR'] },
-  children: [
-    { path: '', component: HomeComponent }  // ← ici
-  ]
-},
+
+  // ── Agent Space ─────────────────────────────────────────────
   {
     path: 'agent',
     component: AgentLayoutComponent,
     canActivate: [RoleGuard],
     data: { roles: ['ROLE_AGENT'] },
     children: [
-      // Redirection par défaut → tableau de bord
-      { path: '',            redirectTo: 'dashboard', pathMatch: 'full' },
- 
-      // ✅ Tableau de bord agent
-      { path: 'dashboard',   component: AgentDashboardComponent },
- 
-      // Mes déclarations
+      { path: '',              redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard',    component: AgentDashboardComponent },
       { path: 'declarations', component: DeclarationManagementComponent },
- 
-      // Calendrier des échéances
-      { path: 'calendar',    component: DeclarationCalendarComponent },
+      { path: 'calendar',     component: DeclarationCalendarComponent },
     ]
   },
+
+  // ── Manager Space ────────────────────────────────────────────
   {
     path: 'manager',
-    component: DashboardLayoutComponent,
+    component: ManagerLayoutComponent,
     canActivate: [RoleGuard],
-    data: { roles: ['ROLE_MANAGER'] },
+    data: { roles: ['ROLE_MANAGER', 'ROLE_ADMIN'] },
     children: [
-      {
-        path: '',
-        component: HomeComponent
-      }
+      { path: '',          redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', component: ManagerDashboardComponent },
     ]
   },
+
+  // ── Auditor ─────────────────────────────────────────────────
   {
     path: 'auditor',
     component: DashboardLayoutComponent,
     canActivate: [RoleGuard],
     data: { roles: ['ROLE_AUDITOR'] },
-    children: [
-      {
-        path: '',
-        component: HomeComponent
-      }
-    ]
+    children: [{ path: '', component: HomeComponent }]
   },
 
-  // Fallback
-  { 
-    path: '**', 
-    redirectTo: '/home' 
-  }
+  // ── Fallback ────────────────────────────────────────────────
+  { path: '**', redirectTo: '' }
 ];
 
 @NgModule({

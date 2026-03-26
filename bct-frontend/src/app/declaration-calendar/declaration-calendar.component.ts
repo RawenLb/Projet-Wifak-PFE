@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { DeclarationService, Declaration } from '../services/declaration.service';
+import { DeclarationService, Declaration } from '../services/Declaration.service';
+import { ValidationService } from '../services/Validation.service';
+
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
 export interface CalendarCell {
@@ -60,7 +62,8 @@ export class DeclarationCalendarComponent implements OnInit {
     'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
   ];
 
-  constructor(private declarationService: DeclarationService) {
+  constructor(private declarationService: DeclarationService,   private validationService: ValidationService  // ✅ Ajouter
+) {
     const today = new Date();
     this.currentMonth = today.getMonth();   // 0-indexed
     this.currentYear  = today.getFullYear();
@@ -424,7 +427,7 @@ export class DeclarationCalendarComponent implements OnInit {
       `Soumettre la déclaration ${d.declarationType?.code} (${d.periode}) pour validation ?`
     )) return;
 
-    this.declarationService.submitForValidation(d.id).subscribe({
+    this.validationService.submitForValidation(d.id).subscribe({
       next:  () => { alert('Soumis pour validation !'); this.loadDeclarations(); },
       error: err => alert('Erreur : ' + (err.error?.message || err.message))
     });
