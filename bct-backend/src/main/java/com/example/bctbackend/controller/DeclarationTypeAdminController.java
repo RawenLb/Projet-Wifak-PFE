@@ -24,7 +24,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/declaration-types")
-@CrossOrigin(origins = "http://localhost:4200")
 public class DeclarationTypeAdminController {
 
     private static final Logger log = LoggerFactory.getLogger(DeclarationTypeAdminController.class);
