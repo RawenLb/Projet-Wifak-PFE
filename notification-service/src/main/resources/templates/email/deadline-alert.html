@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<h2>Bonjour <span th:text="${agentName}">Agent</span>,</h2>
+<p>Votre déclaration <strong th:text="${declarationCode}">CODE</strong> arrive à échéance.</p>
+<p>Période : <span th:text="${periode}">PERIODE</span></p>
+<p>Date limite : <span th:text="${dateFin}">DATE</span></p>
+<p>Jours restants : <span th:text="${daysLeft}">0</span></p>
+<a th:href="${appUrl}">Accéder à l'application</a>
+</body>
+</html>

@@ -1,39 +1,27 @@
-// ============================================
-// AGENT LAYOUT
-// ============================================
+// src/app/agent-layout/agent-layout.component.scss
+// ✅ FIX — ajout du topbar agent avec bell correctement intégré
 
-// Import des styles de base
 @import '../user-management/user-management.component.scss';
 
-// ============================================
-// VARIABLES LOCALES (remplacent $primary-color etc.)
-// ============================================
 $agent-primary:  #2563eb;
 $agent-dark:     #1d4ed8;
 $agent-info:     #0284c7;
 $agent-warning:  #d97706;
 $agent-danger:   #dc2626;
 
-// ============================================
-// ANIMATIONS (redéfinies ici pour éviter les problèmes d'import)
-// ============================================
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: .4; }
 }
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: none; }
 }
-
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-// ============================================
-// FIX SCROLL GLOBAL
-// ============================================
+// ── Layout global ─────────────────────────────────────────────
 .dashboard-container {
   min-height: unset !important;
   height: 100vh !important;
@@ -47,12 +35,58 @@ $agent-danger:   #dc2626;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  // ✅ PAS de overflow:hidden ici pour que le panel fixed sorte correctement
 }
 
-// ============================================
-// SIDEBAR PERSONNALISATIONS
-// ============================================
+// ── TOPBAR AGENT ──────────────────────────────────────────────
+// ✅ NOUVEAU — remplace l'ancien top-header si présent
+.agent-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  min-height: 56px;
+  padding: 0 24px;
+  background: #0c1220;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+  // ✅ Critique : position relative pour le z-index
+  position: relative;
+  z-index: 100;
+}
+
+.topbar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.topbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #e2e8f5;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.topbar-subtitle {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 0;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  // ✅ Pas d'overflow hidden
+}
+
+// ── SIDEBAR ───────────────────────────────────────────────────
 .sidebar {
+  // ✅ overflow: visible pour ne pas clipper le panel
+  overflow: visible !important;
+
   .logo-text {
     .bank-subtitle {
       color: rgba(255, 255, 255, 0.9);
@@ -63,7 +97,7 @@ $agent-danger:   #dc2626;
 
 // ── Nav items ─────────────────────────────────────────────────
 .nav-item {
-  position: relative;        // ← nécessaire pour le badge
+  position: relative;
   display: flex;
   align-items: center;
 
@@ -93,55 +127,16 @@ $agent-danger:   #dc2626;
   line-height: 1;
 }
 
-// Badge blanc quand le nav-item est actif
 .nav-item.active .nav-badge {
   background: rgba(255, 255, 255, .95);
   color: #dc2626;
   box-shadow: 0 2px 6px rgba(0, 0, 0, .15);
-  animation: none;  // pas de clignotement sur fond actif
+  animation: none;
 }
 
-// ============================================
-// USER PROFILE
-// ============================================
+// ── User ─────────────────────────────────────────────────────
 .user-profile {
   .user-avatar {
     background: linear-gradient(135deg, $agent-primary 0%, $agent-info 100%);
-  }
-}
-
-// ============================================
-// STAT CARDS — variantes agent
-// ============================================
-.stat-card {
-  &.stat-agent-primary .stat-icon {
-    background: linear-gradient(135deg, $agent-primary, $agent-info);
-  }
-  &.stat-agent-pending .stat-icon {
-    background: linear-gradient(135deg, $agent-warning, #FF7043);
-  }
-  &.stat-agent-validated .stat-icon {
-    background: linear-gradient(135deg, #00C853, #00E676);
-  }
-  &.stat-agent-rejected .stat-icon {
-    background: linear-gradient(135deg, $agent-danger, #D32F2F);
-  }
-}
-
-// ============================================
-// HEADER AGENT
-// ============================================
-.top-header .page-title {
-  color: $agent-primary;
-}
-
-// ============================================
-// BOUTON CRÉER
-// ============================================
-.btn-create {
-  background: linear-gradient(135deg, $agent-primary 0%, $agent-info 100%);
-
-  &:hover {
-    box-shadow: 0 4px 12px rgba($agent-primary, 0.4);
   }
 }

@@ -1,10 +1,11 @@
 <!-- src/app/manager-layout/manager-layout.component.html -->
+<!-- ✅ MODIFIÉ — ajout de <app-notification-bell> dans le topbar-right -->
 
 <div class="manager-shell" [class.sidebar-collapsed]="sidebarCollapsed">
 
-  <!-- ══════════════════════════════════════════
+  <!-- ═══════════════════════════════════════════
        SIDEBAR
-  ══════════════════════════════════════════ -->
+  ═══════════════════════════════════════════ -->
   <aside class="mgr-sidebar">
 
     <!-- Brand -->
@@ -88,9 +89,7 @@
         <span class="user-name">{{ currentUserName }}</span>
         <span class="user-badge">Responsable</span>
       </div>
-      <button class="logout-btn" (click)="logout()"
-              [title]="sidebarCollapsed ? 'Déconnexion' : ''"
-              *ngIf="!sidebarCollapsed">
+      <button class="logout-btn" (click)="logout()" *ngIf="!sidebarCollapsed">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
           <polyline points="16 17 21 12 16 7"/>
@@ -108,9 +107,9 @@
 
   </aside>
 
-  <!-- ══════════════════════════════════════════
+  <!-- ═══════════════════════════════════════════
        MAIN CONTENT
-  ══════════════════════════════════════════ -->
+  ═══════════════════════════════════════════ -->
   <div class="mgr-main">
 
     <!-- Top Bar -->
@@ -130,20 +129,18 @@
           {{ today | date:'EEEE d MMMM yyyy' : '' : 'fr' }}
         </div>
 
-        <!-- ── THEME TOGGLE ── -->
+        <!-- ✅ NOUVEAU — Cloche de notifications manager -->
+        <app-notification-bell></app-notification-bell>
+
+        <!-- Theme Toggle -->
         <button class="theme-toggle" (click)="toggleTheme()"
                 [title]="isLightTheme ? 'Passer en mode sombre' : 'Passer en mode clair'">
-
-          <!-- Moon icon (shown when dark → suggests switching to light) -->
           <span class="theme-toggle-icon icon-moon" *ngIf="!isLightTheme">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
             </svg>
           </span>
-
           <div class="theme-toggle-track"></div>
-
-          <!-- Sun icon (shown when light → suggests switching to dark) -->
           <span class="theme-toggle-icon icon-sun" *ngIf="isLightTheme">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <circle cx="12" cy="12" r="5"/>
@@ -153,7 +150,6 @@
               <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
             </svg>
           </span>
-
           <span class="theme-toggle-label">
             {{ isLightTheme ? 'Clair' : 'Sombre' }}
           </span>

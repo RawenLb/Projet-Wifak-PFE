@@ -1,6 +1,7 @@
 package com.wifak.validationservice.service;
 
 import com.wifak.validationservice.client.DeclarationClient;
+import com.wifak.validationservice.client.NotificationClient;
 import com.wifak.validationservice.dto.DeclarationDTO;
 import com.wifak.validationservice.dto.ValidationStatsDTO;
 import com.wifak.validationservice.entities.ValidationLog;
@@ -15,26 +16,29 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
 
-    // Constantes des statuts (reflètent l'enum Declaration.DeclarationStatut)
     private static final String GENEREE       = "GENEREE";
     private static final String EN_VALIDATION = "EN_VALIDATION";
     private static final String VALIDEE       = "VALIDEE";
     private static final String REJETEE       = "REJETEE";
     private static final String ENVOYEE       = "ENVOYEE";
 
-    private final DeclarationClient declarationClient;
+    private final DeclarationClient    declarationClient;
+    private final NotificationClient   notificationClient;   // ← AJOUT
     private final ValidationLogRepository logRepository;
 
     public ValidationService(DeclarationClient declarationClient,
+                             NotificationClient notificationClient,
                              ValidationLogRepository logRepository) {
-        this.declarationClient = declarationClient;
-        this.logRepository     = logRepository;
+        this.declarationClient   = declarationClient;
+        this.notificationClient  = notificationClient;
+        this.logRepository       = logRepository;
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -56,7 +60,7 @@ public class ValidationService {
         } catch (FeignException.NotFound e) {
             throw new DeclarationNotFoundException(id);
         } catch (FeignException e) {
-            log.error("❌ Erreur Feign lors de la lecture de la déclaration {}: {}", id, e.getMessage());
+            log.error("❌ Erreur Feign lecture déclaration {} : {}", id, e.getMessage());
             throw new RuntimeException("Impossible de contacter le declaration-service : " + e.getMessage());
         }
     }
@@ -70,7 +74,7 @@ public class ValidationService {
         try {
             return declarationClient.updateStatut(id, nouveauStatut, commentaire, validePar);
         } catch (FeignException e) {
-            log.error("❌ Erreur Feign lors de la mise à jour du statut: {}", e.getMessage());
+            log.error("❌ Erreur Feign mise à jour statut : {}", e.getMessage());
             throw new RuntimeException("Impossible de mettre à jour le statut : " + e.getMessage());
         }
     }
@@ -90,8 +94,24 @@ public class ValidationService {
         entry.setEffectuePar(getCurrentUsername());
         entry.setCommentaire(commentaire);
         logRepository.save(entry);
-        log.info("📝 Log: {} → {} par {} (déclaration {})",
+        log.info("📝 Log : {} → {} par {} (déclaration {})",
                 statutAvant, statutApres, getCurrentUsername(), declarationId);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // HELPER — déclenche une notification de façon non-bloquante
+    //          (une erreur du notification-service ne doit pas
+    //           faire échouer la transition de statut)
+    // ══════════════════════════════════════════════════════════════
+
+    private void sendNotificationSafely(Runnable notificationCall, String context) {
+        try {
+            notificationCall.run();
+        } catch (Exception e) {
+            // On logue l'erreur mais on ne remonte pas l'exception :
+            // la validation métier est déjà effectuée et persistée.
+            log.error("⚠️  Notification non envoyée [{}] : {}", context, e.getMessage());
+        }
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -102,17 +122,14 @@ public class ValidationService {
         log.info("📤 Soumission pour validation — ID: {}", id);
 
         DeclarationDTO decl = fetchDeclaration(id);
-        String currentUser = getCurrentUsername();
+        String currentUser  = getCurrentUsername();
 
-        // ✅ LOG TEMPORAIRE — retirer après vérification
         log.info("🔍 currentUser='{}' | generePar='{}'", currentUser, decl.getGenerePar());
 
         if (!currentUser.equals(decl.getGenerePar())) {
-            throw new ValidationException(
-                    "Vous ne pouvez soumettre que vos propres déclarations");
+            throw new ValidationException("Vous ne pouvez soumettre que vos propres déclarations");
         }
 
-        // Statuts autorisés à soumettre
         String statutActuel = decl.getStatut();
         if (!GENEREE.equals(statutActuel) && !REJETEE.equals(statutActuel)) {
             throw new ValidationException(
@@ -123,12 +140,19 @@ public class ValidationService {
         DeclarationDTO updated = changeStatut(id, EN_VALIDATION, null, null);
         saveLog(id, "SUBMIT", statutActuel, EN_VALIDATION, null);
 
+        // ── Notification : avertir les managers ──────────────────
+        sendNotificationSafely(
+                () -> notificationClient.notifyPendingValidation(Map.of("declarationId", id)),
+                "PENDING_VALIDATION déclaration=" + id
+        );
+
         log.info("✅ Déclaration {} soumise pour validation", id);
         return updated;
     }
 
     // ══════════════════════════════════════════════════════════════
     // 2. VALIDER  (EN_VALIDATION → VALIDEE)
+    //    Pas de notification email pour la validation (cahier des charges)
     // ══════════════════════════════════════════════════════════════
 
     public DeclarationDTO validateDeclaration(Long id) {
@@ -142,7 +166,7 @@ public class ValidationService {
                             "Statut actuel : " + decl.getStatut());
         }
 
-        String validePar = getCurrentUsername();
+        String validePar    = getCurrentUsername();
         DeclarationDTO updated = changeStatut(id, VALIDEE, null, validePar);
         saveLog(id, "VALIDATE", EN_VALIDATION, VALIDEE, null);
 
@@ -158,8 +182,7 @@ public class ValidationService {
         log.info("❌ Rejet déclaration — ID: {}", id);
 
         if (commentaire == null || commentaire.trim().isEmpty()) {
-            throw new ValidationException(
-                    "Un commentaire est obligatoire pour rejeter une déclaration");
+            throw new ValidationException("Un commentaire est obligatoire pour rejeter une déclaration");
         }
 
         DeclarationDTO decl = fetchDeclaration(id);
@@ -170,11 +193,22 @@ public class ValidationService {
                             "Statut actuel : " + decl.getStatut());
         }
 
-        String validePar = getCurrentUsername();
-        DeclarationDTO updated = changeStatut(id, REJETEE, commentaire.trim(), validePar);
-        saveLog(id, "REJECT", EN_VALIDATION, REJETEE, commentaire.trim());
+        String validePar       = getCurrentUsername();
+        String commentaireTrim = commentaire.trim();
 
-        log.info("❌ Déclaration {} rejetée par {} — motif: {}", id, validePar, commentaire);
+        DeclarationDTO updated = changeStatut(id, REJETEE, commentaireTrim, validePar);
+        saveLog(id, "REJECT", EN_VALIDATION, REJETEE, commentaireTrim);
+
+        // ── Notification : avertir l'agent déclarant ─────────────
+        sendNotificationSafely(
+                () -> notificationClient.notifyRejection(Map.of(
+                        "declarationId", id,
+                        "commentaire",   commentaireTrim
+                )),
+                "REJECTION déclaration=" + id
+        );
+
+        log.info("❌ Déclaration {} rejetée par {} — motif: {}", id, validePar, commentaireTrim);
         return updated;
     }
 
@@ -212,13 +246,13 @@ public class ValidationService {
                     .filter(d -> EN_VALIDATION.equals(d.getStatut()))
                     .toList();
         } catch (FeignException e) {
-            log.error("❌ Erreur lors de la récupération des déclarations pending: {}", e.getMessage());
+            log.error("❌ Erreur récupération déclarations pending : {}", e.getMessage());
             throw new RuntimeException("Impossible de récupérer les déclarations : " + e.getMessage());
         }
     }
 
     // ══════════════════════════════════════════════════════════════
-    // 6. STATS  (lecture depuis declaration-service)
+    // 6. STATS
     // ══════════════════════════════════════════════════════════════
 
     public ValidationStatsDTO getStats() {
@@ -226,13 +260,13 @@ public class ValidationService {
         try {
             return declarationClient.getStats();
         } catch (FeignException e) {
-            log.error("❌ Erreur récupération stats: {}", e.getMessage());
+            log.error("❌ Erreur récupération stats : {}", e.getMessage());
             throw new RuntimeException("Impossible de récupérer les statistiques : " + e.getMessage());
         }
     }
 
     // ══════════════════════════════════════════════════════════════
-    // 7. HISTORIQUE  (depuis wifak_validation — local)
+    // 7. HISTORIQUE
     // ══════════════════════════════════════════════════════════════
 
     public List<ValidationLog> getHistory(Long declarationId) {

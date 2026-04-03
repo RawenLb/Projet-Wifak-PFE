@@ -64,7 +64,7 @@ public class DeclarationController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN', 'INTERNAL')")
     public ResponseEntity<Declaration> getDeclarationById(@PathVariable Long id) {
         return ResponseEntity.ok(declarationService.findById(id));
     }

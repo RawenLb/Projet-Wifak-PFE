@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<h2>Bonjour <span th:text="${agentName}">Agent</span>,</h2>
+<p>Votre déclaration <strong th:text="${declarationCode}">CODE</strong> a été <strong>rejetée</strong>.</p>
+<p>Période : <span th:text="${periode}">PERIODE</span></p>
+<p>Rejetée par : <span th:text="${rejectedBy}">MANAGER</span></p>
+<p>Commentaire : <span th:text="${commentaireRejet}">-</span></p>
+<a th:href="${appUrl}">Accéder à l'application</a>
+</body>
+</html>

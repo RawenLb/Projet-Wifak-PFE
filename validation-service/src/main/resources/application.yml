@@ -56,6 +56,10 @@ feign:
         connectTimeout: 5000
         readTimeout: 10000
         loggerLevel: basic
+      notification-service: # ← AJOUTER
+        connectTimeout: 3000
+        readTimeout: 5000
+        loggerLevel: basic
 
 logging:
   level:
@@ -68,4 +72,6 @@ logging:
 app:
   cors:
     allowed-origins: http://localhost:4200
+    internal-secret: ${INTERNAL_SECRET:wifak-internal-secret-2024}   # ← AJOUTER
+
 

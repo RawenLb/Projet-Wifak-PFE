@@ -694,3 +694,36 @@
   50%       { opacity: 0.5; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+// ✅ FIX topbar-right — ne pas clipper le panel dropdown
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  // ✅ Pas d'overflow: hidden ici
+  position: relative;
+}
+
+// ✅ FIX mgr-topbar — z-index suffisant mais pas de overflow hidden
+.mgr-topbar {
+  overflow: visible !important;
+  position: relative;
+  z-index: 100;
+}
+
+// ✅ FIX mgr-main — ne pas clipper le panel
+.mgr-main {
+  overflow: visible !important;
+  position: relative;
+}
+
+// ✅ FIX mgr-content — garder scroll mais pas clipper en dehors
+.mgr-content {
+  position: relative;
+  z-index: 1;
+}
+
+// ✅ FIX sidebar — ne pas clipper le panel
+.mgr-sidebar {
+  overflow: visible !important;
+}

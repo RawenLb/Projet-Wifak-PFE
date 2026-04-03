@@ -1,83 +1,66 @@
-import { Component, OnInit } from '@angular/core';
+// src/app/agent-layout/agent-layout.component.ts
+// ✅ MODIFIÉ — ajout de NotificationService + suppression du loadRejectedCount manuel
+
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { KeycloakAdminService } from '../services/keycloak-admin.service';
-import { DeclarationService } from '../services/Declaration.service';
+import { NotificationService } from '../services/notification.service';   // ← AJOUT
+
 @Component({
   selector: 'app-agent-layout',
   templateUrl: './agent-layout.component.html',
   styleUrls: ['./agent-layout.component.scss']
 })
-export class AgentLayoutComponent implements OnInit {
+export class AgentLayoutComponent implements OnInit, OnDestroy {
 
   sidebarCollapsed = false;
   pageTitle        = 'Mes Déclarations';
   pageSubtitle     = 'Générez et suivez vos déclarations BCT';
   currentRoute     = '';
 
-  // ── Informations utilisateur ───────────────────────────────────────────────
   username  = '';
   fullName  = '';
   email     = '';
   userRole  = 'Agent';
   userRoles: string[] = [];
 
-  // ── Badge rejetées ─────────────────────────────────────────────────────────
-  rejectedCount = 0;
+  // ✅ REMPLACE l'ancien rejectedCount manuel — maintenant via NotificationService
+  get rejectedCount(): number {
+    return this.notifSvc.all
+      .filter(n => n.type === 'reject' && n.unread)
+      .length;
+  }
 
   constructor(
-    private router:             Router,
-    private kcAdmin:            KeycloakAdminService,
-    private declarationService: DeclarationService   // ✅ injecté
+    private router:   Router,
+    private kcAdmin:  KeycloakAdminService,
+    public notifSvc:  NotificationService    // ← AJOUT (public pour le template)
   ) {}
 
   ngOnInit(): void {
-    // Vérifier l'authentification
     if (!this.kcAdmin.isAuthenticated()) {
-      console.warn('Utilisateur non authentifié');
       this.router.navigate(['/home']);
       return;
     }
 
-    // Charger les infos utilisateur
     this.loadUserInfo();
 
-    // ✅ Charger le badge au démarrage
-    this.loadRejectedCount();
+    // ✅ Charge les notifications au démarrage (remplace loadRejectedCount)
+    this.notifSvc.loadNotifications();
 
-    // Mettre à jour le titre + badge à chaque navigation
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
         this.currentRoute = event.url;
         this.updatePageInfo(event.url);
-        // ✅ Rafraîchir le badge à chaque changement de page
-        this.loadRejectedCount();
       });
 
-    // Initialiser avec la route actuelle
+    this.currentRoute = this.router.url;
     this.updatePageInfo(this.router.url);
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // BADGE — Déclarations rejetées
-  // ══════════════════════════════════════════════════════════════════════════
-
-// TEST TEMPORAIRE — supprimer après vérification
-loadRejectedCount(): void {
-  this.declarationService.getMyDeclarations().subscribe({
-    next: (data) => {
-      this.rejectedCount = data.filter(d => d.statut === 'REJETEE').length;
-      console.log('🔴 rejectedCount:', this.rejectedCount);  // ← شوف في console
-      console.log('📋 statuts:', data.map(d => d.statut));   // ← شوف الـ statuts الموجودة
-    },
-    error: () => { this.rejectedCount = 0; }
-  });
-}
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // USER INFO
-  // ══════════════════════════════════════════════════════════════════════════
+  ngOnDestroy(): void {}
 
   loadUserInfo(): void {
     try {
@@ -86,24 +69,11 @@ loadRejectedCount(): void {
       this.email     = this.kcAdmin.getEmail();
       this.userRoles = this.kcAdmin.getCurrentUserRoles();
       this.userRole  = this.kcAdmin.getPrimaryRole();
-
-      console.log('✅ Informations utilisateur chargées:', {
-        username: this.username,
-        fullName: this.fullName,
-        email:    this.email,
-        role:     this.userRole,
-        roles:    this.userRoles
-      });
-    } catch (error) {
-      console.error('❌ Erreur chargement utilisateur:', error);
+    } catch {
       this.username = 'Agent';
       this.userRole = 'Agent';
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // PAGE INFO
-  // ══════════════════════════════════════════════════════════════════════════
 
   updatePageInfo(url: string): void {
     if (url.includes('/agent/declarations') || url === '/agent' || url === '/agent/') {
@@ -127,31 +97,14 @@ loadRejectedCount(): void {
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // SIDEBAR
-  // ══════════════════════════════════════════════════════════════════════════
+  toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
 
-  toggleSidebar(): void {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
-  }
-
-  isActive(route: string): boolean {
-    return this.currentRoute.includes(route);
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // AUTH
-  // ══════════════════════════════════════════════════════════════════════════
+  isActive(route: string): boolean { return this.currentRoute.includes(route); }
 
   logout(): void {
     if (!confirm('Voulez-vous vous déconnecter ?')) return;
-    console.log('🔒 Déconnexion de l\'utilisateur:', this.username);
     this.kcAdmin.logout();
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // HELPERS UTILISATEUR
-  // ══════════════════════════════════════════════════════════════════════════
 
   getUserInitials(): string {
     if (this.fullName && this.fullName.includes(' ')) {
@@ -166,19 +119,7 @@ loadRejectedCount(): void {
     return 'AG';
   }
 
-  getDisplayName(): string {
-    return this.fullName || this.username || 'Agent';
-  }
+  getDisplayName(): string { return this.fullName || this.username || 'Agent'; }
 
-  hasRole(roleName: string): boolean {
-    return this.kcAdmin.hasRole(roleName);
-  }
-
-  getAvatarColor(): string {
-    if (this.hasRole('ROLE_ADMIN'))   return '#DE350B';
-    if (this.hasRole('ROLE_MANAGER')) return '#0052CC';
-    if (this.hasRole('ROLE_AGENT'))   return '#0065FF';
-    if (this.hasRole('ROLE_AUDITOR')) return '#FF5630';
-    return '#5E6C84';
-  }
+  hasRole(roleName: string): boolean { return this.kcAdmin.hasRole(roleName); }
 }

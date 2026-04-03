@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<h2>Bonjour <span th:text="${managerName}">Manager</span>,</h2>
+<p>Une déclaration <strong th:text="${declarationCode}">CODE</strong> est en attente de validation.</p>
+<p>Période : <span th:text="${periode}">PERIODE</span></p>
+<p>Soumise par : <span th:text="${generePar}">AGENT</span></p>
+<a th:href="${appUrl}">Accéder à l'application</a>
+</body>
+</html>

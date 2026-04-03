@@ -59,6 +59,7 @@ app:
   cors:
     allowed-origins: http://localhost:4200
   frontend-client-id: bct-frontend
+  internal-secret: ${INTERNAL_SECRET:wifak-internal-secret-2024}
 
 file:
   upload-dir: uploads/templates

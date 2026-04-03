@@ -8,24 +8,49 @@ spring:
   cloud:
     gateway:
       routes:
-        # ── declaration-service (génération, lecture, download) ──
+        # ── declaration-service (génération, lecture, download) ────
         - id: bct-backend
-          uri: lb://bct-backend          # nom Eureka du bct-backend existant
+          uri: lb://bct-backend
           predicates:
             - Path=/api/declarations/**, /api/admin/**
           filters:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
-        # ── validation-service (workflow) ── NOUVEAU ──────────────
+        # ── validation-service (workflow) ──────────────────────────
         - id: validation-service
-          uri: lb://validation-service   # nom Eureka du nouveau service
+          uri: lb://validation-service
           predicates:
             - Path=/api/validation/**
           filters:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
+        # ── notification-service (webhooks internes + deadlines) ───
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+      # ── CORS global (géré par la gateway pour tous les services) ──
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:4200"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
 
     loadbalancer:
       cache:
@@ -52,3 +77,10 @@ eureka:
     registry-fetch-interval-seconds: 5
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
