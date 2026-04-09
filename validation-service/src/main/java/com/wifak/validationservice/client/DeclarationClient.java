@@ -57,4 +57,11 @@ public interface DeclarationClient {
     // ── Stats (lecture depuis declaration-service) ────────────────
     @GetMapping("/stats")
     ValidationStatsDTO getStats();
+    @GetMapping("/api/declarations/{id}")
+    DeclarationDTO getDeclarationById(@PathVariable Long id);
+
+
+
+    @GetMapping("/api/declarations")
+    List<DeclarationDTO> getAllDeclarations();
 }

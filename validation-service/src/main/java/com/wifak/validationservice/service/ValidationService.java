@@ -1,14 +1,12 @@
 package com.wifak.validationservice.service;
 
 import com.wifak.validationservice.client.DeclarationClient;
-import com.wifak.validationservice.client.NotificationClient;
 import com.wifak.validationservice.dto.DeclarationDTO;
 import com.wifak.validationservice.dto.ValidationStatsDTO;
+import com.wifak.validationservice.dto.jira.TransitionJiraTicketRequest;
 import com.wifak.validationservice.entities.ValidationLog;
-import com.wifak.validationservice.exceptions.DeclarationNotFoundException;
-import com.wifak.validationservice.exceptions.ValidationException;
+import com.wifak.validationservice.feign.JiraIntegrationFeignClient;
 import com.wifak.validationservice.repositories.ValidationLogRepository;
-import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -16,261 +14,219 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class ValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
 
-    private static final String GENEREE       = "GENEREE";
-    private static final String EN_VALIDATION = "EN_VALIDATION";
-    private static final String VALIDEE       = "VALIDEE";
-    private static final String REJETEE       = "REJETEE";
-    private static final String ENVOYEE       = "ENVOYEE";
-
-    private final DeclarationClient    declarationClient;
-    private final NotificationClient   notificationClient;   // ← AJOUT
+    private final DeclarationClient declarationClient;
+    private final JiraIntegrationFeignClient jiraClient;
     private final ValidationLogRepository logRepository;
 
     public ValidationService(DeclarationClient declarationClient,
-                             NotificationClient notificationClient,
+                             JiraIntegrationFeignClient jiraClient,
                              ValidationLogRepository logRepository) {
-        this.declarationClient   = declarationClient;
-        this.notificationClient  = notificationClient;
-        this.logRepository       = logRepository;
+        this.declarationClient = declarationClient;
+        this.jiraClient = jiraClient;
+        this.logRepository = logRepository;
     }
 
     // ══════════════════════════════════════════════════════════════
-    // HELPER — utilisateur courant depuis JWT
+    // 1. SOUMETTRE POUR VALIDATION — GENEREE | REJETEE → EN_VALIDATION
+    //
+    //  Cas GENEREE  : ticket déjà en TO DO (créé par bct-backend à la génération)
+    //                 → transition TO DO → IN PROGRESS (id=31)
+    //  Cas REJETEE  : ticket existant en REJETÉE
+    //                 → transition REJETÉE → IN PROGRESS (id=3)
     // ══════════════════════════════════════════════════════════════
+    public DeclarationDTO submitForValidation(Long declarationId) {
+        String currentUser = getCurrentUsername();
+        log.info("📤 submitForValidation — ID: {}, user: {}", declarationId, currentUser);
 
-    private String getCurrentUsername() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null ? auth.getName() : "system";
-    }
+        DeclarationDTO decl = declarationClient.getById(declarationId);
+        validateStatut(decl.getStatut(), "GENEREE", "REJETEE");
 
-    // ══════════════════════════════════════════════════════════════
-    // HELPER — récupère la déclaration via Feign (avec 404 propre)
-    // ══════════════════════════════════════════════════════════════
+        String statutAvant = decl.getStatut();
 
-    private DeclarationDTO fetchDeclaration(Long id) {
-        try {
-            return declarationClient.getById(id);
-        } catch (FeignException.NotFound e) {
-            throw new DeclarationNotFoundException(id);
-        } catch (FeignException e) {
-            log.error("❌ Erreur Feign lecture déclaration {} : {}", id, e.getMessage());
-            throw new RuntimeException("Impossible de contacter le declaration-service : " + e.getMessage());
+        // Mise à jour du statut BCT → EN_VALIDATION
+        DeclarationDTO updated = declarationClient.updateStatut(
+                declarationId, "EN_VALIDATION", null, null);
+
+        saveLog(declarationId, "SUBMIT", statutAvant, "EN_VALIDATION", currentUser, null);
+
+        // ── Cas 1 : GENEREE → ticket déjà en TO DO
+        //            → transition TO DO → IN PROGRESS (id=31)
+        if ("GENEREE".equals(statutAvant)) {
+            try {
+                TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
+                        declarationId, "EN_VALIDATION", null, currentUser);
+                jiraClient.transitionTicket(req);
+                log.info("🔄 Ticket Jira TO DO → IN PROGRESS pour déclaration {}", declarationId);
+            } catch (Exception e) {
+                log.warn("⚠️ Jira transition EN_VALIDATION échouée pour déclaration {} : {}",
+                        declarationId, e.getMessage());
+            }
         }
-    }
 
-    // ══════════════════════════════════════════════════════════════
-    // HELPER — appelle Feign pour changer le statut
-    // ══════════════════════════════════════════════════════════════
-
-    private DeclarationDTO changeStatut(Long id, String nouveauStatut,
-                                        String commentaire, String validePar) {
-        try {
-            return declarationClient.updateStatut(id, nouveauStatut, commentaire, validePar);
-        } catch (FeignException e) {
-            log.error("❌ Erreur Feign mise à jour statut : {}", e.getMessage());
-            throw new RuntimeException("Impossible de mettre à jour le statut : " + e.getMessage());
+        // ── Cas 2 : REJETEE resoumise
+        //            → JiraIntegrationService détecte bctStatut==REJETEE → utilise id=3
+        if ("REJETEE".equals(statutAvant)) {
+            try {
+                TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
+                        declarationId, "EN_VALIDATION", null, currentUser);
+                jiraClient.transitionTicket(req);
+                log.info("🔁 Ticket Jira REJETÉE → IN PROGRESS pour déclaration {}", declarationId);
+            } catch (Exception e) {
+                log.warn("⚠️ Jira resoumission échouée pour déclaration {} : {}",
+                        declarationId, e.getMessage());
+            }
         }
+
+        return updated;
     }
 
     // ══════════════════════════════════════════════════════════════
-    // HELPER — sauvegarde une trace dans wifak_validation
+    // 2. VALIDER — EN_VALIDATION → VALIDEE
     // ══════════════════════════════════════════════════════════════
+    public DeclarationDTO validateDeclaration(Long declarationId) {
+        String currentUser = getCurrentUsername();
+        log.info("✅ validateDeclaration — ID: {}, manager: {}", declarationId, currentUser);
 
-    private void saveLog(Long declarationId, String action,
-                         String statutAvant, String statutApres,
-                         String commentaire) {
-        ValidationLog entry = new ValidationLog();
-        entry.setDeclarationId(declarationId);
-        entry.setAction(action);
-        entry.setStatutAvant(statutAvant);
-        entry.setStatutApres(statutApres);
-        entry.setEffectuePar(getCurrentUsername());
-        entry.setCommentaire(commentaire);
-        logRepository.save(entry);
-        log.info("📝 Log : {} → {} par {} (déclaration {})",
-                statutAvant, statutApres, getCurrentUsername(), declarationId);
-    }
+        DeclarationDTO decl = declarationClient.getById(declarationId);
+        validateStatut(decl.getStatut(), "EN_VALIDATION");
 
-    // ══════════════════════════════════════════════════════════════
-    // HELPER — déclenche une notification de façon non-bloquante
-    //          (une erreur du notification-service ne doit pas
-    //           faire échouer la transition de statut)
-    // ══════════════════════════════════════════════════════════════
+        DeclarationDTO updated = declarationClient.updateStatut(
+                declarationId, "VALIDEE", null, currentUser);
 
-    private void sendNotificationSafely(Runnable notificationCall, String context) {
+        saveLog(declarationId, "VALIDATE", decl.getStatut(), "VALIDEE", currentUser, null);
+
+        // Transition Jira IN PROGRESS → VALIDÉE (id=41) — NON BLOQUANT
         try {
-            notificationCall.run();
+            TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
+                    declarationId, "VALIDEE", null, currentUser);
+            jiraClient.transitionTicket(req);
+            log.info("🔄 Ticket Jira → VALIDÉE pour déclaration {}", declarationId);
         } catch (Exception e) {
-            // On logue l'erreur mais on ne remonte pas l'exception :
-            // la validation métier est déjà effectuée et persistée.
-            log.error("⚠️  Notification non envoyée [{}] : {}", context, e.getMessage());
-        }
-    }
-
-    // ══════════════════════════════════════════════════════════════
-    // 1. SOUMETTRE POUR VALIDATION  (GENEREE ou REJETEE → EN_VALIDATION)
-    // ══════════════════════════════════════════════════════════════
-
-    public DeclarationDTO submitForValidation(Long id) {
-        log.info("📤 Soumission pour validation — ID: {}", id);
-
-        DeclarationDTO decl = fetchDeclaration(id);
-        String currentUser  = getCurrentUsername();
-
-        log.info("🔍 currentUser='{}' | generePar='{}'", currentUser, decl.getGenerePar());
-
-        if (!currentUser.equals(decl.getGenerePar())) {
-            throw new ValidationException("Vous ne pouvez soumettre que vos propres déclarations");
+            log.warn("⚠️ Jira sync échouée pour validation déclaration {} : {}",
+                    declarationId, e.getMessage());
         }
 
-        String statutActuel = decl.getStatut();
-        if (!GENEREE.equals(statutActuel) && !REJETEE.equals(statutActuel)) {
-            throw new ValidationException(
-                    "Seules les déclarations GENEREE ou REJETEE peuvent être soumises. " +
-                            "Statut actuel : " + statutActuel);
-        }
-
-        DeclarationDTO updated = changeStatut(id, EN_VALIDATION, null, null);
-        saveLog(id, "SUBMIT", statutActuel, EN_VALIDATION, null);
-
-        // ── Notification : avertir les managers ──────────────────
-        sendNotificationSafely(
-                () -> notificationClient.notifyPendingValidation(Map.of("declarationId", id)),
-                "PENDING_VALIDATION déclaration=" + id
-        );
-
-        log.info("✅ Déclaration {} soumise pour validation", id);
         return updated;
     }
 
     // ══════════════════════════════════════════════════════════════
-    // 2. VALIDER  (EN_VALIDATION → VALIDEE)
-    //    Pas de notification email pour la validation (cahier des charges)
+    // 3. REJETER — EN_VALIDATION → REJETEE
     // ══════════════════════════════════════════════════════════════
+    public DeclarationDTO rejectDeclaration(Long declarationId, String commentaire) {
+        String currentUser = getCurrentUsername();
+        log.info("❌ rejectDeclaration — ID: {}, manager: {}", declarationId, currentUser);
 
-    public DeclarationDTO validateDeclaration(Long id) {
-        log.info("✅ Validation déclaration — ID: {}", id);
-
-        DeclarationDTO decl = fetchDeclaration(id);
-
-        if (!EN_VALIDATION.equals(decl.getStatut())) {
-            throw new ValidationException(
-                    "Cette déclaration n'est pas en attente de validation. " +
-                            "Statut actuel : " + decl.getStatut());
+        if (commentaire == null || commentaire.isBlank()) {
+            throw new IllegalArgumentException("Le commentaire de rejet est obligatoire");
         }
 
-        String validePar    = getCurrentUsername();
-        DeclarationDTO updated = changeStatut(id, VALIDEE, null, validePar);
-        saveLog(id, "VALIDATE", EN_VALIDATION, VALIDEE, null);
+        DeclarationDTO decl = declarationClient.getById(declarationId);
+        validateStatut(decl.getStatut(), "EN_VALIDATION");
 
-        log.info("✅ Déclaration {} validée par {}", id, validePar);
-        return updated;
-    }
+        DeclarationDTO updated = declarationClient.updateStatut(
+                declarationId, "REJETEE", commentaire, currentUser);
 
-    // ══════════════════════════════════════════════════════════════
-    // 3. REJETER  (EN_VALIDATION → REJETEE)
-    // ══════════════════════════════════════════════════════════════
+        saveLog(declarationId, "REJECT", decl.getStatut(), "REJETEE", currentUser, commentaire);
 
-    public DeclarationDTO rejectDeclaration(Long id, String commentaire) {
-        log.info("❌ Rejet déclaration — ID: {}", id);
-
-        if (commentaire == null || commentaire.trim().isEmpty()) {
-            throw new ValidationException("Un commentaire est obligatoire pour rejeter une déclaration");
-        }
-
-        DeclarationDTO decl = fetchDeclaration(id);
-
-        if (!EN_VALIDATION.equals(decl.getStatut())) {
-            throw new ValidationException(
-                    "Cette déclaration n'est pas en attente de validation. " +
-                            "Statut actuel : " + decl.getStatut());
-        }
-
-        String validePar       = getCurrentUsername();
-        String commentaireTrim = commentaire.trim();
-
-        DeclarationDTO updated = changeStatut(id, REJETEE, commentaireTrim, validePar);
-        saveLog(id, "REJECT", EN_VALIDATION, REJETEE, commentaireTrim);
-
-        // ── Notification : avertir l'agent déclarant ─────────────
-        sendNotificationSafely(
-                () -> notificationClient.notifyRejection(Map.of(
-                        "declarationId", id,
-                        "commentaire",   commentaireTrim
-                )),
-                "REJECTION déclaration=" + id
-        );
-
-        log.info("❌ Déclaration {} rejetée par {} — motif: {}", id, validePar, commentaireTrim);
-        return updated;
-    }
-
-    // ══════════════════════════════════════════════════════════════
-    // 4. MARQUER COMME ENVOYÉE  (VALIDEE → ENVOYEE)
-    // ══════════════════════════════════════════════════════════════
-
-    public DeclarationDTO markAsSent(Long id) {
-        log.info("📨 Marquage comme envoyée — ID: {}", id);
-
-        DeclarationDTO decl = fetchDeclaration(id);
-
-        if (!VALIDEE.equals(decl.getStatut())) {
-            throw new ValidationException(
-                    "Seules les déclarations VALIDEE peuvent être envoyées. " +
-                            "Statut actuel : " + decl.getStatut());
-        }
-
-        DeclarationDTO updated = changeStatut(id, ENVOYEE, null, null);
-        saveLog(id, "SEND", VALIDEE, ENVOYEE, null);
-
-        log.info("📨 Déclaration {} marquée comme envoyée", id);
-        return updated;
-    }
-
-    // ══════════════════════════════════════════════════════════════
-    // 5. LISTE DES DÉCLARATIONS EN ATTENTE  (pour le Manager)
-    // ══════════════════════════════════════════════════════════════
-
-    public List<DeclarationDTO> getPendingDeclarations() {
-        log.info("📋 Récupération des déclarations EN_VALIDATION");
+        // Transition Jira IN PROGRESS → REJETÉE (id=4) — NON BLOQUANT
         try {
-            return declarationClient.getAll()
-                    .stream()
-                    .filter(d -> EN_VALIDATION.equals(d.getStatut()))
-                    .toList();
-        } catch (FeignException e) {
-            log.error("❌ Erreur récupération déclarations pending : {}", e.getMessage());
-            throw new RuntimeException("Impossible de récupérer les déclarations : " + e.getMessage());
+            TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
+                    declarationId, "REJETEE", commentaire, currentUser);
+            jiraClient.transitionTicket(req);
+            log.info("🔄 Ticket Jira → REJETÉE pour déclaration {}", declarationId);
+        } catch (Exception e) {
+            log.warn("⚠️ Jira sync échouée pour rejet déclaration {} : {}",
+                    declarationId, e.getMessage());
         }
+
+        return updated;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 4. MARQUER COMME ENVOYÉE — VALIDEE → ENVOYEE
+    // ══════════════════════════════════════════════════════════════
+    public DeclarationDTO markAsSent(Long declarationId) {
+        String currentUser = getCurrentUsername();
+        log.info("📨 markAsSent — ID: {}, user: {}", declarationId, currentUser);
+
+        DeclarationDTO decl = declarationClient.getById(declarationId);
+        validateStatut(decl.getStatut(), "VALIDEE");
+
+        DeclarationDTO updated = declarationClient.updateStatut(
+                declarationId, "ENVOYEE", null, null);
+
+        saveLog(declarationId, "SEND", decl.getStatut(), "ENVOYEE", currentUser, null);
+
+        // Transition Jira VALIDÉE → ENVOYÉE (id=2) — NON BLOQUANT
+        try {
+            TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
+                    declarationId, "ENVOYEE", null, currentUser);
+            jiraClient.transitionTicket(req);
+            log.info("🔄 Ticket Jira → ENVOYÉE pour déclaration {}", declarationId);
+        } catch (Exception e) {
+            log.warn("⚠️ Jira sync échouée pour envoi déclaration {} : {}",
+                    declarationId, e.getMessage());
+        }
+
+        return updated;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 5. PENDING — déclarations EN_VALIDATION
+    // ══════════════════════════════════════════════════════════════
+    public List<DeclarationDTO> getPendingDeclarations() {
+        return declarationClient.getAll().stream()
+                .filter(d -> "EN_VALIDATION".equals(d.getStatut()))
+                .toList();
     }
 
     // ══════════════════════════════════════════════════════════════
     // 6. STATS
     // ══════════════════════════════════════════════════════════════
-
     public ValidationStatsDTO getStats() {
-        log.info("📊 Récupération des statistiques");
-        try {
-            return declarationClient.getStats();
-        } catch (FeignException e) {
-            log.error("❌ Erreur récupération stats : {}", e.getMessage());
-            throw new RuntimeException("Impossible de récupérer les statistiques : " + e.getMessage());
-        }
+        return declarationClient.getStats();
     }
 
     // ══════════════════════════════════════════════════════════════
-    // 7. HISTORIQUE
+    // 7. HISTORY
     // ══════════════════════════════════════════════════════════════
-
     public List<ValidationLog> getHistory(Long declarationId) {
-        log.info("📜 Historique validation — déclaration ID: {}", declarationId);
         return logRepository.findByDeclarationIdOrderByDateActionDesc(declarationId);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // UTILITAIRES PRIVÉS
+    // ══════════════════════════════════════════════════════════════
+    private String getCurrentUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) throw new RuntimeException("Utilisateur non authentifié");
+        return auth.getName();
+    }
+
+    private void validateStatut(String current, String... allowed) {
+        for (String s : allowed) {
+            if (s.equals(current)) return;
+        }
+        throw new IllegalStateException(
+                String.format("Statut invalide '%s'. Attendu : %s",
+                        current, String.join(" ou ", allowed)));
+    }
+
+    private void saveLog(Long declarationId, String action, String avant, String apres,
+                         String effectuePar, String commentaire) {
+        ValidationLog vlog = new ValidationLog();
+        vlog.setDeclarationId(declarationId);
+        vlog.setAction(action);
+        vlog.setStatutAvant(avant);
+        vlog.setStatutApres(apres);
+        vlog.setEffectuePar(effectuePar);
+        vlog.setCommentaire(commentaire);
+        logRepository.save(vlog);
     }
 }

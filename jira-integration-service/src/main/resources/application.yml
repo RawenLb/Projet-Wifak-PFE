@@ -1,0 +1,88 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: jira-integration-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/wifak_jira?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/bct-realm
+          jwk-set-uri: http://localhost:8081/realms/bct-realm/protocol/openid-connect/certs
+
+  cloud:
+    inetutils:
+      preferred-networks:
+        - 127.0.0
+    openfeign:
+      httpclient:
+        hc5:
+          enabled: true
+
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+    instance-id: jira-integration-service:8085
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+# ?? Jira Cloud configuration ???????????????????????????????????????????????
+jira:
+  base-url: https://wifak-bct.atlassian.net          # ? remplace par ton domaine Atlassian
+  project-key: BCT                                      # ? clé du projet visible dans screenshot
+  user-email: rawene.labaoui@gmail.com                   # ? email du compte Atlassian
+  api-token: ATATT3xFfGF0yZcdgPJjZ73VCFaLnOD6dUvaU1F7fF6eNSN8EbpJA1o_gI2gKfALVRqvINzj9HrkKawHxHflrHMVjRJ6P5PlFXZAYF73lKb0E-O6SQhyKVaPPuowjBZhBFqYeWoTzuwaQ7sn4Jr9LmH4ciajGY3qPzjmf9Ohs7t8ZF_4qlBdI7M=D5D01476                        # ? Personal Access Token Jira
+  # Transition IDs (visibles dans les screenshots du workflow)
+  transitions:
+    to-do: "10001"          # TO DO
+    in-progress: "10002"    # IN PROGRESS (= EN_VALIDATION)
+    validee: "10003"        # VALIDÉE
+    rejetee: "10004"        # REJETÉE
+    envoyee: "2"            # ENVOYÉE
+
+feign:
+  client:
+    config:
+      bct-backend:
+        connectTimeout: 5000
+        readTimeout: 10000
+        loggerLevel: basic
+      validation-service:
+        connectTimeout: 3000
+        readTimeout: 5000
+        loggerLevel: basic
+
+app:
+  cors:
+    allowed-origins: http://localhost:4200
+  internal-secret: ${INTERNAL_SECRET:wifak-internal-secret-2024}
+
+logging:
+  level:
+    com.wifak.jiraintegration: INFO
+    org.springframework.security: DEBUG
+    feign: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

@@ -1,19 +1,22 @@
-// src/app/components/manager-dashboard/manager-dashboard.component.ts
+// src/app/manager-dashboard/manager-dashboard.component.ts
+// ✅ MODIFIÉ — intégration JiraService complète
 
-import { Component, OnInit } from '@angular/core';
-import { DeclarationService, Declaration, DeclarationStats } from '../services/Declaration.service';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { DeclarationService, Declaration } from '../services/Declaration.service';
 import { ValidationService, ValidationStats, ValidationLog } from '../services/Validation.service';
+import { JiraService, JiraTicketResponse } from '../services/jira.service';
 
 @Component({
   selector: 'app-manager-dashboard',
   templateUrl: './manager-dashboard.component.html',
   styleUrls: ['./manager-dashboard.component.scss']
 })
-export class ManagerDashboardComponent implements OnInit {
+export class ManagerDashboardComponent implements OnInit, OnDestroy {
 
   // ── Données ────────────────────────────────────────────────────
-  pending: Declaration[] = [];          // EN_VALIDATION uniquement
-  toutesDeclarations: Declaration[] = []; // Toutes les déclarations
+  pending: Declaration[] = [];
+  toutesDeclarations: Declaration[] = [];
   declarationsFiltrees: Declaration[] = [];
   stats: ValidationStats | null = null;
 
@@ -38,39 +41,58 @@ export class ManagerDashboardComponent implements OnInit {
   message = '';
   messageType = 'success';
 
+  // ── Jira ───────────────────────────────────────────────────────
+  jiraLoading: Record<number, boolean> = {};
+  private jiraTicketMap = new Map<number, JiraTicketResponse | null>();
+  private jiraSub!: Subscription;
+
   constructor(
     private declarationService: DeclarationService,
-    private validationService: ValidationService   // ✅ workflow via validation-service
+    private validationService: ValidationService,
+    public jiraService: JiraService
   ) {}
 
   ngOnInit(): void {
+    // S'abonner au cache Jira
+    this.jiraSub = this.jiraService.ticketMap$.subscribe(map => {
+      this.jiraTicketMap = map;
+    });
     this.chargerDonnees();
   }
 
-  // ─── Chargement initial ────────────────────────────────────────
+  ngOnDestroy(): void {
+    this.jiraSub?.unsubscribe();
+  }
+
+  // ─── Chargement ───────────────────────────────────────────────
+
   chargerDonnees(): void {
     this.loading = true;
 
-    // 1. Stats (depuis validation-service)
     this.validationService.getStats().subscribe({
       next: (s) => this.stats = s,
       error: () => console.warn('Stats indisponibles')
     });
 
-    // 2. Déclarations en attente (depuis validation-service)
     this.validationService.getPendingDeclarations().subscribe({
       next: (data) => {
         this.pending = data.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+        // ✅ Charger les tickets Jira pour les déclarations en attente
+        this.loadJiraTicketsForList(this.pending);
       },
       error: (err) => this.showMessage('Erreur chargement pending : ' + err.message, 'error')
     });
 
-    // 3. Toutes les déclarations (depuis declaration-service)
     this.declarationService.getAllDeclarations().subscribe({
       next: (data) => {
         this.toutesDeclarations = data.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
         this.declarationsFiltrees = [...this.toutesDeclarations];
         this.loading = false;
+        // ✅ Charger les tickets Jira pour toutes les déclarations éligibles
+        const eligible = data.filter(d =>
+          ['EN_VALIDATION', 'VALIDEE', 'REJETEE', 'ENVOYEE'].includes(d.statut)
+        );
+        this.loadJiraTicketsForList(eligible);
       },
       error: (err) => {
         this.showMessage('Erreur chargement déclarations : ' + err.message, 'error');
@@ -79,34 +101,57 @@ export class ManagerDashboardComponent implements OnInit {
     });
   }
 
-  // ─── Filtre statut ─────────────────────────────────────────────
+  // ─── Jira ──────────────────────────────────────────────────────
+
+  private loadJiraTicketsForList(declarations: Declaration[]): void {
+    declarations.forEach(d => {
+      if (d.id && !this.jiraTicketMap.has(d.id)) {
+        this.jiraLoading[d.id] = true;
+        this.jiraService.getTicketForDeclaration(d.id).subscribe({
+          next: () => { this.jiraLoading[d.id!] = false; },
+          error: () => { this.jiraLoading[d.id!] = false; }
+        });
+      }
+    });
+  }
+
+  getJiraTicket(declarationId: number): JiraTicketResponse | null {
+    return this.jiraTicketMap.get(declarationId) ?? null;
+  }
+
+  ouvrirJira(d: Declaration): void {
+    const ticket = this.getJiraTicket(d.id!);
+    if (ticket) this.jiraService.openJiraTicket(ticket);
+  }
+
+  // ─── Filtre ───────────────────────────────────────────────────
+
   filtrerDeclarations(): void {
     if (!this.filtreStatut) {
       this.declarationsFiltrees = [...this.toutesDeclarations];
     } else {
-      this.declarationsFiltrees = this.toutesDeclarations.filter(
-        d => d.statut === this.filtreStatut
-      );
+      this.declarationsFiltrees = this.toutesDeclarations.filter(d => d.statut === this.filtreStatut);
     }
   }
 
-  // ─── VALIDER ───────────────────────────────────────────────────
-  // ✅ POST /api/validation/{id}/validate → validation-service
+  // ─── VALIDER ──────────────────────────────────────────────────
+
   valider(d: Declaration): void {
     if (!d.id) return;
     if (!confirm(`Valider la déclaration #${d.id} — ${d.declarationType?.nom} (${d.periode}) ?`)) return;
 
     this.actionEnCours[d.id] = true;
-
     this.validationService.validateDeclaration(d.id).subscribe({
       next: (updated) => {
-        // Retirer de la liste pending
         this.pending = this.pending.filter(x => x.id !== d.id);
-        // Mettre à jour dans toutes les déclarations
         this.mettreAJourListe(updated);
         this.actionEnCours[d.id!] = false;
-        // Rafraîchir les stats
         this.rafraichirStats();
+        // Invalider et recharger le cache Jira (statut changé → VALIDÉE)
+        this.jiraService.invalidateCache(d.id!);
+        setTimeout(() => {
+          this.jiraService.getTicketForDeclaration(d.id!).subscribe();
+        }, 1500);
         this.showMessage(`✅ Déclaration #${d.id} validée avec succès.`, 'success');
       },
       error: (err) => {
@@ -116,7 +161,8 @@ export class ManagerDashboardComponent implements OnInit {
     });
   }
 
-  // ─── OUVRIR MODAL REJET ────────────────────────────────────────
+  // ─── OUVRIR MODAL REJET ───────────────────────────────────────
+
   ouvrirRejet(d: Declaration): void {
     this.declarationSelectionnee = d;
     this.commentaireRejet = '';
@@ -131,8 +177,8 @@ export class ManagerDashboardComponent implements OnInit {
     this.rejetEnCours = false;
   }
 
-  // ─── CONFIRMER REJET ───────────────────────────────────────────
-  // ✅ POST /api/validation/{id}/reject → validation-service
+  // ─── CONFIRMER REJET ──────────────────────────────────────────
+
   confirmerRejet(): void {
     this.commentaireRejetTouched = true;
     if (!this.declarationSelectionnee?.id || !this.commentaireRejet.trim()) return;
@@ -142,12 +188,15 @@ export class ManagerDashboardComponent implements OnInit {
 
     this.validationService.rejectDeclaration(id, this.commentaireRejet.trim()).subscribe({
       next: (updated) => {
-        // Retirer de la liste pending
         this.pending = this.pending.filter(x => x.id !== id);
-        // Mettre à jour dans toutes les déclarations
         this.mettreAJourListe(updated);
         this.fermerRejet();
         this.rafraichirStats();
+        // Invalider et recharger le cache Jira (statut changé → REJETÉE)
+        this.jiraService.invalidateCache(id);
+        setTimeout(() => {
+          this.jiraService.getTicketForDeclaration(id).subscribe();
+        }, 1500);
         this.showMessage(`❌ Déclaration #${id} rejetée.`, 'error');
       },
       error: (err) => {
@@ -157,7 +206,8 @@ export class ManagerDashboardComponent implements OnInit {
     });
   }
 
-  // ─── TÉLÉCHARGER ──────────────────────────────────────────────
+  // ─── TÉLÉCHARGER ─────────────────────────────────────────────
+
   download(d: Declaration): void {
     if (!d.id) return;
     this.declarationService.downloadDeclaration(d.id).subscribe({
@@ -174,8 +224,8 @@ export class ManagerDashboardComponent implements OnInit {
     });
   }
 
-  // ─── HISTORIQUE ────────────────────────────────────────────────
-  // ✅ GET /api/validation/{id}/history → validation-service
+  // ─── HISTORIQUE ───────────────────────────────────────────────
+
   voirHistorique(d: Declaration): void {
     if (!d.id) return;
     this.declarationSelectionnee = d;
@@ -184,14 +234,8 @@ export class ManagerDashboardComponent implements OnInit {
     this.showHistoriqueModal = true;
 
     this.validationService.getHistory(d.id).subscribe({
-      next: (logs) => {
-        this.historique = logs;
-        this.historiqueLoading = false;
-      },
-      error: () => {
-        this.historiqueLoading = false;
-        this.showMessage('Historique indisponible', 'error');
-      }
+      next: (logs) => { this.historique = logs; this.historiqueLoading = false; },
+      error: () => { this.historiqueLoading = false; this.showMessage('Historique indisponible', 'error'); }
     });
   }
 
@@ -201,12 +245,11 @@ export class ManagerDashboardComponent implements OnInit {
     this.declarationSelectionnee = null;
   }
 
-  // ─── Helpers ───────────────────────────────────────────────────
+  // ─── Helpers ──────────────────────────────────────────────────
+
   private mettreAJourListe(updated: Declaration): void {
     const idx = this.toutesDeclarations.findIndex(x => x.id === updated.id);
-    if (idx !== -1) {
-      this.toutesDeclarations[idx] = updated;
-    }
+    if (idx !== -1) this.toutesDeclarations[idx] = updated;
     this.filtrerDeclarations();
   }
 
@@ -219,22 +262,22 @@ export class ManagerDashboardComponent implements OnInit {
 
   getStatutClass(statut: string): string {
     const map: Record<string, string> = {
-      'GENEREE':        'statut-generee',
-      'EN_VALIDATION':  'statut-validation',
-      'VALIDEE':        'statut-validee',
-      'REJETEE':        'statut-rejetee',
-      'ENVOYEE':        'statut-envoyee',
+      'GENEREE':       'statut-generee',
+      'EN_VALIDATION': 'statut-validation',
+      'VALIDEE':       'statut-validee',
+      'REJETEE':       'statut-rejetee',
+      'ENVOYEE':       'statut-envoyee',
     };
     return map[statut] || '';
   }
 
   getStatutLabel(statut: string): string {
     const map: Record<string, string> = {
-      'GENEREE':        'Générée',
-      'EN_VALIDATION':  'En validation',
-      'VALIDEE':        'Validée ✓',
-      'REJETEE':        'Rejetée ✗',
-      'ENVOYEE':        'Envoyée',
+      'GENEREE':       'Générée',
+      'EN_VALIDATION': 'En validation',
+      'VALIDEE':       'Validée ✓',
+      'REJETEE':       'Rejetée ✗',
+      'ENVOYEE':       'Envoyée',
     };
     return map[statut] || statut;
   }

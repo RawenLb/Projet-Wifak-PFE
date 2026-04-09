@@ -1190,3 +1190,98 @@
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.5; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   JIRA — Styles additionnels
+   À ajouter à la fin de manager-dashboard.component.scss
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Jira badge dans les tables ─────────────────────────────── */
+.cell-jira { white-space: nowrap; }
+
+.jira-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10.5px; font-weight: 600; font-family: var(--font-mono);
+  padding: 3px 9px; border-radius: 6px; border: 1px solid;
+  text-decoration: none; cursor: pointer; transition: var(--transition);
+  white-space: nowrap;
+
+  &:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+
+  .jira-key { font-weight: 700; }
+}
+
+/* Statuts Jira — Dark */
+.jira-todo {
+  color: #94a3b8;
+  background: rgba(148,163,184,0.08);
+  border-color: rgba(148,163,184,0.20);
+}
+.jira-progress {
+  color: #60a5fa;
+  background: rgba(96,165,250,0.10);
+  border-color: rgba(96,165,250,0.28);
+  &:hover { background: rgba(96,165,250,0.18); }
+}
+.jira-validated {
+  color: var(--green-soft);
+  background: var(--green-glow);
+  border-color: rgba(52,211,153,0.28);
+}
+.jira-rejected {
+  color: var(--red-soft);
+  background: var(--red-glow);
+  border-color: rgba(248,113,113,0.28);
+}
+.jira-sent {
+  color: var(--purple-soft);
+  background: var(--purple-glow);
+  border-color: rgba(167,139,250,0.25);
+}
+.jira-unknown {
+  color: var(--text-muted);
+  background: transparent;
+  border-color: var(--border-subtle);
+}
+
+/* Statuts Jira — Light */
+:host-context(body.theme-light) {
+  .jira-progress  { color: #1a56db; background: rgba(26,86,219,0.07);  border-color: rgba(26,86,219,0.20);  }
+  .jira-validated { color: #15803d; background: rgba(22,163,74,0.07);  border-color: rgba(22,163,74,0.20);  }
+  .jira-rejected  { color: #c0392b; background: rgba(192,57,43,0.07);  border-color: rgba(192,57,43,0.20);  }
+  .jira-sent      { color: #5b21b6; background: rgba(91,33,182,0.07);  border-color: rgba(91,33,182,0.20);  }
+}
+
+.jira-none {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10.5px; color: var(--text-muted); font-style: italic;
+}
+.jira-na { font-size: 11px; color: var(--text-muted); }
+
+/* Bouton Jira dans les actions */
+.btn-jira {
+  color: #0052CC !important;
+  border-color: rgba(0,82,204,0.28) !important;
+  background: rgba(0,82,204,0.10) !important;
+  &:hover { box-shadow: 0 0 8px rgba(0,82,204,0.20); border-color: #0052CC !important; }
+}
+
+:host-context(body.theme-light) .btn-jira {
+  color: #0052CC !important;
+  border-color: rgba(0,82,204,0.22) !important;
+  background: rgba(0,82,204,0.07) !important;
+}
+
+/* Spinner XS */
+.spinner-xs {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid rgba(59,130,246,0.15);
+  border-top-color: var(--blue);
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+:host-context(body.theme-light) .spinner-xs {
+  border-color: rgba(26,86,219,0.12);
+  border-top-color: #1a56db;
+}

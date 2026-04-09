@@ -69,7 +69,6 @@
         </div>
       </div>
     </header>
-    <!-- ✅ header fermé correctement ICI -->
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- CONTENT AREA                                              -->
@@ -81,7 +80,7 @@
         <p>Opération en cours...</p>
       </div>
 
-      <!-- ✅ BANNIÈRE REJETÉES — placée ICI dans content-area -->
+      <!-- BANNIÈRE REJETÉES -->
       <div class="alert-rejected-banner"
            *ngIf="getStatsByStatus('REJETEE') > 0"
            (click)="filterStatut = 'REJETEE'; applyFilters()">
@@ -190,7 +189,7 @@
               <th>TYPE</th>
               <th>PERIODE</th>
               <th>DATE GENERATION</th>
-              <th>STATUT</th>
+              <th>STATUT &amp; JIRA</th>
               <th>ACTIONS</th>
             </tr>
           </thead>
@@ -209,11 +208,34 @@
                 <td>
                   <span class="date-text">{{ formatDate(declaration.dateGeneration) }}</span>
                 </td>
+
+                <!-- ✅ STATUT + BADGE JIRA dans la même cellule -->
                 <td>
-                  <span class="status-badge" [ngClass]="getStatusBadgeClass(declaration.statut)">
-                    <span class="status-dot"></span>{{ getStatusLabel(declaration.statut) }}
-                  </span>
+                  <div class="statut-jira-cell">
+                    <span class="status-badge" [ngClass]="getStatusBadgeClass(declaration.statut)">
+                      <span class="status-dot"></span>{{ getStatusLabel(declaration.statut) }}
+                    </span>
+                    <!-- Badge Jira — apparaît dès qu'un ticket existe -->
+                    <a *ngIf="getJiraTicket(declaration.id)"
+                       [href]="getJiraTicket(declaration.id)!.jiraTicketUrl"
+                       target="_blank"
+                       class="jira-badge"
+                       [title]="'Voir ticket Jira ' + getJiraTicket(declaration.id)!.jiraTicketKey"
+                       (click)="$event.stopPropagation()">
+                      <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+                        <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
+                        <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
+                      </svg>
+                      {{ getJiraTicket(declaration.id)!.jiraTicketKey }}
+                    </a>
+                    <!-- Spinner pendant le chargement Jira -->
+                    <span class="jira-loading-dot"
+                          *ngIf="!getJiraTicket(declaration.id) && isJiraEligible(declaration) && jiraLoadingMap[declaration.id!]">
+                      <span class="spinner-xs"></span>
+                    </span>
+                  </div>
                 </td>
+
                 <td>
                   <div class="action-buttons">
                     <!-- Détails -->
@@ -248,7 +270,7 @@
                       </svg>
                     </button>
 
-                    <!-- ✅ Envoyer à la BCT — VALIDEE uniquement -->
+                    <!-- Envoyer à la BCT — VALIDEE uniquement -->
                     <button *ngIf="canSendToBCT(declaration)"
                             (click)="sendToBCT(declaration)"
                             class="btn-action btn-send"
@@ -284,10 +306,10 @@
         </table>
       </div>
     </div>
-    <!-- ✅ content-area fermé -->
+    <!-- content-area fermé -->
 
   </div>
-  <!-- ✅ main-content fermé -->
+  <!-- main-content fermé -->
 
   <!-- ============================================================ -->
   <!-- GENERATE MODAL — STEPPER 3 ETAPES                           -->
@@ -462,23 +484,15 @@
               <span *ngIf="xsdFile" class="upload-main-text success-text">
                 Fichier selectionné : {{ xsdFile.name }}
               </span>
-              <span class="upload-sub-text" *ngIf="!xsdFile">
-                Format .xsd uniquement - Taille max 5 Mo
-              </span>
-              <span class="upload-sub-text" *ngIf="xsdFile">
-                {{ formatFileSize(xsdFile.size) }} - Cliquer pour changer
-              </span>
+              <span class="upload-sub-text" *ngIf="!xsdFile">Format .xsd uniquement - Taille max 5 Mo</span>
+              <span class="upload-sub-text" *ngIf="xsdFile">{{ formatFileSize(xsdFile.size) }} - Cliquer pour changer</span>
             </div>
-            <span class="error-message" *ngIf="!xsdFile && formSubmitted">
-              Le fichier XSD est obligatoire
-            </span>
+            <span class="error-message" *ngIf="!xsdFile && formSubmitted">Le fichier XSD est obligatoire</span>
 
             <div class="code-preview-box" *ngIf="xsdPreviewContent">
               <div class="code-preview-header">
                 <span>Aperçu XSD</span>
-                <button class="btn-copy-small" (click)="copyToClipboard(xsdPreviewContent)">
-                  Copier
-                </button>
+                <button class="btn-copy-small" (click)="copyToClipboard(xsdPreviewContent)">Copier</button>
               </div>
               <pre class="code-preview-body">{{ xsdPreviewContent }}</pre>
             </div>
@@ -562,17 +576,13 @@
                         placeholder="ex: code_banque, nom_banque, periode, total_actifs"
                         [class.input-error]="!csvConfig.columns && formSubmitted"></textarea>
               <small class="form-hint">Noms de colonnes séparés par des virgules</small>
-              <span class="error-message" *ngIf="!csvConfig.columns && formSubmitted">
-                Les colonnes sont obligatoires
-              </span>
+              <span class="error-message" *ngIf="!csvConfig.columns && formSubmitted">Les colonnes sont obligatoires</span>
             </div>
 
             <div class="csv-preview-box" *ngIf="csvConfig.columns">
               <div class="code-preview-header"><span>Aperçu de l'entête CSV</span></div>
               <div class="csv-preview-row">
-                <span *ngFor="let col of getCsvColumns()" class="csv-cell-chip">
-                  {{ col.trim() }}
-                </span>
+                <span *ngFor="let col of getCsvColumns()" class="csv-cell-chip">{{ col.trim() }}</span>
               </div>
             </div>
           </ng-container>
@@ -625,8 +635,7 @@
               </div>
               <div class="form-group" *ngIf="txtConfig.structure === 'DELIMITED'">
                 <label>Délimiteur</label>
-                <input type="text" [(ngModel)]="txtConfig.delimiter"
-                       maxlength="3" placeholder="ex: | ou ##"/>
+                <input type="text" [(ngModel)]="txtConfig.delimiter" maxlength="3" placeholder="ex: | ou ##"/>
               </div>
             </div>
 
@@ -634,21 +643,17 @@
               <label>Template de ligne</label>
               <textarea [(ngModel)]="txtConfig.lineTemplate" rows="4" class="code-textarea"
                         [placeholder]="txtLinePlaceholder"></textarea>
-              <small class="form-hint">
-                Utilisez <code>[nom_champ]</code> pour les variables dynamiques
-              </small>
+              <small class="form-hint">Utilisez <code>[nom_champ]</code> pour les variables dynamiques</small>
             </div>
 
             <div class="form-row">
               <div class="form-group">
                 <label>En-tête du fichier</label>
-                <input type="text" [(ngModel)]="txtConfig.fileHeader"
-                       placeholder="ex: DECLARATION BCT - PERIODE"/>
+                <input type="text" [(ngModel)]="txtConfig.fileHeader" placeholder="ex: DECLARATION BCT - PERIODE"/>
               </div>
               <div class="form-group">
                 <label>Pied de page</label>
-                <input type="text" [(ngModel)]="txtConfig.fileFooter"
-                       placeholder="ex: FIN - DATE_GENERATION"/>
+                <input type="text" [(ngModel)]="txtConfig.fileFooter" placeholder="ex: FIN - DATE_GENERATION"/>
               </div>
             </div>
 
@@ -666,9 +671,7 @@
             </div>
 
             <div class="code-preview-box" *ngIf="txtConfig.lineTemplate || txtConfig.fileHeader">
-              <div class="code-preview-header">
-                <span>Aperçu de la structure TXT</span>
-              </div>
+              <div class="code-preview-header"><span>Aperçu de la structure TXT</span></div>
               <pre class="code-preview-body">{{ getTxtPreview() }}</pre>
             </div>
           </ng-container>
@@ -690,8 +693,7 @@
               </div>
             </div>
             <div class="alert-info">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/>
                 <line x1="12" y1="16" x2="12" y2="12"/>
                 <line x1="12" y1="8" x2="12.01" y2="8"/>
@@ -730,8 +732,7 @@ WHERE bi.date_valeur BETWEEN :dateDebut AND :dateFin</code></pre>
               <div class="sql-toolbar">
                 <span class="sql-lang-badge">SQL</span>
                 <button class="sql-toolbar-btn" (click)="formatSql()" title="Formater">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                       stroke-width="2" width="14">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14">
                     <line x1="21" y1="10" x2="7" y2="10"/>
                     <line x1="21" y1="6" x2="3" y2="6"/>
                     <line x1="21" y1="14" x2="3" y2="14"/>
@@ -739,8 +740,7 @@ WHERE bi.date_valeur BETWEEN :dateDebut AND :dateFin</code></pre>
                   </svg>
                 </button>
                 <button class="sql-toolbar-btn" (click)="clearSql()" title="Effacer">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                       stroke-width="2" width="14">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14">
                     <line x1="18" y1="6" x2="6" y2="18"/>
                     <line x1="6" y1="6" x2="18" y2="18"/>
                   </svg>
@@ -750,9 +750,7 @@ WHERE bi.date_valeur BETWEEN :dateDebut AND :dateFin</code></pre>
                         placeholder="SELECT ... FROM ... WHERE date_valeur BETWEEN :dateDebut AND :dateFin"
                         rows="8" class="sql-textarea" spellcheck="false"></textarea>
             </div>
-            <span class="error-message" *ngIf="!sqlQuery && formSubmitted">
-              La requête SQL est obligatoire
-            </span>
+            <span class="error-message" *ngIf="!sqlQuery && formSubmitted">La requête SQL est obligatoire</span>
           </div>
 
           <div class="sql-test-section">
@@ -769,8 +767,7 @@ WHERE bi.date_valeur BETWEEN :dateDebut AND :dateFin</code></pre>
             </div>
             <button (click)="testSql()" class="btn-test-sql"
                     [disabled]="testingSQL || !sqlQuery || !generateRequest.declarationTypeId">
-              <svg *ngIf="!testingSQL" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2" width="16">
+              <svg *ngIf="!testingSQL" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
                 <polygon points="5 3 19 12 5 21 5 3"/>
               </svg>
               <div *ngIf="testingSQL" class="spin-sm"></div>
@@ -843,6 +840,8 @@ WHERE bi.date_valeur BETWEEN :dateDebut AND :dateFin</code></pre>
       </div>
 
       <div class="modal-body" *ngIf="selectedDeclaration">
+
+        <!-- Informations générales -->
         <div class="details-section">
           <h3>Informations générales</h3>
           <div class="details-grid">
@@ -867,8 +866,7 @@ WHERE bi.date_valeur BETWEEN :dateDebut AND :dateFin</code></pre>
             <div class="detail-item">
               <span class="detail-label">Statut:</span>
               <span class="detail-value">
-                <span class="status-badge"
-                      [ngClass]="getStatusBadgeClass(selectedDeclaration.statut)">
+                <span class="status-badge" [ngClass]="getStatusBadgeClass(selectedDeclaration.statut)">
                   <span class="status-dot"></span>{{ getStatusLabel(selectedDeclaration.statut) }}
                 </span>
               </span>
@@ -880,6 +878,40 @@ WHERE bi.date_valeur BETWEEN :dateDebut AND :dateFin</code></pre>
           </div>
         </div>
 
+        <!-- ✅ SECTION TICKET JIRA — insérée après Informations générales -->
+        <div class="details-section" *ngIf="getJiraTicket(selectedDeclaration.id)">
+          <h3>Ticket Jira</h3>
+          <div class="jira-detail-card">
+            <div class="jira-detail-left">
+              <!-- Logo Jira -->
+              <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+                <circle cx="16" cy="16" r="16" fill="#0052CC"/>
+                <path d="M16.9 7.1L9.1 15l3.3 3.3 4.5-4.5 4.5 4.5 3.3-3.3L16.9 7.1z" fill="white"/>
+                <path d="M16.9 16.7l-3.3 3.3 3.3 3.3 3.3-3.3-3.3-3.3z" fill="white" opacity="0.7"/>
+              </svg>
+              <div>
+                <div class="jira-ticket-key">
+                  {{ getJiraTicket(selectedDeclaration.id)!.jiraTicketKey }}
+                </div>
+                <div class="jira-ticket-status">
+                  Statut Jira : <strong>{{ getJiraTicket(selectedDeclaration.id)!.jiraStatus }}</strong>
+                </div>
+              </div>
+            </div>
+            <a [href]="getJiraTicket(selectedDeclaration.id)!.jiraTicketUrl"
+               target="_blank"
+               class="btn-open-jira">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              Ouvrir dans Jira
+            </a>
+          </div>
+        </div>
+
+        <!-- Traçabilité -->
         <div class="details-section">
           <h3>Traçabilité</h3>
           <div class="details-grid">
@@ -906,6 +938,7 @@ WHERE bi.date_valeur BETWEEN :dateDebut AND :dateFin</code></pre>
           </div>
         </div>
 
+        <!-- Commentaire de rejet -->
         <div class="details-section" *ngIf="selectedDeclaration.commentaireRejet">
           <h3>Commentaire de rejet</h3>
           <div class="alert-danger">
@@ -918,6 +951,7 @@ WHERE bi.date_valeur BETWEEN :dateDebut AND :dateFin</code></pre>
             <p>{{ selectedDeclaration.commentaireRejet }}</p>
           </div>
         </div>
+
       </div>
 
       <div class="modal-footer">
@@ -935,7 +969,7 @@ WHERE bi.date_valeur BETWEEN :dateDebut AND :dateFin</code></pre>
           Télécharger
         </button>
 
-        <!-- ✅ Envoyer à la BCT — VALIDEE uniquement -->
+        <!-- Envoyer à la BCT — VALIDEE uniquement -->
         <button *ngIf="selectedDeclaration && canSendToBCT(selectedDeclaration)"
                 (click)="sendToBCT(selectedDeclaration!); closeDetailsModal()"
                 class="btn-primary btn-send-bct"

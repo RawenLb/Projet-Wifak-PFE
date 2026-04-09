@@ -60,6 +60,10 @@ feign:
         connectTimeout: 3000
         readTimeout: 5000
         loggerLevel: basic
+      jira-integration-service:      # ← AJOUTER
+        connectTimeout: 3000
+        readTimeout: 8000
+        loggerLevel: basic
 
 logging:
   level:

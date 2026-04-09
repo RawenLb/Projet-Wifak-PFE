@@ -1023,4 +1023,162 @@ $sh-glow: 0 0 0 3px rgba($primary,.15);
     white-space: nowrap;
     flex-shrink: 0;
   }
+
+  
+.statut-jira-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+ 
+.jira-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #0052cc;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s;
+  white-space: nowrap;
+ 
+  &:hover { background: #0065ff; }
+}
+ 
+.jira-detail-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: rgba(0, 82, 204, 0.08);
+  border: 1px solid rgba(0, 82, 204, 0.2);
+  border-radius: 10px;
+}
+ 
+.jira-detail-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+ 
+.jira-ticket-key {
+  font-size: 15px;
+  font-weight: 700;
+  color: #60a5fa;
+}
+ 
+.jira-ticket-status {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+ 
+.btn-open-jira {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #0052cc;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+ 
+  &:hover { background: #0065ff; }
+}
+}
+/* ═══════════════════════════════════════════════════════════════
+   JIRA — Styles additionnels
+   À ajouter à la fin de declaration-management.component.scss
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Jira badge dans la table ────────────────────────────────── */
+.statut-jira-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.jira-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: #0052cc;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  text-decoration: none;
+  transition: background 0.15s;
+  white-space: nowrap;
+  border: 1px solid rgba(0,82,204,0.40);
+
+  &:hover { background: #0065ff; transform: translateY(-1px); }
+
+  svg { flex-shrink: 0; }
+}
+
+/* ── Section Jira dans la modal détails ─────────────────────── */
+.jira-detail-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: rgba(0, 82, 204, 0.06);
+  border: 1px solid rgba(0, 82, 204, 0.18);
+  border-radius: $r-md;
+  gap: 12px;
+}
+
+.jira-detail-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.jira-ticket-key {
+  font-size: 15px;
+  font-weight: 700;
+  color: $primary;
+  font-family: 'DM Mono', monospace;
+}
+
+.jira-ticket-status {
+  font-size: 12px;
+  color: $text-2;
+  margin-top: 2px;
+
+  strong { color: $text-1; }
+}
+
+.btn-open-jira {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: $primary;
+  color: #fff;
+  border-radius: $r-md;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  border: none;
+
+  &:hover {
+    background: $primary-dk;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba($primary, 0.30);
+  }
 }
