@@ -1,28 +1,22 @@
 package com.wifak.validationservice.feign;
-// ════════════════════════════════════════════════════════════════
-// Fichier : validation-service/src/main/java/com/wifak/validationservice/feign/JiraIntegrationFeignClient.java
-// ════════════════════════════════════════════════════════════════
 
 import com.wifak.validationservice.dto.jira.CreateJiraTicketRequest;
-import com.wifak.validationservice.dto.jira.JiraTicketResponseDTO;
 import com.wifak.validationservice.dto.jira.TransitionJiraTicketRequest;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
-/**
- * Feign Client vers jira-integration-service.
- * ⚠️ Toujours encapsuler les appels dans try/catch — NON BLOQUANT.
- */
-@FeignClient(
-        name = "jira-integration-service",
-        configuration = com.wifak.validationservice.config.FeignConfig.class
-)
+@FeignClient(name = "jira-integration-service", path = "/api/jira")
 public interface JiraIntegrationFeignClient {
 
-    @PostMapping("/api/jira/tickets")
-    JiraTicketResponseDTO createTicket(@RequestBody CreateJiraTicketRequest req);
+    // ✅ FIX : créer un ticket (utile quand ticket absent au moment du submit)
+    @PostMapping("/tickets")
+    Object createTicket(@RequestBody CreateJiraTicketRequest req);
 
-    @PostMapping("/api/jira/tickets/transition")
-    JiraTicketResponseDTO transitionTicket(@RequestBody TransitionJiraTicketRequest req);
+    // ✅ FIX : vérifier l'existence avant de tenter une transition
+    @GetMapping("/tickets/{declarationId}/exists")
+    Boolean ticketExists(@PathVariable("declarationId") Long declarationId);
+
+    // Transition de statut Jira
+    @PostMapping("/tickets/transition")
+    Object transitionTicket(@RequestBody TransitionJiraTicketRequest req);
 }

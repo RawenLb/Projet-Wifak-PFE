@@ -37,7 +37,6 @@ public class JiraIntegrationService {
     @Transactional
     public JiraTicketResponseDTO createTicketForDeclaration(Long declarationId, String submittedBy) {
 
-        // Si le ticket existe déjà, on le retourne sans rien créer
         Optional<JiraTicketLink> existing = repository.findByDeclarationId(declarationId);
         if (existing.isPresent()) {
             log.info("ℹ️ Ticket déjà existant pour déclaration {}", declarationId);
@@ -50,27 +49,33 @@ public class JiraIntegrationService {
         String description = "Declaration ID: " + declarationId;
 
         // Créer le ticket dans Jira
-        // Le workflow démarre sur TO DO grâce à la transition Create(1) : Début → TO DO
         Map<String, Object> jiraResponse = jiraApiService.createTicket(summary, description);
 
         String ticketKey = (String) jiraResponse.get("key");
         String ticketId  = (String) jiraResponse.get("id");
         String url       = jiraBaseUrl + "/browse/" + ticketKey;
 
-        log.info("✅ Ticket Jira créé : {} (id={}) — statut initial : TO DO", ticketKey, ticketId);
+        log.info("✅ Ticket Jira créé : {} (id={})", ticketKey, ticketId);
 
-        // ✅ PAS DE TRANSITION ICI
-        // Le ticket reste en TO DO après la création.
-        // La transition TO DO → IN PROGRESS sera déclenchée séparément
-        // par ValidationService.submitForValidation() via transitionTicket(EN_VALIDATION).
+        // ✅ Transition directe vers IN PROGRESS (id=31 — Tous états → IN PROGRESS)
+        // Le ticket passe IDEA → IN PROGRESS sans passer par TO DO
+        // Pour avoir TO DO : modifier la transition Create(1) dans le workflow Jira
+        // pour qu'elle démarre en TO DO au lieu de IDEA
+        try {
+            String transitionId = jiraApiService.mapBctStatutToTransitionId("EN_VALIDATION");
+            jiraApiService.transitionTicket(ticketId, transitionId);
+            log.info("🔄 Ticket {} transitionné vers IN PROGRESS", ticketKey);
+        } catch (Exception e) {
+            log.warn("⚠️ Transition IN PROGRESS échouée pour {} : {}", ticketKey, e.getMessage());
+        }
 
         JiraTicketLink link = new JiraTicketLink();
         link.setDeclarationId(declarationId);
         link.setJiraTicketKey(ticketKey);
         link.setJiraTicketId(ticketId);
         link.setJiraTicketUrl(url);
-        link.setJiraStatus("TO_DO");      // ← statut initial correct
-        link.setBctStatut("GENEREE");     // ← statut BCT à la génération
+        link.setJiraStatus("IN_PROGRESS");
+        link.setBctStatut("EN_VALIDATION");
         link.setCreePar(submittedBy);
 
         repository.save(link);
@@ -83,8 +88,7 @@ public class JiraIntegrationService {
     public JiraTicketResponseDTO transitionTicket(TransitionTicketRequest req) {
 
         JiraTicketLink link = repository.findByDeclarationId(req.getDeclarationId())
-                .orElseThrow(() -> new RuntimeException(
-                        "Ticket Jira introuvable pour déclaration " + req.getDeclarationId()));
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
 
         String statutPourTransition = req.getNewBctStatut();
 

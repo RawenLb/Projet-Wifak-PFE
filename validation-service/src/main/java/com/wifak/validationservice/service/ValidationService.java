@@ -3,6 +3,7 @@ package com.wifak.validationservice.service;
 import com.wifak.validationservice.client.DeclarationClient;
 import com.wifak.validationservice.dto.DeclarationDTO;
 import com.wifak.validationservice.dto.ValidationStatsDTO;
+import com.wifak.validationservice.dto.jira.CreateJiraTicketRequest;
 import com.wifak.validationservice.dto.jira.TransitionJiraTicketRequest;
 import com.wifak.validationservice.entities.ValidationLog;
 import com.wifak.validationservice.feign.JiraIntegrationFeignClient;
@@ -34,11 +35,6 @@ public class ValidationService {
 
     // ══════════════════════════════════════════════════════════════
     // 1. SOUMETTRE POUR VALIDATION — GENEREE | REJETEE → EN_VALIDATION
-    //
-    //  Cas GENEREE  : ticket déjà en TO DO (créé par bct-backend à la génération)
-    //                 → transition TO DO → IN PROGRESS (id=31)
-    //  Cas REJETEE  : ticket existant en REJETÉE
-    //                 → transition REJETÉE → IN PROGRESS (id=3)
     // ══════════════════════════════════════════════════════════════
     public DeclarationDTO submitForValidation(Long declarationId) {
         String currentUser = getCurrentUsername();
@@ -49,34 +45,42 @@ public class ValidationService {
 
         String statutAvant = decl.getStatut();
 
-        // Mise à jour du statut BCT → EN_VALIDATION
         DeclarationDTO updated = declarationClient.updateStatut(
                 declarationId, "EN_VALIDATION", null, null);
 
         saveLog(declarationId, "SUBMIT", statutAvant, "EN_VALIDATION", currentUser, null);
 
-        // ── Cas 1 : GENEREE → ticket déjà en TO DO
-        //            → transition TO DO → IN PROGRESS (id=31)
+        // ── Cas 1 : déclaration GENEREE → créer le ticket (TO DO) puis transitionner IN PROGRESS
         if ("GENEREE".equals(statutAvant)) {
+            try {
+                // Création du ticket → démarre en IDEA, JiraIntegrationService le passe en TO DO
+                CreateJiraTicketRequest jiraReq = new CreateJiraTicketRequest(declarationId, currentUser);
+                jiraClient.createTicket(jiraReq);
+                log.info("🎫 Ticket Jira créé (TO DO) pour déclaration {}", declarationId);
+            } catch (Exception e) {
+                log.warn("⚠️ Jira non disponible — ticket non créé pour déclaration {} : {}",
+                        declarationId, e.getMessage());
+            }
+
+            // Transition TO DO → IN PROGRESS
             try {
                 TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
                         declarationId, "EN_VALIDATION", null, currentUser);
                 jiraClient.transitionTicket(req);
-                log.info("🔄 Ticket Jira TO DO → IN PROGRESS pour déclaration {}", declarationId);
+                log.info("🔄 Ticket Jira transitionné → IN PROGRESS pour déclaration {}", declarationId);
             } catch (Exception e) {
                 log.warn("⚠️ Jira transition EN_VALIDATION échouée pour déclaration {} : {}",
                         declarationId, e.getMessage());
             }
         }
 
-        // ── Cas 2 : REJETEE resoumise
-        //            → JiraIntegrationService détecte bctStatut==REJETEE → utilise id=3
+        // ── Cas 2 : déclaration REJETEE resoumise → transition REJETÉE → IN PROGRESS (id=3)
         if ("REJETEE".equals(statutAvant)) {
             try {
                 TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
-                        declarationId, "EN_VALIDATION", null, currentUser);
+                        declarationId, "RESOUMISE", null, currentUser);
                 jiraClient.transitionTicket(req);
-                log.info("🔁 Ticket Jira REJETÉE → IN PROGRESS pour déclaration {}", declarationId);
+                log.info("🔁 Ticket Jira resoumis → IN PROGRESS pour déclaration {}", declarationId);
             } catch (Exception e) {
                 log.warn("⚠️ Jira resoumission échouée pour déclaration {} : {}",
                         declarationId, e.getMessage());
@@ -101,12 +105,12 @@ public class ValidationService {
 
         saveLog(declarationId, "VALIDATE", decl.getStatut(), "VALIDEE", currentUser, null);
 
-        // Transition Jira IN PROGRESS → VALIDÉE (id=41) — NON BLOQUANT
+        // Transition Jira → VALIDÉE (id=41) — NON BLOQUANT
         try {
             TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
                     declarationId, "VALIDEE", null, currentUser);
             jiraClient.transitionTicket(req);
-            log.info("🔄 Ticket Jira → VALIDÉE pour déclaration {}", declarationId);
+            log.info("🔄 Ticket Jira transitionné → VALIDÉE pour déclaration {}", declarationId);
         } catch (Exception e) {
             log.warn("⚠️ Jira sync échouée pour validation déclaration {} : {}",
                     declarationId, e.getMessage());
@@ -134,12 +138,12 @@ public class ValidationService {
 
         saveLog(declarationId, "REJECT", decl.getStatut(), "REJETEE", currentUser, commentaire);
 
-        // Transition Jira IN PROGRESS → REJETÉE (id=4) — NON BLOQUANT
+        // Transition Jira → REJETÉE (id=4) — NON BLOQUANT
         try {
             TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
                     declarationId, "REJETEE", commentaire, currentUser);
             jiraClient.transitionTicket(req);
-            log.info("🔄 Ticket Jira → REJETÉE pour déclaration {}", declarationId);
+            log.info("🔄 Ticket Jira transitionné → REJETÉE pour déclaration {}", declarationId);
         } catch (Exception e) {
             log.warn("⚠️ Jira sync échouée pour rejet déclaration {} : {}",
                     declarationId, e.getMessage());
@@ -163,12 +167,12 @@ public class ValidationService {
 
         saveLog(declarationId, "SEND", decl.getStatut(), "ENVOYEE", currentUser, null);
 
-        // Transition Jira VALIDÉE → ENVOYÉE (id=2) — NON BLOQUANT
+        // Transition Jira → ENVOYÉE (id=2) — NON BLOQUANT
         try {
             TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
                     declarationId, "ENVOYEE", null, currentUser);
             jiraClient.transitionTicket(req);
-            log.info("🔄 Ticket Jira → ENVOYÉE pour déclaration {}", declarationId);
+            log.info("🔄 Ticket Jira transitionné → ENVOYÉE pour déclaration {}", declarationId);
         } catch (Exception e) {
             log.warn("⚠️ Jira sync échouée pour envoi déclaration {} : {}",
                     declarationId, e.getMessage());
