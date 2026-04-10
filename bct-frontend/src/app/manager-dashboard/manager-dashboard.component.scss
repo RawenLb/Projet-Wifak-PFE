@@ -43,8 +43,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 /* ══════════════════════════════════════════════════════════════
-   LIGHT THEME — :host-context(body.theme-light)
-   Rouge Wifak · Bleu Wifak · Fond bleu-gris clair
+   LIGHT THEME
 ══════════════════════════════════════════════════════════════ */
 :host-context(body.theme-light) {
   --blue:          #1a56db;
@@ -269,7 +268,6 @@
   animation: pulse 2s infinite;
 }
 
-/* Dark KPI variants */
 .kpi-total {
   .kpi-icon  { background: var(--blue-glow); border-color: rgba(59,130,246,0.28); color: var(--blue); }
   .kpi-value { color: var(--blue); }
@@ -296,7 +294,6 @@
   &::after   { background: var(--purple-soft); }
 }
 
-/* Light KPI variants */
 :host-context(body.theme-light) {
   .kpi-total {
     .kpi-icon  { background: #eff4ff; border-color: #c3d3fa; color: #1a56db; }
@@ -313,7 +310,6 @@
   .kpi-validated {
     .kpi-icon  { background: #f0fdf4; border-color: #bbf7d0; color: #16a34a; }
     .kpi-value { color: #15803d; }
-    .kpi-trend { color: #16a34a; background: rgba(22,163,74,0.07); border-color: rgba(22,163,74,0.16); }
     &::after   { background: #22c55e; opacity: 0.8; }
   }
   .kpi-rejected {
@@ -662,14 +658,12 @@
   white-space: nowrap;
 }
 
-/* Dark */
 .statut-generee    { color: var(--text-secondary); background: rgba(255,255,255,0.06); border: 1px solid var(--border-soft); }
 .statut-validation { color: var(--amber); background: var(--amber-glow); border: 1px solid rgba(251,191,36,0.25); }
 .statut-validee    { color: var(--green-soft); background: var(--green-glow); border: 1px solid rgba(52,211,153,0.25); }
 .statut-rejetee    { color: var(--red-soft); background: var(--red-glow); border: 1px solid rgba(248,113,113,0.25); }
 .statut-envoyee    { color: var(--purple-soft); background: var(--purple-glow); border: 1px solid rgba(167,139,250,0.25); }
 
-/* Light */
 :host-context(body.theme-light) {
   .statut-generee    { color: #2d4470; background: #e8edf8; border-color: rgba(26,86,219,0.14); }
   .statut-validation { color: #92400e; background: #fffbeb; border-color: rgba(217,119,6,0.22); }
@@ -679,9 +673,14 @@
 }
 
 /* ── Boutons action ── */
-.cell-actions { display: flex; align-items: center; gap: 6px; }
+.cell-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+}
 
-.btn-validate, .btn-reject {
+.btn-validate, .btn-reject, .btn-consult {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -695,6 +694,29 @@
   transition: var(--transition);
   white-space: nowrap;
   &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.btn-consult {
+  color: var(--blue);
+  border-color: rgba(59,130,246,0.30);
+  background: var(--blue-faint);
+
+  &:hover:not(:disabled) {
+    background: var(--blue-glow);
+    border-color: var(--blue);
+    box-shadow: 0 0 10px rgba(59,130,246,0.15);
+  }
+}
+
+:host-context(body.theme-light) .btn-consult {
+  color: #1a56db;
+  border-color: rgba(26,86,219,0.25);
+  background: rgba(26,86,219,0.06);
+
+  &:hover:not(:disabled) {
+    background: rgba(26,86,219,0.12);
+    border-color: #1a56db;
+  }
 }
 
 .btn-validate {
@@ -749,7 +771,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
-   MODALS
+   MODALS — Base
 ══════════════════════════════════════════════════════════════ */
 .modal-backdrop {
   position: fixed;
@@ -869,6 +891,10 @@
   overflow-y: auto;
   background: var(--bg-card);
   transition: background 0.3s ease;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-surface) transparent;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: var(--bg-surface); border-radius: 4px; }
 }
 
 :host-context(body.theme-light) .modal-body { background: #ffffff; }
@@ -1192,11 +1218,8 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   JIRA — Styles additionnels
-   À ajouter à la fin de manager-dashboard.component.scss
+   JIRA
 ═══════════════════════════════════════════════════════════════ */
-
-/* ── Jira badge dans les tables ─────────────────────────────── */
 .cell-jira { white-space: nowrap; }
 
 .jira-badge {
@@ -1207,58 +1230,26 @@
   white-space: nowrap;
 
   &:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-
   .jira-key { font-weight: 700; }
 }
 
-/* Statuts Jira — Dark */
-.jira-todo {
-  color: #94a3b8;
-  background: rgba(148,163,184,0.08);
-  border-color: rgba(148,163,184,0.20);
-}
-.jira-progress {
-  color: #60a5fa;
-  background: rgba(96,165,250,0.10);
-  border-color: rgba(96,165,250,0.28);
-  &:hover { background: rgba(96,165,250,0.18); }
-}
-.jira-validated {
-  color: var(--green-soft);
-  background: var(--green-glow);
-  border-color: rgba(52,211,153,0.28);
-}
-.jira-rejected {
-  color: var(--red-soft);
-  background: var(--red-glow);
-  border-color: rgba(248,113,113,0.28);
-}
-.jira-sent {
-  color: var(--purple-soft);
-  background: var(--purple-glow);
-  border-color: rgba(167,139,250,0.25);
-}
-.jira-unknown {
-  color: var(--text-muted);
-  background: transparent;
-  border-color: var(--border-subtle);
-}
+.jira-todo     { color: #94a3b8; background: rgba(148,163,184,0.08); border-color: rgba(148,163,184,0.20); }
+.jira-progress { color: #60a5fa; background: rgba(96,165,250,0.10); border-color: rgba(96,165,250,0.28); &:hover { background: rgba(96,165,250,0.18); } }
+.jira-validated { color: var(--green-soft); background: var(--green-glow); border-color: rgba(52,211,153,0.28); }
+.jira-rejected  { color: var(--red-soft); background: var(--red-glow); border-color: rgba(248,113,113,0.28); }
+.jira-sent      { color: var(--purple-soft); background: var(--purple-glow); border-color: rgba(167,139,250,0.25); }
+.jira-unknown   { color: var(--text-muted); background: transparent; border-color: var(--border-subtle); }
 
-/* Statuts Jira — Light */
 :host-context(body.theme-light) {
-  .jira-progress  { color: #1a56db; background: rgba(26,86,219,0.07);  border-color: rgba(26,86,219,0.20);  }
-  .jira-validated { color: #15803d; background: rgba(22,163,74,0.07);  border-color: rgba(22,163,74,0.20);  }
-  .jira-rejected  { color: #c0392b; background: rgba(192,57,43,0.07);  border-color: rgba(192,57,43,0.20);  }
-  .jira-sent      { color: #5b21b6; background: rgba(91,33,182,0.07);  border-color: rgba(91,33,182,0.20);  }
+  .jira-progress  { color: #1a56db; background: rgba(26,86,219,0.07); border-color: rgba(26,86,219,0.20); }
+  .jira-validated { color: #15803d; background: rgba(22,163,74,0.07); border-color: rgba(22,163,74,0.20); }
+  .jira-rejected  { color: #c0392b; background: rgba(192,57,43,0.07); border-color: rgba(192,57,43,0.20); }
+  .jira-sent      { color: #5b21b6; background: rgba(91,33,182,0.07); border-color: rgba(91,33,182,0.20); }
 }
 
-.jira-none {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 10.5px; color: var(--text-muted); font-style: italic;
-}
-.jira-na { font-size: 11px; color: var(--text-muted); }
+.jira-none { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--text-muted); font-style: italic; }
+.jira-na   { font-size: 11px; color: var(--text-muted); }
 
-/* Bouton Jira dans les actions */
 .btn-jira {
   color: #0052CC !important;
   border-color: rgba(0,82,204,0.28) !important;
@@ -1272,7 +1263,6 @@
   background: rgba(0,82,204,0.07) !important;
 }
 
-/* Spinner XS */
 .spinner-xs {
   width: 12px; height: 12px; border-radius: 50%;
   border: 2px solid rgba(59,130,246,0.15);
@@ -1284,4 +1274,124 @@
 :host-context(body.theme-light) .spinner-xs {
   border-color: rgba(26,86,219,0.12);
   border-top-color: #1a56db;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MODAL CONSULTATION
+═══════════════════════════════════════════════════════════════ */
+
+.modal-consult {
+  max-width: 680px;
+}
+
+.consult-body {
+  padding: 0 !important;
+  gap: 0 !important;
+  max-height: 70vh;
+}
+
+.consult-section {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: border-color 0.3s ease;
+
+  &:last-child { border-bottom: none; }
+}
+
+:host-context(body.theme-light) .consult-section {
+  border-bottom-color: rgba(26,86,219,0.08);
+}
+
+.consult-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.3s ease;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 12px;
+    background: currentColor;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  &--danger {
+    color: var(--red-soft);
+  }
+}
+
+:host-context(body.theme-light) {
+  .consult-section-title { color: #1a56db; }
+  .consult-section-title--danger { color: #c0392b; }
+}
+
+.consult-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+
+  @media (max-width: 520px) { grid-template-columns: 1fr; }
+}
+
+.consult-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: all 0.3s ease;
+
+  .mono {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+  }
+}
+
+:host-context(body.theme-light) .consult-info-item {
+  background: #f4f7ff;
+  border-color: rgba(26,86,219,0.09);
+}
+
+.consult-rejet-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--red-glow);
+  border: 1px solid rgba(248,113,113,0.22);
+  border-left: 3px solid var(--red-soft);
+  border-radius: var(--radius-md);
+  font-size: 12.5px;
+  color: var(--red-soft);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+:host-context(body.theme-light) .consult-rejet-box {
+  background: rgba(192,57,43,0.06);
+  border-color: rgba(192,57,43,0.18);
+  border-left-color: #c0392b;
+  color: #991b1b;
+}
+
+/* Footer consultation — Fermer à gauche, actions à droite */
+.consult-foot {
+  justify-content: space-between !important;
+}
+
+.consult-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }

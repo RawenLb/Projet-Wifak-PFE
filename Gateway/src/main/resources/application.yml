@@ -8,7 +8,6 @@ spring:
   cloud:
     gateway:
       routes:
-        # ── declaration-service (génération, lecture, download) ────
         - id: bct-backend
           uri: lb://bct-backend
           predicates:
@@ -16,7 +15,6 @@ spring:
           filters:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
-        # ── validation-service (workflow) ──────────────────────────
         - id: validation-service
           uri: lb://validation-service
           predicates:
@@ -24,7 +22,6 @@ spring:
           filters:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
-        # ── notification-service (webhooks internes + deadlines) ───
         - id: notification-service
           uri: lb://notification-service
           predicates:
@@ -42,7 +39,6 @@ spring:
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
-      # ── CORS global (géré par la gateway pour tous les services) ──
       globalcors:
         cors-configurations:
           '[/**]':
@@ -58,6 +54,7 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
             maxAge: 3600
+        add-to-simple-url-handler-mapping: true   # ← AJOUT CRITIQUE
 
     loadbalancer:
       cache:

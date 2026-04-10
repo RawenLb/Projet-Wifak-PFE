@@ -1,13 +1,15 @@
 // src/app/agent-layout/agent-layout.component.scss
-// ✅ FIX — ajout du topbar agent avec bell correctement intégré
+// Wifak Bank brand — Navy #0D2B5E · Royal #1B4FBC · Crimson #C8192E · Silver #8A9BB0
 
 @import '../user-management/user-management.component.scss';
 
-$agent-primary:  #2563eb;
-$agent-dark:     #1d4ed8;
-$agent-info:     #0284c7;
-$agent-warning:  #d97706;
-$agent-danger:   #dc2626;
+// ── Brand tokens ──────────────────────────────────────────────
+$navy:    #091D42;
+$navy-dk: #091D42;
+$navy-lt: #1B3E78;
+$royal:   #1B4FBC;
+$crimson: #C8192E;
+$silver:  #8A9BB0;
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -35,11 +37,52 @@ $agent-danger:   #dc2626;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  // ✅ PAS de overflow:hidden ici pour que le panel fixed sorte correctement
 }
 
-// ── TOPBAR AGENT ──────────────────────────────────────────────
-// ✅ NOUVEAU — remplace l'ancien top-header si présent
+// ── SIDEBAR ───────────────────────────────────────────────────
+.sidebar {
+  overflow: visible !important;
+  background: $navy-dk !important;
+  border-right: 1px solid rgba(255,255,255,.06) !important;
+
+  .logo-section {
+    border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  }
+
+  .bank-name {
+    color: #fff !important;
+    font-weight: 800 !important;
+    letter-spacing: .04em !important;
+  }
+
+  .bank-subtitle {
+    color: rgba(255,255,255,.55) !important;
+    font-weight: 500 !important;
+    font-size: .7rem !important;
+    letter-spacing: .06em !important;
+    text-transform: uppercase !important;
+  }
+
+  // Active nav item — Wifak royal blue strip
+  .nav-item.active {
+    background: linear-gradient(90deg, rgba($royal,.25), rgba($royal,.10)) !important;
+    border-left: 3px solid $royal !important;
+    color: #fff !important;
+
+    .nav-icon svg { color: lighten($royal, 25%) !important; }
+  }
+
+  .nav-item:not(.active):hover {
+    background: rgba(255,255,255,.06) !important;
+  }
+
+  // Footer divider
+  .sidebar-footer {
+    border-top: 1px solid rgba(255,255,255,.08) !important;
+  }
+}
+
+// ── TOPBAR ────────────────────────────────────────────────────
 .agent-topbar {
   display: flex;
   align-items: center;
@@ -47,12 +90,21 @@ $agent-danger:   #dc2626;
   height: 56px;
   min-height: 56px;
   padding: 0 24px;
-  background: #0c1220;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: $navy;
+  border-bottom: 1px solid rgba(255,255,255,.08);
   flex-shrink: 0;
-  // ✅ Critique : position relative pour le z-index
   position: relative;
   z-index: 100;
+
+  // Subtle accent line at bottom
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, $crimson 0%, $royal 50%, transparent 100%);
+    opacity: .7;
+  }
 }
 
 .topbar-left {
@@ -63,54 +115,30 @@ $agent-danger:   #dc2626;
 
 .topbar-title {
   font-size: 15px;
-  font-weight: 600;
-  color: #e2e8f5;
+  font-weight: 700;
+  color: #E8EDF8;
   margin: 0;
-  letter-spacing: 0.01em;
+  letter-spacing: .01em;
+  font-family: 'Plus Jakarta Sans', 'Plus Jakarta Sans', sans-serif;
 }
 
 .topbar-subtitle {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255,255,255,.35);
   margin: 0;
+  letter-spacing: .02em;
 }
 
 .topbar-right {
   display: flex;
   align-items: center;
   gap: 10px;
-  // ✅ Pas d'overflow hidden
 }
 
-// ── SIDEBAR ───────────────────────────────────────────────────
-.sidebar {
-  // ✅ overflow: visible pour ne pas clipper le panel
-  overflow: visible !important;
-
-  .logo-text {
-    .bank-subtitle {
-      color: rgba(255, 255, 255, 0.9);
-      font-weight: 600;
-    }
-  }
-}
-
-// ── Nav items ─────────────────────────────────────────────────
-.nav-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-
-  &.active {
-    background: linear-gradient(90deg, $agent-primary, $agent-dark);
-    box-shadow: inset 4px 0 0 #0065FF;
-  }
-}
-
-// ── Badge rejetées ────────────────────────────────────────────
+// ── Nav badge ─────────────────────────────────────────────────
 .nav-badge {
   margin-left: auto;
-  background: #dc2626;
+  background: $crimson;
   color: #fff;
   font-size: .625rem;
   font-weight: 800;
@@ -123,20 +151,35 @@ $agent-danger:   #dc2626;
   padding: 0 5px;
   flex-shrink: 0;
   animation: pulse 2s ease infinite;
-  box-shadow: 0 2px 8px rgba(220, 38, 38, .4);
+  box-shadow: 0 2px 10px rgba($crimson, .50);
   line-height: 1;
 }
 
 .nav-item.active .nav-badge {
-  background: rgba(255, 255, 255, .95);
-  color: #dc2626;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, .15);
+  background: rgba(255,255,255,.92);
+  color: $crimson;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
   animation: none;
 }
 
-// ── User ─────────────────────────────────────────────────────
+// ── User profile ──────────────────────────────────────────────
 .user-profile {
   .user-avatar {
-    background: linear-gradient(135deg, $agent-primary 0%, $agent-info 100%);
+    background: linear-gradient(135deg, $royal 0%, $navy-lt 100%) !important;
+    border: 2px solid rgba(255,255,255,.15) !important;
+    font-weight: 700 !important;
+  }
+  .user-name   { color: #E8EDF8 !important; }
+  .user-role   { color: rgba(255,255,255,.45) !important; }
+}
+
+// ── Logout button ─────────────────────────────────────────────
+.btn-logout {
+  color: rgba(255,255,255,.45) !important;
+  border-color: rgba(255,255,255,.10) !important;
+  &:hover {
+    background: rgba($crimson,.15) !important;
+    border-color: rgba($crimson,.30) !important;
+    color: lighten($crimson, 20%) !important;
   }
 }

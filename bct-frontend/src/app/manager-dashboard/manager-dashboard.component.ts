@@ -1,5 +1,4 @@
 // src/app/manager-dashboard/manager-dashboard.component.ts
-// ✅ MODIFIÉ — intégration JiraService complète
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
@@ -24,6 +23,11 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
   loading = false;
   filtreStatut = '';
   actionEnCours: Record<number, boolean> = {};
+
+  // ── Modal Consultation ─────────────────────────────────────────
+  showConsultModal = false;
+  consultHistorique: ValidationLog[] = [];
+  consultHistoriqueLoading = false;
 
   // ── Modal Rejet ────────────────────────────────────────────────
   showRejetModal = false;
@@ -53,7 +57,6 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // S'abonner au cache Jira
     this.jiraSub = this.jiraService.ticketMap$.subscribe(map => {
       this.jiraTicketMap = map;
     });
@@ -77,7 +80,6 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
     this.validationService.getPendingDeclarations().subscribe({
       next: (data) => {
         this.pending = data.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
-        // ✅ Charger les tickets Jira pour les déclarations en attente
         this.loadJiraTicketsForList(this.pending);
       },
       error: (err) => this.showMessage('Erreur chargement pending : ' + err.message, 'error')
@@ -88,7 +90,6 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
         this.toutesDeclarations = data.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
         this.declarationsFiltrees = [...this.toutesDeclarations];
         this.loading = false;
-        // ✅ Charger les tickets Jira pour toutes les déclarations éligibles
         const eligible = data.filter(d =>
           ['EN_VALIDATION', 'VALIDEE', 'REJETEE', 'ENVOYEE'].includes(d.statut)
         );
@@ -124,6 +125,53 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
     if (ticket) this.jiraService.openJiraTicket(ticket);
   }
 
+  // ─── Modal Consultation ───────────────────────────────────────
+
+  ouvrirConsultation(d: Declaration): void {
+    this.declarationSelectionnee = d;
+    this.consultHistorique = [];
+    this.consultHistoriqueLoading = true;
+    this.showConsultModal = true;
+
+    if (d.id) {
+      this.validationService.getHistory(d.id).subscribe({
+        next: (logs) => {
+          this.consultHistorique = logs;
+          this.consultHistoriqueLoading = false;
+        },
+        error: () => {
+          this.consultHistoriqueLoading = false;
+        }
+      });
+    }
+  }
+
+  fermerConsultation(): void {
+    this.showConsultModal = false;
+    this.consultHistorique = [];
+    // Ne pas remettre declarationSelectionnee à null ici
+    // car fermerEtValider / fermerEtRejeter en ont besoin
+  }
+
+  fermerEtValider(): void {
+    const d = this.declarationSelectionnee;
+    this.showConsultModal = false;
+    this.consultHistorique = [];
+    if (d) {
+      // Petit délai pour que la fermeture de la modal soit fluide
+      setTimeout(() => this.valider(d), 100);
+    }
+  }
+
+  fermerEtRejeter(): void {
+    const d = this.declarationSelectionnee;
+    this.showConsultModal = false;
+    this.consultHistorique = [];
+    if (d) {
+      setTimeout(() => this.ouvrirRejet(d), 100);
+    }
+  }
+
   // ─── Filtre ───────────────────────────────────────────────────
 
   filtrerDeclarations(): void {
@@ -147,7 +195,6 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
         this.mettreAJourListe(updated);
         this.actionEnCours[d.id!] = false;
         this.rafraichirStats();
-        // Invalider et recharger le cache Jira (statut changé → VALIDÉE)
         this.jiraService.invalidateCache(d.id!);
         setTimeout(() => {
           this.jiraService.getTicketForDeclaration(d.id!).subscribe();
@@ -192,7 +239,6 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
         this.mettreAJourListe(updated);
         this.fermerRejet();
         this.rafraichirStats();
-        // Invalider et recharger le cache Jira (statut changé → REJETÉE)
         this.jiraService.invalidateCache(id);
         setTimeout(() => {
           this.jiraService.getTicketForDeclaration(id).subscribe();

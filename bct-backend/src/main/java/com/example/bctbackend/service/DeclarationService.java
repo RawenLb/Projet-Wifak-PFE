@@ -1,5 +1,6 @@
 package com.example.bctbackend.service;
 
+import com.example.bctbackend.dto.GenerateDeclarationRequest;
 import com.example.bctbackend.entities.Declaration;
 import com.example.bctbackend.entities.DeclarationType;
 import com.example.bctbackend.repositories.DeclarationRepository;
@@ -21,11 +22,11 @@ public class DeclarationService {
 
     private static final Logger log = LoggerFactory.getLogger(DeclarationService.class);
 
-    private final DeclarationRepository declarationRepository;
+    private final DeclarationRepository    declarationRepository;
     private final DeclarationTypeRepository typeRepository;
-    private final XmlGenerationService xmlGenerationService;
-    private final CsvGenerationService csvGenerationService;
-    private final TxtGenerationService txtGenerationService;
+    private final XmlGenerationService     xmlGenerationService;
+    private final CsvGenerationService     csvGenerationService;
+    private final TxtGenerationService     txtGenerationService;
 
     public DeclarationService(
             DeclarationRepository declarationRepository,
@@ -50,6 +51,59 @@ public class DeclarationService {
         return auth != null ? auth.getName() : "system";
     }
 
+    /**
+     * Génère le contenu du fichier selon le format du type.
+     * Mutualisé entre generateDeclaration et updateDeclaration.
+     */
+    private String generateFileContent(DeclarationType type,
+                                       LocalDate dateDebut, LocalDate dateFin,
+                                       String periode) {
+        switch (type.getFormat()) {
+            case CSV:
+                log.info("⚙️ Génération CSV via SQL...");
+                return csvGenerationService.generateCsvFromSql(
+                        type.getSqlQuery(), dateDebut, dateFin, type.getCode(), periode);
+            case TXT:
+                log.info("⚙️ Génération TXT via SQL...");
+                return txtGenerationService.generateTxtFromSql(
+                        type.getSqlQuery(), dateDebut, dateFin, type.getCode(), periode);
+            case XML:
+            default:
+                log.info("⚙️ Génération XML via XSD + SQL...");
+                return xmlGenerationService.generateXmlFromXsdAndSql(
+                        type.getXsdContent(), type.getSqlQuery(),
+                        dateDebut, dateFin, type.getCode(), periode);
+        }
+    }
+
+    private String resolveExtension(DeclarationType.DeclarationFormat format) {
+        switch (format) {
+            case CSV: return "csv";
+            case TXT: return "txt";
+            default:  return "xml";
+        }
+    }
+
+    private String buildFilename(String code, String periode, String extension) {
+        return String.format("declaration_%s_%s.%s", code, periode.replace("-", ""), extension);
+    }
+
+    /**
+     * Valide qu'un type de déclaration est utilisable :
+     * il doit être actif et avoir une requête SQL configurée.
+     */
+    private void validateType(DeclarationType type) {
+        if (!type.isActif()) {
+            throw new RuntimeException(
+                    "Ce type de déclaration est inactif : " + type.getCode());
+        }
+        if (type.getSqlQuery() == null || type.getSqlQuery().trim().isEmpty()) {
+            throw new RuntimeException(
+                    "La requête SQL n'est pas configurée pour le type « " + type.getCode() +
+                            " ». Veuillez contacter l'administrateur.");
+        }
+    }
+
     // ══════════════════════════════════════════════════════════════
     // GENERATE
     // ══════════════════════════════════════════════════════════════
@@ -60,50 +114,17 @@ public class DeclarationService {
             LocalDate dateDebut,
             LocalDate dateFin
     ) {
-        log.info("🚀 Début génération déclaration — Type: {}, Période: {}", typeId, periode);
+        log.info("🚀 Début génération — Type: {}, Période: {}", typeId, periode);
 
         DeclarationType type = typeRepository.findById(typeId)
-                .orElseThrow(() -> new RuntimeException("Type de déclaration introuvable: " + typeId));
+                .orElseThrow(() -> new RuntimeException("Type introuvable: " + typeId));
 
-        log.info("📋 Type trouvé: {} ({}) — Format: {}", type.getNom(), type.getCode(), type.getFormat());
+        log.info("📋 Type: {} ({}) — Format: {}", type.getNom(), type.getCode(), type.getFormat());
+        validateType(type);
 
-        if (!type.isActif()) {
-            throw new RuntimeException("Ce type de déclaration est inactif");
-        }
-
-        if (type.getSqlQuery() == null || type.getSqlQuery().trim().isEmpty()) {
-            throw new RuntimeException(
-                    "La requête SQL n'est pas configurée pour ce type de déclaration. " +
-                            "Veuillez contacter l'administrateur.");
-        }
-
-        String fileContent;
-        String fileExtension;
-
-        DeclarationType.DeclarationFormat format = type.getFormat();
-
-        switch (format) {
-            case CSV:
-                log.info("⚙️ Génération CSV via SQL...");
-                fileContent   = csvGenerationService.generateCsvFromSql(
-                        type.getSqlQuery(), dateDebut, dateFin, type.getCode(), periode);
-                fileExtension = "csv";
-                break;
-            case TXT:
-                log.info("⚙️ Génération TXT via SQL...");
-                fileContent   = txtGenerationService.generateTxtFromSql(
-                        type.getSqlQuery(), dateDebut, dateFin, type.getCode(), periode);
-                fileExtension = "txt";
-                break;
-            case XML:
-            default:
-                log.info("⚙️ Génération XML via XSD + SQL...");
-                fileContent   = xmlGenerationService.generateXmlFromXsdAndSql(
-                        type.getXsdContent(), type.getSqlQuery(),
-                        dateDebut, dateFin, type.getCode(), periode);
-                fileExtension = "xml";
-                break;
-        }
+        String fileContent   = generateFileContent(type, dateDebut, dateFin, periode);
+        String fileExtension = resolveExtension(type.getFormat());
+        String filename      = buildFilename(type.getCode(), periode, fileExtension);
 
         Declaration declaration = new Declaration();
         declaration.setDeclarationType(type);
@@ -116,14 +137,10 @@ public class DeclarationService {
         declaration.setGenerePar(getCurrentUsername());
         declaration.setSqlQueryUsed(type.getSqlQuery());
         declaration.setXsdFileNameUsed(type.getXsdFileName());
-
-        String filename = String.format("declaration_%s_%s.%s",
-                type.getCode(), periode.replace("-", ""), fileExtension);
         declaration.setNomFichier(filename);
 
         Declaration saved = declarationRepository.save(declaration);
-        log.info("✅ Déclaration générée avec succès — ID: {}, Fichier: {}", saved.getId(), filename);
-
+        log.info("✅ Déclaration générée — ID: {}, Fichier: {}", saved.getId(), filename);
         return saved;
     }
 
@@ -135,7 +152,7 @@ public class DeclarationService {
         String username = getCurrentUsername();
         log.info("👤 getMyDeclarations — username='{}'", username);
         List<Declaration> list = declarationRepository.findByGenerePar(username);
-        log.info("📋 {} déclaration(s) trouvée(s) pour '{}'", list.size(), username);
+        log.info("📋 {} déclaration(s) pour '{}'", list.size(), username);
         return list;
     }
 
@@ -149,19 +166,96 @@ public class DeclarationService {
     }
 
     // ══════════════════════════════════════════════════════════════
+    // UPDATE — édition par l'agent (type et/ou période)
+    // ══════════════════════════════════════════════════════════════
+
+    /**
+     * Modifie le type et/ou la période d'une déclaration existante,
+     * régénère son fichier, et repasse le statut à GENEREE.
+     *
+     * Statuts autorisés : GENEREE, REJETEE.
+     * Statuts bloqués   : EN_VALIDATION, VALIDEE, ENVOYEE.
+     */
+    public Declaration updateDeclaration(Long id, GenerateDeclarationRequest request) {
+        log.info("✏️ updateDeclaration — ID: {}", id);
+
+        Declaration declaration = findById(id);
+
+        if (declaration.getStatut() != Declaration.DeclarationStatut.GENEREE &&
+                declaration.getStatut() != Declaration.DeclarationStatut.REJETEE) {
+            throw new RuntimeException(
+                    "Impossible de modifier une déclaration au statut « " +
+                            declaration.getStatut() +
+                            " ». Seules les déclarations GENEREE ou REJETEE sont modifiables.");
+        }
+
+        DeclarationType type = typeRepository.findById(request.getDeclarationTypeId())
+                .orElseThrow(() -> new RuntimeException(
+                        "Type introuvable: " + request.getDeclarationTypeId()));
+        validateType(type);
+
+        String fileContent   = generateFileContent(type,
+                request.getDateDebut(), request.getDateFin(), request.getPeriode());
+        String fileExtension = resolveExtension(type.getFormat());
+        String filename      = buildFilename(type.getCode(), request.getPeriode(), fileExtension);
+
+        declaration.setDeclarationType(type);
+        declaration.setPeriode(request.getPeriode());
+        declaration.setDateDebut(request.getDateDebut());
+        declaration.setDateFin(request.getDateFin());
+        declaration.setContenuFichier(fileContent);
+        declaration.setDateGeneration(LocalDateTime.now());
+        declaration.setSqlQueryUsed(type.getSqlQuery());
+        declaration.setXsdFileNameUsed(type.getXsdFileName());
+        declaration.setNomFichier(filename);
+
+        // Réinitialisation — repasse à GENEREE et efface le rejet éventuel
+        declaration.setStatut(Declaration.DeclarationStatut.GENEREE);
+        declaration.setCommentaireRejet(null);
+        declaration.setValidePar(null);
+        declaration.setDateValidation(null);
+
+        Declaration saved = declarationRepository.save(declaration);
+        log.info("✅ Déclaration mise à jour — ID: {}, Fichier: {}", saved.getId(), filename);
+        return saved;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // DELETE
+    // ══════════════════════════════════════════════════════════════
+
+    /**
+     * Supprime définitivement une déclaration.
+     *
+     * Statuts autorisés : BROUILLON, GENEREE, REJETEE.
+     * Statuts bloqués   : EN_VALIDATION, VALIDEE, ENVOYEE.
+     */
+    public void deleteDeclaration(Long id) {
+        log.info("🗑️ deleteDeclaration — ID: {}", id);
+
+        Declaration declaration = findById(id);
+
+        if (declaration.getStatut() == Declaration.DeclarationStatut.EN_VALIDATION ||
+                declaration.getStatut() == Declaration.DeclarationStatut.VALIDEE       ||
+                declaration.getStatut() == Declaration.DeclarationStatut.ENVOYEE) {
+            throw new RuntimeException(
+                    "Impossible de supprimer une déclaration au statut « " +
+                            declaration.getStatut() +
+                            " ». Seules les déclarations BROUILLON, GENEREE ou REJETEE peuvent être supprimées.");
+        }
+
+        declarationRepository.delete(declaration);
+        log.info("✅ Déclaration supprimée — ID: {}", id);
+    }
+
+    // ══════════════════════════════════════════════════════════════
     // UPDATE STATUT — appelé par validation-service via Feign
     // ══════════════════════════════════════════════════════════════
 
     /**
-     * Met à jour le statut d'une déclaration.
-     * Cette méthode est le seul point d'écriture du statut dans ce service.
-     * Elle est appelée exclusivement par le validation-service via l'endpoint interne
-     * PATCH /api/declarations/{id}/statut
-     *
-     * @param id            ID de la déclaration
-     * @param nouveauStatut Valeur de l'enum DeclarationStatut en String
-     * @param commentaire   Commentaire de rejet (si REJETEE)
-     * @param validePar     Username du valideur (si VALIDEE ou REJETEE)
+     * Met à jour uniquement le statut d'une déclaration.
+     * Invoqué exclusivement par le validation-service via l'endpoint interne
+     * POST /api/declarations/{id}/statut.
      */
     public Declaration updateStatut(Long id, String nouveauStatut,
                                     String commentaire, String validePar) {
@@ -169,20 +263,19 @@ public class DeclarationService {
 
         Declaration declaration = findById(id);
 
-        // Convertir le String en enum (lève IllegalArgumentException si invalide)
         Declaration.DeclarationStatut statut;
         try {
             statut = Declaration.DeclarationStatut.valueOf(nouveauStatut.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Statut invalide : " + nouveauStatut +
-                    ". Valeurs acceptées : GENEREE, EN_VALIDATION, VALIDEE, REJETEE, ENVOYEE");
+            throw new RuntimeException(
+                    "Statut invalide : « " + nouveauStatut +
+                            " ». Valeurs acceptées : GENEREE, EN_VALIDATION, VALIDEE, REJETEE, ENVOYEE");
         }
 
         declaration.setStatut(statut);
 
         switch (statut) {
             case EN_VALIDATION:
-                // Pas de champs supplémentaires nécessaires
                 log.info("📤 Déclaration {} soumise pour validation", id);
                 break;
 
@@ -195,7 +288,7 @@ public class DeclarationService {
             case REJETEE:
                 if (commentaire == null || commentaire.trim().isEmpty()) {
                     throw new RuntimeException(
-                            "Un commentaire est obligatoire pour rejeter une déclaration");
+                            "Un commentaire est obligatoire pour rejeter une déclaration.");
                 }
                 declaration.setCommentaireRejet(commentaire.trim());
                 declaration.setValidePar(validePar != null ? validePar : getCurrentUsername());
@@ -206,20 +299,19 @@ public class DeclarationService {
 
             case ENVOYEE:
                 declaration.setDateEnvoi(LocalDateTime.now());
-                log.info("📨 Déclaration {} marquée comme envoyée", id);
+                log.info("📨 Déclaration {} marquée ENVOYEE", id);
                 break;
 
             default:
-                log.warn("⚠️ updateStatut appelé avec statut inattendu: {}", statut);
+                log.warn("⚠️ updateStatut — statut inattendu: {}", statut);
                 break;
         }
 
         return declarationRepository.save(declaration);
     }
 
-
     // ══════════════════════════════════════════════════════════════
-    // STATS — Dashboard (lecture seule, utilisée par validation-service aussi)
+    // STATS — Dashboard
     // ══════════════════════════════════════════════════════════════
 
     public DeclarationStats getStats() {
@@ -234,7 +326,7 @@ public class DeclarationService {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // DTO STATS
+    // DTO STATS (inner class)
     // ══════════════════════════════════════════════════════════════
 
     public static class DeclarationStats {
@@ -259,13 +351,12 @@ public class DeclarationService {
         public void setEnvoyees(long v)     { envoyees = v; }
     }
 
-
     // ══════════════════════════════════════════════════════════════
-    // MÉTHODES SUPPRIMÉES — migrées vers validation-service
+    // MÉTHODES MIGRÉES vers validation-service
     // ══════════════════════════════════════════════════════════════
-    // submitForValidation()  → ValidationService.submitForValidation()
-    // validateDeclaration()  → ValidationService.validateDeclaration()
-    // rejectDeclaration()    → ValidationService.rejectDeclaration()
-    // markAsSent()           → ValidationService.markAsSent()
+    // submitForValidation()    → ValidationService.submitForValidation()
+    // validateDeclaration()    → ValidationService.validateDeclaration()
+    // rejectDeclaration()      → ValidationService.rejectDeclaration()
+    // markAsSent()             → ValidationService.markAsSent()
     // getPendingDeclarations() → ValidationService.getPendingDeclarations()
 }

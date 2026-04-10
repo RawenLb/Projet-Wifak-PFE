@@ -98,4 +98,15 @@ export class DeclarationService {
   getStats(): Observable<DeclarationStats> {
     return this.http.get<DeclarationStats>(`${this.apiUrl}/stats`, { headers: this.headers() });
   }
+  // ─── ✅ NOUVEAU — Mise à jour d'une déclaration ───────────────
+  // Appelle PUT /api/declarations/{id} avec les nouvelles données
+  updateDeclaration(id: number, request: GenerateDeclarationRequest): Observable<Declaration> {
+    return this.http.put<Declaration>(`${this.apiUrl}/${id}`, request, { headers: this.headers() });
+  }
+ 
+  // ─── ✅ NOUVEAU — Suppression d'une déclaration ───────────────
+  // Appelle DELETE /api/declarations/{id}
+  deleteDeclaration(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers: this.headers() });
+  }
 }
