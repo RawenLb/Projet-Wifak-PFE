@@ -1,0 +1,480 @@
+// src/app/agent-notifications/agent-notifications.component.scss
+// Wifak Bank — Navy #0D2B5E · Royal #1B4FBC · Crimson #C8192E
+// Compatible avec agent-layout (fond $bg, sidebar dark)
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+// ── Brand tokens ──────────────────────────────────────────────
+$navy:       #0D2B5E;
+$royal:      #1B4FBC;
+$royal-lt:   #E8EFFD;
+$crimson:    #C8192E;
+$crimson-lt: #FDECED;
+$silver:     #8A9BB0;
+$success:    #0A7A5A;
+$warning:    #B8651A;
+
+$bg:         #F2F5FA;
+$surface:    #FFFFFF;
+$border:     #D4DCE8;
+$border-lt:  #E8EDF5;
+$text-1:     #0D1E35;
+$text-2:     #3D5068;
+$text-3:     #8A9BB0;
+
+$r-md:  10px;
+$r-lg:  14px;
+$r-xl:  18px;
+$r-2xl: 24px;
+
+$sh-xs: 0 1px 4px rgba(13,43,94,.06), 0 1px 2px rgba(13,43,94,.04);
+$sh-sm: 0 4px 12px rgba(13,43,94,.10), 0 2px 4px rgba(13,43,94,.05);
+
+@keyframes fadeIn  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+@keyframes pulse   { 0%,100%{ opacity:1 } 50%{ opacity:.45 } }
+@keyframes slideIn { from { opacity:0; transform:translateX(-6px); } to { opacity:1; transform:none; } }
+
+// ════════════════════════════════════════════════════════
+// PAGE WRAPPER
+// ════════════════════════════════════════════════════════
+.notif-page {
+  padding: 1.75rem 2.25rem 3rem;
+  background: $bg;
+  min-height: calc(100vh - 56px); // 56px = topbar height
+  animation: fadeIn .4s ease both;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+// ════════════════════════════════════════════════════════
+// EN-TÊTE
+// ════════════════════════════════════════════════════════
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.notif-header-left {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+}
+
+.notif-header-icon {
+  width: 46px;
+  height: 46px;
+  background: linear-gradient(135deg, $royal, $navy);
+  color: #fff;
+  border-radius: $r-lg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba($royal,.40);
+  flex-shrink: 0;
+
+  svg { width: 22px; height: 22px; }
+}
+
+.notif-page-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: $navy;
+  letter-spacing: -.01em;
+  margin: 0 0 .3rem;
+  position: relative;
+  display: inline-block;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 36px;
+    height: 3px;
+    background: linear-gradient(90deg, $crimson, $royal);
+    border-radius: 2px;
+  }
+}
+
+.notif-page-sub {
+  font-size: .875rem;
+  color: $text-2;
+  margin: .7rem 0 0;
+}
+
+.btn-mark-all {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5625rem 1.125rem;
+  background: $surface;
+  border: 1.5px solid $border;
+  border-radius: $r-md;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .8125rem;
+  font-weight: 600;
+  color: $text-2;
+  cursor: pointer;
+  transition: all .2s ease;
+
+  svg { flex-shrink: 0; }
+
+  &:hover {
+    background: darken($royal-lt, 2%);
+    border-color: $royal;
+    color: $royal;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// STATS STRIP
+// ════════════════════════════════════════════════════════
+.stats-strip {
+  display: flex;
+  gap: .75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem 1rem;
+  border-radius: $r-lg;
+  font-size: .8125rem;
+  font-weight: 600;
+  border: 1.5px solid transparent;
+
+  svg { flex-shrink: 0; }
+
+  &.stat-danger  {
+    background: rgba($crimson,.08);
+    border-color: rgba($crimson,.20);
+    color: darken($crimson, 8%);
+  }
+  &.stat-warning {
+    background: rgba($warning,.08);
+    border-color: rgba($warning,.20);
+    color: darken($warning, 10%);
+  }
+  &.stat-info    {
+    background: rgba($royal,.08);
+    border-color: rgba($royal,.20);
+    color: darken($royal, 8%);
+  }
+}
+
+.chip-badge {
+  min-width: 18px;
+  height: 18px;
+  background: $crimson;
+  color: #fff;
+  border-radius: 99px;
+  font-size: .625rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  animation: pulse 2s ease infinite;
+
+  &.chip-badge-warning { background: $warning; }
+  &.chip-badge-info    { background: $royal; }
+}
+
+// ════════════════════════════════════════════════════════
+// ONGLETS
+// ════════════════════════════════════════════════════════
+.notif-tabs {
+  display: flex;
+  gap: .375rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 2px solid $border-lt;
+  padding-bottom: 0;
+}
+
+.ntab {
+  display: inline-flex;
+  align-items: center;
+  gap: .4375rem;
+  padding: .6875rem 1.125rem;
+  border: none;
+  background: transparent;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .8125rem;
+  font-weight: 500;
+  color: $text-3;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  border-radius: $r-md $r-md 0 0;
+  transition: all .2s ease;
+
+  &:hover:not(.active) {
+    background: $border-lt;
+    color: $text-2;
+  }
+
+  &.active {
+    color: $royal;
+    border-bottom-color: $royal;
+    font-weight: 600;
+    background: rgba($royal,.04);
+  }
+}
+
+.ntab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 99px;
+  font-size: .625rem;
+  font-weight: 800;
+  padding: 0 4px;
+  background: rgba($warning,.15);
+  color: darken($warning, 10%);
+
+  &.ntab-danger  { background: rgba($crimson,.12); color: darken($crimson, 8%); }
+  &.ntab-warning { background: rgba($warning,.12); color: darken($warning, 10%); }
+  &.ntab-info    { background: rgba($royal,.12);   color: darken($royal, 8%); }
+}
+
+// ════════════════════════════════════════════════════════
+// LISTE
+// ════════════════════════════════════════════════════════
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+// ════════════════════════════════════════════════════════
+// CARTE
+// ════════════════════════════════════════════════════════
+.notif-card {
+  background: $surface;
+  border: 1px solid $border-lt;
+  border-radius: $r-xl;
+  padding: 1.125rem 1.375rem;
+  display: flex;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all .2s ease;
+  box-shadow: $sh-xs;
+  animation: slideIn .3s ease both;
+  border-left: 4px solid transparent;
+
+  &:hover {
+    box-shadow: $sh-sm;
+    transform: translateX(3px);
+  }
+
+  &.unread {
+    &.sev-danger  { border-left-color: $crimson; background: lighten($crimson-lt, 3%); }
+    &.sev-warning { border-left-color: $warning; background: rgba($warning,.04); }
+    &.sev-info    { border-left-color: $royal;   background: rgba($royal,.03); }
+  }
+}
+
+// ── Icône ─────────────────────────────────────────────
+.n-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: $r-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: .125rem;
+
+  &.ic-danger  { background: rgba($crimson,.10); color: darken($crimson, 5%); }
+  &.ic-warning { background: rgba($warning,.10); color: darken($warning, 8%); }
+  &.ic-info    { background: rgba($royal,.10);   color: darken($royal, 8%); }
+}
+
+// ── Corps ─────────────────────────────────────────────
+.n-body { flex: 1; min-width: 0; }
+
+.n-header-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .375rem;
+}
+
+.n-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: $crimson;
+  flex-shrink: 0;
+  animation: pulse 2s ease infinite;
+}
+
+.n-title {
+  font-size: .9375rem;
+  font-weight: 600;
+  color: $text-1;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.n-time {
+  font-size: .75rem;
+  color: $text-3;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.n-msg {
+  font-size: .875rem;
+  color: $text-2;
+  line-height: 1.55;
+  margin: 0 0 .75rem;
+}
+
+// ── Pills ─────────────────────────────────────────────
+.n-pills {
+  display: flex;
+  gap: .375rem;
+  flex-wrap: wrap;
+  margin-bottom: .75rem;
+}
+
+.npill {
+  font-size: .6875rem;
+  font-weight: 700;
+  padding: .25rem .75rem;
+  border-radius: 99px;
+  letter-spacing: .03em;
+
+  &.np-danger  { background: rgba($crimson,.10); color: darken($crimson, 8%); }
+  &.np-warning { background: rgba($warning,.10); color: darken($warning, 8%); }
+  &.np-info    { background: rgba($royal,.10);   color: darken($royal, 8%); }
+  &.np-neutral { background: rgba($navy,.07);    color: $text-2; }
+}
+
+// ── Motif de rejet ────────────────────────────────────
+.n-motif {
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+  background: rgba($crimson,.06);
+  border: 1px solid rgba($crimson,.18);
+  border-radius: $r-md;
+  padding: .625rem .875rem;
+  margin-bottom: .75rem;
+  font-size: .8125rem;
+  color: darken($crimson, 10%);
+  line-height: 1.5;
+  font-style: italic;
+
+  svg { flex-shrink: 0; margin-top: 1px; opacity: .8; }
+}
+
+// ── Actions ───────────────────────────────────────────
+.n-actions {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+}
+
+.btn-act {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  padding: .4375rem .875rem;
+  border-radius: $r-md;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid $border;
+  background: $surface;
+  color: $text-2;
+  transition: all .2s;
+
+  &:hover {
+    background: $bg;
+    border-color: darken($border, 8%);
+    color: $text-1;
+  }
+
+  &.btn-act-primary {
+    background: linear-gradient(135deg, $royal, $navy);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 3px 10px rgba($royal,.30);
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba($royal,.40);
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// ÉTAT VIDE
+// ════════════════════════════════════════════════════════
+.empty-notif {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: $surface;
+  border: 1px solid $border-lt;
+  border-radius: $r-xl;
+  box-shadow: $sh-xs;
+
+  .empty-icon {
+    color: $silver;
+    opacity: .4;
+    margin-bottom: 1rem;
+  }
+
+  .empty-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: $navy;
+    margin: 0 0 .5rem;
+  }
+
+  .empty-sub {
+    font-size: .875rem;
+    color: $text-3;
+    margin: 0;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// FOOTER
+// ════════════════════════════════════════════════════════
+.notif-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: .75rem;
+  color: $text-3;
+}
+
+// ════════════════════════════════════════════════════════
+// RESPONSIVE
+// ════════════════════════════════════════════════════════
+@media (max-width: 768px) {
+  .notif-page { padding: 1.25rem; }
+  .notif-header { flex-direction: column; align-items: flex-start; gap: .875rem; }
+  .notif-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .ntab { white-space: nowrap; }
+  .stats-strip { flex-direction: column; }
+  .n-title { font-size: .875rem; }
+}

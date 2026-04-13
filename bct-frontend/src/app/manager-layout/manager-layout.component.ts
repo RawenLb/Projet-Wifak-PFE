@@ -1,10 +1,11 @@
 // src/app/manager-layout/manager-layout.component.ts
-// ✅ MODIFIÉ — ajout de NotificationService.loadManagerNotifications()
+// ✅ MISE À JOUR — navItems complétés avec toutes les routes
 
 import { Component, OnInit, OnDestroy, HostBinding } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { KeycloakAdminService } from '../services/keycloak-admin.service';
-import { NotificationService } from '../services/notification.service';   // ← AJOUT
+import { NotificationService } from '../services/notification.service';
+import { ValidationService } from '../services/Validation.service';
 import { filter } from 'rxjs/operators';
 
 @Component({
@@ -18,6 +19,7 @@ export class ManagerLayoutComponent implements OnInit, OnDestroy {
   sidebarCollapsed = false;
   currentRoute     = '';
   isLightTheme     = false;
+  pendingCount     = 0;
 
   @HostBinding('class.theme-light')
   get themeLight(): boolean { return this.isLightTheme; }
@@ -26,6 +28,7 @@ export class ManagerLayoutComponent implements OnInit, OnDestroy {
   currentUserInitials = '';
   currentUserEmail    = '';
 
+  // ✅ SIDEBAR COMPLÈTE — toutes les routes du CDC
   navItems = [
     {
       section: 'Supervision',
@@ -54,7 +57,8 @@ export class ManagerLayoutComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private kcAdmin: KeycloakAdminService,
-    public notifSvc: NotificationService    // ← AJOUT (public pour le template)
+    public notifSvc: NotificationService,
+    private validationService: ValidationService
   ) {}
 
   ngOnInit(): void {
@@ -64,11 +68,21 @@ export class ManagerLayoutComponent implements OnInit, OnDestroy {
 
     this.currentRoute = this.router.url;
     this.loadProfile();
-
-    // ✅ Charge les notifications manager (déclarations EN_VALIDATION)
     this.notifSvc.loadManagerNotifications();
 
-    // Restaurer la préférence de thème
+    // Charger le nombre de déclarations en attente pour le badge
+    this.validationService.getPendingDeclarations().subscribe({
+      next: (data) => {
+        this.pendingCount = data.length;
+        // Mettre à jour le badge dynamiquement
+        const pendingLink = this.navItems[0].links.find(l => l.path === '/manager/pending');
+        if (pendingLink && this.pendingCount > 0) {
+          pendingLink.badge = String(this.pendingCount);
+        }
+      },
+      error: () => {}
+    });
+
     const saved = localStorage.getItem('wifak-theme');
     if (saved === 'light') {
       this.isLightTheme = true;
@@ -103,11 +117,8 @@ export class ManagerLayoutComponent implements OnInit, OnDestroy {
   }
 
   private applyBodyClass(light: boolean): void {
-    if (light) {
-      document.body.classList.add('theme-light');
-    } else {
-      document.body.classList.remove('theme-light');
-    }
+    if (light) document.body.classList.add('theme-light');
+    else       document.body.classList.remove('theme-light');
   }
 
   isActive(path: string): boolean {
@@ -115,7 +126,6 @@ export class ManagerLayoutComponent implements OnInit, OnDestroy {
   }
 
   toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
-
   navigate(path: string): void { this.router.navigate([path]); }
 
   logout(): void {

@@ -15,6 +15,14 @@ import { DeclarationCalendarComponent } from './declaration-calendar/declaration
 import { AgentDashboardComponent } from './agent-dashboard/agent-dashboard.component';
 import { ManagerDashboardComponent } from './manager-dashboard/manager-dashboard.component';
 import { ManagerLayoutComponent } from './manager-layout/manager-layout.component';
+import { AgentDeclarationTypesComponent } from './agent-declaration-types/agent-declaration-types.component';
+import { AgentNotificationsComponent } from './agent-notifications/agent-notifications.component';
+
+// ✅ NOUVEAUX imports manager
+import { ManagerCalendarComponent } from './manager-calendar/manager-calendar.component';
+import { ManagerReportsComponent } from './manager-reports/manager-reports.component';
+ import { ManagerHistoryComponent } from './manager-history/manager-history.component';
+import { ManagerPendingComponent } from './manager-pending/manager-pending.component';
 
 const routes: Routes = [
 
@@ -72,23 +80,43 @@ const routes: Routes = [
       { path: 'calendar',       component: DeclarationCalendarComponent },
 
       // ✅ Types BCT en lecture seule — réutilise le composant existant
-      { path: 'types',          component: DeclarationTypeManagementComponent },
+{ path: 'types', component: AgentDeclarationTypesComponent },
 
       // ✅ Notifications — redirige vers déclarations avec filtre rejetées
       // Si vous avez un composant dédié, remplacez HomeComponent ci-dessous
       // { path: 'notifications',  component: AgentNotificationsComponent },
-      { path: 'notifications',  redirectTo: 'declarations', pathMatch: 'full' },
+      { path: 'notifications',  component: AgentNotificationsComponent },
     ]
   },
   // ── Manager Space ────────────────────────────────────────────
-  {
+   {
     path: 'manager',
     component: ManagerLayoutComponent,
     canActivate: [RoleGuard],
     data: { roles: ['ROLE_MANAGER', 'ROLE_ADMIN'] },
     children: [
-      { path: '',          redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard', component: ManagerDashboardComponent },
+      { path: '',              redirectTo: 'dashboard', pathMatch: 'full' },
+ 
+      // ✅ Tableau de bord (KPI + pending + toutes décl.)
+      { path: 'dashboard',    component: ManagerDashboardComponent },
+ 
+      // ✅ Validation dédiée — même composant, filtre EN_VALIDATION automatique
+      // À remplacer par ManagerPendingComponent dès sa création
+      { path: 'pending',      component: ManagerPendingComponent },
+ 
+      // ✅ Toutes les déclarations avec filtres avancés
+      // À remplacer par ManagerDeclarationsComponent
+      { path: 'declarations', component: ManagerDashboardComponent },
+ 
+      // ✅ Historique / journal d'audit
+      // À remplacer par ManagerHistoryComponent
+      { path: 'history',      component: ManagerHistoryComponent  },
+ 
+      // ✅ Calendrier BCT — US-18
+      { path: 'calendar',     component: ManagerCalendarComponent },
+ 
+      // ✅ Rapports & synthèse — US-19
+      { path: 'reports',      component: ManagerReportsComponent },
     ]
   },
 

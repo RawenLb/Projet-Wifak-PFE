@@ -17,6 +17,12 @@ import { AgentDashboardComponent } from './agent-dashboard/agent-dashboard.compo
 import { ManagerDashboardComponent } from './manager-dashboard/manager-dashboard.component';
 import { ManagerLayoutComponent } from './manager-layout/manager-layout.component';
 import { NotificationBellComponent } from './notification-bell/notification-bell.component';
+import { AgentDeclarationTypesComponent } from './agent-declaration-types/agent-declaration-types.component';
+import { AgentNotificationsComponent } from './agent-notifications/agent-notifications.component';
+import { ManagerCalendarComponent } from './manager-calendar/manager-calendar.component';
+import { ManagerReportsComponent } from './manager-reports/manager-reports.component';
+import { ManagerHistoryComponent } from './manager-history/manager-history.component';
+import { ManagerPendingComponent } from './manager-pending/manager-pending.component';
 export function kcFactory() {
   return () =>
     keycloak.init({
@@ -63,6 +69,12 @@ export function kcFactory() {
     ManagerDashboardComponent,
     ManagerLayoutComponent,
     NotificationBellComponent,
+    AgentDeclarationTypesComponent,
+    AgentNotificationsComponent,
+    ManagerCalendarComponent,
+    ManagerReportsComponent,
+    ManagerHistoryComponent,
+    ManagerPendingComponent,
   ],
   imports: [
     BrowserModule,

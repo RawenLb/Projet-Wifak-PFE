@@ -1,0 +1,377 @@
+<!-- src/app/manager-history/manager-history.component.html -->
+<!-- US-11 / US-12 — Journal d'audit complet -->
+
+<div class="hist-wrapper">
+
+  <!-- ── HEADER ── -->
+  <div class="hist-header">
+    <div class="header-left">
+      <div class="header-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polyline points="12 8 12 12 14 14"/>
+          <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="page-title">Journal d'audit</h1>
+        <p class="page-subtitle">Traçabilité complète des déclarations BCT</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="view-toggle">
+        <button class="vt-btn" [class.active]="viewMode === 'table'" (click)="viewMode = 'table'" title="Vue tableau">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/>
+          </svg>
+        </button>
+        <button class="vt-btn" [class.active]="viewMode === 'timeline'" (click)="viewMode = 'timeline'" title="Vue timeline">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="2" x2="12" y2="22"/><circle cx="12" cy="7" r="3"/>
+            <circle cx="12" cy="17" r="3"/><line x1="4" y1="7" x2="9" y2="7"/>
+            <line x1="4" y1="17" x2="9" y2="17"/>
+          </svg>
+        </button>
+      </div>
+      <button class="btn-export" (click)="exportCSV()" title="Exporter CSV">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Exporter
+      </button>
+      <button class="btn-refresh" (click)="charger()" [disabled]="loading">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- ── STATS ── -->
+  <div class="stats-strip" *ngIf="!loading">
+    <div class="stat-item stat-total">
+      <span class="stat-num">{{ stats.total }}</span>
+      <span class="stat-lbl">Total</span>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-item stat-valid">
+      <span class="stat-num">{{ stats.validees }}</span>
+      <span class="stat-lbl">Validées</span>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-item stat-reject">
+      <span class="stat-num">{{ stats.rejetees }}</span>
+      <span class="stat-lbl">Rejetées</span>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-item stat-sent">
+      <span class="stat-num">{{ stats.envoyees }}</span>
+      <span class="stat-lbl">Envoyées BCT</span>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-item stat-pending">
+      <span class="stat-num">{{ stats.enCours }}</span>
+      <span class="stat-lbl">En cours</span>
+    </div>
+  </div>
+
+  <!-- ── FILTRES ── -->
+  <div class="filter-panel">
+    <div class="filter-row-1">
+      <div class="search-wrap">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input class="search-input" type="text" placeholder="Rechercher par ID, type, code, agent..."
+               [(ngModel)]="filters.search" (ngModelChange)="onFilterChange()">
+        <button class="search-clear" *ngIf="filters.search" (click)="filters.search=''; onFilterChange()">✕</button>
+      </div>
+      <button class="btn-reset" (click)="resetFilters()" title="Réinitialiser les filtres">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Réinitialiser
+      </button>
+    </div>
+
+    <div class="filter-row-2">
+      <div class="filter-group">
+        <label class="filter-label">Statut</label>
+        <select [(ngModel)]="filters.statut" (ngModelChange)="onFilterChange()">
+          <option value="">Tous</option>
+          <option value="GENEREE">Générée</option>
+          <option value="EN_VALIDATION">En validation</option>
+          <option value="VALIDEE">Validée</option>
+          <option value="REJETEE">Rejetée</option>
+          <option value="ENVOYEE">Envoyée</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Période</label>
+        <select [(ngModel)]="filters.periode" (ngModelChange)="onFilterChange()">
+          <option value="">Toutes</option>
+          <option *ngFor="let p of uniquePeriodes" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Type déclaration</label>
+        <select [(ngModel)]="filters.type" (ngModelChange)="onFilterChange()">
+          <option value="">Tous</option>
+          <option *ngFor="let t of uniqueTypes" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Du</label>
+        <input type="date" [(ngModel)]="filters.dateDebut" (ngModelChange)="onFilterChange()">
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Au</label>
+        <input type="date" [(ngModel)]="filters.dateFin" (ngModelChange)="onFilterChange()">
+      </div>
+
+      <div class="filter-result-count">
+        <span class="count-badge">{{ filteredDeclarations.length }}</span>
+        <span>résultat{{ filteredDeclarations.length !== 1 ? 's' : '' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LOADER ── -->
+  <div class="loader-block" *ngIf="loading">
+    <div class="spinner-ring"></div>
+    <span>Chargement du journal d'audit...</span>
+  </div>
+
+  <!-- ══════════════════════════
+       VUE TABLEAU
+  ══════════════════════════ -->
+  <div class="content-block" *ngIf="!loading && viewMode === 'table'">
+
+    <div class="empty-state" *ngIf="filteredDeclarations.length === 0">
+      <div class="empty-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </div>
+      <p>Aucune déclaration trouvée pour ces filtres</p>
+      <button class="btn-reset-sm" (click)="resetFilters()">Effacer les filtres</button>
+    </div>
+
+    <div class="table-wrap" *ngIf="filteredDeclarations.length > 0">
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th class="th-expand"></th>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Période</th>
+            <th>Statut</th>
+            <th>Généré par</th>
+            <th>Validé par</th>
+            <th>Date génération</th>
+            <th>Date validation</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let d of paginatedDeclarations; trackBy: trackById">
+            <!-- Ligne principale -->
+            <tr class="main-row" [class.expanded]="isExpanded(d)" (click)="toggleLogs(d)">
+              <td class="td-expand">
+                <div class="expand-btn" [class.open]="isExpanded(d)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </div>
+              </td>
+              <td class="cell-id">#{{ d.id }}</td>
+              <td>
+                <div class="type-info">
+                  <span class="type-code">{{ d.declarationType?.code }}</span>
+                  <span class="type-name">{{ d.declarationType?.nom }}</span>
+                </div>
+              </td>
+              <td><span class="periode-chip">{{ d.periode }}</span></td>
+              <td>
+                <span class="statut-badge" [ngClass]="getStatutClass(d.statut)">
+                  {{ getStatutLabel(d.statut) }}
+                </span>
+              </td>
+              <td class="cell-user">
+                <div class="user-cell" *ngIf="d.generePar">
+                  <div class="user-avatar">{{ d.generePar.charAt(0).toUpperCase() }}</div>
+                  <span>{{ d.generePar }}</span>
+                </div>
+                <span *ngIf="!d.generePar" class="cell-empty">—</span>
+              </td>
+              <td class="cell-user">
+                <div class="user-cell" *ngIf="d.validePar">
+                  <div class="user-avatar user-avatar--green">{{ d.validePar.charAt(0).toUpperCase() }}</div>
+                  <span>{{ d.validePar }}</span>
+                </div>
+                <span *ngIf="!d.validePar" class="cell-empty">—</span>
+              </td>
+              <td class="cell-date">{{ d.dateGeneration | date:'dd/MM/yy HH:mm' }}</td>
+              <td class="cell-date">{{ d.dateValidation ? (d.dateValidation | date:'dd/MM/yy HH:mm') : '—' }}</td>
+              <td class="cell-actions" (click)="$event.stopPropagation()">
+                <button class="btn-logs" [class.loading]="isLoadingLogs(d)" (click)="toggleLogs(d)"
+                        [title]="isExpanded(d) ? 'Masquer les logs' : 'Voir les logs'">
+                  <span class="spinner-xs" *ngIf="isLoadingLogs(d)"></span>
+                  <svg *ngIf="!isLoadingLogs(d)" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="12 8 12 12 14 14"/>
+                    <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
+                  </svg>
+                  Logs
+                </button>
+              </td>
+            </tr>
+
+            <!-- Ligne dépliée : timeline des logs -->
+            <tr class="log-row" *ngIf="isExpanded(d)">
+              <td colspan="10" class="log-cell">
+
+                <div class="log-loader" *ngIf="isLoadingLogs(d)">
+                  <div class="spinner-ring"></div>
+                  <span>Chargement des logs...</span>
+                </div>
+
+                <!-- Motif rejet -->
+                <div class="rejet-banner" *ngIf="d.commentaireRejet && !isLoadingLogs(d)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                  </svg>
+                  <strong>Motif du dernier rejet :</strong>
+                  <span>{{ d.commentaireRejet }}</span>
+                </div>
+
+                <div class="no-logs" *ngIf="!isLoadingLogs(d) && getLogsForDeclaration(d).length === 0">
+                  Aucun événement enregistré pour cette déclaration.
+                </div>
+
+                <div class="log-timeline" *ngIf="!isLoadingLogs(d) && getLogsForDeclaration(d).length > 0">
+                  <div class="tl-item" *ngFor="let log of getLogsForDeclaration(d); let last = last">
+                    <div class="tl-line" [class.last]="last"></div>
+                    <div class="tl-dot" [ngClass]="getActionClass(log.action)">
+                      <span class="tl-icon">{{ getActionIcon(log.action) }}</span>
+                    </div>
+                    <div class="tl-content">
+                      <div class="tl-top">
+                        <span class="tl-action" [ngClass]="getActionClass(log.action)">{{ getActionLabel(log.action) }}</span>
+                        <span class="tl-date">{{ log.dateAction | date:'dd/MM/yyyy à HH:mm' }}</span>
+                      </div>
+                      <div class="tl-transition">
+                        <span class="tl-state from">{{ log.statutAvant }}</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                        </svg>
+                        <span class="tl-state to">{{ log.statutApres }}</span>
+                      </div>
+                      <div class="tl-user" *ngIf="log.effectuePar">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                          <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        {{ log.effectuePar }}
+                      </div>
+                      <div class="tl-comment" *ngIf="log.commentaire">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        {{ log.commentaire }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="pg-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+
+      <ng-container *ngFor="let p of pages">
+        <button class="pg-btn pg-num" *ngIf="p !== -1" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+        <span class="pg-dots" *ngIf="p === -1">…</span>
+      </ng-container>
+
+      <button class="pg-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+
+      <span class="pg-info">
+        Page {{ currentPage }} / {{ totalPages }} — {{ filteredDeclarations.length }} résultats
+      </span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════
+       VUE TIMELINE GLOBALE
+  ══════════════════════════ -->
+  <div class="content-block timeline-view" *ngIf="!loading && viewMode === 'timeline'">
+    <p class="timeline-hint">Cliquez sur une déclaration dans la vue tableau pour voir ses logs détaillés.</p>
+
+    <div class="global-timeline">
+      <div class="gtl-item" *ngFor="let d of paginatedDeclarations; trackBy: trackById">
+        <div class="gtl-dot" [ngClass]="getStatutClass(d.statut)"></div>
+        <div class="gtl-card" (click)="viewMode = 'table'; toggleLogs(d)">
+          <div class="gtl-top">
+            <span class="gtl-code">{{ d.declarationType?.code }}</span>
+            <span class="statut-badge" [ngClass]="getStatutClass(d.statut)">{{ getStatutLabel(d.statut) }}</span>
+            <span class="gtl-date">{{ d.dateGeneration | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="gtl-nom">{{ d.declarationType?.nom }}</div>
+          <div class="gtl-meta">
+            <span class="periode-chip">{{ d.periode }}</span>
+            <span class="gtl-user" *ngIf="d.generePar">par {{ d.generePar }}</span>
+          </div>
+          <div class="rejet-inline" *ngIf="d.commentaireRejet">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            {{ d.commentaireRejet }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination timeline -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="pg-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <ng-container *ngFor="let p of pages">
+        <button class="pg-btn pg-num" *ngIf="p !== -1" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+        <span class="pg-dots" *ngIf="p === -1">…</span>
+      </ng-container>
+      <button class="pg-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+      <span class="pg-info">Page {{ currentPage }} / {{ totalPages }}</span>
+    </div>
+  </div>
+
+</div>

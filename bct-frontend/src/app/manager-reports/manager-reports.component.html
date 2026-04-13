@@ -1,0 +1,200 @@
+<!-- src/app/manager-reports/manager-reports.component.html -->
+<!-- US-19 — Tableau de bord de synthèse Responsable -->
+
+<div class="rpt-wrapper">
+
+  <!-- HEADER -->
+  <div class="rpt-header">
+    <div>
+      <h1 class="page-title">Rapports & Synthèse</h1>
+      <p class="page-subtitle">Pilotage de l'état global des déclarations BCT</p>
+    </div>
+    <button class="btn-refresh" (click)="charger()" [disabled]="loading">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="23 4 23 10 17 10"/>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+      </svg>
+      Actualiser
+    </button>
+  </div>
+
+  <!-- KPI SYNTHÈSE -->
+  <div class="kpi-grid" *ngIf="stats">
+    <div class="kpi-card kpi-total">
+      <div class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div class="kpi-body">
+        <div class="kpi-val">{{ stats.total }}</div>
+        <div class="kpi-lbl">Total déclarations</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-taux">
+      <div class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="kpi-body">
+        <div class="kpi-val">{{ tauxValidationGlobal }} %</div>
+        <div class="kpi-lbl">Taux de validation</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-pending">
+      <div class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="kpi-body">
+        <div class="kpi-val">{{ stats.enValidation }}</div>
+        <div class="kpi-lbl">En attente</div>
+      </div>
+      <div class="kpi-alert" *ngIf="stats.enValidation > 0">● Urgent</div>
+    </div>
+    <div class="kpi-card kpi-rejet">
+      <div class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+      <div class="kpi-body">
+        <div class="kpi-val">{{ stats.rejetees }}</div>
+        <div class="kpi-lbl">Rejetées</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-sent">
+      <div class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
+      <div class="kpi-body">
+        <div class="kpi-val">{{ stats.envoyees }}</div>
+        <div class="kpi-lbl">Envoyées BCT</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="loader-block" *ngIf="loading">
+    <div class="spinner-ring"></div>
+    <span>Chargement des rapports...</span>
+  </div>
+
+  <div *ngIf="!loading" class="panels-col">
+
+    <!-- ── STATS PAR PÉRIODE ── -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Évolution par période</h2>
+      </div>
+      <table class="rpt-table">
+        <thead>
+          <tr>
+            <th>Période</th>
+            <th>Total</th>
+            <th>Validées</th>
+            <th>Rejetées</th>
+            <th>Envoyées</th>
+            <th>Taux validation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of periodeStats">
+            <td><span class="periode-chip">{{ p.periode }}</span></td>
+            <td class="num">{{ p.total }}</td>
+            <td class="num green">{{ p.validees }}</td>
+            <td class="num red">{{ p.rejetees }}</td>
+            <td class="num purple">{{ p.envoyees }}</td>
+            <td>
+              <div class="bar-wrap">
+                <div class="bar-fill" [style.width.%]="p.tauxValidation" [class.bar-ok]="p.tauxValidation >= 80" [class.bar-warn]="p.tauxValidation < 80 && p.tauxValidation >= 50" [class.bar-bad]="p.tauxValidation < 50"></div>
+              </div>
+              <span class="bar-pct">{{ p.tauxValidation }} %</span>
+            </td>
+          </tr>
+          <tr *ngIf="periodeStats.length === 0">
+            <td colspan="6" class="empty-td">Aucune donnée disponible</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── STATS PAR TYPE ── -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Répartition par type de déclaration</h2>
+      </div>
+      <div class="type-bars">
+        <div class="type-bar-row" *ngFor="let t of typeStats">
+          <div class="tb-label">
+            <span class="tb-code">{{ t.code }}</span>
+            <span class="tb-nom">{{ t.nom }}</span>
+          </div>
+          <div class="tb-bar-track">
+            <div class="tb-bar-fill tb-green" [style.width.%]="getBarWidth(t.validees, t.total)" [title]="t.validees + ' validées'"></div>
+            <div class="tb-bar-fill tb-red"   [style.width.%]="getBarWidth(t.rejetees, t.total)" [title]="t.rejetees + ' rejetées'"></div>
+          </div>
+          <span class="tb-total">{{ t.total }}</span>
+          <span class="tb-taux" [class.taux-ok]="t.taux >= 80" [class.taux-warn]="t.taux < 80 && t.taux >= 50" [class.taux-bad]="t.taux < 50">{{ t.taux }}%</span>
+        </div>
+        <div class="empty-td" *ngIf="typeStats.length === 0">Aucune déclaration</div>
+      </div>
+    </div>
+
+    <!-- ── LISTE FILTRÉE ── -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Détail des déclarations</h2>
+        <div class="filter-row">
+          <select [(ngModel)]="filtreStatut">
+            <option value="">Tous statuts</option>
+            <option value="GENEREE">Générée</option>
+            <option value="EN_VALIDATION">En validation</option>
+            <option value="VALIDEE">Validée</option>
+            <option value="REJETEE">Rejetée</option>
+            <option value="ENVOYEE">Envoyée</option>
+          </select>
+          <select [(ngModel)]="filtrePeriode">
+            <option value="">Toutes périodes</option>
+            <option *ngFor="let p of uniquePeriodes" [value]="p">{{ p }}</option>
+          </select>
+          <select [(ngModel)]="filtreType">
+            <option value="">Tous types</option>
+            <option *ngFor="let t of uniqueTypes" [value]="t">{{ t }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table class="rpt-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Période</th>
+              <th>Statut</th>
+              <th>Généré par</th>
+              <th>Validé par</th>
+              <th>Date validation</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of filteredDeclarations.slice(0, 20)">
+              <td class="cell-id">#{{ d.id }}</td>
+              <td>
+                <div class="type-info">
+                  <span class="type-code">{{ d.declarationType?.code }}</span>
+                  <span class="type-name">{{ d.declarationType?.nom }}</span>
+                </div>
+              </td>
+              <td><span class="periode-chip">{{ d.periode }}</span></td>
+              <td><span class="statut-badge" [ngClass]="getStatutClass(d.statut)">{{ getStatutLabel(d.statut) }}</span></td>
+              <td class="cell-user">{{ d.generePar || '—' }}</td>
+              <td class="cell-user">{{ d.validePar || '—' }}</td>
+              <td class="cell-date">{{ d.dateValidation ? (d.dateValidation | date:'dd/MM/yy') : '—' }}</td>
+              <td>
+                <button class="btn-see" (click)="voirDeclaration(d)" title="Voir">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="filteredDeclarations.length === 0">
+              <td colspan="8" class="empty-td">Aucune déclaration pour ces filtres</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-footer" *ngIf="filteredDeclarations.length > 20">
+        Affichage des 20 premiers / {{ filteredDeclarations.length }} au total
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,361 @@
+<!-- src/app/agent-declaration-types/agent-declaration-types.component.html -->
+<div class="types-page">
+
+  <!-- ══════════════════════ HEADER ══════════════════════ -->
+  <header class="types-header">
+    <div class="types-header-left">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Accueil</span>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-item active">Types de Déclarations BCT</span>
+      </div>
+      <h1 class="page-title">Catalogue BCT</h1>
+      <p class="page-subtitle">Consultez les types de déclarations réglementaires disponibles</p>
+    </div>
+    <div class="types-header-right">
+      <button class="btn-refresh" (click)="loadTypes()" title="Rafraîchir">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/>
+          <polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        Actualiser
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════ LOADING ══════════════════════ -->
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Chargement des types...</p>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- ══════════════════════ STAT CARDS ══════════════════════ -->
+    <div class="stats-grid">
+      <div class="stat-card stat-primary">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Total types</div>
+          <div class="stat-value">{{ allTypes.length }}</div>
+        </div>
+      </div>
+      <div class="stat-card stat-success">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Actifs</div>
+          <div class="stat-value">{{ activeCount }}</div>
+        </div>
+      </div>
+      <div class="stat-card stat-warning">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Mensuels</div>
+          <div class="stat-value">{{ monthlyCount }}</div>
+        </div>
+      </div>
+      <div class="stat-card stat-info">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16 18 22 12 16 6"/>
+            <polyline points="8 6 2 12 8 18"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Formats XML</div>
+          <div class="stat-value">{{ xmlCount }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ SEARCH + FILTERS ══════════════════════ -->
+    <div class="search-filter-bar">
+      <div class="search-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" placeholder="Rechercher par code, nom, format..."
+               [(ngModel)]="searchQuery" (input)="applyFilters()"/>
+        <button class="btn-clear-search" *ngIf="searchQuery" (click)="clearSearch()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="filter-chips">
+        <button class="chip-btn" [class.active]="filterFormat === ''"
+                (click)="filterFormat = ''; applyFilters()">Tous</button>
+        <button class="chip-btn chip-xml" [class.active]="filterFormat === 'XML'"
+                (click)="filterFormat = 'XML'; applyFilters()">XML</button>
+        <button class="chip-btn chip-csv" [class.active]="filterFormat === 'CSV'"
+                (click)="filterFormat = 'CSV'; applyFilters()">CSV</button>
+        <button class="chip-btn chip-txt" [class.active]="filterFormat === 'TXT'"
+                (click)="filterFormat = 'TXT'; applyFilters()">TXT</button>
+      </div>
+
+      <div class="filter-chips">
+        <button class="chip-btn" [class.active]="filterFreq === ''"
+                (click)="filterFreq = ''; applyFilters()">Toutes fréquences</button>
+        <button class="chip-btn" [class.active]="filterFreq === 'QUOTIDIENNE'"
+                (click)="filterFreq = 'QUOTIDIENNE'; applyFilters()">Quotidienne</button>
+        <button class="chip-btn" [class.active]="filterFreq === 'MENSUELLE'"
+                (click)="filterFreq = 'MENSUELLE'; applyFilters()">Mensuelle</button>
+        <button class="chip-btn" [class.active]="filterFreq === 'TRIMESTRIELLE'"
+                (click)="filterFreq = 'TRIMESTRIELLE'; applyFilters()">Trimestrielle</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ TABLE ══════════════════════ -->
+    <div class="table-card">
+      <div class="table-header-row">
+        <h3>{{ filteredTypes.length }} type(s) disponible(s)</h3>
+        <div class="view-toggle">
+          <button [class.active]="viewMode === 'table'" (click)="viewMode = 'table'" title="Vue tableau">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <button [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" title="Vue grille">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Vue Tableau -->
+      <div *ngIf="viewMode === 'table'">
+        <table class="types-table">
+          <thead>
+            <tr>
+              <th>CODE</th>
+              <th>NOM</th>
+              <th>FORMAT</th>
+              <th>FRÉQUENCE</th>
+              <th>DATE LIMITE</th>
+              <th>STATUT</th>
+              <th>ACTION</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of filteredTypes" [class.row-inactive]="!t.actif">
+              <td><span class="code-badge">{{ t.code }}</span></td>
+              <td>
+                <div class="nom-cell">
+                  <span class="nom-text">{{ t.nom }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="format-badge" [ngClass]="getFormatClass(t.format)">{{ t.format }}</span>
+              </td>
+              <td>
+                <span class="freq-badge" [ngClass]="getFreqClass(t.frequence)">{{ t.frequence }}</span>
+              </td>
+              <td>
+                <span class="date-limit">{{ t.dateLimite }}</span>
+              </td>
+              <td>
+                <span class="status-badge" [class.status-active]="t.actif" [class.status-inactive]="!t.actif">
+                  <span class="status-dot"></span>
+                  {{ t.actif ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+              <td>
+                <button class="btn-voir" (click)="openDetail(t)" title="Voir les détails">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  Détails
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="filteredTypes.length === 0">
+              <td colspan="7" class="empty-state">
+                <div class="empty-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M16 16s-1.5-2-4-2-4 2-4 2"/>
+                    <line x1="9" y1="9" x2="9.01" y2="9"/>
+                    <line x1="15" y1="9" x2="15.01" y2="9"/>
+                  </svg>
+                </div>
+                <p>Aucun type trouvé</p>
+                <button (click)="clearSearch()" class="btn-reset">Réinitialiser les filtres</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Vue Grille -->
+      <div *ngIf="viewMode === 'grid'" class="grid-view">
+        <div class="type-card" *ngFor="let t of filteredTypes"
+             [class.type-card-inactive]="!t.actif"
+             (click)="openDetail(t)">
+          <div class="type-card-header">
+            <span class="code-badge">{{ t.code }}</span>
+            <span class="format-badge" [ngClass]="getFormatClass(t.format)">{{ t.format }}</span>
+          </div>
+          <div class="type-card-body">
+            <h4>{{ t.nom }}</h4>
+            <div class="type-card-meta">
+              <span class="freq-badge" [ngClass]="getFreqClass(t.frequence)">{{ t.frequence }}</span>
+              <span class="date-limit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                {{ t.dateLimite }}
+              </span>
+            </div>
+          </div>
+          <div class="type-card-footer">
+            <span class="status-badge" [class.status-active]="t.actif" [class.status-inactive]="!t.actif">
+              <span class="status-dot"></span>{{ t.actif ? 'Actif' : 'Inactif' }}
+            </span>
+            <span class="voir-details">Voir détails →</span>
+          </div>
+        </div>
+
+        <div class="grid-empty" *ngIf="filteredTypes.length === 0">
+          <p>Aucun type trouvé</p>
+          <button (click)="clearSearch()" class="btn-reset">Réinitialiser</button>
+        </div>
+      </div>
+
+    </div>
+  </ng-container>
+
+</div>
+
+<!-- ════════════════════ DETAIL MODAL (lecture seule) ════════════════════ -->
+<div class="modal-overlay" *ngIf="showDetail" (click)="closeDetail()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+
+    <div class="modal-header detail-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon detail-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Détails du type BCT</h2>
+          <p class="modal-subtitle">Informations en lecture seule</p>
+        </div>
+      </div>
+      <button class="btn-close" (click)="closeDetail()">✕</button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedType">
+
+      <!-- En-tête identité -->
+      <div class="detail-identity">
+        <span class="code-badge code-badge-lg">{{ selectedType.code }}</span>
+        <span class="format-badge format-badge-lg" [ngClass]="getFormatClass(selectedType.format)">
+          {{ selectedType.format }}
+        </span>
+        <span class="status-badge" [class.status-active]="selectedType.actif"
+              [class.status-inactive]="!selectedType.actif">
+          <span class="status-dot"></span>{{ selectedType.actif ? 'Actif' : 'Inactif' }}
+        </span>
+      </div>
+
+      <div class="detail-nom">{{ selectedType.nom }}</div>
+
+      <!-- Grille de détails -->
+      <div class="detail-section">
+        <h3>Informations générales</h3>
+        <div class="detail-grid">
+
+          <div class="detail-item">
+            <span class="detail-label">Format</span>
+            <span class="detail-value">
+              <span class="format-badge" [ngClass]="getFormatClass(selectedType.format)">
+                {{ selectedType.format }}
+              </span>
+            </span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Fréquence</span>
+            <span class="detail-value">
+              <span class="freq-badge" [ngClass]="getFreqClass(selectedType.frequence)">
+                {{ selectedType.frequence }}
+              </span>
+            </span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Date limite</span>
+            <span class="detail-value">{{ selectedType.dateLimite }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Statut</span>
+            <span class="detail-value">
+              <span class="status-badge"
+                    [class.status-active]="selectedType.actif"
+                    [class.status-inactive]="!selectedType.actif">
+                <span class="status-dot"></span>
+                {{ selectedType.actif ? 'Actif' : 'Inactif' }}
+              </span>
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Info utilisation -->
+      <div class="detail-info-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <p>Pour générer une déclaration de ce type, rendez-vous dans
+          <strong>Mes Déclarations</strong> et cliquez sur
+          <strong>Nouvelle déclaration</strong>.</p>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeDetail()">Fermer</button>
+      <button class="btn-primary" (click)="goToNewDeclaration()" *ngIf="selectedType?.actif">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Nouvelle déclaration
+      </button>
+    </div>
+
+  </div>
+</div>

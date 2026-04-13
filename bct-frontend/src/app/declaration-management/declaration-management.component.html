@@ -852,7 +852,11 @@
           <div class="details-grid">
             <div class="detail-item"><span class="detail-label">Date génération:</span><span class="detail-value">{{ formatDate(selectedDeclaration.dateGeneration) }}</span></div>
             <div class="detail-item"><span class="detail-label">Généré par:</span><span class="detail-value">{{ selectedDeclaration.generePar || '-' }}</span></div>
-            <div class="detail-item" *ngIf="selectedDeclaration.xsdFileNameUsed"><span class="detail-label">XSD utilisé:</span><span class="detail-value">{{ selectedDeclaration.xsdFileNameUsed }}</span></div>
+<div class="detail-item" 
+     *ngIf="selectedDeclaration.xsdFileNameUsed && selectedDeclaration.declarationType?.format === 'XML'">
+  <span class="detail-label">XSD utilisé:</span>
+  <span class="detail-value">{{ selectedDeclaration.xsdFileNameUsed }}</span>
+</div>
             <div class="detail-item" *ngIf="selectedDeclaration.dateValidation"><span class="detail-label">Date validation:</span><span class="detail-value">{{ formatDate(selectedDeclaration.dateValidation) }}</span></div>
             <div class="detail-item" *ngIf="selectedDeclaration.validePar"><span class="detail-label">Validé/Rejeté par:</span><span class="detail-value">{{ selectedDeclaration.validePar }}</span></div>
           </div>

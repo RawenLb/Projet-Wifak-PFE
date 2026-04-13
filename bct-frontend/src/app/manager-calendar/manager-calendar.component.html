@@ -1,0 +1,151 @@
+<!-- src/app/manager-calendar/manager-calendar.component.html -->
+<div class="cal-wrapper">
+
+  <!-- HEADER -->
+  <div class="cal-header">
+    <div class="header-left">
+      <h1 class="page-title">Calendrier BCT</h1>
+      <p class="page-subtitle">Suivi des échéances réglementaires — {{ currentMonthLabel }}</p>
+    </div>
+    <div class="header-right">
+      <div class="nav-controls">
+        <button class="nav-btn" (click)="previousMonth()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <span class="month-label">{{ currentMonthLabel }}</span>
+        <button class="nav-btn" (click)="nextMonth()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+        <button class="btn-today" (click)="goToToday()">Aujourd'hui</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LÉGENDE -->
+  <div class="legend-bar">
+    <div class="legend-item" *ngFor="let l of legend">
+      <span class="legend-dot" [ngClass]="l.cls"></span>
+      <span>{{ l.label }}</span>
+    </div>
+  </div>
+
+  <!-- STATS RAPIDES -->
+  <div class="stats-row" *ngIf="!loading">
+    <div class="stat-pill stat-blue">
+      <span class="stat-num">{{ monthStats.total }}</span>
+      <span class="stat-lbl">Total ce mois</span>
+    </div>
+    <div class="stat-pill stat-amber">
+      <span class="stat-num">{{ monthStats.enCours }}</span>
+      <span class="stat-lbl">En cours</span>
+    </div>
+    <div class="stat-pill stat-red">
+      <span class="stat-num">{{ monthStats.enRetard }}</span>
+      <span class="stat-lbl">En retard</span>
+    </div>
+    <div class="stat-pill stat-green">
+      <span class="stat-num">{{ monthStats.validees }}</span>
+      <span class="stat-lbl">Validées</span>
+    </div>
+  </div>
+
+  <!-- LOADER -->
+  <div class="loader-block" *ngIf="loading">
+    <div class="spinner-ring"></div>
+    <span>Chargement du calendrier...</span>
+  </div>
+
+  <!-- CALENDRIER GRID -->
+  <div class="cal-grid-wrap" *ngIf="!loading">
+    <!-- Jours de la semaine -->
+    <div class="day-headers">
+      <div class="day-hdr" *ngFor="let d of dayHeaders">{{ d }}</div>
+    </div>
+
+    <!-- Grille des jours -->
+    <div class="days-grid">
+      <div class="day-cell"
+           *ngFor="let cell of calendarCells"
+           [class.empty-cell]="!cell.day"
+           [class.today]="cell.isToday"
+           [class.has-events]="cell.events.length > 0"
+           (click)="cell.day && selectDay(cell)">
+
+        <div class="day-num" *ngIf="cell.day">
+          <span [class.today-circle]="cell.isToday">{{ cell.day }}</span>
+        </div>
+
+        <div class="events-list" *ngIf="cell.events.length > 0">
+          <div class="event-pill"
+               *ngFor="let e of cell.events.slice(0, 3)"
+               [ngClass]="getEventClass(e)"
+               [title]="e.code + ' — ' + e.nom"
+               (click)="$event.stopPropagation(); openEvent(e)">
+            <span class="event-code">{{ e.code }}</span>
+            <span class="event-status-dot" [ngClass]="getDotClass(e.statut)"></span>
+          </div>
+          <div class="more-badge" *ngIf="cell.events.length > 3">
+            +{{ cell.events.length - 3 }}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL LATÉRAL — jour sélectionné -->
+  <div class="side-panel" *ngIf="selectedCell && selectedCell.events.length > 0">
+    <div class="side-header">
+      <span class="side-date">{{ selectedCell.day }} {{ currentMonthLabel }}</span>
+      <button class="side-close" (click)="selectedCell = null">✕</button>
+    </div>
+    <div class="side-events">
+      <div class="side-event" *ngFor="let e of selectedCell.events" [ngClass]="getEventClass(e)">
+        <div class="se-top">
+          <span class="se-code">{{ e.code }}</span>
+          <span class="se-badge" [ngClass]="getStatutClass(e.statut)">{{ getStatutLabel(e.statut) }}</span>
+        </div>
+        <div class="se-nom">{{ e.nom }}</div>
+        <div class="se-meta">
+          <span>{{ e.frequence }}</span>
+          <span *ngIf="e.generePar">· {{ e.generePar }}</span>
+        </div>
+        <div class="se-actions">
+          <button class="btn-see" (click)="voirDeclaration(e)">Voir →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTE DES DÉCLARATIONS EN RETARD -->
+  <div class="retard-panel" *ngIf="!loading && overdueDeclarations.length > 0">
+    <div class="retard-header">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      <span>Déclarations en retard ou à risque ({{ overdueDeclarations.length }})</span>
+    </div>
+    <div class="retard-list">
+      <div class="retard-item" *ngFor="let d of overdueDeclarations">
+        <span class="ri-code">{{ d.declarationType?.code }}</span>
+        <div class="ri-info">
+          <span class="ri-nom">{{ d.declarationType?.nom }}</span>
+          <span class="ri-meta">{{ d.periode }}</span>
+        </div>
+        <span class="ri-badge" [ngClass]="getStatutClass(d.statut)">{{ getStatutLabel(d.statut) }}</span>
+        <button class="btn-icon-sm" (click)="voirDeclarationById(d)" title="Voir">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
