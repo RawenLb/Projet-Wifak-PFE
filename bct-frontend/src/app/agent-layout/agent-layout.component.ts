@@ -1,11 +1,9 @@
 // src/app/agent-layout/agent-layout.component.ts
-// ✅ MODIFIÉ — ajout de NotificationService + suppression du loadRejectedCount manuel
-
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { KeycloakAdminService } from '../services/keycloak-admin.service';
-import { NotificationService } from '../services/notification.service';   // ← AJOUT
+import { NotificationService } from '../services/notification.service';
 
 @Component({
   selector: 'app-agent-layout',
@@ -25,7 +23,6 @@ export class AgentLayoutComponent implements OnInit, OnDestroy {
   userRole  = 'Agent';
   userRoles: string[] = [];
 
-  // ✅ REMPLACE l'ancien rejectedCount manuel — maintenant via NotificationService
   get rejectedCount(): number {
     return this.notifSvc.all
       .filter(n => n.type === 'reject' && n.unread)
@@ -35,7 +32,7 @@ export class AgentLayoutComponent implements OnInit, OnDestroy {
   constructor(
     private router:   Router,
     private kcAdmin:  KeycloakAdminService,
-    public notifSvc:  NotificationService    // ← AJOUT (public pour le template)
+    public notifSvc:  NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -45,8 +42,6 @@ export class AgentLayoutComponent implements OnInit, OnDestroy {
     }
 
     this.loadUserInfo();
-
-    // ✅ Charge les notifications au démarrage (remplace loadRejectedCount)
     this.notifSvc.loadNotifications();
 
     this.router.events
@@ -76,21 +71,21 @@ export class AgentLayoutComponent implements OnInit, OnDestroy {
   }
 
   updatePageInfo(url: string): void {
-    if (url.includes('/agent/declarations') || url === '/agent' || url === '/agent/') {
+    if (url.includes('/agent/dashboard') || url === '/agent' || url === '/agent/') {
+      this.pageTitle    = 'Tableau de bord';
+      this.pageSubtitle = 'Vue d\'ensemble de vos déclarations BCT';
+    } else if (url.includes('/agent/declarations')) {
       this.pageTitle    = 'Mes Déclarations BCT';
       this.pageSubtitle = 'Générez et suivez vos déclarations réglementaires';
     } else if (url.includes('/agent/calendar')) {
       this.pageTitle    = 'Calendrier des Échéances';
       this.pageSubtitle = 'Visualisez et suivez vos échéances déclaratives BCT';
-    } else if (url.includes('/agent/history')) {
-      this.pageTitle    = 'Historique des Déclarations';
-      this.pageSubtitle = 'Consultez l\'historique complet de vos déclarations';
     } else if (url.includes('/agent/types')) {
-      this.pageTitle    = 'Types de Déclarations Disponibles';
-      this.pageSubtitle = 'Découvrez les types de déclarations que vous pouvez générer';
-    } else if (url.includes('/agent/help')) {
-      this.pageTitle    = 'Aide & Support';
-      this.pageSubtitle = 'Documentation et assistance pour vos déclarations';
+      this.pageTitle    = 'Types de Déclarations BCT';
+      this.pageSubtitle = 'Catalogue des types de déclarations disponibles';
+    } else if (url.includes('/agent/notifications')) {
+      this.pageTitle    = 'Notifications';
+      this.pageSubtitle = 'Vos alertes et messages de validation';
     } else {
       this.pageTitle    = 'Mes Déclarations';
       this.pageSubtitle = 'Espace agent';
@@ -98,7 +93,6 @@ export class AgentLayoutComponent implements OnInit, OnDestroy {
   }
 
   toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
-
   isActive(route: string): boolean { return this.currentRoute.includes(route); }
 
   logout(): void {
@@ -120,6 +114,5 @@ export class AgentLayoutComponent implements OnInit, OnDestroy {
   }
 
   getDisplayName(): string { return this.fullName || this.username || 'Agent'; }
-
   hasRole(roleName: string): boolean { return this.kcAdmin.hasRole(roleName); }
 }

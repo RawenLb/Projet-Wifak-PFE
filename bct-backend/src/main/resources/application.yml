@@ -76,3 +76,11 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka/
 
+feign:                          # ← au même niveau que eureka, spring, etc.
+  client:
+    config:
+      jira-integration-service:
+        connectTimeout: 3000
+        readTimeout: 5000
+        loggerLevel: basic
+

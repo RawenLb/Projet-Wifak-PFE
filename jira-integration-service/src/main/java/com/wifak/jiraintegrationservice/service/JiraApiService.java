@@ -27,35 +27,30 @@ public class JiraApiService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // ✅ Vérifie la config au démarrage et log un avertissement clair si credentials suspects
     @PostConstruct
     public void validateConfig() {
-        if (userEmail == null || userEmail.isBlank()) {
+        if (userEmail == null || userEmail.isBlank())
             log.error("❌ jira.user-email est vide ou non configuré !");
-        } else {
+        else
             log.info("✅ Jira user-email configuré : {}", userEmail.trim());
-        }
-        if (apiToken == null || apiToken.isBlank()) {
+
+        if (apiToken == null || apiToken.isBlank())
             log.error("❌ jira.api-token est vide ou non configuré !");
-        } else {
+        else
             log.info("✅ Jira api-token configuré : longueur={}", apiToken.trim().length());
-        }
-        if (jiraBaseUrl == null || jiraBaseUrl.isBlank()) {
+
+        if (jiraBaseUrl == null || jiraBaseUrl.isBlank())
             log.error("❌ jira.base-url est vide ou non configuré !");
-        } else {
+        else
             log.info("✅ Jira base-url : {}", jiraBaseUrl.trim());
-        }
     }
 
+    // ─────────────────────────────────────────────────────────────
     private HttpHeaders buildHeaders() {
         HttpHeaders headers = new HttpHeaders();
-
-        // ✅ FIX : trim() pour supprimer espaces/retours à la ligne invisibles
-        //         StandardCharsets.UTF_8 pour un encodage Base64 déterministe
         String credentials = userEmail.trim() + ":" + apiToken.trim();
         String encoded = Base64.getEncoder()
                 .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
-
         headers.set("Authorization", "Basic " + encoded);
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Accept", "application/json");
@@ -63,27 +58,42 @@ public class JiraApiService {
     }
 
     // ================= CREATE =================
-    public Map<String, Object> createTicket(String summary, String description) {
-
+    /**
+     * Crée un ticket Jira.
+     *
+     * @param summary          Titre du ticket  — ex. "BCT_01 - Avril 2025"
+     * @param description      Corps du ticket (texte multi-ligne)
+     * @param assigneeUsername Username Jira du responsable (peut être null)
+     */
+    public Map<String, Object> createTicket(String summary,
+                                            String description,
+                                            String assigneeUsername) {
         Map<String, Object> fields = new HashMap<>();
-        fields.put("project", Map.of("key", "BCT"));
-        fields.put("summary", summary);
+        fields.put("project",   Map.of("key", "BCT"));
+        fields.put("summary",   summary);
+        fields.put("issuetype", Map.of("name", "Task"));
+
+        // ✅ Assigné au responsable si username fourni
+        if (assigneeUsername != null && !assigneeUsername.isBlank()) {
+            fields.put("assignee", Map.of("name", assigneeUsername)); // Jira Server : "name"
+            // Pour Jira Cloud remplacer par : Map.of("accountId", assigneeAccountId)
+        }
+
+        // ✅ Description ADF (Atlassian Document Format)
         fields.put("description", Map.of(
-                "type", "doc",
+                "type",    "doc",
                 "version", 1,
                 "content", List.of(
                         Map.of(
-                                "type", "paragraph",
+                                "type",    "paragraph",
                                 "content", List.of(
                                         Map.of("type", "text", "text", description)
                                 )
                         )
                 )
         ));
-        fields.put("issuetype", Map.of("name", "Task"));
 
         HttpEntity<?> entity = new HttpEntity<>(Map.of("fields", fields), buildHeaders());
-
         log.debug("📡 Appel Jira CREATE : {}/rest/api/3/issue", jiraBaseUrl.trim());
 
         ResponseEntity<Map> response = restTemplate.exchange(
@@ -98,13 +108,10 @@ public class JiraApiService {
 
     // ================= TRANSITION =================
     public void transitionTicket(String ticketId, String transitionId) {
-
         Map<String, Object> body = Map.of(
                 "transition", Map.of("id", transitionId)
         );
-
         HttpEntity<?> entity = new HttpEntity<>(body, buildHeaders());
-
         log.debug("📡 Appel Jira TRANSITION : ticketId={} transitionId={}", ticketId, transitionId);
 
         restTemplate.exchange(
@@ -117,14 +124,13 @@ public class JiraApiService {
 
     // ================= COMMENT =================
     public void addComment(String ticketId, String comment) {
-
         Map<String, Object> body = Map.of(
                 "body", Map.of(
-                        "type", "doc",
+                        "type",    "doc",
                         "version", 1,
                         "content", List.of(
                                 Map.of(
-                                        "type", "paragraph",
+                                        "type",    "paragraph",
                                         "content", List.of(
                                                 Map.of("type", "text", "text", comment)
                                         )
@@ -132,7 +138,6 @@ public class JiraApiService {
                         )
                 )
         );
-
         HttpEntity<?> entity = new HttpEntity<>(body, buildHeaders());
 
         restTemplate.exchange(
@@ -144,17 +149,15 @@ public class JiraApiService {
     }
 
     // ================= MAPPING BCT → JIRA TRANSITION ID =================
-    // Workflow Jira "Déclarations BCT" :
-    //  1 : Début         → IDEA         (Create — à la création)
-    //  5 : Tous états    → TO DO        (GENEREE)
-    // 31 : Tous états    → IN PROGRESS  (EN_VALIDATION)
-    //  4 : IN PROGRESS   → REJETÉE      (REJETEE)
-    //  3 : REJETÉE       → IN PROGRESS  (REJETEE resoumise → EN_VALIDATION)
-    // 41 : Tous états    → VALIDÉE      (VALIDEE)
-    //  2 : VALIDÉE       → ENVOYÉE      (ENVOYEE)
+    // Workflow Jira actuel :
+    //  1 : Début    → TO DO        (Create — ticket démarre en TO DO)
+    // 31 : Tous     → IN PROGRESS  (EN_VALIDATION — soumission)
+    //  4 : IN PROG  → REJETÉE      (REJETEE)
+    //  3 : REJETÉE  → IN PROGRESS  (RESOUMISE)
+    // 41 : Tous     → VALIDÉE      (VALIDEE)
+    //  2 : VALIDÉE  → ENVOYÉE      (ENVOYEE)
     public String mapBctStatutToTransitionId(String statut) {
         return switch (statut.toUpperCase()) {
-            case "GENEREE"       -> "5";
             case "EN_VALIDATION" -> "31";
             case "REJETEE"       -> "4";
             case "RESOUMISE"     -> "3";

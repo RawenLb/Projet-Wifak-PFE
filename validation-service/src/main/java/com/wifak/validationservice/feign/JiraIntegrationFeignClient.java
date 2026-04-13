@@ -9,8 +9,7 @@ import org.springframework.web.bind.annotation.*;
 public interface JiraIntegrationFeignClient {
 
     // ✅ FIX : créer un ticket (utile quand ticket absent au moment du submit)
-    @PostMapping("/tickets")
-    Object createTicket(@RequestBody CreateJiraTicketRequest req);
+
 
     // ✅ FIX : vérifier l'existence avant de tenter une transition
     @GetMapping("/tickets/{declarationId}/exists")
@@ -19,4 +18,5 @@ public interface JiraIntegrationFeignClient {
     // Transition de statut Jira
     @PostMapping("/tickets/transition")
     Object transitionTicket(@RequestBody TransitionJiraTicketRequest req);
+
 }

@@ -1,15 +1,9 @@
 package com.wifak.jiraintegrationservice.dto;
 
-// Re-export all DTOs as public classes for use across the service
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Map;
 
-// ══════════════════════════════════════════════════════════════
-// DeclarationDTO
-// ══════════════════════════════════════════════════════════════
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DeclarationDTO {
     private Long id;
@@ -18,6 +12,8 @@ public class DeclarationDTO {
     private LocalDate dateDebut;
     private LocalDate dateFin;
     private String nomFichier;
+    private String xmlFileUrl;           // ✅ NOUVEAU — lien vers le fichier XML
+    private String responsableUsername;  // ✅ NOUVEAU — username du responsable (pour affichage Jira)
     private LocalDateTime dateGeneration;
     private LocalDateTime dateValidation;
     private String generePar;
@@ -37,6 +33,10 @@ public class DeclarationDTO {
     public void setDateFin(LocalDate dateFin) { this.dateFin = dateFin; }
     public String getNomFichier() { return nomFichier; }
     public void setNomFichier(String nomFichier) { this.nomFichier = nomFichier; }
+    public String getXmlFileUrl() { return xmlFileUrl; }                          // ✅
+    public void setXmlFileUrl(String xmlFileUrl) { this.xmlFileUrl = xmlFileUrl; }// ✅
+    public String getResponsableUsername() { return responsableUsername; }                         // ✅
+    public void setResponsableUsername(String responsableUsername) { this.responsableUsername = responsableUsername; } // ✅
     public LocalDateTime getDateGeneration() { return dateGeneration; }
     public void setDateGeneration(LocalDateTime dateGeneration) { this.dateGeneration = dateGeneration; }
     public LocalDateTime getDateValidation() { return dateValidation; }

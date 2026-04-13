@@ -1,10 +1,10 @@
 package com.wifak.jiraintegrationservice.dto;
 
 public class TransitionTicketRequest {
-    private Long declarationId;
-    private String newBctStatut;    // EN_VALIDATION, VALIDEE, REJETEE, ENVOYEE
-    private String commentaire;     // optionnel — obligatoire si REJETEE
-    private String effectuePar;     // username du manager
+    private Long   declarationId;
+    private String newBctStatut;   // EN_VALIDATION, VALIDEE, REJETEE, ENVOYEE
+    private String commentaire;    // optionnel — obligatoire si REJETEE
+    private String effectuePar;    // username du manager
 
     public Long getDeclarationId() { return declarationId; }
     public void setDeclarationId(Long declarationId) { this.declarationId = declarationId; }

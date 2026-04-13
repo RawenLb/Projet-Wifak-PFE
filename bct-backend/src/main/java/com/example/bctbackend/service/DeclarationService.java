@@ -1,8 +1,10 @@
 package com.example.bctbackend.service;
 
+import com.example.bctbackend.dto.CreateTicketRequest;
 import com.example.bctbackend.dto.GenerateDeclarationRequest;
 import com.example.bctbackend.entities.Declaration;
 import com.example.bctbackend.entities.DeclarationType;
+import com.example.bctbackend.feign.JiraIntegrationFeignClient;
 import com.example.bctbackend.repositories.DeclarationRepository;
 import com.example.bctbackend.repositories.DeclarationTypeRepository;
 import org.slf4j.Logger;
@@ -17,44 +19,38 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@Transactional
 public class DeclarationService {
 
     private static final Logger log = LoggerFactory.getLogger(DeclarationService.class);
 
-    private final DeclarationRepository    declarationRepository;
-    private final DeclarationTypeRepository typeRepository;
-    private final XmlGenerationService     xmlGenerationService;
-    private final CsvGenerationService     csvGenerationService;
-    private final TxtGenerationService     txtGenerationService;
+    private final DeclarationRepository      declarationRepository;
+    private final DeclarationTypeRepository  typeRepository;
+    private final XmlGenerationService       xmlGenerationService;
+    private final CsvGenerationService       csvGenerationService;
+    private final TxtGenerationService       txtGenerationService;
+    private final JiraIntegrationFeignClient jiraClient;
 
     public DeclarationService(
             DeclarationRepository declarationRepository,
             DeclarationTypeRepository typeRepository,
             XmlGenerationService xmlGenerationService,
             CsvGenerationService csvGenerationService,
-            TxtGenerationService txtGenerationService
+            TxtGenerationService txtGenerationService,
+            JiraIntegrationFeignClient jiraClient
     ) {
         this.declarationRepository = declarationRepository;
         this.typeRepository        = typeRepository;
         this.xmlGenerationService  = xmlGenerationService;
         this.csvGenerationService  = csvGenerationService;
         this.txtGenerationService  = txtGenerationService;
+        this.jiraClient            = jiraClient;
     }
-
-    // ══════════════════════════════════════════════════════════════
-    // PRIVATE HELPERS
-    // ══════════════════════════════════════════════════════════════
 
     private String getCurrentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null ? auth.getName() : "system";
     }
 
-    /**
-     * Génère le contenu du fichier selon le format du type.
-     * Mutualisé entre generateDeclaration et updateDeclaration.
-     */
     private String generateFileContent(DeclarationType type,
                                        LocalDate dateDebut, LocalDate dateFin,
                                        String periode) {
@@ -88,10 +84,6 @@ public class DeclarationService {
         return String.format("declaration_%s_%s.%s", code, periode.replace("-", ""), extension);
     }
 
-    /**
-     * Valide qu'un type de déclaration est utilisable :
-     * il doit être actif et avoir une requête SQL configurée.
-     */
     private void validateType(DeclarationType type) {
         if (!type.isActif()) {
             throw new RuntimeException(
@@ -105,10 +97,11 @@ public class DeclarationService {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // GENERATE
+    // GENERATE — @Transactional isolé : ne fait QUE sauvegarder
     // ══════════════════════════════════════════════════════════════
 
-    public Declaration generateDeclaration(
+    @Transactional
+    public Declaration generateAndSave(
             Long typeId,
             String periode,
             LocalDate dateDebut,
@@ -140,8 +133,22 @@ public class DeclarationService {
         declaration.setNomFichier(filename);
 
         Declaration saved = declarationRepository.save(declaration);
-        log.info("✅ Déclaration générée — ID: {}, Fichier: {}", saved.getId(), filename);
+        log.info("✅ Déclaration sauvegardée — ID: {}, Fichier: {}", saved.getId(), filename);
         return saved;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // NOTIFY JIRA — appelé APRÈS commit, hors transaction
+    // ══════════════════════════════════════════════════════════════
+
+    public void notifyJiraTicketCreation(Long declarationId, String username) {
+        try {
+            jiraClient.createTicket(new CreateTicketRequest(declarationId, username));
+            log.info("🎫 Ticket Jira créé en TO DO pour déclaration {}", declarationId);
+        } catch (Exception e) {
+            log.warn("⚠️ Jira non disponible — ticket non créé pour déclaration {} : {}",
+                    declarationId, e.getMessage());
+        }
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -160,22 +167,17 @@ public class DeclarationService {
         return declarationRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Declaration findById(Long id) {
         return declarationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Déclaration introuvable: " + id));
     }
 
     // ══════════════════════════════════════════════════════════════
-    // UPDATE — édition par l'agent (type et/ou période)
+    // UPDATE
     // ══════════════════════════════════════════════════════════════
 
-    /**
-     * Modifie le type et/ou la période d'une déclaration existante,
-     * régénère son fichier, et repasse le statut à GENEREE.
-     *
-     * Statuts autorisés : GENEREE, REJETEE.
-     * Statuts bloqués   : EN_VALIDATION, VALIDEE, ENVOYEE.
-     */
+    @Transactional
     public Declaration updateDeclaration(Long id, GenerateDeclarationRequest request) {
         log.info("✏️ updateDeclaration — ID: {}", id);
 
@@ -208,8 +210,7 @@ public class DeclarationService {
         declaration.setSqlQueryUsed(type.getSqlQuery());
         declaration.setXsdFileNameUsed(type.getXsdFileName());
         declaration.setNomFichier(filename);
-
-        // Réinitialisation — repasse à GENEREE et efface le rejet éventuel
+        declaration.setGenerePar(getCurrentUsername());
         declaration.setStatut(Declaration.DeclarationStatut.GENEREE);
         declaration.setCommentaireRejet(null);
         declaration.setValidePar(null);
@@ -224,12 +225,7 @@ public class DeclarationService {
     // DELETE
     // ══════════════════════════════════════════════════════════════
 
-    /**
-     * Supprime définitivement une déclaration.
-     *
-     * Statuts autorisés : BROUILLON, GENEREE, REJETEE.
-     * Statuts bloqués   : EN_VALIDATION, VALIDEE, ENVOYEE.
-     */
+    @Transactional
     public void deleteDeclaration(Long id) {
         log.info("🗑️ deleteDeclaration — ID: {}", id);
 
@@ -241,7 +237,7 @@ public class DeclarationService {
             throw new RuntimeException(
                     "Impossible de supprimer une déclaration au statut « " +
                             declaration.getStatut() +
-                            " ». Seules les déclarations BROUILLON, GENEREE ou REJETEE peuvent être supprimées.");
+                            " ». Seules les déclarations GENEREE ou REJETEE peuvent être supprimées.");
         }
 
         declarationRepository.delete(declaration);
@@ -252,11 +248,7 @@ public class DeclarationService {
     // UPDATE STATUT — appelé par validation-service via Feign
     // ══════════════════════════════════════════════════════════════
 
-    /**
-     * Met à jour uniquement le statut d'une déclaration.
-     * Invoqué exclusivement par le validation-service via l'endpoint interne
-     * POST /api/declarations/{id}/statut.
-     */
+    @Transactional
     public Declaration updateStatut(Long id, String nouveauStatut,
                                     String commentaire, String validePar) {
         log.info("🔄 updateStatut — ID: {}, nouveauStatut: {}", id, nouveauStatut);
@@ -278,13 +270,11 @@ public class DeclarationService {
             case EN_VALIDATION:
                 log.info("📤 Déclaration {} soumise pour validation", id);
                 break;
-
             case VALIDEE:
                 declaration.setDateValidation(LocalDateTime.now());
                 declaration.setValidePar(validePar != null ? validePar : getCurrentUsername());
                 log.info("✅ Déclaration {} validée par {}", id, declaration.getValidePar());
                 break;
-
             case REJETEE:
                 if (commentaire == null || commentaire.trim().isEmpty()) {
                     throw new RuntimeException(
@@ -296,12 +286,10 @@ public class DeclarationService {
                 log.info("❌ Déclaration {} rejetée par {} — motif: {}",
                         id, declaration.getValidePar(), commentaire);
                 break;
-
             case ENVOYEE:
                 declaration.setDateEnvoi(LocalDateTime.now());
                 log.info("📨 Déclaration {} marquée ENVOYEE", id);
                 break;
-
             default:
                 log.warn("⚠️ updateStatut — statut inattendu: {}", statut);
                 break;
@@ -311,7 +299,7 @@ public class DeclarationService {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // STATS — Dashboard
+    // STATS
     // ══════════════════════════════════════════════════════════════
 
     public DeclarationStats getStats() {
@@ -325,18 +313,8 @@ public class DeclarationService {
         return stats;
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // DTO STATS (inner class)
-    // ══════════════════════════════════════════════════════════════
-
     public static class DeclarationStats {
-        private long total;
-        private long generees;
-        private long enValidation;
-        private long validees;
-        private long rejetees;
-        private long envoyees;
-
+        private long total, generees, enValidation, validees, rejetees, envoyees;
         public long getTotal()              { return total; }
         public void setTotal(long v)        { total = v; }
         public long getGenerees()           { return generees; }
@@ -350,13 +328,4 @@ public class DeclarationService {
         public long getEnvoyees()           { return envoyees; }
         public void setEnvoyees(long v)     { envoyees = v; }
     }
-
-    // ══════════════════════════════════════════════════════════════
-    // MÉTHODES MIGRÉES vers validation-service
-    // ══════════════════════════════════════════════════════════════
-    // submitForValidation()    → ValidationService.submitForValidation()
-    // validateDeclaration()    → ValidationService.validateDeclaration()
-    // rejectDeclaration()      → ValidationService.rejectDeclaration()
-    // markAsSent()             → ValidationService.markAsSent()
-    // getPendingDeclarations() → ValidationService.getPendingDeclarations()
 }

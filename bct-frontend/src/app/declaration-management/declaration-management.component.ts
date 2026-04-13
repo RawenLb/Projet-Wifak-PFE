@@ -1,5 +1,5 @@
 // src/app/declaration-management/declaration-management.component.ts
-// ✅ VERSION FINALE — édition, suppression, correction après rejet
+// ✅ VERSION FINALE — badge Jira visible dès la génération
 
 import { Component, OnInit } from '@angular/core';
 import {
@@ -153,20 +153,30 @@ export class DeclarationManagementComponent implements OnInit {
 
   // ── Jira ──────────────────────────────────────────────────────
 
+  // ✅ FIX : GENEREE inclus — le ticket est créé dès la génération
+  isJiraEligible(d: Declaration): boolean {
+    return ['GENEREE', 'EN_VALIDATION', 'VALIDEE', 'REJETEE', 'ENVOYEE'].includes(d.statut);
+  }
+
+  // ✅ FIX : délai de 1.5s pour les déclarations GENEREE très récentes
   private loadJiraTickets(declarations: Declaration[]): void {
     declarations
       .filter(d => this.isJiraEligible(d) && d.id)
       .forEach(d => {
         this.jiraLoadingMap[d.id!] = true;
-        this.jiraService.getTicketForDeclaration(d.id!).subscribe(ticket => {
-          this.jiraLoadingMap[d.id!] = false;
-          if (ticket) this.jiraTickets.set(d.id!, ticket);
-        });
-      });
-  }
 
-  isJiraEligible(d: Declaration): boolean {
-    return ['EN_VALIDATION', 'VALIDEE', 'REJETEE', 'ENVOYEE'].includes(d.statut);
+        // Petit délai pour laisser le temps au backend de créer le ticket
+        const delay = d.statut === 'GENEREE' ? 1500 : 0;
+
+        setTimeout(() => {
+          this.jiraService.getTicketForDeclaration(d.id!).subscribe(ticket => {
+            this.jiraLoadingMap[d.id!] = false;
+            if (ticket) {
+              this.jiraTickets.set(d.id!, ticket);
+            }
+          });
+        }, delay);
+      });
   }
 
   getJiraTicket(id: number | undefined): JiraTicketResponse | null {
@@ -226,7 +236,6 @@ export class DeclarationManagementComponent implements OnInit {
                                      delimiter: '|', lineTemplate: '', fileHeader: '', fileFooter: '',
                                      includeLineNumbers: false, includeTimestamp: true };
 
-    // Pré-remplir les dates de test sur le mois précédent
     const now  = new Date();
     const m    = now.getMonth() === 0 ? 12 : now.getMonth();
     const y    = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
@@ -237,22 +246,23 @@ export class DeclarationManagementComponent implements OnInit {
 
   // ── Stepper ────────────────────────────────────────────────────
 
-  stepNext(): void {
-    this.formSubmitted = true;
-    if (this.currentStep === 1) {
-      if (!this.generateRequest.declarationTypeId || !this.generateRequest.periode) return;
-      this.formSubmitted = false;
-      this.currentStep   = 2;
-      return;
-    }
-    if (this.currentStep === 2) {
-      const fmt = this.selectedDeclarationType?.format;
-      if (fmt === 'XML' && !this.xsdFile)              return;
-      if (fmt === 'CSV' && !this.csvConfig.columns?.trim()) return;
-      this.formSubmitted = false;
-      this.currentStep   = 3;
-    }
+stepNext(): void {
+  this.formSubmitted = true;
+  if (this.currentStep === 1) {
+    if (!this.generateRequest.declarationTypeId || !this.generateRequest.periode) return;
+    this.formSubmitted = false;
+    this.currentStep   = 2;
+    return;
   }
+  if (this.currentStep === 2) {
+    const fmt = this.selectedDeclarationType?.format;
+    // ✅ CORRIGÉ — seul XML exige un XSD, CSV et TXT passent directement
+    if (fmt === 'XML' && !this.xsdFile) return;
+    // CSV et TXT : aucune validation supplémentaire à l'étape 2
+    this.formSubmitted = false;
+    this.currentStep   = 3;
+  }
+}
 
   stepBack(): void {
     if (this.currentStep > 1) { this.currentStep--; }
@@ -276,7 +286,6 @@ export class DeclarationManagementComponent implements OnInit {
     this.testDateFin                = this.generateRequest.dateFin;
   }
 
-  // Convertit un objet Date en "yyyy-MM-dd" (format attendu par LocalDate Jackson)
   private toIso(d: Date): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
@@ -310,8 +319,8 @@ export class DeclarationManagementComponent implements OnInit {
   }
 
   formatFileSize(bytes: number): string {
-    if (bytes < 1024)        return `${bytes} o`;
-    if (bytes < 1048576)     return `${(bytes / 1024).toFixed(1)} Ko`;
+    if (bytes < 1024)    return `${bytes} o`;
+    if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} Ko`;
     return `${(bytes / 1048576).toFixed(1)} Mo`;
   }
 
@@ -325,7 +334,7 @@ export class DeclarationManagementComponent implements OnInit {
 
   getTxtPreview(): string {
     const lines: string[] = [];
-    if (this.txtConfig.fileHeader)      lines.push(this.txtConfig.fileHeader);
+    if (this.txtConfig.fileHeader)       lines.push(this.txtConfig.fileHeader);
     if (this.txtConfig.includeTimestamp) lines.push(`GENERE_LE=${new Date().toISOString().split('T')[0]}`);
     if (this.txtConfig.lineTemplate) {
       lines.push('--- DONNEES ---');
@@ -352,9 +361,9 @@ export class DeclarationManagementComponent implements OnInit {
   }
 
   testSql(): void {
-    if (!this.sqlQuery?.trim())                   { alert('Saisissez une requête SQL'); return; }
-    if (!this.testDateDebut || !this.testDateFin)  { alert('Saisissez les dates de test'); return; }
-    if (!this.generateRequest.declarationTypeId)  { alert('Sélectionnez un type'); return; }
+    if (!this.sqlQuery?.trim())                  { alert('Saisissez une requête SQL'); return; }
+    if (!this.testDateDebut || !this.testDateFin) { alert('Saisissez les dates de test'); return; }
+    if (!this.generateRequest.declarationTypeId) { alert('Sélectionnez un type'); return; }
 
     this.testingSQL    = true;
     this.sqlTestResult = null;
@@ -383,19 +392,20 @@ export class DeclarationManagementComponent implements OnInit {
 
   // ── Génération finale ──────────────────────────────────────────
 
-  generateDeclaration(): void {
-    this.formSubmitted = true;
-    const fmt = this.selectedDeclarationType?.format;
+generateDeclaration(): void {
+  this.formSubmitted = true;
+  const fmt = this.selectedDeclarationType?.format;
 
-    if (!this.generateRequest.declarationTypeId) { alert('Type obligatoire'); return; }
-    if (!this.generateRequest.periode)            { alert('Période obligatoire'); return; }
-    if (fmt === 'XML' && !this.xsdFile)           { alert('Fichier XSD obligatoire'); return; }
-    if (fmt === 'CSV' && !this.csvConfig.columns) { alert('Colonnes CSV obligatoires'); return; }
-    if (!this.sqlQuery?.trim())                   { alert('Requête SQL obligatoire'); return; }
-    if (!this.sqlQuery.trim().toUpperCase().startsWith('SELECT')) {
-      alert('La requête doit commencer par SELECT');
-      return;
-    }
+  if (!this.generateRequest.declarationTypeId) { alert('Type obligatoire'); return; }
+  if (!this.generateRequest.periode)            { alert('Période obligatoire'); return; }
+  // ✅ CORRIGÉ — XSD uniquement requis pour XML
+  if (fmt === 'XML' && !this.xsdFile)           { alert('Fichier XSD obligatoire pour le format XML'); return; }
+  // ✅ Supprimé la validation CSV colonnes — plus nécessaire
+  if (!this.sqlQuery?.trim())                   { alert('Requête SQL obligatoire'); return; }
+  if (!this.sqlQuery.trim().toUpperCase().startsWith('SELECT')) {
+    alert('La requête doit commencer par SELECT');
+    return;
+  }
 
     this.loadingAction = true;
 
@@ -405,11 +415,15 @@ export class DeclarationManagementComponent implements OnInit {
         .subscribe({
           next: () => {
             this.declarationService.generateDeclaration(this.generateRequest).subscribe({
-              next: () => {
+              next: (saved) => {
                 alert('Déclaration générée avec succès !');
                 this.closeGenerateModal();
-                this.loadDeclarations();
                 this.loadingAction = false;
+
+                // ✅ FIX : recharge après 2.5s pour laisser le ticket Jira se créer
+                setTimeout(() => {
+                  this.loadDeclarations();
+                }, 2500);
               },
               error: (err) => {
                 alert('Erreur génération : ' + (err.error?.message || err.message || 'Erreur inconnue'));
@@ -444,11 +458,8 @@ export class DeclarationManagementComponent implements OnInit {
 
   // ══════════════════════════════════════════════════════
   // EDIT MODAL
-  // Accessible uniquement : GENEREE
   // ══════════════════════════════════════════════════════
 
-  /** Seule une déclaration GENEREE peut être modifiée via l'éditeur simple.
-   *  Les REJETEE passent par le modal de correction (voir canCorrect). */
   canEdit(d: Declaration): boolean { return d.statut === 'GENEREE'; }
 
   openEditModal(d: Declaration): void {
@@ -546,9 +557,7 @@ export class DeclarationManagementComponent implements OnInit {
   }
 
   // ══════════════════════════════════════════════════════
-  // CORRECT MODAL (correction après rejet)
-  // Affiche le motif de rejet, permet de corriger la SQL
-  // (et le XSD si format XML), puis remet en validation.
+  // CORRECT MODAL
   // ══════════════════════════════════════════════════════
 
   canCorrect(d: Declaration): boolean { return d.statut === 'REJETEE'; }
@@ -574,7 +583,6 @@ export class DeclarationManagementComponent implements OnInit {
     this.correctXsdFile      = null;
   }
 
-  // XSD dans le modal de correction
   onCorrectXsdFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -601,11 +609,10 @@ export class DeclarationManagementComponent implements OnInit {
     reader.readAsText(file);
   }
 
-  // Test SQL dans le modal de correction
   testCorrectSql(): void {
-    if (!this.correctSqlQuery?.trim())                               { alert('Saisissez une requête SQL'); return; }
-    if (!this.correctTestDateDebut || !this.correctTestDateFin)      { alert('Saisissez les dates de test'); return; }
-    if (!this.selectedDeclaration?.declarationType?.id)              return;
+    if (!this.correctSqlQuery?.trim())                          { alert('Saisissez une requête SQL'); return; }
+    if (!this.correctTestDateDebut || !this.correctTestDateFin) { alert('Saisissez les dates de test'); return; }
+    if (!this.selectedDeclaration?.declarationType?.id)         return;
 
     this.correctTestingSQL    = true;
     this.correctSqlTestResult = null;
@@ -639,90 +646,75 @@ export class DeclarationManagementComponent implements OnInit {
     this.correctSqlQuery = q.trim();
   }
 
-  /**
-   * Workflow correction :
-   *  1. (optionnel) Upload XSD
-   *  2. Sauvegarder la nouvelle requête SQL
-   *  3. Appel PUT /api/declarations/{id} → régénère le fichier et passe en GENEREE
-   *  4. Soumet directement en validation via validation-service
-   */
   saveAndResubmit(): void {
-  this.formSubmitted = true;
-  if (!this.correctSqlQuery?.trim()) {
-    alert('La requête SQL est obligatoire');
-    return;
+    this.formSubmitted = true;
+    if (!this.correctSqlQuery?.trim()) { alert('La requête SQL est obligatoire'); return; }
+    if (!this.selectedDeclaration?.id) return;
+    if (!this.selectedDeclaration?.declarationType?.id) return;
+
+    this.loadingAction = true;
+    const typeId = this.selectedDeclaration.declarationType.id;
+    const decl   = this.selectedDeclaration;
+
+    const doCorrectAndResubmit = () => {
+      this.declarationTypeService.saveSqlQuery(typeId, this.correctSqlQuery).subscribe({
+        next: () => {
+          const req: GenerateDeclarationRequest = {
+            declarationTypeId: typeId,
+            periode:           decl.periode,
+            dateDebut:         decl.dateDebut ?? '',
+            dateFin:           decl.dateFin   ?? ''
+          };
+
+          this.declarationService.updateDeclaration(decl.id!, req).subscribe({
+            next: (updated) => {
+              this.jiraTickets.delete(updated.id!);
+              this.validationService.submitForValidation(updated.id!).subscribe({
+                next: () => {
+                  alert('✅ Déclaration corrigée et soumise pour validation !');
+                  this.closeCorrectModal();
+                  this.loadDeclarations();
+                  this.loadingAction = false;
+                },
+                error: (err) => {
+                  alert('⚠️ Correction OK mais erreur lors de la soumission.\n' +
+                        'La déclaration est repassée en statut GÉNÉRÉE.\n' +
+                        'Vous pouvez la soumettre manuellement.\n\n' +
+                        'Détail : ' + (err.error?.message || err.message));
+                  this.closeCorrectModal();
+                  this.loadDeclarations();
+                  this.loadingAction = false;
+                }
+              });
+            },
+            error: (err) => {
+              alert('❌ Erreur régénération : ' + (err.error?.message || err.message));
+              this.loadingAction = false;
+            }
+          });
+        },
+        error: (err) => {
+          alert('❌ Erreur sauvegarde SQL : ' + (err.error?.error || err.message));
+          this.loadingAction = false;
+        }
+      });
+    };
+
+    if (this.correctXsdFile) {
+      this.declarationTypeService.uploadXsd(typeId, this.correctXsdFile).subscribe({
+        next:  () => doCorrectAndResubmit(),
+        error: (err) => {
+          alert('❌ Erreur upload XSD : ' + (err.error?.error || err.message));
+          this.loadingAction = false;
+        }
+      });
+    } else {
+      doCorrectAndResubmit();
+    }
   }
-  if (!this.selectedDeclaration?.id) return;
-  if (!this.selectedDeclaration?.declarationType?.id) return;
 
-  this.loadingAction = true;
-  const typeId = this.selectedDeclaration.declarationType.id;
-  const decl   = this.selectedDeclaration;
-
-  const doCorrectAndResubmit = () => {
-    // Étape 1 : sauvegarder la SQL corrigée
-    this.declarationTypeService.saveSqlQuery(typeId, this.correctSqlQuery).subscribe({
-      next: () => {
-        // Étape 2 : PUT → régénère + repasse GENEREE
-        const req: GenerateDeclarationRequest = {
-          declarationTypeId: typeId,
-          periode:           decl.periode,
-          dateDebut:         decl.dateDebut ?? '',
-          dateFin:           decl.dateFin   ?? ''
-        };
-
-        this.declarationService.updateDeclaration(decl.id!, req).subscribe({
-          next: (updated) => {
-            // Étape 3 : soumettre en validation
-            this.jiraTickets.delete(updated.id!);
-            this.validationService.submitForValidation(updated.id!).subscribe({
-              next: () => {
-                alert('✅ Déclaration corrigée et soumise pour validation !');
-                this.closeCorrectModal();
-                this.loadDeclarations();
-                this.loadingAction = false;
-              },
-              error: (err) => {
-                // La régénération a réussi mais la soumission a échoué
-                // On recharge quand même pour afficher le statut GENEREE
-                alert('⚠️ Correction OK mais erreur lors de la soumission.\n' +
-                      'La déclaration est repassée en statut GÉNÉRÉE.\n' +
-                      'Vous pouvez la soumettre manuellement.\n\n' +
-                      'Détail : ' + (err.error?.message || err.message));
-                this.closeCorrectModal();
-                this.loadDeclarations();
-                this.loadingAction = false;
-              }
-            });
-          },
-          error: (err) => {
-            alert('❌ Erreur régénération : ' + (err.error?.message || err.message));
-            this.loadingAction = false;
-          }
-        });
-      },
-      error: (err) => {
-        alert('❌ Erreur sauvegarde SQL : ' + (err.error?.error || err.message));
-        this.loadingAction = false;
-      }
-    });
-  };
-
-  // Upload XSD si fourni
-  if (this.correctXsdFile) {
-    this.declarationTypeService.uploadXsd(typeId, this.correctXsdFile).subscribe({
-      next:  () => doCorrectAndResubmit(),
-      error: (err) => {
-        alert('❌ Erreur upload XSD : ' + (err.error?.error || err.message));
-        this.loadingAction = false;
-      }
-    });
-  } else {
-    doCorrectAndResubmit();
-  }
-}
   // ══════════════════════════════════════════════════════
-  // ACTIONS EXISTANTES
+  // ACTIONS
   // ══════════════════════════════════════════════════════
 
   downloadDeclaration(declaration: Declaration): void {
@@ -757,7 +749,7 @@ export class DeclarationManagementComponent implements OnInit {
     this.jiraTickets.delete(declaration.id);
     this.validationService.submitForValidation(declaration.id).subscribe({
       next: () => {
-        alert('Soumis pour validation ! Un ticket Jira a été créé automatiquement.');
+        alert('Soumis pour validation !');
         this.loadDeclarations();
         this.loadingAction = false;
       },
@@ -768,7 +760,6 @@ export class DeclarationManagementComponent implements OnInit {
     });
   }
 
-  // Seule une déclaration GENEREE peut être soumise directement
   canSubmit(d: Declaration): boolean    { return d.statut === 'GENEREE'; }
   canDownload(d: Declaration): boolean  { return !!d.id && !!d.nomFichier; }
   canSendToBCT(d: Declaration): boolean { return d.statut === 'VALIDEE'; }

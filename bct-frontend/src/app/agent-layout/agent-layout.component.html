@@ -1,10 +1,5 @@
 <!-- src/app/agent-layout/agent-layout.component.html -->
-<!-- ✅ MODIFIÉ — ajout de <app-notification-bell> dans le topbar + suppression badge manuel -->
-
 <div class="dashboard-container">
-  <!-- ============================================ -->
-  <!-- SIDEBAR AGENT -->
-  <!-- ============================================ -->
   <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
     <div class="logo-section">
       <div class="logo">
@@ -24,7 +19,8 @@
     </div>
 
     <nav class="nav-menu">
-      <!-- Dashboard -->
+
+      <!-- ① Tableau de bord -->
       <a class="nav-item"
          [routerLink]="['/agent/dashboard']"
          [class.active]="isActive('/agent/dashboard')">
@@ -39,7 +35,7 @@
         <span class="nav-text">Tableau de bord</span>
       </a>
 
-      <!-- Mes Déclarations -->
+      <!-- ② Mes Déclarations -->
       <a class="nav-item"
          [routerLink]="['/agent/declarations']"
          [class.active]="isActive('/agent/declarations')">
@@ -52,13 +48,12 @@
           </svg>
         </span>
         <span class="nav-text">Mes Déclarations</span>
-        <!-- ✅ Badge rejets via NotificationService -->
         <span class="nav-badge" *ngIf="rejectedCount > 0">
           {{ rejectedCount > 9 ? '9+' : rejectedCount }}
         </span>
       </a>
 
-      <!-- Calendrier -->
+      <!-- ③ Calendrier des échéances -->
       <a class="nav-item"
          [routerLink]="['/agent/calendar']"
          [class.active]="isActive('/agent/calendar')">
@@ -73,7 +68,7 @@
         <span class="nav-text">Calendrier</span>
       </a>
 
-      <!-- Types disponibles -->
+      <!-- ④ Types de déclarations (lecture seule) -->
       <a class="nav-item"
          [routerLink]="['/agent/types']"
          [class.active]="isActive('/agent/types')">
@@ -81,24 +76,30 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
             <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+            <line x1="8" y1="16" x2="14" y2="16"/>
           </svg>
         </span>
-        <span class="nav-text">Types disponibles</span>
+        <span class="nav-text">Types BCT</span>
       </a>
 
-      <!-- Aide -->
+      <!-- ⑤ Notifications -->
       <a class="nav-item"
-         [routerLink]="['/agent/help']"
-         [class.active]="isActive('/agent/help')">
+         [routerLink]="['/agent/notifications']"
+         [class.active]="isActive('/agent/notifications')">
         <span class="nav-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
         </span>
-        <span class="nav-text">Aide & Support</span>
+        <span class="nav-text">Notifications</span>
+        <span class="nav-badge nav-badge-blue"
+              *ngIf="notifSvc.unreadCount > 0">
+          {{ notifSvc.unreadCount > 9 ? '9+' : notifSvc.unreadCount }}
+        </span>
       </a>
+
     </nav>
 
     <!-- User Profile & Logout -->
@@ -121,23 +122,16 @@
     </div>
   </aside>
 
-  <!-- ============================================ -->
-  <!-- MAIN CONTENT -->
-  <!-- ============================================ -->
   <div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
-
-    <!-- ✅ TOPBAR avec NotificationBell ajouté -->
     <div class="agent-topbar">
       <div class="topbar-left">
         <h2 class="topbar-title">{{ pageTitle }}</h2>
         <p class="topbar-subtitle">{{ pageSubtitle }}</p>
       </div>
       <div class="topbar-right">
-        <!-- ✅ NOUVEAU — Cloche de notifications -->
         <app-notification-bell></app-notification-bell>
       </div>
     </div>
-
     <router-outlet></router-outlet>
   </div>
 </div>

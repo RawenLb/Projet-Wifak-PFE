@@ -3,7 +3,6 @@ package com.wifak.validationservice.service;
 import com.wifak.validationservice.client.DeclarationClient;
 import com.wifak.validationservice.dto.DeclarationDTO;
 import com.wifak.validationservice.dto.ValidationStatsDTO;
-import com.wifak.validationservice.dto.jira.CreateJiraTicketRequest;
 import com.wifak.validationservice.dto.jira.TransitionJiraTicketRequest;
 import com.wifak.validationservice.entities.ValidationLog;
 import com.wifak.validationservice.feign.JiraIntegrationFeignClient;
@@ -21,20 +20,20 @@ public class ValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
 
-    private final DeclarationClient declarationClient;
+    private final DeclarationClient          declarationClient;
     private final JiraIntegrationFeignClient jiraClient;
-    private final ValidationLogRepository logRepository;
+    private final ValidationLogRepository   logRepository;
 
     public ValidationService(DeclarationClient declarationClient,
                              JiraIntegrationFeignClient jiraClient,
                              ValidationLogRepository logRepository) {
         this.declarationClient = declarationClient;
-        this.jiraClient = jiraClient;
-        this.logRepository = logRepository;
+        this.jiraClient        = jiraClient;
+        this.logRepository     = logRepository;
     }
 
     // ══════════════════════════════════════════════════════════════
-    // 1. SOUMETTRE POUR VALIDATION — GENEREE | REJETEE → EN_VALIDATION
+    // 1. SOUMETTRE — GENEREE | REJETEE → EN_VALIDATION
     // ══════════════════════════════════════════════════════════════
     public DeclarationDTO submitForValidation(Long declarationId) {
         String currentUser = getCurrentUsername();
@@ -43,6 +42,11 @@ public class ValidationService {
         DeclarationDTO decl = declarationClient.getById(declarationId);
         validateStatut(decl.getStatut(), "GENEREE", "REJETEE");
 
+        // ✅ Vérification ownership AVANT toute modification
+        if (!currentUser.equals(decl.getGenerePar())) {
+            throw new IllegalStateException("Vous ne pouvez soumettre que vos propres déclarations");
+        }
+
         String statutAvant = decl.getStatut();
 
         DeclarationDTO updated = declarationClient.updateStatut(
@@ -50,37 +54,31 @@ public class ValidationService {
 
         saveLog(declarationId, "SUBMIT", statutAvant, "EN_VALIDATION", currentUser, null);
 
-        // ── Cas 1 : déclaration GENEREE → créer le ticket (TO DO) puis transitionner IN PROGRESS
+        // ── Cas 1 : GENEREE → ticket déjà en TO DO depuis la génération → transition TO DO → IN PROGRESS
         if ("GENEREE".equals(statutAvant)) {
             try {
-                // Création du ticket → démarre en IDEA, JiraIntegrationService le passe en TO DO
-                CreateJiraTicketRequest jiraReq = new CreateJiraTicketRequest(declarationId, currentUser);
-                jiraClient.createTicket(jiraReq);
-                log.info("🎫 Ticket Jira créé (TO DO) pour déclaration {}", declarationId);
+                Boolean exists = jiraClient.ticketExists(declarationId);
+                if (Boolean.TRUE.equals(exists)) {
+                    TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
+                            declarationId, "EN_VALIDATION", null, currentUser);
+                    jiraClient.transitionTicket(req);
+                    log.info("🔄 Ticket Jira TO DO → IN PROGRESS pour déclaration {}", declarationId);
+                } else {
+                    log.warn("⚠️ Ticket Jira introuvable pour déclaration {} — transition ignorée", declarationId);
+                }
             } catch (Exception e) {
-                log.warn("⚠️ Jira non disponible — ticket non créé pour déclaration {} : {}",
-                        declarationId, e.getMessage());
-            }
-
-            // Transition TO DO → IN PROGRESS
-            try {
-                TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
-                        declarationId, "EN_VALIDATION", null, currentUser);
-                jiraClient.transitionTicket(req);
-                log.info("🔄 Ticket Jira transitionné → IN PROGRESS pour déclaration {}", declarationId);
-            } catch (Exception e) {
-                log.warn("⚠️ Jira transition EN_VALIDATION échouée pour déclaration {} : {}",
+                log.warn("⚠️ Jira transition échouée pour déclaration {} : {}",
                         declarationId, e.getMessage());
             }
         }
 
-        // ── Cas 2 : déclaration REJETEE resoumise → transition REJETÉE → IN PROGRESS (id=3)
+        // ── Cas 2 : REJETEE resoumise → REJETÉE → IN PROGRESS
         if ("REJETEE".equals(statutAvant)) {
             try {
                 TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
                         declarationId, "RESOUMISE", null, currentUser);
                 jiraClient.transitionTicket(req);
-                log.info("🔁 Ticket Jira resoumis → IN PROGRESS pour déclaration {}", declarationId);
+                log.info("🔁 Ticket Jira REJETÉE → IN PROGRESS pour déclaration {}", declarationId);
             } catch (Exception e) {
                 log.warn("⚠️ Jira resoumission échouée pour déclaration {} : {}",
                         declarationId, e.getMessage());
@@ -105,12 +103,11 @@ public class ValidationService {
 
         saveLog(declarationId, "VALIDATE", decl.getStatut(), "VALIDEE", currentUser, null);
 
-        // Transition Jira → VALIDÉE (id=41) — NON BLOQUANT
         try {
             TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
                     declarationId, "VALIDEE", null, currentUser);
             jiraClient.transitionTicket(req);
-            log.info("🔄 Ticket Jira transitionné → VALIDÉE pour déclaration {}", declarationId);
+            log.info("🔄 Ticket Jira IN PROGRESS → VALIDÉE pour déclaration {}", declarationId);
         } catch (Exception e) {
             log.warn("⚠️ Jira sync échouée pour validation déclaration {} : {}",
                     declarationId, e.getMessage());
@@ -138,12 +135,11 @@ public class ValidationService {
 
         saveLog(declarationId, "REJECT", decl.getStatut(), "REJETEE", currentUser, commentaire);
 
-        // Transition Jira → REJETÉE (id=4) — NON BLOQUANT
         try {
             TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
                     declarationId, "REJETEE", commentaire, currentUser);
             jiraClient.transitionTicket(req);
-            log.info("🔄 Ticket Jira transitionné → REJETÉE pour déclaration {}", declarationId);
+            log.info("🔄 Ticket Jira IN PROGRESS → REJETÉE pour déclaration {}", declarationId);
         } catch (Exception e) {
             log.warn("⚠️ Jira sync échouée pour rejet déclaration {} : {}",
                     declarationId, e.getMessage());
@@ -153,7 +149,7 @@ public class ValidationService {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // 4. MARQUER COMME ENVOYÉE — VALIDEE → ENVOYEE
+    // 4. ENVOYER — VALIDEE → ENVOYEE
     // ══════════════════════════════════════════════════════════════
     public DeclarationDTO markAsSent(Long declarationId) {
         String currentUser = getCurrentUsername();
@@ -167,12 +163,11 @@ public class ValidationService {
 
         saveLog(declarationId, "SEND", decl.getStatut(), "ENVOYEE", currentUser, null);
 
-        // Transition Jira → ENVOYÉE (id=2) — NON BLOQUANT
         try {
             TransitionJiraTicketRequest req = new TransitionJiraTicketRequest(
                     declarationId, "ENVOYEE", null, currentUser);
             jiraClient.transitionTicket(req);
-            log.info("🔄 Ticket Jira transitionné → ENVOYÉE pour déclaration {}", declarationId);
+            log.info("🔄 Ticket Jira VALIDÉE → ENVOYÉE pour déclaration {}", declarationId);
         } catch (Exception e) {
             log.warn("⚠️ Jira sync échouée pour envoi déclaration {} : {}",
                     declarationId, e.getMessage());
@@ -182,7 +177,7 @@ public class ValidationService {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // 5. PENDING — déclarations EN_VALIDATION
+    // 5. PENDING
     // ══════════════════════════════════════════════════════════════
     public List<DeclarationDTO> getPendingDeclarations() {
         return declarationClient.getAll().stream()

@@ -66,13 +66,20 @@ const routes: Routes = [
     canActivate: [RoleGuard],
     data: { roles: ['ROLE_AGENT'] },
     children: [
-      { path: '',              redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard',    component: AgentDashboardComponent },
-      { path: 'declarations', component: DeclarationManagementComponent },
-      { path: 'calendar',     component: DeclarationCalendarComponent },
+      { path: '',               redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard',      component: AgentDashboardComponent },
+      { path: 'declarations',   component: DeclarationManagementComponent },
+      { path: 'calendar',       component: DeclarationCalendarComponent },
+
+      // ✅ Types BCT en lecture seule — réutilise le composant existant
+      { path: 'types',          component: DeclarationTypeManagementComponent },
+
+      // ✅ Notifications — redirige vers déclarations avec filtre rejetées
+      // Si vous avez un composant dédié, remplacez HomeComponent ci-dessous
+      // { path: 'notifications',  component: AgentNotificationsComponent },
+      { path: 'notifications',  redirectTo: 'declarations', pathMatch: 'full' },
     ]
   },
-
   // ── Manager Space ────────────────────────────────────────────
   {
     path: 'manager',
