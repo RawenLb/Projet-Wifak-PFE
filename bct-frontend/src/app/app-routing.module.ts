@@ -106,7 +106,6 @@ const routes: Routes = [
  
       // ✅ Toutes les déclarations avec filtres avancés
       // À remplacer par ManagerDeclarationsComponent
-      { path: 'declarations', component: ManagerDashboardComponent },
  
       // ✅ Historique / journal d'audit
       // À remplacer par ManagerHistoryComponent

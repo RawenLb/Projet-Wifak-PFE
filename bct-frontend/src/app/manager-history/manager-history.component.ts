@@ -1,24 +1,12 @@
-// src/app/manager-history/manager-history.component.ts
-// US-11 / US-12 — Journal d'audit complet pour le Responsable & Auditeur
-
 import { Component, OnInit } from '@angular/core';
 import { DeclarationService, Declaration } from '../services/Declaration.service';
 import { ValidationService, ValidationLog } from '../services/Validation.service';
 
-export interface AuditEntry {
-  declaration: Declaration;
-  logs: ValidationLog[];
-  expanded: boolean;
-}
-
 export interface AuditFilter {
   search: string;
   statut: string;
-  action: string;
   periode: string;
   type: string;
-  dateDebut: string;
-  dateFin: string;
 }
 
 @Component({
@@ -29,100 +17,63 @@ export interface AuditFilter {
 export class ManagerHistoryComponent implements OnInit {
 
   loading = false;
-  loadingLogs: Record<number, boolean> = {};
+  logsLoading = false;
 
   declarations: Declaration[] = [];
-  auditEntries: AuditEntry[] = [];
+  selectedDeclaration: Declaration | null = null;
+  selectedId: number | null = null;
+  currentLogs: ValidationLog[] = [];
 
-  // Filtres
-  filters: AuditFilter = {
-    search: '',
-    statut: '',
-    action: '',
-    periode: '',
-    type: '',
-    dateDebut: '',
-    dateFin: ''
-  };
+  private logsCache = new Map<number, ValidationLog[]>();
 
-  // Pagination
-  pageSize = 15;
-  currentPage = 1;
+  filters: AuditFilter = { search: '', statut: '', periode: '', type: '' };
 
-  // Vue
-  viewMode: 'table' | 'timeline' = 'table';
+  constructor(
+    private declarationService: DeclarationService,
+    private validationService: ValidationService
+  ) {}
 
-  // Stats
+  ngOnInit(): void { this.charger(); }
+
+  charger(): void {
+    this.loading = true;
+    this.declarationService.getAllDeclarations().subscribe({
+      next: (data) => {
+        this.declarations = data.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+        this.loading = false;
+      },
+      error: () => { this.loading = false; }
+    });
+  }
+
   get stats() {
     const all = this.declarations;
     return {
-      total:      all.length,
-      validees:   all.filter(d => ['VALIDEE', 'ENVOYEE'].includes(d.statut)).length,
-      rejetees:   all.filter(d => d.statut === 'REJETEE').length,
-      envoyees:   all.filter(d => d.statut === 'ENVOYEE').length,
-      enCours:    all.filter(d => ['GENEREE', 'EN_VALIDATION'].includes(d.statut)).length,
+      total:    all.length,
+      validees: all.filter(d => ['VALIDEE','ENVOYEE'].includes(d.statut)).length,
+      rejetees: all.filter(d => d.statut === 'REJETEE').length,
+      envoyees: all.filter(d => d.statut === 'ENVOYEE').length,
+      enCours:  all.filter(d => ['GENEREE','EN_VALIDATION'].includes(d.statut)).length,
     };
   }
 
   get filteredDeclarations(): Declaration[] {
     return this.declarations.filter(d => {
-      const s = this.filters;
-
-      if (s.search) {
-        const q = s.search.toLowerCase();
-        const matchId   = String(d.id).includes(q);
-        const matchCode = d.declarationType?.code?.toLowerCase().includes(q);
-        const matchNom  = d.declarationType?.nom?.toLowerCase().includes(q);
-        const matchUser = d.generePar?.toLowerCase().includes(q) || d.validePar?.toLowerCase().includes(q);
-        if (!matchId && !matchCode && !matchNom && !matchUser) return false;
+      const f = this.filters;
+      if (f.search) {
+        const q = f.search.toLowerCase();
+        const ok = String(d.id).includes(q)
+          || d.declarationType?.code?.toLowerCase().includes(q)
+          || d.declarationType?.nom?.toLowerCase().includes(q)
+          || d.generePar?.toLowerCase().includes(q)
+          || d.validePar?.toLowerCase().includes(q);
+        if (!ok) return false;
       }
-
-      if (s.statut   && d.statut !== s.statut) return false;
-      if (s.periode  && !d.periode?.includes(s.periode)) return false;
-      if (s.type     && d.declarationType?.code !== s.type) return false;
-
-      if (s.dateDebut && d.dateGeneration) {
-        const gen = new Date(d.dateGeneration);
-        const deb = new Date(s.dateDebut);
-        if (gen < deb) return false;
-      }
-
-      if (s.dateFin && d.dateGeneration) {
-        const gen = new Date(d.dateGeneration);
-        const fin = new Date(s.dateFin);
-        fin.setHours(23, 59, 59);
-        if (gen > fin) return false;
-      }
-
+      if (f.statut && d.statut !== f.statut) return false;
+      if (f.periode && !d.periode?.includes(f.periode)) return false;
+      if (f.type && d.declarationType?.code !== f.type) return false;
       return true;
     });
-  }
-
-  get totalPages(): number {
-    return Math.ceil(this.filteredDeclarations.length / this.pageSize);
-  }
-
-  get paginatedDeclarations(): Declaration[] {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredDeclarations.slice(start, start + this.pageSize);
-  }
-
-  get pages(): number[] {
-    const total = this.totalPages;
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-    const pages: number[] = [];
-    if (this.currentPage <= 4) {
-      for (let i = 1; i <= 5; i++) pages.push(i);
-      pages.push(-1, total);
-    } else if (this.currentPage >= total - 3) {
-      pages.push(1, -1);
-      for (let i = total - 4; i <= total; i++) pages.push(i);
-    } else {
-      pages.push(1, -1);
-      for (let i = this.currentPage - 1; i <= this.currentPage + 1; i++) pages.push(i);
-      pages.push(-1, total);
-    }
-    return pages;
   }
 
   get uniquePeriodes(): string[] {
@@ -133,95 +84,37 @@ export class ManagerHistoryComponent implements OnInit {
     return [...new Set(this.declarations.map(d => d.declarationType?.code || '').filter(Boolean))].sort();
   }
 
-  // Logs en cache
-  private logsCache = new Map<number, ValidationLog[]>();
-
-  constructor(
-    private declarationService: DeclarationService,
-    private validationService: ValidationService
-  ) {}
-
-  ngOnInit(): void {
-    this.charger();
+  setStatut(statut: string): void {
+    this.filters.statut = statut;
   }
 
-  charger(): void {
-    this.loading = true;
-    this.declarationService.getAllDeclarations().subscribe({
-      next: (data) => {
-        this.declarations = data.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
-        this.loading = false;
-        this.currentPage = 1;
-      },
-      error: () => { this.loading = false; }
-    });
-  }
+  onFilterChange(): void {}
 
-  toggleLogs(d: Declaration): void {
+  selectDeclaration(d: Declaration): void {
+    this.selectedDeclaration = d;
+    this.selectedId = d.id ?? null;
+    this.currentLogs = [];
+
     if (!d.id) return;
 
-    const entry = this.auditEntries.find(e => e.declaration.id === d.id);
-
-    if (entry) {
-      entry.expanded = !entry.expanded;
-      return;
-    }
-
-    // Charger les logs si pas encore en cache
     if (this.logsCache.has(d.id)) {
-      this.auditEntries.push({ declaration: d, logs: this.logsCache.get(d.id)!, expanded: true });
+      this.currentLogs = this.logsCache.get(d.id)!;
       return;
     }
 
-    this.loadingLogs[d.id] = true;
+    this.logsLoading = true;
     this.validationService.getHistory(d.id).subscribe({
       next: (logs) => {
         this.logsCache.set(d.id!, logs);
-        this.loadingLogs[d.id!] = false;
-
-        const existing = this.auditEntries.find(e => e.declaration.id === d.id);
-        if (existing) {
-          existing.logs = logs;
-          existing.expanded = true;
-        } else {
-          this.auditEntries.push({ declaration: d, logs, expanded: true });
-        }
+        this.currentLogs = logs;
+        this.logsLoading = false;
       },
-      error: () => {
-        this.loadingLogs[d.id!] = false;
-      }
+      error: () => { this.logsLoading = false; }
     });
   }
 
-  isExpanded(d: Declaration): boolean {
-    return this.auditEntries.find(e => e.declaration.id === d.id)?.expanded ?? false;
-  }
-
-  getLogsForDeclaration(d: Declaration): ValidationLog[] {
-    return this.auditEntries.find(e => e.declaration.id === d.id)?.logs ?? [];
-  }
-
-  isLoadingLogs(d: Declaration): boolean {
-    return !!this.loadingLogs[d.id ?? -1];
-  }
-
-  resetFilters(): void {
-    this.filters = { search: '', statut: '', action: '', periode: '', type: '', dateDebut: '', dateFin: '' };
-    this.currentPage = 1;
-  }
-
-  onFilterChange(): void {
-    this.currentPage = 1;
-  }
-
-  goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages) return;
-    this.currentPage = page;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
   exportCSV(): void {
-    const rows: string[] = ['ID,Type,Code,Période,Statut,Généré par,Validé par,Date génération,Date validation,Motif rejet'];
+    const rows = ['ID,Type,Code,Période,Statut,Généré par,Validé par,Date génération,Date validation,Motif rejet'];
     this.filteredDeclarations.forEach(d => {
       rows.push([
         d.id,
@@ -236,55 +129,85 @@ export class ManagerHistoryComponent implements OnInit {
         `"${d.commentaireRejet || ''}"`,
       ].join(','));
     });
-
     const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `historique_declarations_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `audit_${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
-  // ─── Helpers ──────────────────────────────────────────────────
+  exportSingle(d: Declaration): void {
+    const rows = ['ID,Type,Période,Statut,Généré par,Validé par,Date génération,Date validation'];
+    rows.push([
+      d.id, `"${d.declarationType?.nom || ''}"`, d.periode || '', d.statut,
+      d.generePar || '', d.validePar || '',
+      d.dateGeneration ? new Date(d.dateGeneration).toLocaleDateString('fr-FR') : '',
+      d.dateValidation ? new Date(d.dateValidation).toLocaleDateString('fr-FR') : '',
+    ].join(','));
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `decl_${d.id}_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
-  getStatutClass(statut: string): string {
-    const map: Record<string, string> = {
-      'GENEREE': 'sc-generee', 'EN_VALIDATION': 'sc-validation',
-      'VALIDEE': 'sc-validee', 'REJETEE': 'sc-rejetee', 'ENVOYEE': 'sc-envoyee',
+  // ─── Helpers ───────────────────────────────────────────
+
+  getDotClass(statut: string): string {
+    const m: Record<string,string> = {
+      'VALIDEE':'dot-green','ENVOYEE':'dot-green',
+      'REJETEE':'dot-red','EN_VALIDATION':'dot-amber',
+      'GENEREE':'dot-muted'
     };
-    return map[statut] || '';
+    return m[statut] || 'dot-muted';
+  }
+
+  getBadgeClass(statut: string): string {
+    const m: Record<string,string> = {
+      'VALIDEE':'badge-g','ENVOYEE':'badge-g',
+      'REJETEE':'badge-r','EN_VALIDATION':'badge-a',
+      'GENEREE':'badge-x'
+    };
+    return m[statut] || 'badge-x';
   }
 
   getStatutLabel(statut: string): string {
-    const map: Record<string, string> = {
-      'GENEREE': 'Générée', 'EN_VALIDATION': 'En validation',
-      'VALIDEE': 'Validée', 'REJETEE': 'Rejetée', 'ENVOYEE': 'Envoyée',
+    const m: Record<string,string> = {
+      'GENEREE':'Générée','EN_VALIDATION':'En validation',
+      'VALIDEE':'Validée','REJETEE':'Rejetée','ENVOYEE':'Envoyée BCT'
     };
-    return map[statut] || statut;
+    return m[statut] || statut;
   }
 
-  getActionClass(action: string): string {
-    const map: Record<string, string> = {
-      'SUBMIT': 'act-submit', 'VALIDATE': 'act-validate',
-      'REJECT': 'act-reject', 'SEND': 'act-send',
+  getActionDotClass(action: string): string {
+    const m: Record<string,string> = {
+      'SUBMIT':'td-sub','VALIDATE':'td-val','REJECT':'td-rej','SEND':'td-snd'
     };
-    return map[action] || '';
+    return m[action] || '';
+  }
+
+  getActionTextClass(action: string): string {
+    const m: Record<string,string> = {
+      'SUBMIT':'ta-sub','VALIDATE':'ta-val','REJECT':'ta-rej','SEND':'ta-snd'
+    };
+    return m[action] || '';
   }
 
   getActionLabel(action: string): string {
-    const map: Record<string, string> = {
-      'SUBMIT': 'Soumission', 'VALIDATE': 'Validation',
-      'REJECT': 'Rejet', 'SEND': 'Envoi BCT',
+    const m: Record<string,string> = {
+      'SUBMIT':'Soumission','VALIDATE':'Validation',
+      'REJECT':'Rejet','SEND':'Envoi BCT'
     };
-    return map[action] || action;
+    return m[action] || action;
   }
 
   getActionIcon(action: string): string {
-    const map: Record<string, string> = {
-      'SUBMIT': '📤', 'VALIDATE': '✅', 'REJECT': '❌', 'SEND': '📨',
-    };
-    return map[action] || '•';
+    const m: Record<string,string> = { 'SUBMIT':'→','VALIDATE':'✓','REJECT':'✕','SEND':'✉' };
+    return m[action] || '·';
   }
 
   trackById(_: number, d: Declaration): number { return d.id ?? 0; }

@@ -35,7 +35,6 @@ export class ManagerLayoutComponent implements OnInit, OnDestroy {
       links: [
         { path: '/manager/dashboard',    label: 'Tableau de bord',  icon: 'dashboard',    badge: null },
         { path: '/manager/pending',      label: 'Validation',       icon: 'validation',   badge: '●'  },
-        { path: '/manager/declarations', label: 'Déclarations',     icon: 'declarations', badge: null },
         { path: '/manager/history',      label: 'Historique',       icon: 'history',      badge: null },
       ]
     },
