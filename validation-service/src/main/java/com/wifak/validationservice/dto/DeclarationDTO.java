@@ -16,6 +16,8 @@ public class DeclarationDTO {
     private LocalDate dateDebut;
     private LocalDate dateFin;
     private String nomFichier;
+    private String contenuFichier;   // ✅ AJOUT
+
     private String generePar;
     private String validePar;
     private String commentaireRejet;
@@ -36,7 +38,8 @@ public class DeclarationDTO {
 
     public String getPeriode() { return periode; }
     public void setPeriode(String periode) { this.periode = periode; }
-
+    public String getContenuFichier()               { return contenuFichier; }
+    public void setContenuFichier(String c)         { this.contenuFichier = c; }
     public LocalDate getDateDebut() { return dateDebut; }
     public void setDateDebut(LocalDate dateDebut) { this.dateDebut = dateDebut; }
 

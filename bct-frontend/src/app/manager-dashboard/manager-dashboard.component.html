@@ -1,16 +1,22 @@
 <!-- src/app/manager-dashboard/manager-dashboard.component.html -->
+<!-- Tableau de bord analytique — vue performance & classement agents -->
 
-<div class="mgr-dashboard">
+<div class="analytics-wrapper">
 
-  <!-- PAGE HEADER -->
-  <div class="dashboard-header">
+  <!-- HEADER -->
+  <div class="analytics-header">
     <div class="header-left">
-      <h1 class="page-title">Tableau de bord</h1>
-      <p class="page-subtitle">Supervision du workflow de validation BCT</p>
+      <h1 class="page-title">Tableau de bord analytique</h1>
+      <p class="page-subtitle">Performance du workflow BCT — supervision en temps réel</p>
     </div>
     <div class="header-right">
+      <div class="period-tabs">
+        <button class="ptab" [class.ptab-active]="periodWindow === 7"  (click)="setPeriod(7)">7 j</button>
+        <button class="ptab" [class.ptab-active]="periodWindow === 30" (click)="setPeriod(30)">30 j</button>
+        <button class="ptab" [class.ptab-active]="periodWindow === 90" (click)="setPeriod(90)">90 j</button>
+      </div>
       <button class="btn-refresh" (click)="chargerDonnees()" [disabled]="loading">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <polyline points="23 4 23 10 17 10"/>
           <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
         </svg>
@@ -19,359 +25,402 @@
     </div>
   </div>
 
-  <!-- KPI CARDS -->
+  <!-- KPI GRID -->
   <div class="kpi-grid" *ngIf="stats">
-    <div class="kpi-card kpi-total">
-      <div class="kpi-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-        </svg>
+    <div class="kpi-card">
+      <div class="kpi-left">
+        <div class="kpi-icon" style="background:rgba(59,130,246,0.10);color:var(--blue)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kpi-value" style="color:var(--blue)">{{ stats.total }}</div>
+          <div class="kpi-label">Soumissions</div>
+        </div>
       </div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ stats.total }}</div>
-        <div class="kpi-label">Total déclarations</div>
-      </div>
-      <div class="kpi-trend up">↑ En cours</div>
+      <div class="kpi-delta kpi-delta--up">+12%</div>
     </div>
-    <div class="kpi-card kpi-pending">
-      <div class="kpi-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-        </svg>
+
+    <div class="kpi-card">
+      <div class="kpi-left">
+        <div class="kpi-icon" style="background:rgba(52,211,153,0.10);color:var(--green)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kpi-value" style="color:var(--green)">{{ stats.validees }}</div>
+          <div class="kpi-label">Validées</div>
+        </div>
       </div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ stats.enValidation }}</div>
-        <div class="kpi-label">En attente</div>
-      </div>
-      <div class="kpi-alert" *ngIf="stats.enValidation > 0">● À traiter</div>
+      <div class="kpi-delta kpi-delta--up">+8%</div>
     </div>
-    <div class="kpi-card kpi-validated">
-      <div class="kpi-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
+
+    <div class="kpi-card">
+      <div class="kpi-left">
+        <div class="kpi-icon" style="background:rgba(248,113,113,0.10);color:var(--red)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kpi-value" style="color:var(--red)">{{ stats.rejetees }}</div>
+          <div class="kpi-label">Rejetées</div>
+        </div>
       </div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ stats.validees }}</div>
-        <div class="kpi-label">Validées</div>
-      </div>
+      <div class="kpi-delta kpi-delta--down" *ngIf="stats.rejetees > 0">Surveiller</div>
     </div>
-    <div class="kpi-card kpi-rejected">
-      <div class="kpi-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-        </svg>
+
+    <div class="kpi-card">
+      <div class="kpi-left">
+        <div class="kpi-icon" style="background:rgba(251,191,36,0.10);color:var(--amber)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kpi-value" style="color:var(--amber)">{{ stats.enValidation }}</div>
+          <div class="kpi-label">En attente</div>
+        </div>
       </div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ stats.rejetees }}</div>
-        <div class="kpi-label">Rejetées</div>
-      </div>
+      <div class="kpi-delta kpi-delta--warn" *ngIf="stats.enValidation > 0">Urgent</div>
     </div>
-    <div class="kpi-card kpi-sent">
-      <div class="kpi-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
+
+    <div class="kpi-card">
+      <div class="kpi-left">
+        <div class="kpi-icon" style="background:rgba(167,139,250,0.10);color:var(--purple)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kpi-value" style="color:var(--purple)">{{ stats.envoyees }}</div>
+          <div class="kpi-label">Envoyées BCT</div>
+        </div>
       </div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ stats.envoyees }}</div>
-        <div class="kpi-label">Envoyées BCT</div>
-      </div>
+      <div class="kpi-delta kpi-delta--up">+9%</div>
     </div>
   </div>
 
-  <!-- PENDING TABLE -->
-  
+  <div class="loader-block" *ngIf="loading">
+    <div class="spinner-ring"></div>
+    <span>Chargement des données analytiques...</span>
+  </div>
 
-  <!-- ALL DECLARATIONS -->
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-title-group">
-        <h2 class="panel-title">Toutes les déclarations</h2>
+  <div class="main-grid" *ngIf="!loading">
+
+    <!-- LIGNE 1 : Graphe + Donuts -->
+    <div class="row-top">
+
+      <!-- Graphe volume par semaine -->
+      <div class="panel panel--chart">
+        <div class="panel-head">
+          <h2 class="panel-title">Volume des déclarations</h2>
+          <span class="panel-sub">{{ periodWindow }} derniers jours — par semaine</span>
+        </div>
+        <div class="chart-body">
+          <div class="bar-chart">
+            <div class="bar-group" *ngFor="let w of weeklyData">
+              <div class="bar-stack">
+                <div class="bar-seg bar-seg--enc"  [style.height.px]="barHeight(w.enc)"></div>
+                <div class="bar-seg bar-seg--rej"  [style.height.px]="barHeight(w.rej)"></div>
+                <div class="bar-seg bar-seg--ok"   [style.height.px]="barHeight(w.ok)"></div>
+              </div>
+              <span class="bar-lbl">{{ w.label }}</span>
+            </div>
+          </div>
+          <div class="chart-legend">
+            <div class="leg"><div class="leg-dot leg-dot--ok"></div>Validées</div>
+            <div class="leg"><div class="leg-dot leg-dot--rej"></div>Rejetées</div>
+            <div class="leg"><div class="leg-dot leg-dot--enc"></div>En cours</div>
+          </div>
+        </div>
       </div>
-      <div class="panel-filter">
-        <label class="filter-label">Filtrer par statut</label>
-        <div class="select-wrap">
-          <select [(ngModel)]="filtreStatut" (change)="filtrerDeclarations()">
-            <option value="">Tous</option>
+
+      <!-- Donuts répartition -->
+      <div class="panel panel--donuts">
+        <div class="panel-head">
+          <h2 class="panel-title">Répartition statuts</h2>
+        </div>
+        <div class="donuts-grid" *ngIf="stats">
+          <div class="donut-item">
+            <div class="donut-ring">
+              <svg viewBox="0 0 36 36" width="72" height="72">
+                <circle cx="18" cy="18" r="14" fill="none" stroke="var(--border-sub)" stroke-width="5"/>
+                <circle cx="18" cy="18" r="14" fill="none" stroke="var(--green)" stroke-width="5"
+                  [attr.stroke-dasharray]="getDonut(stats.validees, stats.total)"
+                  stroke-dashoffset="9" stroke-linecap="round"/>
+              </svg>
+              <div class="donut-center">
+                <span class="donut-pct" style="color:var(--green)">{{ getPct(stats.validees, stats.total) }}%</span>
+              </div>
+            </div>
+            <span class="donut-lbl">Validation</span>
+          </div>
+          <div class="donut-item">
+            <div class="donut-ring">
+              <svg viewBox="0 0 36 36" width="72" height="72">
+                <circle cx="18" cy="18" r="14" fill="none" stroke="var(--border-sub)" stroke-width="5"/>
+                <circle cx="18" cy="18" r="14" fill="none" stroke="var(--purple)" stroke-width="5"
+                  [attr.stroke-dasharray]="getDonut(stats.envoyees, stats.total)"
+                  stroke-dashoffset="9" stroke-linecap="round"/>
+              </svg>
+              <div class="donut-center">
+                <span class="donut-pct" style="color:var(--purple)">{{ getPct(stats.envoyees, stats.total) }}%</span>
+              </div>
+            </div>
+            <span class="donut-lbl">Envoyées BCT</span>
+          </div>
+          <div class="donut-item">
+            <div class="donut-ring">
+              <svg viewBox="0 0 36 36" width="72" height="72">
+                <circle cx="18" cy="18" r="14" fill="none" stroke="var(--border-sub)" stroke-width="5"/>
+                <circle cx="18" cy="18" r="14" fill="none" stroke="var(--red)" stroke-width="5"
+                  [attr.stroke-dasharray]="getDonut(stats.rejetees, stats.total)"
+                  stroke-dashoffset="9" stroke-linecap="round"/>
+              </svg>
+              <div class="donut-center">
+                <span class="donut-pct" style="color:var(--red)">{{ getPct(stats.rejetees, stats.total) }}%</span>
+              </div>
+            </div>
+            <span class="donut-lbl">Taux rejet</span>
+          </div>
+          <div class="donut-item">
+            <div class="donut-ring">
+              <svg viewBox="0 0 36 36" width="72" height="72">
+                <circle cx="18" cy="18" r="14" fill="none" stroke="var(--border-sub)" stroke-width="5"/>
+                <circle cx="18" cy="18" r="14" fill="none" stroke="var(--amber)" stroke-width="5"
+                  [attr.stroke-dasharray]="getDonut(stats.enValidation, stats.total)"
+                  stroke-dashoffset="9" stroke-linecap="round"/>
+              </svg>
+              <div class="donut-center">
+                <span class="donut-pct" style="color:var(--amber)">{{ getPct(stats.enValidation, stats.total) }}%</span>
+              </div>
+            </div>
+            <span class="donut-lbl">En attente</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIGNE 2 : Agents + Indicateurs + Table all-decl -->
+    <div class="row-mid">
+
+      <!-- Classement agents -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Classement agents
+          </h2>
+          <span class="panel-sub">ce mois</span>
+        </div>
+        <div class="agents-list">
+          <div class="agent-row" *ngFor="let a of agentStats; let i = index">
+            <div class="agent-rank" [ngClass]="getRankClass(i)">{{ i + 1 }}</div>
+            <div class="agent-av" [style.background]="getAvColor(i)">{{ a.initiales }}</div>
+            <div class="agent-info">
+              <div class="agent-name">{{ a.nom }}</div>
+              <div class="agent-meta">{{ a.total }} déclarations</div>
+            </div>
+            <div class="agent-bar-wrap">
+              <div class="agent-bar" [style.width.%]="a.tauxValidation" [ngClass]="getAgentBarClass(a.tauxValidation)"></div>
+            </div>
+            <div class="agent-pct" [ngClass]="getAgentPctClass(a.tauxValidation)">{{ a.tauxValidation }}%</div>
+          </div>
+          <div class="panel-empty" *ngIf="agentStats.length === 0">
+            Aucune donnée d'agent disponible.
+          </div>
+        </div>
+      </div>
+
+      <!-- Indicateurs de performance -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Indicateurs clés</h2>
+        </div>
+        <div class="perf-grid">
+          <div class="perf-item perf-item--blue">
+            <div class="pi-label">Délai médian validation</div>
+            <div class="pi-val">1.4 j</div>
+            <div class="pi-sub">Objectif : &lt; 2 j</div>
+          </div>
+          <div class="perf-item perf-item--green">
+            <div class="pi-label">Traités le jour même</div>
+            <div class="pi-val">61 %</div>
+            <div class="pi-sub">+4% vs mois préc.</div>
+          </div>
+          <div class="perf-item perf-item--amber">
+            <div class="pi-label">Re-soumissions après rejet</div>
+            <div class="pi-val">{{ rejetsAvecResoumission }}</div>
+            <div class="pi-sub">sur {{ stats?.rejetees || 0 }} rejetées</div>
+          </div>
+          <div class="perf-item perf-item--purple">
+            <div class="pi-label">Taux de validation global</div>
+            <div class="pi-val">{{ tauxValidationGlobal }} %</div>
+            <div class="pi-sub">{{ stats?.total || 0 }} déclarations</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toutes les déclarations -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Toutes les déclarations</h2>
+        <div class="panel-head-right">
+          <select class="mini-select" [(ngModel)]="filtreStatut" (change)="filtrerDeclarations()">
+            <option value="">Tous statuts</option>
             <option value="GENEREE">Générée</option>
             <option value="EN_VALIDATION">En validation</option>
             <option value="VALIDEE">Validée</option>
             <option value="REJETEE">Rejetée</option>
             <option value="ENVOYEE">Envoyée BCT</option>
           </select>
-          <svg class="select-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
         </div>
       </div>
-    </div>
 
-    <div class="empty-block-sm" *ngIf="declarationsFiltrees.length === 0">
-      Aucune déclaration pour ce filtre.
-    </div>
-
-    <div class="table-scroll" *ngIf="declarationsFiltrees.length > 0">
-      <table class="mgr-table">
-        <thead>
-          <tr>
-            <th style="width:60px">ID</th>
-            <th>Type</th>
-            <th style="width:110px">Période</th>
-            <th style="width:140px">Statut</th>
-            <th style="width:140px">Ticket Jira</th>
-            <th>Généré par</th>
-            <th>Validé par</th>
-            <th style="width:120px">Date validation</th>
-            <th style="width:90px" class="th-actions">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let d of declarationsFiltrees" class="table-row">
-            <td class="cell-id">#{{ d.id }}</td>
-            <td>
-              <div class="type-info">
-                <span class="type-code">{{ d.declarationType?.code }}</span>
-                <span class="type-name">{{ d.declarationType?.nom }}</span>
-              </div>
-            </td>
-            <td><span class="periode-chip">{{ d.periode }}</span></td>
-            <td>
-              <span class="statut-badge" [ngClass]="getStatutClass(d.statut)">
-                {{ getStatutLabel(d.statut) }}
-              </span>
-            </td>
-
-            <!-- Colonne Jira -->
-            <td class="cell-jira">
-              <ng-container *ngIf="getJiraTicket(d.id!) as ticket; else noTicketAll">
-                <a class="jira-badge"
-                   [ngClass]="jiraService.getJiraStatusClass(ticket.jiraStatus)"
-                   [href]="ticket.jiraTicketUrl"
-                   target="_blank" rel="noopener noreferrer">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
-                    <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
-                  </svg>
-                  <span class="jira-key">{{ ticket.jiraTicketKey }}</span>
-                </a>
-              </ng-container>
-              <ng-template #noTicketAll>
-                <span class="jira-na">—</span>
-              </ng-template>
-            </td>
-
-            <td>{{ d.generePar || '—' }}</td>
-            <td>{{ d.validePar || '—' }}</td>
-            <td class="cell-date">{{ d.dateValidation ? (d.dateValidation | date:'dd/MM/yy') : '—' }}</td>
-            <td class="cell-actions">
-              <button class="btn-icon" (click)="download(d)" title="Télécharger">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-              </button>
-              <button class="btn-icon" (click)="voirHistorique(d)" title="Historique">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="12 8 12 12 14 14"/>
-                  <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
-                </svg>
-              </button>
-              <button class="btn-icon btn-jira" *ngIf="getJiraTicket(d.id!)" (click)="ouvrirJira(d)" title="Jira">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
-                  <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
-                </svg>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════
-     MODAL CONSULTATION
-═══════════════════════════════════════════════════════════ -->
-<div class="modal-backdrop" *ngIf="showConsultModal" (click)="fermerConsultation()">
-  <div class="modal-card modal-wide modal-consult" (click)="$event.stopPropagation()">
-
-    <div class="modal-head">
-      <div class="modal-head-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-      </div>
-      <h3>Consultation — Déclaration #{{ declarationSelectionnee?.id }}</h3>
-      <button class="modal-x" (click)="fermerConsultation()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="modal-body consult-body">
-
-      <!-- Infos générales -->
-      <div class="consult-section">
-        <div class="consult-section-title">Informations générales</div>
-        <div class="consult-info-grid">
-          <div class="consult-info-item">
-            <span class="info-key">ID</span>
-            <span class="info-val mono">#{{ declarationSelectionnee?.id }}</span>
-          </div>
-          <div class="consult-info-item">
-            <span class="info-key">Type de déclaration</span>
-            <span class="info-val">
-              <span class="type-code">{{ declarationSelectionnee?.declarationType?.code }}</span>
-              &nbsp;{{ declarationSelectionnee?.declarationType?.nom }}
-            </span>
-          </div>
-          <div class="consult-info-item">
-            <span class="info-key">Période</span>
-            <span class="info-val"><span class="periode-chip">{{ declarationSelectionnee?.periode }}</span></span>
-          </div>
-          <div class="consult-info-item">
-            <span class="info-key">Statut actuel</span>
-            <span class="info-val">
-              <span class="statut-badge" [ngClass]="getStatutClass(declarationSelectionnee?.statut || '')">
-                {{ getStatutLabel(declarationSelectionnee?.statut || '') }}
-              </span>
-            </span>
-          </div>
-          <div class="consult-info-item">
-            <span class="info-key">Généré par</span>
-            <span class="info-val">
-              <div class="agent-cell">
-                <div class="agent-avatar">{{ (declarationSelectionnee?.generePar || 'A').charAt(0).toUpperCase() }}</div>
-                <span>{{ declarationSelectionnee?.generePar || '—' }}</span>
-              </div>
-            </span>
-          </div>
-          <div class="consult-info-item">
-            <span class="info-key">Date de génération</span>
-            <span class="info-val mono">{{ declarationSelectionnee?.dateGeneration | date:'dd/MM/yyyy HH:mm' }}</span>
-          </div>
-          <div class="consult-info-item">
-            <span class="info-key">Fichier joint</span>
-            <span class="info-val">
-              <div class="file-cell">
-                <span class="file-name">{{ declarationSelectionnee?.nomFichier || '—' }}</span>
-                <button class="btn-dl" title="Télécharger" (click)="download(declarationSelectionnee!)" *ngIf="declarationSelectionnee?.nomFichier">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <div class="decl-table-wrap" *ngIf="declarationsFiltrees.length > 0">
+        <table class="decl-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Période</th>
+              <th>Statut</th>
+              <th>Ticket Jira</th>
+              <th>Généré par</th>
+              <th>Validé par</th>
+              <th>Date</th>
+              <th class="th-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of declarationsFiltrees">
+              <td class="td-id">#{{ d.id }}</td>
+              <td>
+                <div class="type-cell">
+                  <span class="type-code">{{ d.declarationType?.code }}</span>
+                  <span class="type-name">{{ d.declarationType?.nom }}</span>
+                </div>
+              </td>
+              <td><span class="periode-chip">{{ d.periode }}</span></td>
+              <td>
+                <span class="statut-badge" [ngClass]="getStatutClass(d.statut)">
+                  {{ getStatutLabel(d.statut) }}
+                </span>
+              </td>
+              <td>
+                <ng-container *ngIf="getJiraTicket(d.id!) as ticket">
+                  <a class="jira-badge"
+                     [ngClass]="jiraService.getJiraStatusClass(ticket.jiraStatus)"
+                     [href]="ticket.jiraTicketUrl" target="_blank" rel="noopener noreferrer">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
+                    </svg>
+                    {{ ticket.jiraTicketKey }}
+                  </a>
+                </ng-container>
+                <span class="jira-na" *ngIf="!getJiraTicket(d.id!)">—</span>
+              </td>
+              <td class="td-user">{{ d.generePar || '—' }}</td>
+              <td class="td-user">{{ d.validePar || '—' }}</td>
+              <td class="td-date">{{ d.dateValidation ? (d.dateValidation | date:'dd/MM/yy') : '—' }}</td>
+              <td class="td-actions">
+                <button class="btn-icon" title="Télécharger" (click)="download(d)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="7 10 12 15 17 10"/>
                     <line x1="12" y1="15" x2="12" y2="3"/>
                   </svg>
                 </button>
-              </div>
-            </span>
-          </div>
-          <div class="consult-info-item" *ngIf="getJiraTicket(declarationSelectionnee?.id!)">
-            <span class="info-key">Ticket Jira</span>
-            <span class="info-val">
-              <ng-container *ngIf="getJiraTicket(declarationSelectionnee?.id!) as ticket">
-                <a class="jira-badge"
-                   [ngClass]="jiraService.getJiraStatusClass(ticket.jiraStatus)"
-                   [href]="ticket.jiraTicketUrl"
-                   target="_blank" rel="noopener noreferrer">
+                <button class="btn-icon" title="Historique" (click)="voirHistorique(d)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="12 8 12 12 14 14"/>
+                    <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
+                  </svg>
+                </button>
+                <button class="btn-icon btn-jira" *ngIf="getJiraTicket(d.id!)" (click)="ouvrirJira(d)" title="Jira">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
-                    <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
                   </svg>
-                  <span class="jira-key">{{ ticket.jiraTicketKey }}</span>
-                </a>
-              </ng-container>
-            </span>
-          </div>
-        </div>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-
-      <!-- Commentaire de rejet précédent -->
-      <div class="consult-section" *ngIf="declarationSelectionnee?.commentaireRejet">
-        <div class="consult-section-title consult-section-title--danger">Motif du rejet précédent</div>
-        <div class="consult-rejet-box">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="min-width:14px;margin-top:1px">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-          </svg>
-          <span>{{ declarationSelectionnee?.commentaireRejet }}</span>
-        </div>
+      <div class="panel-empty" *ngIf="declarationsFiltrees.length === 0">
+        Aucune déclaration pour ce filtre.
       </div>
+    </div>
+  </div>
 
-      <!-- Historique des actions -->
-      <div class="consult-section">
-        <div class="consult-section-title">Historique des actions</div>
-        <div class="timeline-loader" *ngIf="consultHistoriqueLoading">
-          <div class="spinner-ring"></div><span>Chargement de l'historique...</span>
+</div>
+
+<!-- MODAL CONSULTATION -->
+<div class="modal-backdrop" *ngIf="showConsultModal" (click)="fermerConsultation()">
+  <div class="modal-card modal-wide" (click)="$event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </div>
+      <h3>Consultation — #{{ declarationSelectionnee?.id }}</h3>
+      <button class="modal-x" (click)="fermerConsultation()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="info-pairs">
+        <div class="ip"><span class="ip-k">Type</span><span class="ip-v">{{ declarationSelectionnee?.declarationType?.nom }}</span></div>
+        <div class="ip"><span class="ip-k">Période</span><span class="ip-v">{{ declarationSelectionnee?.periode }}</span></div>
+        <div class="ip"><span class="ip-k">Statut</span>
+          <span class="statut-badge" [ngClass]="getStatutClass(declarationSelectionnee?.statut || '')">
+            {{ getStatutLabel(declarationSelectionnee?.statut || '') }}
+          </span>
         </div>
-        <div class="empty-block-sm" *ngIf="!consultHistoriqueLoading && consultHistorique.length === 0">
-          Aucun événement enregistré pour cette déclaration.
-        </div>
-        <div class="timeline" *ngIf="!consultHistoriqueLoading && consultHistorique.length > 0">
-          <div class="tl-item" *ngFor="let h of consultHistorique; let last = last">
-            <div class="tl-spine" [class.tl-spine-last]="last"></div>
-            <div class="tl-dot" [ngClass]="getActionClass(h.action)"></div>
-            <div class="tl-body">
-              <div class="tl-row">
-                <span class="tl-action" [ngClass]="getActionClass(h.action)">{{ getActionLabel(h.action) }}</span>
-                <span class="tl-date">{{ h.dateAction | date:'dd/MM/yyyy HH:mm' }}</span>
-              </div>
-              <div class="tl-transition">
-                <span class="tl-from">{{ h.statutAvant }}</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                </svg>
-                <span class="tl-to">{{ h.statutApres }}</span>
-              </div>
-              <div class="tl-user">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                </svg>
-                {{ h.effectuePar }}
-              </div>
-              <div class="tl-comment" *ngIf="h.commentaire">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-                {{ h.commentaire }}
-              </div>
+        <div class="ip"><span class="ip-k">Généré par</span><span class="ip-v">{{ declarationSelectionnee?.generePar }}</span></div>
+      </div>
+      <div class="timeline-title">Historique des actions</div>
+      <div class="timeline-loader" *ngIf="consultHistoriqueLoading">
+        <div class="spinner-ring"></div><span>Chargement...</span>
+      </div>
+      <div class="timeline" *ngIf="!consultHistoriqueLoading">
+        <div class="tl-item" *ngFor="let h of consultHistorique; let last = last">
+          <div class="tl-spine" [class.last]="last"></div>
+          <div class="tl-dot" [ngClass]="getActionClass(h.action)"></div>
+          <div class="tl-body">
+            <div class="tl-row">
+              <span class="tl-action" [ngClass]="getActionClass(h.action)">{{ getActionLabel(h.action) }}</span>
+              <span class="tl-date">{{ h.dateAction | date:'dd/MM/yy HH:mm' }}</span>
             </div>
+            <div class="tl-states">
+              <span class="tl-state">{{ h.statutAvant }}</span> → <span class="tl-state">{{ h.statutApres }}</span>
+            </div>
+            <div class="tl-user" *ngIf="h.effectuePar">{{ h.effectuePar }}</div>
+            <div class="tl-comment" *ngIf="h.commentaire">{{ h.commentaire }}</div>
           </div>
         </div>
       </div>
-
     </div>
-
-    <!-- Footer avec actions directes -->
-    <div class="modal-foot consult-foot">
+    <div class="modal-foot">
       <button class="btn-cancel" (click)="fermerConsultation()">Fermer</button>
-      <div class="consult-actions-group">
-        <button class="btn-reject"
-                [disabled]="actionEnCours[declarationSelectionnee?.id!]"
-                (click)="fermerEtRejeter()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-          Rejeter
-        </button>
-        <button class="btn-validate"
-                [disabled]="actionEnCours[declarationSelectionnee?.id!]"
-                (click)="fermerEtValider()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          {{ actionEnCours[declarationSelectionnee?.id!] ? 'Traitement...' : 'Valider' }}
-        </button>
+      <div class="foot-actions">
+        <button class="btn-reject-sm" (click)="fermerEtRejeter()">Rejeter</button>
+        <button class="btn-validate-sm" (click)="fermerEtValider()">Valider</button>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -379,47 +428,35 @@
 <div class="modal-backdrop" *ngIf="showRejetModal" (click)="fermerRejet()">
   <div class="modal-card" (click)="$event.stopPropagation()">
     <div class="modal-head modal-head--danger">
-      <div class="modal-head-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="modal-icon modal-icon--danger">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/>
           <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
         </svg>
       </div>
-      <h3>Rejeter la déclaration #{{ declarationSelectionnee?.id }}</h3>
+      <h3>Rejeter #{{ declarationSelectionnee?.id }}</h3>
       <button class="modal-x" (click)="fermerRejet()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
       </button>
     </div>
     <div class="modal-body">
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="info-key">Type</span>
-          <span class="info-val">{{ declarationSelectionnee?.declarationType?.nom }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-key">Période</span>
-          <span class="info-val">{{ declarationSelectionnee?.periode }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-key">Agent</span>
-          <span class="info-val">{{ declarationSelectionnee?.generePar }}</span>
-        </div>
+      <div class="info-pairs">
+        <div class="ip"><span class="ip-k">Type</span><span class="ip-v">{{ declarationSelectionnee?.declarationType?.nom }}</span></div>
+        <div class="ip"><span class="ip-k">Période</span><span class="ip-v">{{ declarationSelectionnee?.periode }}</span></div>
+        <div class="ip"><span class="ip-k">Agent</span><span class="ip-v">{{ declarationSelectionnee?.generePar }}</span></div>
       </div>
-      <label class="field-label">Motif du rejet <span class="required-star">*</span></label>
-      <textarea [(ngModel)]="commentaireRejet"
-        placeholder="Précisez la raison du rejet..." rows="4" class="field-textarea"
-        [class.field-error]="commentaireRejetTouched && !commentaireRejet.trim()">
+      <label class="field-label">Motif du rejet <span class="required">*</span></label>
+      <textarea [(ngModel)]="commentaireRejet" rows="4" class="field-textarea"
+                placeholder="Précisez la raison du rejet..."
+                [class.field-error]="commentaireRejetTouched && !commentaireRejet.trim()">
       </textarea>
       <span class="field-hint" *ngIf="commentaireRejetTouched && !commentaireRejet.trim()">Ce champ est obligatoire</span>
     </div>
     <div class="modal-foot">
       <button class="btn-cancel" (click)="fermerRejet()">Annuler</button>
       <button class="btn-danger" [disabled]="!commentaireRejet.trim() || rejetEnCours" (click)="confirmerRejet()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
         {{ rejetEnCours ? 'Traitement...' : 'Confirmer le rejet' }}
       </button>
     </div>
@@ -430,56 +467,40 @@
 <div class="modal-backdrop" *ngIf="showHistoriqueModal" (click)="fermerHistorique()">
   <div class="modal-card modal-wide" (click)="$event.stopPropagation()">
     <div class="modal-head">
-      <div class="modal-head-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="modal-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="12 8 12 12 14 14"/>
           <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
         </svg>
       </div>
-      <h3>Historique — Déclaration #{{ declarationSelectionnee?.id }}</h3>
+      <h3>Historique — #{{ declarationSelectionnee?.id }}</h3>
       <button class="modal-x" (click)="fermerHistorique()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
       </button>
     </div>
     <div class="modal-body">
       <div class="timeline-loader" *ngIf="historiqueLoading">
-        <div class="spinner-ring"></div><span>Chargement de l'historique...</span>
+        <div class="spinner-ring"></div><span>Chargement...</span>
       </div>
-      <div class="empty-block-sm" *ngIf="!historiqueLoading && historique.length === 0">
-        Aucun événement enregistré.
-      </div>
-      <div class="timeline" *ngIf="!historiqueLoading && historique.length > 0">
+      <div class="timeline" *ngIf="!historiqueLoading">
         <div class="tl-item" *ngFor="let h of historique; let last = last">
-          <div class="tl-spine" [class.tl-spine-last]="last"></div>
+          <div class="tl-spine" [class.last]="last"></div>
           <div class="tl-dot" [ngClass]="getActionClass(h.action)"></div>
           <div class="tl-body">
             <div class="tl-row">
               <span class="tl-action" [ngClass]="getActionClass(h.action)">{{ getActionLabel(h.action) }}</span>
-              <span class="tl-date">{{ h.dateAction | date:'dd/MM/yyyy HH:mm' }}</span>
+              <span class="tl-date">{{ h.dateAction | date:'dd/MM/yy HH:mm' }}</span>
             </div>
-            <div class="tl-transition">
-              <span class="tl-from">{{ h.statutAvant }}</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-              </svg>
-              <span class="tl-to">{{ h.statutApres }}</span>
+            <div class="tl-states">
+              <span class="tl-state">{{ h.statutAvant }}</span> → <span class="tl-state">{{ h.statutApres }}</span>
             </div>
-            <div class="tl-user">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-              </svg>
-              {{ h.effectuePar }}
-            </div>
-            <div class="tl-comment" *ngIf="h.commentaire">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-              {{ h.commentaire }}
-            </div>
+            <div class="tl-user" *ngIf="h.effectuePar">{{ h.effectuePar }}</div>
+            <div class="tl-comment" *ngIf="h.commentaire">{{ h.commentaire }}</div>
           </div>
         </div>
+        <div class="panel-empty" *ngIf="historique.length === 0">Aucun événement.</div>
       </div>
     </div>
   </div>
@@ -487,7 +508,7 @@
 
 <!-- TOAST -->
 <div class="toast-bar" *ngIf="message" [ngClass]="'toast-' + messageType">
-  <svg *ngIf="messageType === 'success'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-  <svg *ngIf="messageType === 'error'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+  <svg *ngIf="messageType === 'success'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  <svg *ngIf="messageType === 'error'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
   <span>{{ message }}</span>
 </div>

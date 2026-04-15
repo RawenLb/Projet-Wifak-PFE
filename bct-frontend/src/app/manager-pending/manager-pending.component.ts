@@ -1,10 +1,7 @@
-// src/app/manager-pending/manager-pending.component.ts
-// US-08 — Validation dédiée : page focalisée uniquement sur EN_VALIDATION
-
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { DeclarationService, Declaration } from '../services/Declaration.service';
-import { ValidationService, ValidationStats, ValidationLog } from '../services/Validation.service';
+import { ValidationService, ValidationStats, ValidationLog, AiValidationResult } from '../services/Validation.service';
 import { JiraService, JiraTicketResponse } from '../services/jira.service';
 
 type SortField = 'id' | 'type' | 'periode' | 'date';
@@ -63,6 +60,33 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
   private jiraTicketMap = new Map<number, JiraTicketResponse | null>();
   private jiraSub!: Subscription;
 
+  // ── AI Analysis ───────────────────────────────────────
+  aiResult: AiValidationResult | null = null;
+  aiLoading = false;
+  showAiPanel = false;
+  aiDeclarationId: number | null = null;
+
+  // ✅ Loader animé
+  aiStep = 0;
+  aiStepMessage = '';
+  aiElapsed = 0;
+  aiTip = '';
+  private aiTimer: any;
+
+  private readonly AI_STEPS = [
+    'Chargement du fichier XML...',
+    'Envoi à Mistral via Ollama...',
+    'Analyse des champs BCT en cours...',
+    'Génération du rapport de conformité...'
+  ];
+
+  private readonly AI_TIPS = [
+    '💡 Ollama analyse localement — aucune donnée n\'est envoyée au cloud.',
+    '⏱ Mistral prend ~15-45s pour une analyse complète.',
+    '🔍 Vérification des champs obligatoires, montants et cohérence des données.',
+    '✅ Le résultat inclura un score 0-100 et une recommandation détaillée.'
+  ];
+
   constructor(
     private declarationService: DeclarationService,
     private validationService: ValidationService,
@@ -74,16 +98,14 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
       this.jiraTicketMap = map;
     });
     this.charger();
-    // Auto-refresh toutes les 60 secondes
     this.autoRefreshInterval = setInterval(() => this.charger(true), 60000);
   }
 
   ngOnDestroy(): void {
     this.jiraSub?.unsubscribe();
     clearInterval(this.autoRefreshInterval);
+    clearInterval(this.aiTimer); // ✅ Nettoyage timer IA
   }
-
-  // ─── Chargement ───────────────────────────────────────
 
   charger(silent = false): void {
     if (!silent) this.loading = true;
@@ -98,7 +120,6 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
         this.pending = data;
         this.lastRefreshed = new Date();
         this.loading = false;
-        // Charger les tickets Jira
         data.forEach(d => {
           if (d.id && !this.jiraTicketMap.has(d.id)) {
             this.jiraLoading[d.id] = true;
@@ -116,7 +137,88 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─── Filtres & tri ────────────────────────────────────
+  // ── AI Analysis ───────────────────────────────────────
+
+  lancerAiAnalysis(d: Declaration): void {
+    if (!d.id) return;
+
+    // Réinitialisation complète
+    this.aiResult       = null;
+    this.aiLoading      = true;
+    this.showAiPanel    = true;
+    this.aiDeclarationId = d.id;
+    this.aiElapsed      = 0;
+    this.aiStep         = 0;
+    this.aiStepMessage  = this.AI_STEPS[0];
+    this.aiTip          = this.AI_TIPS[0];
+
+    // ✅ Timer de progression animé
+    clearInterval(this.aiTimer);
+    this.aiTimer = setInterval(() => {
+      this.aiElapsed++;
+      const nextStep = Math.min(Math.floor(this.aiElapsed / 8), this.AI_STEPS.length - 1);
+      if (nextStep !== this.aiStep) {
+        this.aiStep        = nextStep;
+        this.aiStepMessage = this.AI_STEPS[this.aiStep];
+        this.aiTip         = this.AI_TIPS[this.aiStep];
+      }
+    }, 1000);
+
+    this.validationService.aiAnalysis(d.id).subscribe({
+      next: (result) => {
+        clearInterval(this.aiTimer);
+        this.aiResult  = result;
+        this.aiLoading = false;
+      },
+      error: () => {
+        clearInterval(this.aiTimer);
+        this.aiLoading = false;
+        this.aiResult = {
+          valid: false,
+          score: 0,
+          anomalies: ['Erreur ou timeout — vérifiez qu\'Ollama est démarré sur le port 11434'],
+          recommendation: 'REVIEW'
+        };
+      }
+    });
+  }
+
+  fermerAiPanel(): void {
+    clearInterval(this.aiTimer); // ✅ Stopper le timer si on ferme avant la fin
+    this.showAiPanel     = false;
+    this.aiResult        = null;
+    this.aiDeclarationId = null;
+    this.aiLoading       = false;
+  }
+
+  getScoreColor(): string {
+    if (!this.aiResult) return '';
+    if (this.aiResult.score >= 75) return 'score-green';
+    if (this.aiResult.score >= 40) return 'score-amber';
+    return 'score-red';
+  }
+
+  getRecoClass(): string {
+    if (!this.aiResult) return '';
+    const map: Record<string, string> = {
+      'VALIDATE': 'reco-validate',
+      'REVIEW':   'reco-review',
+      'REJECT':   'reco-reject'
+    };
+    return map[this.aiResult.recommendation] || '';
+  }
+
+  getRecoLabel(): string {
+    if (!this.aiResult) return '';
+    const map: Record<string, string> = {
+      'VALIDATE': '✅ Valider',
+      'REVIEW':   '⚠️ Réviser',
+      'REJECT':   '❌ Rejeter'
+    };
+    return map[this.aiResult.recommendation] || this.aiResult.recommendation;
+  }
+
+  // ── Filtres & tri ─────────────────────────────────────
 
   get uniqueTypes(): string[] {
     return [...new Set(this.pending.map(d => d.declarationType?.code || '').filter(Boolean))].sort();
@@ -140,13 +242,12 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
       list = list.filter(d => d.declarationType?.code === this.filtreType);
     }
 
-    // Tri
     list.sort((a, b) => {
       let va: any, vb: any;
       switch (this.sortField) {
-        case 'id':      va = a.id ?? 0; vb = b.id ?? 0; break;
+        case 'id':      va = a.id ?? 0;       vb = b.id ?? 0; break;
         case 'type':    va = a.declarationType?.code ?? ''; vb = b.declarationType?.code ?? ''; break;
-        case 'periode': va = a.periode ?? ''; vb = b.periode ?? ''; break;
+        case 'periode': va = a.periode ?? '';  vb = b.periode ?? ''; break;
         case 'date':    va = a.dateGeneration ? new Date(a.dateGeneration).getTime() : 0;
                         vb = b.dateGeneration ? new Date(b.dateGeneration).getTime() : 0; break;
       }
@@ -158,46 +259,22 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
   }
 
   toggleSort(field: SortField): void {
-    if (this.sortField === field) {
-      this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortField = field;
-      this.sortDir = 'desc';
-    }
+    if (this.sortField === field) this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    else { this.sortField = field; this.sortDir = 'desc'; }
   }
-
-  // ─── Sélection multiple ───────────────────────────────
 
   toggleSelect(id: number): void {
     if (this.selectedIds.has(id)) this.selectedIds.delete(id);
     else this.selectedIds.add(id);
   }
 
-  toggleSelectAll(): void {
-    if (this.selectedIds.size === this.filteredPending.length) {
-      this.selectedIds.clear();
-    } else {
-      this.filteredPending.forEach(d => { if (d.id) this.selectedIds.add(d.id); });
-    }
-  }
-
-  get allSelected(): boolean {
-    return this.filteredPending.length > 0 && this.selectedIds.size === this.filteredPending.length;
-  }
-
-  get someSelected(): boolean {
-    return this.selectedIds.size > 0 && !this.allSelected;
-  }
-
   async validerSelection(): Promise<void> {
     if (this.selectedIds.size === 0) return;
     const ids = [...this.selectedIds];
-    const msg = `Valider les ${ids.length} déclaration(s) sélectionnée(s) ?`;
-    if (!confirm(msg)) return;
+    if (!confirm(`Valider les ${ids.length} déclaration(s) sélectionnée(s) ?`)) return;
 
     this.bulkLoading = true;
-    let success = 0;
-    let errors = 0;
+    let success = 0, errors = 0;
 
     for (const id of ids) {
       try {
@@ -206,21 +283,17 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
         this.pending = this.pending.filter(x => x.id !== id);
         this.selectedIds.delete(id);
         this.jiraService.invalidateCache(id);
-      } catch {
-        errors++;
-      }
+      } catch { errors++; }
     }
 
     this.bulkLoading = false;
     this.rafraichirStats();
-    if (errors === 0) {
-      this.showToast(`✅ ${success} déclaration(s) validée(s) avec succès.`, 'success');
-    } else {
-      this.showToast(`✅ ${success} validée(s), ❌ ${errors} erreur(s).`, 'error');
-    }
+    this.showToast(errors === 0
+      ? `✅ ${success} déclaration(s) validée(s).`
+      : `✅ ${success} validée(s), ❌ ${errors} erreur(s).`,
+      errors === 0 ? 'success' : 'error'
+    );
   }
-
-  // ─── Actions individuelles ─────────────────────────────
 
   valider(d: Declaration): void {
     if (!d.id) return;
@@ -278,8 +351,6 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─── Modal Consultation ───────────────────────────────
-
   ouvrirConsultation(d: Declaration): void {
     this.declarationSelectionnee = d;
     this.consultLogs = [];
@@ -311,8 +382,6 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
     if (d) setTimeout(() => this.ouvrirRejet(d), 100);
   }
 
-  // ─── Historique ───────────────────────────────────────
-
   voirHistorique(d: Declaration): void {
     if (!d.id) return;
     this.declarationSelectionnee = d;
@@ -332,8 +401,6 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
     this.declarationSelectionnee = null;
   }
 
-  // ─── Jira ─────────────────────────────────────────────
-
   getJiraTicket(id: number): JiraTicketResponse | null {
     return this.jiraTicketMap.get(id) ?? null;
   }
@@ -342,8 +409,6 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
     const ticket = this.getJiraTicket(d.id!);
     if (ticket) this.jiraService.openJiraTicket(ticket);
   }
-
-  // ─── Download ─────────────────────────────────────────
 
   download(d: Declaration): void {
     if (!d.id) return;
@@ -360,8 +425,6 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
       error: () => this.showToast('❌ Erreur téléchargement', 'error')
     });
   }
-
-  // ─── Helpers ──────────────────────────────────────────
 
   private rafraichirStats(): void {
     this.validationService.getStats().subscribe({ next: (s) => this.stats = s, error: () => {} });
@@ -390,12 +453,18 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
   }
 
   getActionClass(a: string): string {
-    const map: Record<string, string> = { 'SUBMIT': 'act-submit', 'VALIDATE': 'act-validate', 'REJECT': 'act-reject', 'SEND': 'act-send' };
+    const map: Record<string, string> = {
+      'SUBMIT': 'act-submit', 'VALIDATE': 'act-validate',
+      'REJECT': 'act-reject', 'SEND': 'act-send'
+    };
     return map[a] || '';
   }
 
   getActionLabel(a: string): string {
-    const map: Record<string, string> = { 'SUBMIT': '📤 Soumission', 'VALIDATE': '✅ Validation', 'REJECT': '❌ Rejet', 'SEND': '📨 Envoi BCT' };
+    const map: Record<string, string> = {
+      'SUBMIT': '📤 Soumission', 'VALIDATE': '✅ Validation',
+      'REJECT': '❌ Rejet', 'SEND': '📨 Envoi BCT'
+    };
     return map[a] || a;
   }
 

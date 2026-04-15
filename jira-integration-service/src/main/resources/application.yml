@@ -53,8 +53,7 @@ jira:
   base-url: https://wifak-bct.atlassian.net          # ? remplace par ton domaine Atlassian
   project-key: BCT                                      # ? clé du projet visible dans screenshot
   user-email: rawene.labaoui@gmail.com                   # ? email du compte Atlassian
-  api-token: ATATT3xFfGF0yZcdgPJjZ73VCFaLnOD6dUvaU1F7fF6eNSN8EbpJA1o_gI2gKfALVRqvINzj9HrkKawHxHflrHMVjRJ6P5PlFXZAYF73lKb0E-O6SQhyKVaPPuowjBZhBFqYeWoTzuwaQ7sn4Jr9LmH4ciajGY3qPzjmf9Ohs7t8ZF_4qlBdI7M=D5D01476                        # ? Personal Access Token Jira
-  # Transition IDs (visibles dans les screenshots du workflow)
+  api-token: ATATT3xFfGF0OI5RjtaSblClyYoEMfGSHYjU-PxAIIn0duIEsecXr-f2kBnc87DkKqGukVkVtT4jIWFvS20_Rwjur5LpdYlfMBgqcD7KDbyXWLrfNMEA-W76bKa7Iul2DVHoUVJR6yFaLvFYftNU93KOG6AQ5HN-vVJmExxdhQGBwRmx62ezBYY=7BF92416
   transitions:
     to-do: "10001"          # TO DO
     in-progress: "10002"    # IN PROGRESS (= EN_VALIDATION)

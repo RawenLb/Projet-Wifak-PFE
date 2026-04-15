@@ -1,5 +1,5 @@
 <!-- src/app/manager-pending/manager-pending.component.html -->
-<!-- US-08 — Page de validation dédiée -->
+<!-- US-08 — Page de validation dédiée — Layout Cartes -->
 
 <div class="pnd-wrapper">
 
@@ -49,7 +49,6 @@
       </div>
       <div class="kpi-urgency" *ngIf="stats.enValidation > 0">⚡ Urgent</div>
     </div>
-
     <div class="kpi-item kpi-total">
       <div class="kpi-icon-wrap">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -62,7 +61,6 @@
         <div class="kpi-lbl">Total décl.</div>
       </div>
     </div>
-
     <div class="kpi-item kpi-validees">
       <div class="kpi-icon-wrap">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -74,7 +72,6 @@
         <div class="kpi-lbl">Validées</div>
       </div>
     </div>
-
     <div class="kpi-item kpi-rejetees">
       <div class="kpi-icon-wrap">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -87,7 +84,6 @@
         <div class="kpi-lbl">Rejetées</div>
       </div>
     </div>
-
     <div class="kpi-item kpi-envoyees">
       <div class="kpi-icon-wrap">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -117,6 +113,14 @@
         <option value="">Tous types</option>
         <option *ngFor="let t of uniqueTypes" [value]="t">{{ t }}</option>
       </select>
+
+      <!-- Tri rapide -->
+      <div class="sort-pills">
+        <button class="sort-pill" [class.active]="sortField === 'id'"     (click)="toggleSort('id')">ID {{ getSortIcon('id') }}</button>
+        <button class="sort-pill" [class.active]="sortField === 'date'"   (click)="toggleSort('date')">Date {{ getSortIcon('date') }}</button>
+        <button class="sort-pill" [class.active]="sortField === 'type'"   (click)="toggleSort('type')">Type {{ getSortIcon('type') }}</button>
+        <button class="sort-pill" [class.active]="sortField === 'periode'"(click)="toggleSort('periode')">Période {{ getSortIcon('periode') }}</button>
+      </div>
     </div>
 
     <!-- Bulk actions -->
@@ -153,156 +157,251 @@
     </button>
   </div>
 
-  <!-- ── TABLE ── -->
-  <div class="table-container" *ngIf="!loading && filteredPending.length > 0">
+  <!-- ── GRILLE DE CARTES ── -->
+  <div class="cards-grid" *ngIf="!loading && filteredPending.length > 0">
 
-    <!-- Entête sticky -->
-    <div class="table-head">
-      <div class="th-check">
-        <label class="checkbox-wrap">
-          <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
-                 (change)="toggleSelectAll()">
-          <span class="checkmark"></span>
-        </label>
-      </div>
-      <div class="th-sortable" (click)="toggleSort('id')">
-        ID <span class="sort-icon">{{ getSortIcon('id') }}</span>
-      </div>
-      <div class="th-sortable" (click)="toggleSort('type')">
-        Type <span class="sort-icon">{{ getSortIcon('type') }}</span>
-      </div>
-      <div class="th-sortable" (click)="toggleSort('periode')">
-        Période <span class="sort-icon">{{ getSortIcon('periode') }}</span>
-      </div>
-      <div>Ticket Jira</div>
-      <div>Fichier</div>
-      <div>Généré par</div>
-      <div class="th-sortable" (click)="toggleSort('date')">
-        Date génération <span class="sort-icon">{{ getSortIcon('date') }}</span>
-      </div>
-      <div class="th-center">Actions</div>
-    </div>
+    <div class="decl-card"
+         *ngFor="let d of filteredPending; trackBy: trackById"
+         [class.selected]="selectedIds.has(d.id!)">
 
-    <!-- Lignes -->
-    <div class="table-body">
-      <div class="table-row" *ngFor="let d of filteredPending; trackBy: trackById"
-           [class.selected]="selectedIds.has(d.id!)">
+      <!-- Barre de couleur top (urgence) -->
+      <div class="card-accent" [class.accent-urgent]="true"></div>
 
-        <!-- Checkbox -->
-        <div class="td-check">
+      <!-- En-tête carte -->
+      <div class="card-head">
+        <div class="card-head-left">
+          <!-- Checkbox -->
           <label class="checkbox-wrap">
             <input type="checkbox" [checked]="selectedIds.has(d.id!)"
                    (change)="toggleSelect(d.id!)">
             <span class="checkmark"></span>
           </label>
+          <span class="card-id">#{{ d.id }}</span>
         </div>
-
-        <!-- ID -->
-        <div class="td-id">#{{ d.id }}</div>
-
-        <!-- Type -->
-        <div class="td-type">
-          <span class="type-code">{{ d.declarationType?.code }}</span>
-          <span class="type-nom">{{ d.declarationType?.nom }}</span>
+        <div class="card-head-right">
+          <span class="badge-urgency">⚡ Urgent</span>
+          <span class="card-date">{{ d.dateGeneration | date:'dd/MM/yy HH:mm' }}</span>
         </div>
+      </div>
 
-        <!-- Période -->
-        <div class="td-periode">
-          <span class="periode-chip">{{ d.periode }}</span>
-        </div>
+      <!-- Type déclaration -->
+      <div class="card-type">
+        <span class="type-code">{{ d.declarationType?.code }}</span>
+        <span class="type-nom">{{ d.declarationType?.nom }}</span>
+      </div>
 
-        <!-- Jira -->
-        <div class="td-jira">
-          <ng-container *ngIf="getJiraTicket(d.id!) as ticket">
-            <a class="jira-badge" [ngClass]="jiraService.getJiraStatusClass(ticket.jiraStatus)"
-               [href]="ticket.jiraTicketUrl" target="_blank" rel="noopener noreferrer"
-               [title]="ticket.jiraTicketKey + ' — ' + jiraService.getJiraStatusLabel(ticket.jiraStatus)">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
-                <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
-              </svg>
-              {{ ticket.jiraTicketKey }}
-            </a>
-          </ng-container>
-          <span class="jira-loading" *ngIf="jiraLoading[d.id!]">
-            <span class="spinner-xs"></span>
+      <!-- Méta infos en grille 2×2 -->
+      <div class="card-meta">
+        <div class="meta-item">
+          <span class="meta-key">Période</span>
+          <span class="meta-val">
+            <span class="periode-chip">{{ d.periode }}</span>
           </span>
-          <span class="jira-na" *ngIf="!getJiraTicket(d.id!) && !jiraLoading[d.id!]">—</span>
         </div>
 
-        <!-- Fichier -->
-        <div class="td-fichier">
-          <span class="file-name" [title]="d.nomFichier || ''">{{ d.nomFichier || '—' }}</span>
-          <button class="btn-icon" title="Télécharger" (click)="download(d)" *ngIf="d.nomFichier">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-          </button>
+        <div class="meta-item">
+          <span class="meta-key">Généré par</span>
+          <span class="meta-val">
+            <div class="agent-cell" *ngIf="d.generePar">
+              <div class="agent-avatar">{{ d.generePar.charAt(0).toUpperCase() }}</div>
+              <span>{{ d.generePar }}</span>
+            </div>
+            <span *ngIf="!d.generePar" class="na">—</span>
+          </span>
         </div>
 
-        <!-- Agent -->
-        <div class="td-agent">
-          <div class="agent-cell" *ngIf="d.generePar">
-            <div class="agent-avatar">{{ d.generePar.charAt(0).toUpperCase() }}</div>
-            <span>{{ d.generePar }}</span>
-          </div>
-          <span *ngIf="!d.generePar" class="na">—</span>
+        <div class="meta-item">
+          <span class="meta-key">Ticket Jira</span>
+          <span class="meta-val">
+            <ng-container *ngIf="getJiraTicket(d.id!) as ticket">
+              <a class="jira-badge"
+                 [ngClass]="jiraService.getJiraStatusClass(ticket.jiraStatus)"
+                 [href]="ticket.jiraTicketUrl" target="_blank" rel="noopener noreferrer">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
+                  <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
+                </svg>
+                {{ ticket.jiraTicketKey }}
+              </a>
+            </ng-container>
+            <span class="spinner-xs" *ngIf="jiraLoading[d.id!]"></span>
+            <span class="na" *ngIf="!getJiraTicket(d.id!) && !jiraLoading[d.id!]">—</span>
+          </span>
         </div>
 
-        <!-- Date -->
-        <div class="td-date">{{ d.dateGeneration | date:'dd/MM/yy HH:mm' }}</div>
+        <div class="meta-item">
+          <span class="meta-key">Fichier</span>
+          <span class="meta-val">
+            <div class="file-row" *ngIf="d.nomFichier">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--text-3)">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <span class="file-name" [title]="d.nomFichier">{{ d.nomFichier }}</span>
+              <button class="btn-icon-xs" (click)="download(d)" title="Télécharger">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </button>
+            </div>
+            <span *ngIf="!d.nomFichier" class="na">—</span>
+          </span>
+        </div>
+      </div>
 
-        <!-- Actions -->
-        <div class="td-actions">
-          <button class="btn-consult" [disabled]="actionEnCours[d.id!]"
-                  (click)="ouvrirConsultation(d)" title="Consulter le dossier">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            Consulter
-          </button>
+      <!-- Motif rejet précédent (si applicable) -->
+      <div class="card-rejet" *ngIf="d.commentaireRejet">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        <span>{{ d.commentaireRejet }}</span>
+      </div>
 
-          <button class="btn-validate" [disabled]="actionEnCours[d.id!]"
-                  (click)="valider(d)" title="Valider">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-            {{ actionEnCours[d.id!] ? '...' : 'Valider' }}
-          </button>
+      <!-- Pied de carte : actions -->
+      <div class="card-foot">
+        <button class="btn-consult" [disabled]="actionEnCours[d.id!]"
+                (click)="ouvrirConsultation(d)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Consulter
+        </button>
 
-          <button class="btn-reject" [disabled]="actionEnCours[d.id!]"
-                  (click)="ouvrirRejet(d)" title="Rejeter">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-            {{ actionEnCours[d.id!] ? '...' : 'Rejeter' }}
-          </button>
+        <!-- Bouton AI -->
+        <button class="btn-ai" [disabled]="actionEnCours[d.id!]"
+                (click)="lancerAiAnalysis(d)" title="Analyse IA Ollama">
+          🤖 IA
+        </button>
 
+        <button class="btn-validate" [disabled]="actionEnCours[d.id!]"
+                (click)="valider(d)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          {{ actionEnCours[d.id!] ? '...' : 'Valider' }}
+        </button>
+
+        <button class="btn-reject" [disabled]="actionEnCours[d.id!]"
+                (click)="ouvrirRejet(d)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          {{ actionEnCours[d.id!] ? '...' : 'Rejeter' }}
+        </button>
+
+        <div class="foot-extras">
           <button class="btn-icon" title="Historique" (click)="voirHistorique(d)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="12 8 12 12 14 14"/>
               <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
             </svg>
           </button>
-
-          <button class="btn-icon btn-jira" *ngIf="getJiraTicket(d.id!)" title="Voir dans Jira"
-                  (click)="ouvrirJira(d)">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+          <button class="btn-icon btn-jira" *ngIf="getJiraTicket(d.id!)"
+                  title="Voir dans Jira" (click)="ouvrirJira(d)">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
               <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
               <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
             </svg>
           </button>
         </div>
       </div>
+
     </div>
   </div>
 
 </div>
 
+<!-- ════════════════════════════════
+     MODAL AI ANALYSIS
+════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="showAiPanel" (click)="fermerAiPanel()">
+  <div class="modal-card modal-wide modal-ai" (click)="$event.stopPropagation()">
 
+    <div class="modal-head">
+      <div class="modal-icon modal-icon--ai">🤖</div>
+      <h3>Analyse IA — Déclaration #{{ aiDeclarationId }}</h3>
+      <button class="modal-x" (click)="fermerAiPanel()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- ✅ Loader animé avec étapes et timer -->
+      <div class="ai-loader" *ngIf="aiLoading">
+        <div class="spinner-ring"></div>
+
+        <div class="ai-step-block">
+          <span class="ai-step-msg">{{ aiStepMessage }}</span>
+
+          <!-- Points de progression -->
+          <div class="ai-dots">
+            <span class="ai-dot" [class.active]="aiStep >= 0"></span>
+            <span class="ai-dot" [class.active]="aiStep >= 1"></span>
+            <span class="ai-dot" [class.active]="aiStep >= 2"></span>
+            <span class="ai-dot" [class.active]="aiStep >= 3"></span>
+          </div>
+
+          <span class="ai-elapsed">{{ aiElapsed }}s</span>
+        </div>
+
+        <!-- Astuce contextuelle -->
+        <div class="ai-tip-box">{{ aiTip }}</div>
+      </div>
+
+      <!-- Résultat -->
+      <ng-container *ngIf="!aiLoading && aiResult">
+
+        <!-- Score -->
+        <div class="ai-score-row">
+          <div class="ai-score-circle" [ngClass]="getScoreColor()">
+            <span class="score-val">{{ aiResult.score }}</span>
+            <span class="score-lbl">/100</span>
+          </div>
+          <div class="ai-score-info">
+            <div class="ai-valid-badge" [class.valid-ok]="aiResult.valid" [class.valid-ko]="!aiResult.valid">
+              {{ aiResult.valid ? '✅ Fichier valide' : '❌ Fichier invalide' }}
+            </div>
+            <div class="ai-reco" [ngClass]="getRecoClass()">
+              Recommandation IA : <strong>{{ getRecoLabel() }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Anomalies -->
+        <div class="ai-section">
+          <div class="section-title">Anomalies détectées</div>
+          <div class="ai-no-anomaly" *ngIf="aiResult.anomalies.length === 0">
+            <span>✅ Aucune anomalie détectée</span>
+          </div>
+          <ul class="ai-anomaly-list" *ngIf="aiResult.anomalies.length > 0">
+            <li *ngFor="let a of aiResult.anomalies" class="ai-anomaly-item">
+              <span class="anomaly-dot">⚠</span>
+              {{ a }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="ai-disclaimer">
+          ⚠️ L'analyse IA est un <strong>assistant de décision</strong> — la décision finale reste humaine.
+        </div>
+
+      </ng-container>
+    </div>
+
+    <div class="modal-foot" *ngIf="!aiLoading && aiResult">
+      <button class="btn-cancel" (click)="fermerAiPanel()">Fermer</button>
+    </div>
+
+  </div>
+</div>
 
 <!-- ════════════════════════════════
      MODAL CONSULTATION
