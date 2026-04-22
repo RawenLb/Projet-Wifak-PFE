@@ -16,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ValidationService {
@@ -27,7 +28,7 @@ public class ValidationService {
     private final ValidationLogRepository   logRepository;
 
     @Autowired
-    private OllamaService ollamaService;   // ✅ AJOUT
+    private AiDeclarationService aiDeclarationService;
 
     public ValidationService(DeclarationClient declarationClient,
                              JiraIntegrationFeignClient jiraClient,
@@ -47,9 +48,8 @@ public class ValidationService {
         DeclarationDTO decl = declarationClient.getById(declarationId);
         validateStatut(decl.getStatut(), "GENEREE", "REJETEE");
 
-        if (!currentUser.equals(decl.getGenerePar())) {
+        if (!currentUser.equals(decl.getGenerePar()))
             throw new IllegalStateException("Vous ne pouvez soumettre que vos propres déclarations");
-        }
 
         String statutAvant = decl.getStatut();
         DeclarationDTO updated = declarationClient.updateStatut(declarationId, "EN_VALIDATION", null, null);
@@ -62,18 +62,14 @@ public class ValidationService {
                     jiraClient.transitionTicket(new TransitionJiraTicketRequest(declarationId, "EN_VALIDATION", null, currentUser));
                     log.info("🔄 Ticket Jira TO DO → IN PROGRESS pour déclaration {}", declarationId);
                 }
-            } catch (Exception e) {
-                log.warn("⚠️ Jira transition échouée: {}", e.getMessage());
-            }
+            } catch (Exception e) { log.warn("⚠️ Jira transition échouée: {}", e.getMessage()); }
         }
 
         if ("REJETEE".equals(statutAvant)) {
             try {
                 jiraClient.transitionTicket(new TransitionJiraTicketRequest(declarationId, "RESOUMISE", null, currentUser));
                 log.info("🔁 Ticket Jira REJETÉE → IN PROGRESS pour déclaration {}", declarationId);
-            } catch (Exception e) {
-                log.warn("⚠️ Jira resoumission échouée: {}", e.getMessage());
-            }
+            } catch (Exception e) { log.warn("⚠️ Jira resoumission échouée: {}", e.getMessage()); }
         }
 
         return updated;
@@ -94,9 +90,7 @@ public class ValidationService {
 
         try {
             jiraClient.transitionTicket(new TransitionJiraTicketRequest(declarationId, "VALIDEE", null, currentUser));
-        } catch (Exception e) {
-            log.warn("⚠️ Jira sync échouée: {}", e.getMessage());
-        }
+        } catch (Exception e) { log.warn("⚠️ Jira sync échouée: {}", e.getMessage()); }
 
         return updated;
     }
@@ -108,9 +102,8 @@ public class ValidationService {
         String currentUser = getCurrentUsername();
         log.info("❌ rejectDeclaration — ID: {}, manager: {}", declarationId, currentUser);
 
-        if (commentaire == null || commentaire.isBlank()) {
+        if (commentaire == null || commentaire.isBlank())
             throw new IllegalArgumentException("Le commentaire de rejet est obligatoire");
-        }
 
         DeclarationDTO decl = declarationClient.getById(declarationId);
         validateStatut(decl.getStatut(), "EN_VALIDATION");
@@ -120,9 +113,7 @@ public class ValidationService {
 
         try {
             jiraClient.transitionTicket(new TransitionJiraTicketRequest(declarationId, "REJETEE", commentaire, currentUser));
-        } catch (Exception e) {
-            log.warn("⚠️ Jira sync échouée: {}", e.getMessage());
-        }
+        } catch (Exception e) { log.warn("⚠️ Jira sync échouée: {}", e.getMessage()); }
 
         return updated;
     }
@@ -142,9 +133,7 @@ public class ValidationService {
 
         try {
             jiraClient.transitionTicket(new TransitionJiraTicketRequest(declarationId, "ENVOYEE", null, currentUser));
-        } catch (Exception e) {
-            log.warn("⚠️ Jira sync échouée: {}", e.getMessage());
-        }
+        } catch (Exception e) { log.warn("⚠️ Jira sync échouée: {}", e.getMessage()); }
 
         return updated;
     }
@@ -173,15 +162,47 @@ public class ValidationService {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // 8. AI ANALYSIS ✅ AJOUT
+    // 8. AI ANALYSIS — validation complète (score + anomalies)
     // ══════════════════════════════════════════════════════════════
     public AiValidationResult analyzeWithAi(Long declarationId) {
         log.info("🤖 analyzeWithAi — ID: {}", declarationId);
         DeclarationDTO decl = declarationClient.getById(declarationId);
-        return ollamaService.analyzeDeclaration(
+        return aiDeclarationService.analyzeDeclaration(
                 decl.getContenuFichier(),
                 decl.getNomFichier()
         );
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 9. AI SUMMARY — résumé structuré (montants, indicateurs, classes)
+    // ══════════════════════════════════════════════════════════════
+    public Map<String, Object> getAiSummary(Long declarationId) {
+        log.info("📊 getAiSummary — ID: {}", declarationId);
+        DeclarationDTO decl = declarationClient.getById(declarationId);
+        return aiDeclarationService.buildAiSummary(
+                decl.getContenuFichier(),
+                decl.getNomFichier()
+        );
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 10. COMPARAISON PÉRIODE PRÉCÉDENTE
+    // ══════════════════════════════════════════════════════════════
+    public Map<String, Object> compareWithPrevious(Long declarationId, Long previousDeclarationId) {
+        log.info("📈 compareWithPrevious — ID: {} vs {}", declarationId, previousDeclarationId);
+        DeclarationDTO curr = declarationClient.getById(declarationId);
+        DeclarationDTO prev = declarationClient.getById(previousDeclarationId);
+        return aiDeclarationService.compareWithPrevious(
+                curr.getContenuFichier(),
+                prev != null ? prev.getContenuFichier() : null
+        );
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 11. TEMPLATES DE REJET PRÉDÉFINIS
+    // ══════════════════════════════════════════════════════════════
+    public List<Map<String, String>> getRejectTemplates() {
+        return aiDeclarationService.getRejectTemplates();
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -194,9 +215,7 @@ public class ValidationService {
     }
 
     private void validateStatut(String current, String... allowed) {
-        for (String s : allowed) {
-            if (s.equals(current)) return;
-        }
+        for (String s : allowed) if (s.equals(current)) return;
         throw new IllegalStateException(
                 String.format("Statut invalide '%s'. Attendu : %s", current, String.join(" ou ", allowed)));
     }

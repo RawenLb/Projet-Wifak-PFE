@@ -23,12 +23,53 @@ export interface ValidationLog {
   dateAction: string;
 }
 
-// ✅ AJOUT
 export interface AiValidationResult {
   valid: boolean;
   score: number;
   anomalies: string[];
   recommendation: 'VALIDATE' | 'REJECT' | 'REVIEW';
+}
+
+export interface AnomalieDetail {
+  ligne: number;
+  client: string;
+  type: string;
+  severity: 'CRITIQUE' | 'MAJEURE' | 'MINEURE';
+  detail: string;
+}
+
+export interface AiSummary {
+  periode: string;
+  dateDebut: string;
+  dateFin: string;
+  codeDeclaration: string;
+  nombreLignes: number;
+  totalMontantCredit: number;
+  totalMontantImpaye: number;
+  totalProvision: number;
+  tauxImpayeGlobal: number;
+  repartitionClasses: Record<string, number>;
+  anomaliesDetaillees: AnomalieDetail[];
+  nombreAnomaliesCritiques: number;
+  nombreAnomaliesMajeures: number;
+  riskScore: number;
+  riskLevel: 'FAIBLE' | 'MOYEN' | 'ELEVE';
+}
+
+export interface ComparisonResult {
+  available: boolean;
+  message?: string;
+  variationCredit: number;
+  variationImpaye: number;
+  variationProvision: number;
+  variationLignes: number;
+  alerteVariation: boolean;
+}
+
+export interface RejectTemplate {
+  id: string;
+  label: string;
+  text: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -70,8 +111,23 @@ export class ValidationService {
     return this.http.get<ValidationLog[]>(`${this.baseUrl}/${declarationId}/history`, { headers: this.headers() });
   }
 
-  // ✅ AJOUT
+  // Feature : Analyse IA complète (score Mistral)
   aiAnalysis(id: number): Observable<AiValidationResult> {
     return this.http.get<AiValidationResult>(`${this.baseUrl}/${id}/ai-analysis`, { headers: this.headers() });
+  }
+
+  // Feature 1 : AI Summary structuré
+  getAiSummary(id: number): Observable<AiSummary> {
+    return this.http.get<AiSummary>(`${this.baseUrl}/${id}/ai-summary`, { headers: this.headers() });
+  }
+
+  // Feature 2 & 3 : Comparaison période précédente + variation
+  compareWithPrevious(id: number, previousId: number): Observable<ComparisonResult> {
+    return this.http.get<ComparisonResult>(`${this.baseUrl}/${id}/compare/${previousId}`, { headers: this.headers() });
+  }
+
+  // Feature 5 : Templates de rejet prédéfinis
+  getRejectTemplates(): Observable<RejectTemplate[]> {
+    return this.http.get<RejectTemplate[]>(`${this.baseUrl}/reject-templates`, { headers: this.headers() });
   }
 }

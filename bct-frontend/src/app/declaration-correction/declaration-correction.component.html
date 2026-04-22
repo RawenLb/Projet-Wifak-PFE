@@ -1,0 +1,531 @@
+<!-- src/app/declaration-correction/declaration-correction.component.html -->
+<div class="corr-root">
+
+  <!-- ══════════════════════════════════════════════════════════════
+       EN-TÊTE FIXE
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="corr-header">
+
+    <!-- Motif de rejet -->
+    <div class="reject-banner" *ngIf="showRejectReason && declaration?.commentaireRejet">
+      <div class="reject-banner-left">
+        <div class="reject-banner-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8"  x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div class="reject-banner-content">
+          <span class="reject-banner-title">Motif de rejet</span>
+          <p class="reject-banner-text">{{ declaration.commentaireRejet }}</p>
+          <div class="reject-banner-meta" *ngIf="declaration.validePar">
+            Par <strong>{{ declaration.validePar }}</strong>
+          </div>
+        </div>
+      </div>
+      <button class="reject-banner-close" (click)="showRejectReason = false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Info déclaration + tabs -->
+    <div class="corr-meta-row">
+      <div class="corr-meta-info">
+        <span class="corr-code-badge">{{ declaration?.declarationType?.code }}</span>
+        <span class="corr-period">{{ declaration?.periode }}</span>
+        <span class="corr-format-badge" [ngClass]="'fmt-' + (declaration?.declarationType?.format?.toLowerCase() ?? 'xml')">
+          {{ declaration?.declarationType?.format }}
+        </span>
+        <span class="corr-modified-badge" *ngIf="xmlModified">
+          <span class="corr-mod-dot"></span>{{ modifiedCount }} modification(s)
+        </span>
+      </div>
+
+      <!-- Tabs modes -->
+      <div class="corr-tabs">
+        <button class="corr-tab" [class.active]="activeMode === 'inline-xml'"
+                (click)="setMode('inline-xml')" *ngIf="isXml">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+          </svg>
+          Édition XML
+        </button>
+        <button class="corr-tab" [class.active]="activeMode === 'mapping-view'"
+                (click)="setMode('mapping-view')" *ngIf="isXml">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+          Mapping XSD ↔ SQL
+        </button>
+        <button class="corr-tab" [class.active]="activeMode === 'sql-xsd-view'"
+                (click)="setMode('sql-xsd-view')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+          XSD + SQL
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       CORPS
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="corr-body">
+
+    <!-- ── Notifications ──────────────────────────────────────────── -->
+    <div class="corr-notif corr-notif-err" *ngIf="error">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+      {{ error }}
+    </div>
+    <div class="corr-notif corr-notif-ok" *ngIf="success">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      {{ success }}
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         MODE 1 — ÉDITION XML INLINE
+         ════════════════════════════════════════════════════════════ -->
+    <div *ngIf="activeMode === 'inline-xml'" class="xml-editor-section">
+
+      <!-- Toolbar -->
+      <div class="xml-toolbar">
+        <div class="xml-toolbar-left">
+          <div class="xml-search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input type="text" placeholder="Chercher champ / valeur..."
+                   [(ngModel)]="xmlSearchQuery" class="xml-search-input"/>
+          </div>
+          <label class="xml-diff-toggle">
+            <input type="checkbox" [(ngModel)]="showDiffOnly" class="xml-diff-cb"/>
+            <span class="xml-diff-slider"></span>
+            Modifications uniquement
+          </label>
+        </div>
+        <div class="xml-toolbar-right">
+          <span class="xml-lines-info">{{ filteredLines.length }} / {{ xmlLines.length }} lignes</span>
+          <button class="xml-btn xml-btn-reset" (click)="resetXml()" [disabled]="!xmlModified"
+                  title="Réinitialiser">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <polyline points="1 4 1 10 7 10"/>
+              <path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+            </svg>
+            Réinitialiser
+          </button>
+          <span class="xml-mod-count" *ngIf="modifiedCount > 0">
+            {{ modifiedCount }} modifié(s)
+          </span>
+        </div>
+      </div>
+
+      <!-- Erreur parse -->
+      <div class="xml-parse-error" *ngIf="xmlParseError">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        {{ xmlParseError }}
+      </div>
+
+      <!-- Grille XML -->
+      <div class="xml-grid" *ngIf="xmlLines.length > 0">
+
+        <!-- Header colonnes -->
+        <div class="xml-grid-header">
+          <span class="xg-col-line">#</span>
+          <span class="xg-col-tag">Champ XML</span>
+          <span class="xg-col-value">Valeur</span>
+          <span class="xg-col-orig">Valeur originale</span>
+        </div>
+
+        <!-- Lignes -->
+        <ng-container *ngFor="let line of filteredLines">
+
+          <!-- Ouverture / fermeture de section -->
+          <div *ngIf="line.type === 'open' || line.type === 'close'"
+               class="xg-section-row"
+               [style.paddingLeft]="getDepthPadding(line.depth)">
+            <span class="xg-line-num">{{ line.lineNum }}</span>
+            <span class="xg-section-tag" [class.xg-close]="line.type === 'close'">
+              <svg *ngIf="line.type === 'open'"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+              <svg *ngIf="line.type === 'close'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+              &lt;{{ line.type === 'close' ? '/' : '' }}{{ line.tag }}&gt;
+            </span>
+          </div>
+
+          <!-- Champ feuille éditable -->
+          <div *ngIf="line.type === 'leaf' && line.tag"
+               class="xg-leaf-row"
+               [class.xg-leaf-selected]="selectedLineIndex === line.index"
+               [class.xg-leaf-modified]="line.modified"
+               [style.paddingLeft]="getDepthPadding(line.depth)"
+               (click)="selectLine(line.index)">
+
+            <span class="xg-line-num">{{ line.lineNum }}</span>
+
+            <div class="xg-tag-cell">
+              <span class="xg-tag-name">{{ line.tag }}</span>
+              <span class="xg-mod-dot" *ngIf="line.modified" title="Modifié"></span>
+            </div>
+
+            <div class="xg-value-cell" (click)="$event.stopPropagation()">
+              <input type="text"
+                     class="xg-value-input"
+                     [class.xg-input-modified]="line.modified"
+                     [value]="line.value"
+                     (change)="updateLineValue(line.index, $any($event.target).value)"
+                     (input)="updateLineValue(line.index, $any($event.target).value)"
+                     [placeholder]="'Valeur pour ' + line.tag"/>
+            </div>
+
+            <div class="xg-orig-cell">
+              <span class="xg-orig-value" [class.xg-orig-changed]="line.modified">
+                {{ line.originalValue || '(vide)' }}
+              </span>
+              <button *ngIf="line.modified"
+                      class="xg-undo-btn"
+                      (click)="$event.stopPropagation(); updateLineValue(line.index, line.originalValue ?? '')"
+                      title="Annuler cette modification">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11">
+                  <polyline points="9 14 4 9 9 4"/>
+                  <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+                </svg>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Commentaire / déclaration XML -->
+          <div *ngIf="line.type === 'comment' || line.type === 'declaration'"
+               class="xg-meta-row">
+            <span class="xg-line-num">{{ line.lineNum }}</span>
+            <span class="xg-meta-text">{{ line.raw.trim() }}</span>
+          </div>
+
+        </ng-container>
+      </div>
+
+      <!-- État vide -->
+      <div class="xml-empty" *ngIf="xmlLines.length === 0 && !xmlParseError">
+        <p>Aucun champ XML à afficher.</p>
+      </div>
+
+      <!-- Éditeur brut (fallback) -->
+      <div class="xml-raw-section">
+        <div class="xml-raw-header">
+          <span>Édition brute (XML complet)</span>
+          <span class="xml-raw-hint">Les modifications ici sont répercutées dans la grille</span>
+        </div>
+        <div class="xml-raw-toolbar">
+          <span class="xml-lang-badge">XML</span>
+        </div>
+        <textarea class="xml-raw-textarea"
+                  [value]="xmlContent"
+                  (input)="onXmlContentChange($any($event.target).value)"
+                  rows="12"
+                  spellcheck="false">
+        </textarea>
+      </div>
+
+    </div>
+    <!-- /mode inline-xml -->
+
+    <!-- ════════════════════════════════════════════════════════════
+         MODE 2 — MAPPING XSD ↔ SQL
+         ════════════════════════════════════════════════════════════ -->
+    <div *ngIf="activeMode === 'mapping-view'" class="mapping-section">
+
+      <div class="mapping-loading" *ngIf="loadingMapping">
+        <div class="mload-spinner"></div>
+        <span>Chargement du mapping XSD ↔ SQL...</span>
+      </div>
+
+      <div class="mapping-error-banner" *ngIf="mappingError && !loadingMapping">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        {{ mappingError }}
+      </div>
+
+      <ng-container *ngIf="!loadingMapping && !mappingError && mappingJson.length > 0">
+
+        <!-- Score de compatibilité -->
+        <div class="compat-header" *ngIf="mappingAnalysis">
+          <div class="compat-score-wrap">
+            <div class="compat-score-ring"
+                 [class.score-high]="mappingAnalysis.compatibilityScore >= 70"
+                 [class.score-med]="mappingAnalysis.compatibilityScore >= 30 && mappingAnalysis.compatibilityScore < 70"
+                 [class.score-low]="mappingAnalysis.compatibilityScore < 30">
+              <span class="compat-score-num">{{ mappingAnalysis.compatibilityScore }}%</span>
+            </div>
+            <div>
+              <div class="compat-label">Score de compatibilité</div>
+              <div class="compat-summary">{{ mappingAnalysis.summary }}</div>
+            </div>
+          </div>
+          <div class="compat-chips">
+            <span class="compat-chip chip-xsd">{{ mappingAnalysis.xsdFields?.length || 0 }} champs XSD</span>
+            <span class="compat-chip chip-sql">{{ mappingAnalysis.sqlColumns?.length || 0 }} colonnes SQL</span>
+          </div>
+        </div>
+
+        <!-- Table de mapping -->
+        <div class="mapping-table">
+          <div class="mt-header">
+            <span>CHAMP XSD</span>
+            <span>TYPE</span>
+            <span>SOURCE</span>
+            <span>COLONNE SQL / VALEUR STATIQUE</span>
+            <span>REQUIS</span>
+          </div>
+
+          <div *ngFor="let fm of mappingJson; let i = index"
+               class="mt-row"
+               [class.mt-row-warn]="fm.required && fm.source === 'NONE'"
+               [class.mt-row-ok]="fm.source !== 'NONE'">
+
+            <!-- Champ XSD -->
+            <div class="mt-cell mt-cell-xsd">
+              <span class="mt-xsd-name">{{ fm.xsdFieldName }}</span>
+              <span class="mt-xsd-path">{{ fm.xsdFieldPath }}</span>
+            </div>
+
+            <!-- Type -->
+            <div class="mt-cell">
+              <span class="mt-type-tag">{{ fm.xsdType }}</span>
+            </div>
+
+            <!-- Source toggle -->
+            <div class="mt-cell">
+              <div class="mt-source-toggle">
+                <button class="mt-src-btn" [class.active-sql]="fm.source === 'SQL'"
+                        (click)="updateMappingField(i, 'source', 'SQL'); updateMappingField(i, 'staticValue', '')">
+                  SQL
+                </button>
+                <button class="mt-src-btn" [class.active-static]="fm.source === 'STATIC'"
+                        (click)="updateMappingField(i, 'source', 'STATIC'); updateMappingField(i, 'sqlColumn', '')">
+                  Statique
+                </button>
+                <button class="mt-src-btn" [class.active-none]="fm.source === 'NONE'"
+                        (click)="updateMappingField(i, 'source', 'NONE'); updateMappingField(i, 'sqlColumn', ''); updateMappingField(i, 'staticValue', '')">
+                  Ignorer
+                </button>
+              </div>
+            </div>
+
+            <!-- Valeur / colonne -->
+            <div class="mt-cell mt-cell-value">
+              <select *ngIf="fm.source === 'SQL'"
+                      [ngModel]="fm.sqlColumn"
+                      (ngModelChange)="updateMappingField(i, 'sqlColumn', $event)"
+                      class="mt-select"
+                      [class.mt-select-ok]="fm.sqlColumn">
+                <option value="">— Sélectionner une colonne —</option>
+                <option *ngFor="let col of sqlColumns" [value]="col">{{ col }}</option>
+              </select>
+              <input *ngIf="fm.source === 'STATIC'"
+                     type="text"
+                     [ngModel]="fm.staticValue"
+                     (ngModelChange)="updateMappingField(i, 'staticValue', $event)"
+                     class="mt-input"
+                     [placeholder]="'Valeur fixe pour ' + fm.xsdFieldName"/>
+              <span *ngIf="fm.source === 'NONE'" class="mt-ignored">ignoré</span>
+            </div>
+
+            <!-- Requis -->
+            <div class="mt-cell">
+              <span class="mt-req-badge" [class.req-yes]="fm.required" [class.req-opt]="!fm.required">
+                {{ fm.required ? 'Requis' : 'Optionnel' }}
+              </span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ✅ FIX: Remplacé le pipe 'missingRequired' par un appel de méthode -->
+        <div class="mapping-warn" *ngIf="hasMissingRequired()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          Certains champs obligatoires ne sont pas mappés. Assignez une colonne SQL ou une valeur statique.
+        </div>
+
+      </ng-container>
+
+    </div>
+    <!-- /mode mapping-view -->
+
+    <!-- ════════════════════════════════════════════════════════════
+         MODE 3 — XSD + SQL CÔTE À CÔTE
+         ════════════════════════════════════════════════════════════ -->
+    <div *ngIf="activeMode === 'sql-xsd-view'" class="xsd-sql-section">
+
+      <div class="xsd-sql-grid">
+
+        <!-- Panneau XSD -->
+        <div class="xsd-panel" *ngIf="xsdContent">
+          <div class="panel-header xsd-panel-header">
+            <div class="panel-badge xsd-badge">XSD</div>
+            <span class="panel-title">Schéma de validation</span>
+            <span class="panel-hint">Champs attendus dans le XML</span>
+          </div>
+
+          <!-- Champs XSD extraits -->
+          <div class="xsd-fields-list" *ngIf="xsdFields.length > 0">
+            <div *ngFor="let field of xsdFields"
+                 class="xsd-field-row"
+                 [class.xsd-field-req]="field.required">
+              <div class="xsdf-info">
+                <span class="xsdf-name">{{ field.name }}</span>
+                <span class="xsdf-type">{{ field.type }}</span>
+              </div>
+              <span class="xsdf-req" *ngIf="field.required" title="Obligatoire">●</span>
+              <span class="xsdf-opt" *ngIf="!field.required" title="Optionnel">○</span>
+            </div>
+          </div>
+
+          <!-- XSD brut -->
+          <details class="xsd-raw-section">
+            <summary class="xsd-raw-summary">Voir le XSD complet</summary>
+            <pre class="xsd-raw-pre">{{ xsdContent }}</pre>
+          </details>
+        </div>
+
+        <!-- Panneau SQL -->
+        <div class="sql-panel">
+          <div class="panel-header sql-panel-header">
+            <div class="panel-badge sql-badge">SQL</div>
+            <span class="panel-title">Requête de données</span>
+            <span class="panel-hint">Peut être corrigée ici</span>
+          </div>
+
+          <!-- Éditeur SQL -->
+          <div class="sql-editor-wrap">
+            <div class="sql-toolbar">
+              <span class="sql-lang-badge">SQL</span>
+            </div>
+            <textarea class="sql-textarea"
+                      [(ngModel)]="sqlQuery"
+                      rows="10"
+                      spellcheck="false"
+                      placeholder="SELECT ... FROM ... WHERE date BETWEEN :dateDebut AND :dateFin">
+            </textarea>
+          </div>
+
+          <!-- Test SQL -->
+          <div class="sql-test-block">
+            <div class="sql-test-dates">
+              <div class="std-group">
+                <label>Date début</label>
+                <input type="date" [(ngModel)]="testDateDebut" class="std-input"/>
+              </div>
+              <div class="std-group">
+                <label>Date fin</label>
+                <input type="date" [(ngModel)]="testDateFin" class="std-input"/>
+              </div>
+              <button class="btn-test-sql" (click)="testSql()"
+                      [disabled]="testingSQL || !sqlQuery">
+                <div *ngIf="testingSQL" class="spin-xs"></div>
+                <svg *ngIf="!testingSQL" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                {{ testingSQL ? 'Test...' : 'Tester' }}
+              </button>
+            </div>
+
+            <div class="sql-test-result sql-ok" *ngIf="sqlTestResult?.success">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span><strong>{{ sqlTestResult.nombreLignes }}</strong> ligne(s) — Colonnes : {{ getSqlColumnsDisplay() }}</span>
+            </div>
+            <div class="sql-test-result sql-err" *ngIf="sqlTestResult && !sqlTestResult.success">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+              <span>{{ sqlTestResult.error }}</span>
+            </div>
+          </div>
+
+          <!-- ✅ FIX: Colonnes SQL vs champs XSD — arrow functions déplacées dans le composant -->
+          <div class="sql-xsd-compare" *ngIf="xsdFields.length > 0 && sqlColumns.length > 0">
+            <div class="sxc-header">Correspondances détectées</div>
+            <div class="sxc-grid">
+              <div *ngFor="let field of xsdFields" class="sxc-row">
+                <div class="sxc-xsd-field">
+                  <span class="sxc-field-name">{{ field.name }}</span>
+                  <span class="sxc-dot" [class.match]="hasExactOrFuzzyMatch(field.name)"></span>
+                </div>
+                <div class="sxc-arrow">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14">
+                    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                  </svg>
+                </div>
+                <div class="sxc-sql-col">
+                  <span *ngIf="hasExactMatch(field.name)" class="sxc-col-matched">{{ field.name }}</span>
+                  <span *ngIf="!hasExactMatch(field.name) && hasFuzzyMatch(field.name)"
+                        class="sxc-col-fuzzy">
+                    {{ getFuzzyMatch(field.name) }}
+                  </span>
+                  <span *ngIf="!hasExactMatch(field.name) && !hasFuzzyMatch(field.name)"
+                        class="sxc-col-missing">Non trouvée</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+    <!-- /mode sql-xsd-view -->
+
+  </div>
+  <!-- /corr-body -->
+
+  <!-- ══════════════════════════════════════════════════════════════
+       FOOTER ACTIONS
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="corr-footer">
+    <button class="corr-btn corr-btn-cancel" (click)="cancel()">
+      Annuler
+    </button>
+    <div class="corr-footer-center">
+      <div class="corr-save-hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span *ngIf="activeMode === 'inline-xml'">La correction sera soumise automatiquement pour validation.</span>
+        <span *ngIf="activeMode === 'mapping-view'">La déclaration sera régénérée avec le mapping corrigé.</span>
+        <span *ngIf="activeMode === 'sql-xsd-view'">La requête SQL sera sauvegardée puis le fichier régénéré.</span>
+      </div>
+    </div>
+    <button class="corr-btn corr-btn-save" (click)="save()" [disabled]="saving">
+      <div *ngIf="saving" class="spin-xs"></div>
+      <svg *ngIf="!saving" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+        <polyline points="9 11 12 14 22 4"/>
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      </svg>
+      {{ saving ? 'Sauvegarde...' : 'Corriger et soumettre' }}
+    </button>
+  </div>
+
+</div>

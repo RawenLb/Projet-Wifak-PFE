@@ -23,6 +23,8 @@ import { ManagerCalendarComponent } from './manager-calendar/manager-calendar.co
 import { ManagerReportsComponent } from './manager-reports/manager-reports.component';
 import { ManagerHistoryComponent } from './manager-history/manager-history.component';
 import { ManagerPendingComponent } from './manager-pending/manager-pending.component';
+import { ManagerMlDashboardComponent } from './manager-ml-dashboard/manager-ml-dashboard.component';
+import { DeclarationCorrectionComponent } from './declaration-correction/declaration-correction.component';
 export function kcFactory() {
   return () =>
     keycloak.init({
@@ -75,6 +77,8 @@ export function kcFactory() {
     ManagerReportsComponent,
     ManagerHistoryComponent,
     ManagerPendingComponent,
+    ManagerMlDashboardComponent,
+    DeclarationCorrectionComponent,
   ],
   imports: [
     BrowserModule,

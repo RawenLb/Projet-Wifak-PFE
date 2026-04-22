@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/validation")
@@ -20,7 +21,6 @@ import java.util.List;
 public class ValidationController {
 
     private static final Logger log = LoggerFactory.getLogger(ValidationController.class);
-
     private final ValidationService validationService;
 
     public ValidationController(ValidationService validationService) {
@@ -85,11 +85,37 @@ public class ValidationController {
         return ResponseEntity.ok(validationService.getHistory(id));
     }
 
-    // 8. AI ANALYSIS ✅ AJOUT
+    // 8. AI ANALYSIS — score de conformité complet (Mistral via Ollama)
     @GetMapping("/{id}/ai-analysis")
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<AiValidationResult> aiAnalysis(@PathVariable Long id) {
         log.info("🤖 [GET] /api/validation/{}/ai-analysis", id);
         return ResponseEntity.ok(validationService.analyzeWithAi(id));
+    }
+
+    // 9. AI SUMMARY — résumé structuré : montants clés, répartition classes, anomalies (Feature 1)
+    @GetMapping("/{id}/ai-summary")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<Map<String, Object>> aiSummary(@PathVariable Long id) {
+        log.info("📋 [GET] /api/validation/{}/ai-summary", id);
+        return ResponseEntity.ok(validationService.getAiSummary(id));
+    }
+
+    // 10. COMPARAISON PÉRIODE PRÉCÉDENTE — variation % crédit, impayé, provision (Feature 2 & 3)
+    @GetMapping("/{id}/compare/{previousId}")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<Map<String, Object>> compareWithPrevious(
+            @PathVariable Long id,
+            @PathVariable Long previousId) {
+        log.info("📈 [GET] /api/validation/{}/compare/{}", id, previousId);
+        return ResponseEntity.ok(validationService.compareWithPrevious(id, previousId));
+    }
+
+    // 11. TEMPLATES DE REJET PRÉDÉFINIS (Feature 5)
+    @GetMapping("/reject-templates")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<List<Map<String, String>>> getRejectTemplates() {
+        log.info("📝 [GET] /api/validation/reject-templates");
+        return ResponseEntity.ok(validationService.getRejectTemplates());
     }
 }

@@ -23,6 +23,7 @@ import { ManagerCalendarComponent } from './manager-calendar/manager-calendar.co
 import { ManagerReportsComponent } from './manager-reports/manager-reports.component';
  import { ManagerHistoryComponent } from './manager-history/manager-history.component';
 import { ManagerPendingComponent } from './manager-pending/manager-pending.component';
+import { ManagerMlDashboardComponent } from './manager-ml-dashboard/manager-ml-dashboard.component';
 
 const routes: Routes = [
 
@@ -113,9 +114,12 @@ const routes: Routes = [
  
       // ✅ Calendrier BCT — US-18
       { path: 'calendar',     component: ManagerCalendarComponent },
+      
  
       // ✅ Rapports & synthèse — US-19
       { path: 'reports',      component: ManagerReportsComponent },
+
+      { path: 'ml', component: ManagerMlDashboardComponent }
     ]
   },
 

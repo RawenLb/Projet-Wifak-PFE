@@ -6,6 +6,60 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+ 
+// ── Interfaces à ajouter ──────────────────────────────────────────
+ 
+export interface FieldMapping {
+  xsdFieldName:  string;
+  xsdFieldPath:  string;
+  xsdType:       string;
+  required:      boolean;
+  source:        'SQL' | 'STATIC' | 'NONE';
+  sqlColumn:     string;
+  staticValue:   string;
+}
+ 
+export interface AnalyzeMappingRequest {
+  declarationTypeId: number;
+  dateDebut?:        string;
+  dateFin?:          string;
+}
+ 
+export interface GenerateWithMappingRequest {
+  declarationTypeId: number;
+  periode:           string;
+  dateDebut:         string;
+  dateFin:           string;
+  mappings:          FieldMapping[];
+}
+ 
+export interface MappingAnalysisResponse {
+  applicable:         boolean;
+  xsdFields:          XsdField[];
+  sqlColumns:         string[];
+  autoMapped:         Record<string, string>;
+  unmappedXsdFields:  string[];
+  unmappedSqlColumns: string[];
+  compatibilityScore: number;
+  summary:            string;
+  declarationTypeCode: string;
+  declarationTypeNom:  string;
+}
+ 
+export interface XsdField {
+  name:          string;
+  path:          string;
+  type:          string;
+  required:      boolean;
+  defaultValue?: string;
+  documentation?: string;
+  maxOccurs:     number;
+}
+ 
+// ── Méthodes à ajouter dans DeclarationService ───────────────────
+ 
+
+
 export interface GenerateDeclarationRequest {
   declarationTypeId: number;
   periode: string;    // "2025-01"
@@ -39,6 +93,7 @@ export interface Declaration {
   commentaireRejet?: string;
 }
 
+
 export interface DeclarationStats {
   total: number;
   generees: number;
@@ -62,6 +117,15 @@ export class DeclarationService {
     return new HttpHeaders({ 'Content-Type': 'application/json' });
   }
 
+
+
+    patchXmlContent(id: number, xmlContent: string): Observable<Declaration> {
+    return this.http.patch<Declaration>(
+      `${this.apiUrl}/${id}/content`,
+      { xmlContent },
+      { headers: this.headers() }
+    );
+  }
   // ─── Génération ───────────────────────────────────────────────
   generateDeclaration(request: GenerateDeclarationRequest): Observable<Declaration> {
     return this.http.post<Declaration>(`${this.apiUrl}/generate`, request, { headers: this.headers() });
@@ -109,4 +173,31 @@ export class DeclarationService {
   deleteDeclaration(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers: this.headers() });
   }
+
+  /**
+ * ✅ Analyse la compatibilité XSD ↔ SQL pour un type de déclaration.
+ * Retourne les champs XSD, les colonnes SQL et le mapping automatique.
+ *
+ * POST /api/declarations/analyze-mapping
+ */
+analyzeMappingHttp(req: AnalyzeMappingRequest): Observable<MappingAnalysisResponse> {
+  return this.http.post<MappingAnalysisResponse>(
+    `${this.apiUrl}/analyze-mapping`,
+    req,
+    { headers: this.headers() }
+  );
+}
+ 
+/**
+ * ✅ Génère une déclaration XML en utilisant le mapping XSD ↔ SQL validé.
+ *
+ * POST /api/declarations/generate-with-mapping
+ */
+generateDeclarationWithMapping(req: GenerateWithMappingRequest): Observable<Declaration> {
+  return this.http.post<Declaration>(
+    `${this.apiUrl}/generate-with-mapping`,
+    req,
+    { headers: this.headers() }
+  );
+}
 }

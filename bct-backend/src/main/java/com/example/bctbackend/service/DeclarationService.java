@@ -2,11 +2,14 @@ package com.example.bctbackend.service;
 
 import com.example.bctbackend.dto.CreateTicketRequest;
 import com.example.bctbackend.dto.GenerateDeclarationRequest;
+import com.example.bctbackend.dto.XsdSqlMappingRequest;
 import com.example.bctbackend.entities.Declaration;
 import com.example.bctbackend.entities.DeclarationType;
 import com.example.bctbackend.feign.JiraIntegrationFeignClient;
 import com.example.bctbackend.repositories.DeclarationRepository;
 import com.example.bctbackend.repositories.DeclarationTypeRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -29,6 +32,7 @@ public class DeclarationService {
     private final CsvGenerationService       csvGenerationService;
     private final TxtGenerationService       txtGenerationService;
     private final JiraIntegrationFeignClient jiraClient;
+    private final ObjectMapper               objectMapper;
 
     public DeclarationService(
             DeclarationRepository declarationRepository,
@@ -36,7 +40,8 @@ public class DeclarationService {
             XmlGenerationService xmlGenerationService,
             CsvGenerationService csvGenerationService,
             TxtGenerationService txtGenerationService,
-            JiraIntegrationFeignClient jiraClient
+            JiraIntegrationFeignClient jiraClient,
+            ObjectMapper objectMapper
     ) {
         this.declarationRepository = declarationRepository;
         this.typeRepository        = typeRepository;
@@ -44,13 +49,20 @@ public class DeclarationService {
         this.csvGenerationService  = csvGenerationService;
         this.txtGenerationService  = txtGenerationService;
         this.jiraClient            = jiraClient;
+        this.objectMapper          = objectMapper;
     }
 
+    // ── Auth helper ────────────────────────────────────────────────
     private String getCurrentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null ? auth.getName() : "system";
     }
 
+    // ── Génération de contenu ──────────────────────────────────────
+
+    /**
+     * Génération SANS mapping (CSV, TXT, XML générique).
+     */
     private String generateFileContent(DeclarationType type,
                                        LocalDate dateDebut, LocalDate dateFin,
                                        String periode) {
@@ -65,12 +77,36 @@ public class DeclarationService {
                         type.getSqlQuery(), dateDebut, dateFin, type.getCode(), periode);
             case XML:
             default:
-                log.info("⚙️ Génération XML via XSD + SQL...");
+                log.info("⚙️ Génération XML générique (sans mapping)...");
                 return xmlGenerationService.generateXmlFromXsdAndSql(
                         type.getXsdContent(), type.getSqlQuery(),
                         dateDebut, dateFin, type.getCode(), periode);
         }
     }
+
+    /**
+     * ✅ NOUVEAU — Génération XML AVEC mapping XSD ↔ SQL.
+     * Les mappings JSON sont sérialisés et stockés dans la déclaration.
+     */
+    private String generateFileContentWithMapping(
+            DeclarationType type,
+            LocalDate dateDebut, LocalDate dateFin,
+            String periode,
+            List<XsdSqlMappingRequest.FieldMapping> mappings
+    ) {
+        if (type.getFormat() != DeclarationType.DeclarationFormat.XML) {
+            // Pour CSV/TXT : mapping non applicable, génération standard
+            return generateFileContent(type, dateDebut, dateFin, periode);
+        }
+        log.info("⚙️ Génération XML avec mapping ({} champs)...", mappings.size());
+        return xmlGenerationService.generateXmlFromMapping(
+                type.getXsdContent(), type.getSqlQuery(),
+                dateDebut, dateFin, type.getCode(), periode,
+                mappings
+        );
+    }
+
+    // ── Résolution extension / nom de fichier ──────────────────────
 
     private String resolveExtension(DeclarationType.DeclarationFormat format) {
         switch (format) {
@@ -86,8 +122,7 @@ public class DeclarationService {
 
     private void validateType(DeclarationType type) {
         if (!type.isActif()) {
-            throw new RuntimeException(
-                    "Ce type de déclaration est inactif : " + type.getCode());
+            throw new RuntimeException("Ce type de déclaration est inactif : " + type.getCode());
         }
         if (type.getSqlQuery() == null || type.getSqlQuery().trim().isEmpty()) {
             throw new RuntimeException(
@@ -97,28 +132,103 @@ public class DeclarationService {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // GENERATE — @Transactional isolé : ne fait QUE sauvegarder
+    // GENERATE — sans mapping (CSV, TXT, XML générique)
     // ══════════════════════════════════════════════════════════════
 
     @Transactional
-    public Declaration generateAndSave(
-            Long typeId,
-            String periode,
-            LocalDate dateDebut,
-            LocalDate dateFin
-    ) {
-        log.info("🚀 Début génération — Type: {}, Période: {}", typeId, periode);
+    public Declaration generateAndSave(Long typeId, String periode,
+                                       LocalDate dateDebut, LocalDate dateFin) {
+        log.info("🚀 Génération sans mapping — Type: {}, Période: {}", typeId, periode);
 
         DeclarationType type = typeRepository.findById(typeId)
                 .orElseThrow(() -> new RuntimeException("Type introuvable: " + typeId));
-
-        log.info("📋 Type: {} ({}) — Format: {}", type.getNom(), type.getCode(), type.getFormat());
         validateType(type);
 
         String fileContent   = generateFileContent(type, dateDebut, dateFin, periode);
         String fileExtension = resolveExtension(type.getFormat());
         String filename      = buildFilename(type.getCode(), periode, fileExtension);
 
+        Declaration declaration = buildDeclaration(type, periode, dateDebut, dateFin, fileContent, filename);
+        // Pas de mapping → mappingJson = null
+        declaration.setMappingJson(null);
+
+        Declaration saved = declarationRepository.save(declaration);
+        log.info("✅ Déclaration sauvegardée — ID: {}, Fichier: {}", saved.getId(), filename);
+        return saved;
+    }
+
+    @Transactional
+    public Declaration patchContent(Long id, String newContent) {
+        log.info("✏️ patchContent — ID: {}, taille: {} chars", id, newContent.length());
+
+        Declaration declaration = findById(id);
+
+        if (declaration.getStatut() != Declaration.DeclarationStatut.GENEREE &&
+                declaration.getStatut() != Declaration.DeclarationStatut.REJETEE) {
+            throw new RuntimeException(
+                    "Impossible de modifier une déclaration au statut « " +
+                            declaration.getStatut() + " »");
+        }
+
+        declaration.setContenuFichier(newContent);
+        declaration.setDateGeneration(java.time.LocalDateTime.now());
+        declaration.setGenerePar(getCurrentUsername());
+        // Remettre en GENEREE après correction
+        declaration.setStatut(Declaration.DeclarationStatut.GENEREE);
+        declaration.setCommentaireRejet(null);
+        declaration.setValidePar(null);
+        declaration.setDateValidation(null);
+
+        Declaration saved = declarationRepository.save(declaration);
+        log.info("✅ Contenu patché — ID: {}", saved.getId());
+        return saved;
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    // ✅ GENERATE WITH MAPPING — XML avec mapping XSD ↔ SQL
+    // ══════════════════════════════════════════════════════════════
+
+    @Transactional
+    public Declaration generateAndSaveWithMapping(
+            Long typeId,
+            String periode,
+            LocalDate dateDebut,
+            LocalDate dateFin,
+            List<XsdSqlMappingRequest.FieldMapping> mappings
+    ) {
+        log.info("🚀 Génération avec mapping — Type: {}, Période: {}, {} mappings",
+                typeId, periode, mappings.size());
+
+        DeclarationType type = typeRepository.findById(typeId)
+                .orElseThrow(() -> new RuntimeException("Type introuvable: " + typeId));
+        validateType(type);
+
+        String fileContent   = generateFileContentWithMapping(type, dateDebut, dateFin, periode, mappings);
+        String fileExtension = resolveExtension(type.getFormat());
+        String filename      = buildFilename(type.getCode(), periode, fileExtension);
+
+        Declaration declaration = buildDeclaration(type, periode, dateDebut, dateFin, fileContent, filename);
+
+        // ✅ Sérialiser et stocker le mapping JSON pour traçabilité / ré-génération
+        try {
+            String mappingJson = objectMapper.writeValueAsString(mappings);
+            declaration.setMappingJson(mappingJson);
+            log.info("📋 Mapping JSON stocké ({} caractères)", mappingJson.length());
+        } catch (Exception e) {
+            log.warn("⚠️ Impossible de sérialiser le mapping: {}", e.getMessage());
+        }
+
+        Declaration saved = declarationRepository.save(declaration);
+        log.info("✅ Déclaration avec mapping sauvegardée — ID: {}, Fichier: {}", saved.getId(), filename);
+        return saved;
+    }
+
+    // ── Builder commun ─────────────────────────────────────────────
+
+    private Declaration buildDeclaration(DeclarationType type, String periode,
+                                         LocalDate dateDebut, LocalDate dateFin,
+                                         String fileContent, String filename) {
         Declaration declaration = new Declaration();
         declaration.setDeclarationType(type);
         declaration.setPeriode(periode);
@@ -131,23 +241,19 @@ public class DeclarationService {
         declaration.setSqlQueryUsed(type.getSqlQuery());
         declaration.setXsdFileNameUsed(type.getXsdFileName());
         declaration.setNomFichier(filename);
-
-        Declaration saved = declarationRepository.save(declaration);
-        log.info("✅ Déclaration sauvegardée — ID: {}, Fichier: {}", saved.getId(), filename);
-        return saved;
+        return declaration;
     }
 
     // ══════════════════════════════════════════════════════════════
-    // NOTIFY JIRA — appelé APRÈS commit, hors transaction
+    // NOTIFY JIRA
     // ══════════════════════════════════════════════════════════════
 
     public void notifyJiraTicketCreation(Long declarationId, String username) {
         try {
             jiraClient.createTicket(new CreateTicketRequest(declarationId, username));
-            log.info("🎫 Ticket Jira créé en TO DO pour déclaration {}", declarationId);
+            log.info("🎫 Ticket Jira créé pour déclaration {}", declarationId);
         } catch (Exception e) {
-            log.warn("⚠️ Jira non disponible — ticket non créé pour déclaration {} : {}",
-                    declarationId, e.getMessage());
+            log.warn("⚠️ Jira non disponible — ticket non créé: {}", e.getMessage());
         }
     }
 
@@ -187,17 +293,34 @@ public class DeclarationService {
                 declaration.getStatut() != Declaration.DeclarationStatut.REJETEE) {
             throw new RuntimeException(
                     "Impossible de modifier une déclaration au statut « " +
-                            declaration.getStatut() +
-                            " ». Seules les déclarations GENEREE ou REJETEE sont modifiables.");
+                            declaration.getStatut() + " ». Seules GENEREE ou REJETEE sont modifiables.");
         }
 
         DeclarationType type = typeRepository.findById(request.getDeclarationTypeId())
-                .orElseThrow(() -> new RuntimeException(
-                        "Type introuvable: " + request.getDeclarationTypeId()));
+                .orElseThrow(() -> new RuntimeException("Type introuvable: " + request.getDeclarationTypeId()));
         validateType(type);
 
-        String fileContent   = generateFileContent(type,
-                request.getDateDebut(), request.getDateFin(), request.getPeriode());
+        // ✅ Si la déclaration avait un mapping, le réutiliser pour la ré-génération
+        String fileContent;
+        if (declaration.getMappingJson() != null && !declaration.getMappingJson().isEmpty()
+                && type.getFormat() == DeclarationType.DeclarationFormat.XML) {
+            try {
+                List<XsdSqlMappingRequest.FieldMapping> mappings = objectMapper.readValue(
+                        declaration.getMappingJson(),
+                        new TypeReference<List<XsdSqlMappingRequest.FieldMapping>>() {}
+                );
+                log.info("🔄 Ré-utilisation du mapping existant ({} entrées)", mappings.size());
+                fileContent = generateFileContentWithMapping(
+                        type, request.getDateDebut(), request.getDateFin(),
+                        request.getPeriode(), mappings);
+            } catch (Exception e) {
+                log.warn("⚠️ Impossible de désérialiser le mapping, génération générique: {}", e.getMessage());
+                fileContent = generateFileContent(type, request.getDateDebut(), request.getDateFin(), request.getPeriode());
+            }
+        } else {
+            fileContent = generateFileContent(type, request.getDateDebut(), request.getDateFin(), request.getPeriode());
+        }
+
         String fileExtension = resolveExtension(type.getFormat());
         String filename      = buildFilename(type.getCode(), request.getPeriode(), fileExtension);
 
@@ -217,7 +340,7 @@ public class DeclarationService {
         declaration.setDateValidation(null);
 
         Declaration saved = declarationRepository.save(declaration);
-        log.info("✅ Déclaration mise à jour — ID: {}, Fichier: {}", saved.getId(), filename);
+        log.info("✅ Déclaration mise à jour — ID: {}", saved.getId());
         return saved;
     }
 
@@ -228,16 +351,14 @@ public class DeclarationService {
     @Transactional
     public void deleteDeclaration(Long id) {
         log.info("🗑️ deleteDeclaration — ID: {}", id);
-
         Declaration declaration = findById(id);
 
         if (declaration.getStatut() == Declaration.DeclarationStatut.EN_VALIDATION ||
-                declaration.getStatut() == Declaration.DeclarationStatut.VALIDEE       ||
+                declaration.getStatut() == Declaration.DeclarationStatut.VALIDEE ||
                 declaration.getStatut() == Declaration.DeclarationStatut.ENVOYEE) {
             throw new RuntimeException(
                     "Impossible de supprimer une déclaration au statut « " +
-                            declaration.getStatut() +
-                            " ». Seules les déclarations GENEREE ou REJETEE peuvent être supprimées.");
+                            declaration.getStatut() + " ».");
         }
 
         declarationRepository.delete(declaration);
@@ -245,23 +366,20 @@ public class DeclarationService {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // UPDATE STATUT — appelé par validation-service via Feign
+    // UPDATE STATUT
     // ══════════════════════════════════════════════════════════════
 
     @Transactional
     public Declaration updateStatut(Long id, String nouveauStatut,
                                     String commentaire, String validePar) {
         log.info("🔄 updateStatut — ID: {}, nouveauStatut: {}", id, nouveauStatut);
-
         Declaration declaration = findById(id);
 
         Declaration.DeclarationStatut statut;
         try {
             statut = Declaration.DeclarationStatut.valueOf(nouveauStatut.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException(
-                    "Statut invalide : « " + nouveauStatut +
-                            " ». Valeurs acceptées : GENEREE, EN_VALIDATION, VALIDEE, REJETEE, ENVOYEE");
+            throw new RuntimeException("Statut invalide : « " + nouveauStatut + " »");
         }
 
         declaration.setStatut(statut);
@@ -273,26 +391,20 @@ public class DeclarationService {
             case VALIDEE:
                 declaration.setDateValidation(LocalDateTime.now());
                 declaration.setValidePar(validePar != null ? validePar : getCurrentUsername());
-                log.info("✅ Déclaration {} validée par {}", id, declaration.getValidePar());
                 break;
             case REJETEE:
                 if (commentaire == null || commentaire.trim().isEmpty()) {
-                    throw new RuntimeException(
-                            "Un commentaire est obligatoire pour rejeter une déclaration.");
+                    throw new RuntimeException("Un commentaire est obligatoire pour rejeter.");
                 }
                 declaration.setCommentaireRejet(commentaire.trim());
                 declaration.setValidePar(validePar != null ? validePar : getCurrentUsername());
                 declaration.setDateValidation(LocalDateTime.now());
-                log.info("❌ Déclaration {} rejetée par {} — motif: {}",
-                        id, declaration.getValidePar(), commentaire);
                 break;
             case ENVOYEE:
                 declaration.setDateEnvoi(LocalDateTime.now());
-                log.info("📨 Déclaration {} marquée ENVOYEE", id);
                 break;
             default:
-                log.warn("⚠️ updateStatut — statut inattendu: {}", statut);
-                break;
+                log.warn("⚠️ Statut inattendu: {}", statut);
         }
 
         return declarationRepository.save(declaration);

@@ -135,4 +135,8 @@ export class DeclarationTypeService {
       { headers: this.getHeaders() }
     );
   }
+
+    getById(id: number): Observable<DeclarationType> {
+    return this.http.get<DeclarationType>(`${this.apiUrl}/${id}`);
+  }
 }

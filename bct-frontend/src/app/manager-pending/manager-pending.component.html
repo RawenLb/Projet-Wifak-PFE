@@ -1,5 +1,4 @@
-<!-- src/app/manager-pending/manager-pending.component.html -->
-<!-- US-08 — Page de validation dédiée — Layout Cartes -->
+<!-- manager-pending.component.html — US-08 + Features 1-5 -->
 
 <div class="pnd-wrapper">
 
@@ -43,10 +42,7 @@
           <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
         </svg>
       </div>
-      <div>
-        <div class="kpi-val">{{ stats.enValidation }}</div>
-        <div class="kpi-lbl">En attente</div>
-      </div>
+      <div><div class="kpi-val">{{ stats.enValidation }}</div><div class="kpi-lbl">En attente</div></div>
       <div class="kpi-urgency" *ngIf="stats.enValidation > 0">⚡ Urgent</div>
     </div>
     <div class="kpi-item kpi-total">
@@ -56,33 +52,21 @@
           <polyline points="14 2 14 8 20 8"/>
         </svg>
       </div>
-      <div>
-        <div class="kpi-val">{{ stats.total }}</div>
-        <div class="kpi-lbl">Total décl.</div>
-      </div>
+      <div><div class="kpi-val">{{ stats.total }}</div><div class="kpi-lbl">Total décl.</div></div>
     </div>
     <div class="kpi-item kpi-validees">
       <div class="kpi-icon-wrap">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
-      <div>
-        <div class="kpi-val">{{ stats.validees }}</div>
-        <div class="kpi-lbl">Validées</div>
-      </div>
+      <div><div class="kpi-val">{{ stats.validees }}</div><div class="kpi-lbl">Validées</div></div>
     </div>
     <div class="kpi-item kpi-rejetees">
       <div class="kpi-icon-wrap">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
         </svg>
       </div>
-      <div>
-        <div class="kpi-val">{{ stats.rejetees }}</div>
-        <div class="kpi-lbl">Rejetées</div>
-      </div>
+      <div><div class="kpi-val">{{ stats.rejetees }}</div><div class="kpi-lbl">Rejetées</div></div>
     </div>
     <div class="kpi-item kpi-envoyees">
       <div class="kpi-icon-wrap">
@@ -90,16 +74,14 @@
           <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
         </svg>
       </div>
-      <div>
-        <div class="kpi-val">{{ stats.envoyees }}</div>
-        <div class="kpi-lbl">Envoyées BCT</div>
-      </div>
+      <div><div class="kpi-val">{{ stats.envoyees }}</div><div class="kpi-lbl">Envoyées BCT</div></div>
     </div>
   </div>
 
   <!-- ── TOOLBAR ── -->
   <div class="toolbar">
     <div class="toolbar-left">
+      <!-- Recherche -->
       <div class="search-wrap">
         <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -114,22 +96,27 @@
         <option *ngFor="let t of uniqueTypes" [value]="t">{{ t }}</option>
       </select>
 
-      <!-- Tri rapide -->
+      <!-- Feature 4 : Filtres priorité -->
+      <div class="priority-pills">
+        <button class="priority-pill" [class.active]="priorityFilter === 'ALL'"         (click)="setPriorityFilter('ALL')">Tous</button>
+        <button class="priority-pill pill-rouge" [class.active]="priorityFilter === 'RISQUE_ELEVE'" (click)="setPriorityFilter('RISQUE_ELEVE')">🔴 Risque élevé</button>
+        <button class="priority-pill pill-amber" [class.active]="priorityFilter === 'ANOMALIE'"     (click)="setPriorityFilter('ANOMALIE')">⚠️ Anomalies</button>
+      </div>
+
+      <!-- Tri -->
       <div class="sort-pills">
-        <button class="sort-pill" [class.active]="sortField === 'id'"     (click)="toggleSort('id')">ID {{ getSortIcon('id') }}</button>
-        <button class="sort-pill" [class.active]="sortField === 'date'"   (click)="toggleSort('date')">Date {{ getSortIcon('date') }}</button>
-        <button class="sort-pill" [class.active]="sortField === 'type'"   (click)="toggleSort('type')">Type {{ getSortIcon('type') }}</button>
-        <button class="sort-pill" [class.active]="sortField === 'periode'"(click)="toggleSort('periode')">Période {{ getSortIcon('periode') }}</button>
+        <button class="sort-pill" [class.active]="sortField === 'risque'"  (click)="toggleSort('risque')">Risque {{ getSortIcon('risque') }}</button>
+        <button class="sort-pill" [class.active]="sortField === 'id'"      (click)="toggleSort('id')">ID {{ getSortIcon('id') }}</button>
+        <button class="sort-pill" [class.active]="sortField === 'date'"    (click)="toggleSort('date')">Date {{ getSortIcon('date') }}</button>
+        <button class="sort-pill" [class.active]="sortField === 'periode'" (click)="toggleSort('periode')">Période {{ getSortIcon('periode') }}</button>
       </div>
     </div>
 
-    <!-- Bulk actions -->
+    <!-- Bulk -->
     <div class="bulk-actions" *ngIf="selectedIds.size > 0">
       <span class="bulk-count">{{ selectedIds.size }} sélectionnée(s)</span>
       <button class="btn-bulk-validate" [disabled]="bulkLoading" (click)="validerSelection()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
         {{ bulkLoading ? 'En cours...' : 'Valider la sélection' }}
       </button>
     </div>
@@ -144,61 +131,74 @@
   <!-- ── EMPTY ── -->
   <div class="empty-state" *ngIf="!loading && filteredPending.length === 0">
     <div class="empty-checkmark">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <polyline points="20 6 9 17 4 12"/>
-      </svg>
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
     <h3>File vide</h3>
-    <p *ngIf="searchQuery || filtreType">Aucune déclaration ne correspond à vos critères.</p>
-    <p *ngIf="!searchQuery && !filtreType">Toutes les déclarations ont été traitées. Excellent travail !</p>
-    <button class="btn-reset-filters" *ngIf="searchQuery || filtreType"
-            (click)="searchQuery=''; filtreType=''">
+    <p *ngIf="searchQuery || filtreType || priorityFilter !== 'ALL'">Aucune déclaration ne correspond à vos critères.</p>
+    <p *ngIf="!searchQuery && !filtreType && priorityFilter === 'ALL'">Toutes les déclarations ont été traitées. Excellent travail !</p>
+    <button class="btn-reset-filters" *ngIf="searchQuery || filtreType || priorityFilter !== 'ALL'"
+            (click)="searchQuery=''; filtreType=''; priorityFilter='ALL'">
       Effacer les filtres
     </button>
   </div>
 
   <!-- ── GRILLE DE CARTES ── -->
   <div class="cards-grid" *ngIf="!loading && filteredPending.length > 0">
-
     <div class="decl-card"
          *ngFor="let d of filteredPending; trackBy: trackById"
-         [class.selected]="selectedIds.has(d.id!)">
+         [class.selected]="selectedIds.has(d.id!)"
+         [class.card-risque-eleve]="summaryCache[d.id!]?.riskLevel === 'ELEVE'"
+         [class.card-risque-moyen]="summaryCache[d.id!]?.riskLevel === 'MOYEN'">
 
-      <!-- Barre de couleur top (urgence) -->
-      <div class="card-accent" [class.accent-urgent]="true"></div>
+      <!-- Accent coloré (risque) -->
+      <div class="card-accent"
+           [class.accent-rouge]="summaryCache[d.id!]?.riskLevel === 'ELEVE'"
+           [class.accent-amber]="summaryCache[d.id!]?.riskLevel === 'MOYEN'"
+           [class.accent-vert]="summaryCache[d.id!]?.riskLevel === 'FAIBLE'"
+           [class.accent-default]="!summaryCache[d.id!]"></div>
 
-      <!-- En-tête carte -->
+      <!-- En-tête -->
       <div class="card-head">
         <div class="card-head-left">
-          <!-- Checkbox -->
           <label class="checkbox-wrap">
-            <input type="checkbox" [checked]="selectedIds.has(d.id!)"
-                   (change)="toggleSelect(d.id!)">
+            <input type="checkbox" [checked]="selectedIds.has(d.id!)" (change)="toggleSelect(d.id!)">
             <span class="checkmark"></span>
           </label>
           <span class="card-id">#{{ d.id }}</span>
         </div>
         <div class="card-head-right">
-          <span class="badge-urgency">⚡ Urgent</span>
+          <!-- Feature 3 : Indicateur visuel de risque -->
+          <ng-container *ngIf="summaryCache[d.id!] as summary; else loadingBadge">
+            <span class="risk-badge"
+                  [class.risk-rouge]="summary.riskLevel === 'ELEVE'"
+                  [class.risk-amber]="summary.riskLevel === 'MOYEN'"
+                  [class.risk-vert]="summary.riskLevel === 'FAIBLE'">
+              {{ summary.riskLevel === 'ELEVE' ? '🔴' : summary.riskLevel === 'MOYEN' ? '🟡' : '🟢' }}
+              {{ summary.riskScore }}/100
+            </span>
+            <span class="anomaly-count" *ngIf="summary.nombreAnomaliesCritiques > 0">
+              ⚠ {{ summary.nombreAnomaliesCritiques }} critique(s)
+            </span>
+          </ng-container>
+          <ng-template #loadingBadge>
+            <span class="spinner-xs" *ngIf="summaryLoading[d.id!]"></span>
+          </ng-template>
           <span class="card-date">{{ d.dateGeneration | date:'dd/MM/yy HH:mm' }}</span>
         </div>
       </div>
 
-      <!-- Type déclaration -->
+      <!-- Type -->
       <div class="card-type">
         <span class="type-code">{{ d.declarationType?.code }}</span>
         <span class="type-nom">{{ d.declarationType?.nom }}</span>
       </div>
 
-      <!-- Méta infos en grille 2×2 -->
+      <!-- Méta 2×2 -->
       <div class="card-meta">
         <div class="meta-item">
           <span class="meta-key">Période</span>
-          <span class="meta-val">
-            <span class="periode-chip">{{ d.periode }}</span>
-          </span>
+          <span class="meta-val"><span class="periode-chip">{{ d.periode }}</span></span>
         </div>
-
         <div class="meta-item">
           <span class="meta-key">Généré par</span>
           <span class="meta-val">
@@ -206,87 +206,79 @@
               <div class="agent-avatar">{{ d.generePar.charAt(0).toUpperCase() }}</div>
               <span>{{ d.generePar }}</span>
             </div>
-            <span *ngIf="!d.generePar" class="na">—</span>
           </span>
         </div>
-
-        <div class="meta-item">
-          <span class="meta-key">Ticket Jira</span>
-          <span class="meta-val">
-            <ng-container *ngIf="getJiraTicket(d.id!) as ticket">
-              <a class="jira-badge"
-                 [ngClass]="jiraService.getJiraStatusClass(ticket.jiraStatus)"
-                 [href]="ticket.jiraTicketUrl" target="_blank" rel="noopener noreferrer">
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
-                  <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
-                </svg>
-                {{ ticket.jiraTicketKey }}
-              </a>
-            </ng-container>
-            <span class="spinner-xs" *ngIf="jiraLoading[d.id!]"></span>
-            <span class="na" *ngIf="!getJiraTicket(d.id!) && !jiraLoading[d.id!]">—</span>
+        <!-- Feature 3 : Montants clés inline si summary disponible -->
+        <div class="meta-item" *ngIf="summaryCache[d.id!] as s">
+          <span class="meta-key">Total Crédit</span>
+          <span class="meta-val mono-val">{{ formatMontant(s.totalMontantCredit) }}</span>
+        </div>
+        <div class="meta-item" *ngIf="summaryCache[d.id!] as s">
+          <span class="meta-key">Taux impayé</span>
+          <span class="meta-val"
+                [class.taux-danger]="s.tauxImpayeGlobal > 30"
+                [class.taux-warning]="s.tauxImpayeGlobal > 10 && s.tauxImpayeGlobal <= 30">
+            {{ s.tauxImpayeGlobal.toFixed(1) }}%
           </span>
         </div>
-
-        <div class="meta-item">
-          <span class="meta-key">Fichier</span>
-          <span class="meta-val">
-            <div class="file-row" *ngIf="d.nomFichier">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--text-3)">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
-              <span class="file-name" [title]="d.nomFichier">{{ d.nomFichier }}</span>
-              <button class="btn-icon-xs" (click)="download(d)" title="Télécharger">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-              </button>
-            </div>
-            <span *ngIf="!d.nomFichier" class="na">—</span>
-          </span>
-        </div>
+        <!-- Ticket Jira si pas de summary -->
+        <ng-container *ngIf="!summaryCache[d.id!]">
+          <div class="meta-item">
+            <span class="meta-key">Ticket Jira</span>
+            <span class="meta-val">
+              <ng-container *ngIf="getJiraTicket(d.id!) as ticket">
+                <a class="jira-badge" [ngClass]="jiraService.getJiraStatusClass(ticket.jiraStatus)"
+                   [href]="ticket.jiraTicketUrl" target="_blank" rel="noopener noreferrer">
+                  {{ ticket.jiraTicketKey }}
+                </a>
+              </ng-container>
+              <span class="spinner-xs" *ngIf="jiraLoading[d.id!]"></span>
+              <span class="na" *ngIf="!getJiraTicket(d.id!) && !jiraLoading[d.id!]">—</span>
+            </span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-key">Fichier</span>
+            <span class="meta-val">
+              <div class="file-row" *ngIf="d.nomFichier">
+                <span class="file-name" [title]="d.nomFichier">{{ d.nomFichier }}</span>
+                <button class="btn-icon-xs" (click)="download(d)">⬇</button>
+              </div>
+              <span *ngIf="!d.nomFichier" class="na">—</span>
+            </span>
+          </div>
+        </ng-container>
       </div>
 
-      <!-- Motif rejet précédent (si applicable) -->
+      <!-- Motif rejet précédent -->
       <div class="card-rejet" *ngIf="d.commentaireRejet">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
         </svg>
         <span>{{ d.commentaireRejet }}</span>
       </div>
 
       <!-- Pied de carte : actions -->
       <div class="card-foot">
-        <button class="btn-consult" [disabled]="actionEnCours[d.id!]"
-                (click)="ouvrirConsultation(d)">
+        <!-- Feature 1 : Quick Review Panel -->
+        <button class="btn-review" [disabled]="actionEnCours[d.id!]" (click)="ouvrirReviewPanel(d)" title="Résumé IA + validation rapide">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="21" x2="9" y2="9"/>
           </svg>
-          Consulter
+          Réviser
         </button>
 
-        <!-- Bouton AI -->
-        <button class="btn-ai" [disabled]="actionEnCours[d.id!]"
-                (click)="lancerAiAnalysis(d)" title="Analyse IA Ollama">
+        <!-- Analyse Mistral -->
+        <button class="btn-ai" [disabled]="actionEnCours[d.id!]" (click)="lancerAiAnalysis(d)" title="Analyse Mistral complète">
           🤖 IA
         </button>
 
-        <button class="btn-validate" [disabled]="actionEnCours[d.id!]"
-                (click)="valider(d)">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
+        <button class="btn-validate" [disabled]="actionEnCours[d.id!]" (click)="valider(d)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           {{ actionEnCours[d.id!] ? '...' : 'Valider' }}
         </button>
 
-        <button class="btn-reject" [disabled]="actionEnCours[d.id!]"
-                (click)="ouvrirRejet(d)">
+        <button class="btn-reject" [disabled]="actionEnCours[d.id!]" (click)="ouvrirRejet(d)">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
@@ -300,65 +292,287 @@
               <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
             </svg>
           </button>
-          <button class="btn-icon btn-jira" *ngIf="getJiraTicket(d.id!)"
-                  title="Voir dans Jira" (click)="ouvrirJira(d)">
+          <button class="btn-icon btn-jira" *ngIf="getJiraTicket(d.id!)" title="Voir dans Jira" (click)="ouvrirJira(d)">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
               <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
               <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
             </svg>
           </button>
+          <button class="btn-icon-xs" title="Télécharger" (click)="download(d)">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
         </div>
       </div>
-
     </div>
   </div>
-
 </div>
 
-<!-- ════════════════════════════════
-     MODAL AI ANALYSIS
-════════════════════════════════ -->
-<div class="modal-backdrop" *ngIf="showAiPanel" (click)="fermerAiPanel()">
-  <div class="modal-card modal-wide modal-ai" (click)="$event.stopPropagation()">
+<!-- ════════════════════════════════════════════════════════════
+     FEATURE 1 & 2 : QUICK REVIEW PANEL (côte à côte)
+════════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="showReviewPanel" (click)="fermerReviewPanel()">
+  <div class="review-panel" (click)="$event.stopPropagation()">
 
-    <div class="modal-head">
-      <div class="modal-icon modal-icon--ai">🤖</div>
-      <h3>Analyse IA — Déclaration #{{ aiDeclarationId }}</h3>
-      <button class="modal-x" (click)="fermerAiPanel()">
+    <!-- Header panel -->
+    <div class="review-header">
+      <div class="review-header-left">
+        <div class="modal-icon modal-icon--review">📋</div>
+        <div>
+          <h3>Révision rapide — Déclaration #{{ reviewDeclaration?.id }}</h3>
+          <p class="review-subtitle">{{ reviewDeclaration?.declarationType?.nom }} · {{ reviewDeclaration?.periode }}</p>
+        </div>
+      </div>
+      <button class="modal-x" (click)="fermerReviewPanel()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
       </button>
     </div>
 
-    <div class="modal-body">
+    <!-- Tabs -->
+    <div class="review-tabs">
+      <button class="review-tab" [class.active]="reviewTab === 'summary'"    (click)="reviewTab = 'summary'">📊 Résumé</button>
+      <button class="review-tab" [class.active]="reviewTab === 'anomalies'"  (click)="reviewTab = 'anomalies'">
+        ⚠️ Anomalies
+        <span class="tab-badge" *ngIf="reviewSummary && (reviewSummary.nombreAnomaliesCritiques + reviewSummary.nombreAnomaliesMajeures) > 0">
+          {{ reviewSummary.nombreAnomaliesCritiques + reviewSummary.nombreAnomaliesMajeures }}
+        </span>
+      </button>
+      <button class="review-tab" [class.active]="reviewTab === 'history'"    (click)="reviewTab = 'history'">🕒 Historique</button>
+    </div>
 
-      <!-- ✅ Loader animé avec étapes et timer -->
+    <div class="review-body">
+      <!-- Colonne gauche : contenu de l'onglet -->
+      <div class="review-left">
+
+        <!-- Loader -->
+        <div class="review-loader" *ngIf="reviewSummaryLoading">
+          <div class="spinner-ring"></div><span>Analyse du fichier...</span>
+        </div>
+
+        <!-- ── TAB: RÉSUMÉ ── -->
+        <ng-container *ngIf="!reviewSummaryLoading && reviewTab === 'summary' && reviewSummary as s">
+          <!-- Score de risque -->
+          <div class="summary-risk-row">
+            <div class="risk-circle" [ngClass]="getSummaryScoreColor(s.riskScore)">
+              <span class="risk-score-val">{{ s.riskScore }}</span>
+              <span class="risk-score-lbl">/100</span>
+            </div>
+            <div class="risk-info">
+              <div class="risk-level-badge"
+                   [class.badge-rouge]="s.riskLevel === 'ELEVE'"
+                   [class.badge-amber]="s.riskLevel === 'MOYEN'"
+                   [class.badge-vert]="s.riskLevel === 'FAIBLE'">
+                {{ s.riskLevel === 'ELEVE' ? '🔴 Risque Élevé' : s.riskLevel === 'MOYEN' ? '🟡 Risque Moyen' : '🟢 Risque Faible' }}
+              </div>
+              <div class="risk-meta">
+                <span>{{ s.nombreLignes }} lignes</span>
+                <span>·</span>
+                <span>{{ s.nombreAnomaliesCritiques }} critique(s)</span>
+                <span>·</span>
+                <span>{{ s.nombreAnomaliesMajeures }} majeure(s)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Montants clés -->
+          <div class="section-title">Indicateurs financiers</div>
+          <div class="kpi-grid-3">
+            <div class="summary-kpi">
+              <span class="summary-kpi-lbl">Montant Crédit</span>
+              <span class="summary-kpi-val">{{ formatMontant(s.totalMontantCredit) }} TND</span>
+            </div>
+            <div class="summary-kpi">
+              <span class="summary-kpi-lbl">Montant Impayé</span>
+              <span class="summary-kpi-val" [class.val-danger]="s.tauxImpayeGlobal > 30">
+                {{ formatMontant(s.totalMontantImpaye) }} TND
+              </span>
+            </div>
+            <div class="summary-kpi">
+              <span class="summary-kpi-lbl">Provision</span>
+              <span class="summary-kpi-val">{{ formatMontant(s.totalProvision) }} TND</span>
+            </div>
+          </div>
+
+          <!-- Taux impayé -->
+          <div class="taux-row">
+            <span class="taux-label">Taux d'impayé global</span>
+            <div class="taux-bar-wrap">
+              <div class="taux-bar" [style.width.%]="s.tauxImpayeGlobal"
+                   [class.taux-bar-rouge]="s.tauxImpayeGlobal > 30"
+                   [class.taux-bar-amber]="s.tauxImpayeGlobal > 10 && s.tauxImpayeGlobal <= 30"
+                   [class.taux-bar-vert]="s.tauxImpayeGlobal <= 10"></div>
+            </div>
+            <span class="taux-pct" [class.taux-danger]="s.tauxImpayeGlobal > 30">{{ s.tauxImpayeGlobal.toFixed(1) }}%</span>
+          </div>
+
+          <!-- Répartition classes de risque -->
+          <div class="section-title" style="margin-top:12px">Répartition par classe de risque</div>
+          <div class="classes-list">
+            <div class="classe-row" *ngFor="let entry of s.repartitionClasses | keyvalue">
+              <span class="classe-label" [style.color]="getClasseColor(entry.key)">Classe {{ entry.key }}</span>
+              <div class="classe-bar-wrap">
+                <div class="classe-bar"
+                     [style.width.%]="getClasseBarWidth(+entry.value, s.nombreLignes)"
+                     [style.background]="getClasseColor(entry.key)"></div>
+              </div>
+              <span class="classe-count">{{ entry.value }} ({{ getClasseBarWidth(+entry.value, s.nombreLignes) }}%)</span>
+            </div>
+            <div class="na" *ngIf="!s.repartitionClasses || (s.repartitionClasses | keyvalue).length === 0">Aucune classe détectée</div>
+          </div>
+
+          <!-- AI Mistral inline -->
+          <div class="section-title" style="margin-top:14px">Analyse Mistral</div>
+          <div class="ai-inline-loader" *ngIf="reviewAiLoading">
+            <div class="spinner-ring"></div><span>Analyse en cours...</span>
+          </div>
+          <div class="ai-inline-result" *ngIf="reviewAiResult && !reviewAiLoading">
+            <div class="ai-score-mini" [ngClass]="getSummaryScoreColor(reviewAiResult.score)">
+              {{ reviewAiResult.score }}/100
+            </div>
+            <div class="ai-reco-mini" [ngClass]="getRecoClass()">{{ getRecoLabel() }}</div>
+          </div>
+          <button class="btn-ai-launch" *ngIf="!reviewAiResult && !reviewAiLoading" (click)="lancerAiDepuisReview()">
+            🤖 Lancer l'analyse Mistral
+          </button>
+        </ng-container>
+
+        <!-- ── TAB: ANOMALIES ── -->
+        <ng-container *ngIf="!reviewSummaryLoading && reviewTab === 'anomalies'">
+          <div class="no-anomalies" *ngIf="reviewSummary && reviewSummary.anomaliesDetaillees.length === 0">
+            <span class="check-big">✅</span>
+            <p>Aucune anomalie détectée dans ce fichier.</p>
+          </div>
+          <div class="anomaly-list-full" *ngIf="reviewSummary && reviewSummary.anomaliesDetaillees.length > 0">
+            <div class="anomaly-item-full" *ngFor="let a of reviewSummary.anomaliesDetaillees"
+                 [class.sev-critique]="a.severity === 'CRITIQUE'"
+                 [class.sev-majeure]="a.severity === 'MAJEURE'">
+              <div class="anomaly-sev-badge">{{ a.severity }}</div>
+              <div class="anomaly-body">
+                <div class="anomaly-title">{{ a.type.replace('_', ' ') }}</div>
+                <div class="anomaly-detail">{{ a.detail }}</div>
+                <div class="anomaly-meta">Ligne {{ a.ligne }} · Client {{ a.client }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="review-loader" *ngIf="reviewSummaryLoading">
+            <div class="spinner-ring"></div>
+          </div>
+        </ng-container>
+
+        <!-- ── TAB: HISTORIQUE ── -->
+        <ng-container *ngIf="reviewTab === 'history'">
+          <div class="empty-logs" *ngIf="reviewLogs.length === 0">Aucun événement.</div>
+          <div class="mini-timeline" *ngIf="reviewLogs.length > 0">
+            <div class="mtl-item" *ngFor="let h of reviewLogs; let last = last">
+              <div class="mtl-spine" [class.last]="last"></div>
+              <div class="mtl-dot" [ngClass]="getActionClass(h.action)"></div>
+              <div class="mtl-body">
+                <div class="mtl-row">
+                  <span class="mtl-action" [ngClass]="getActionClass(h.action)">{{ getActionLabel(h.action) }}</span>
+                  <span class="mtl-date">{{ h.dateAction | date:'dd/MM/yy HH:mm' }}</span>
+                </div>
+                <div class="mtl-from-to">
+                  <span class="mtl-state">{{ h.statutAvant }}</span> → <span class="mtl-state">{{ h.statutApres }}</span>
+                </div>
+                <div class="mtl-user" *ngIf="h.effectuePar">{{ h.effectuePar }}</div>
+                <div class="mtl-comment" *ngIf="h.commentaire">{{ h.commentaire }}</div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- Colonne droite : Actions rapides -->
+      <div class="review-right">
+        <div class="review-action-title">Décision</div>
+
+        <!-- Infos déclaration -->
+        <div class="review-info-block">
+          <div class="review-info-row"><span>ID</span><span class="mono">#{{ reviewDeclaration?.id }}</span></div>
+          <div class="review-info-row"><span>Type</span><span>{{ reviewDeclaration?.declarationType?.code }}</span></div>
+          <div class="review-info-row"><span>Période</span><span class="periode-chip">{{ reviewDeclaration?.periode }}</span></div>
+          <div class="review-info-row"><span>Agent</span><span>{{ reviewDeclaration?.generePar }}</span></div>
+        </div>
+
+        <!-- Recommandation IA si dispo -->
+        <div class="review-reco-block" *ngIf="reviewAiResult">
+          <div class="reco-label-full" [ngClass]="getRecoClass()">
+            Recommandation IA : <strong>{{ getRecoLabel() }}</strong>
+          </div>
+          <div class="reco-score">Score : {{ reviewAiResult.score }}/100</div>
+          <div class="reco-anomalies" *ngIf="reviewAiResult.anomalies.length > 0">
+            <div *ngFor="let a of reviewAiResult.anomalies" class="reco-anomaly-item">⚠ {{ a }}</div>
+          </div>
+        </div>
+
+        <!-- Boutons de décision -->
+        <div class="review-decision-btns">
+          <button class="btn-decision-validate" [disabled]="actionEnCours[reviewDeclaration?.id!]"
+                  (click)="validerDepuisReview()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Valider
+          </button>
+          <button class="btn-decision-reject" [disabled]="actionEnCours[reviewDeclaration?.id!]"
+                  (click)="rejeterDepuisReview()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            Rejeter
+          </button>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="review-disclaimer">
+          ⚠️ La décision finale reste sous votre responsabilité.
+        </div>
+
+        <!-- Téléchargement -->
+        <button class="btn-download-full" (click)="download(reviewDeclaration!)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Télécharger le fichier
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     MODAL AI ANALYSIS (Mistral complet)
+════════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="showAiPanel" (click)="fermerAiPanel()">
+  <div class="modal-card modal-wide modal-ai" (click)="$event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-icon modal-icon--ai">🤖</div>
+      <h3>Analyse Mistral — Déclaration #{{ aiDeclarationId }}</h3>
+      <button class="modal-x" (click)="fermerAiPanel()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
       <div class="ai-loader" *ngIf="aiLoading">
         <div class="spinner-ring"></div>
-
         <div class="ai-step-block">
           <span class="ai-step-msg">{{ aiStepMessage }}</span>
-
-          <!-- Points de progression -->
           <div class="ai-dots">
             <span class="ai-dot" [class.active]="aiStep >= 0"></span>
             <span class="ai-dot" [class.active]="aiStep >= 1"></span>
             <span class="ai-dot" [class.active]="aiStep >= 2"></span>
             <span class="ai-dot" [class.active]="aiStep >= 3"></span>
           </div>
-
           <span class="ai-elapsed">{{ aiElapsed }}s</span>
         </div>
-
-        <!-- Astuce contextuelle -->
         <div class="ai-tip-box">{{ aiTip }}</div>
       </div>
-
-      <!-- Résultat -->
       <ng-container *ngIf="!aiLoading && aiResult">
-
-        <!-- Score -->
         <div class="ai-score-row">
           <div class="ai-score-circle" [ngClass]="getScoreColor()">
             <span class="score-val">{{ aiResult.score }}</span>
@@ -369,193 +583,37 @@
               {{ aiResult.valid ? '✅ Fichier valide' : '❌ Fichier invalide' }}
             </div>
             <div class="ai-reco" [ngClass]="getRecoClass()">
-              Recommandation IA : <strong>{{ getRecoLabel() }}</strong>
+              Recommandation : <strong>{{ getRecoLabel() }}</strong>
             </div>
           </div>
         </div>
-
-        <!-- Anomalies -->
         <div class="ai-section">
           <div class="section-title">Anomalies détectées</div>
-          <div class="ai-no-anomaly" *ngIf="aiResult.anomalies.length === 0">
-            <span>✅ Aucune anomalie détectée</span>
-          </div>
+          <div class="ai-no-anomaly" *ngIf="aiResult.anomalies.length === 0">✅ Aucune anomalie</div>
           <ul class="ai-anomaly-list" *ngIf="aiResult.anomalies.length > 0">
             <li *ngFor="let a of aiResult.anomalies" class="ai-anomaly-item">
-              <span class="anomaly-dot">⚠</span>
-              {{ a }}
+              <span class="anomaly-dot">⚠</span>{{ a }}
             </li>
           </ul>
         </div>
-
-        <!-- Disclaimer -->
-        <div class="ai-disclaimer">
-          ⚠️ L'analyse IA est un <strong>assistant de décision</strong> — la décision finale reste humaine.
-        </div>
-
+        <div class="ai-disclaimer">⚠️ L'analyse IA est un <strong>assistant de décision</strong> — la décision finale reste humaine.</div>
       </ng-container>
     </div>
-
     <div class="modal-foot" *ngIf="!aiLoading && aiResult">
       <button class="btn-cancel" (click)="fermerAiPanel()">Fermer</button>
     </div>
-
   </div>
 </div>
 
-<!-- ════════════════════════════════
-     MODAL CONSULTATION
-════════════════════════════════ -->
-<div class="modal-backdrop" *ngIf="showConsultModal" (click)="fermerConsultation()">
-  <div class="modal-card modal-wide modal-consult" (click)="$event.stopPropagation()">
-    <div class="modal-head">
-      <div class="modal-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-      </div>
-      <h3>Consultation — Déclaration #{{ declarationSelectionnee?.id }}</h3>
-      <button class="modal-x" (click)="fermerConsultation()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="modal-body consult-body">
-      <!-- Infos -->
-      <div class="consult-section">
-        <div class="section-title">Informations générales</div>
-        <div class="info-grid-2">
-          <div class="info-item">
-            <span class="info-key">ID</span>
-            <span class="info-val mono">#{{ declarationSelectionnee?.id }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-key">Type</span>
-            <span class="info-val">
-              <span class="type-code">{{ declarationSelectionnee?.declarationType?.code }}</span>
-              {{ declarationSelectionnee?.declarationType?.nom }}
-            </span>
-          </div>
-          <div class="info-item">
-            <span class="info-key">Période</span>
-            <span class="info-val"><span class="periode-chip">{{ declarationSelectionnee?.periode }}</span></span>
-          </div>
-          <div class="info-item">
-            <span class="info-key">Statut</span>
-            <span class="info-val">
-              <span class="statut-badge" [ngClass]="getStatutClass(declarationSelectionnee?.statut || '')">
-                {{ getStatutLabel(declarationSelectionnee?.statut || '') }}
-              </span>
-            </span>
-          </div>
-          <div class="info-item">
-            <span class="info-key">Généré par</span>
-            <span class="info-val">
-              <div class="agent-cell" *ngIf="declarationSelectionnee?.generePar">
-                <div class="agent-avatar">{{ (declarationSelectionnee?.generePar || 'A').charAt(0).toUpperCase() }}</div>
-                {{ declarationSelectionnee?.generePar }}
-              </div>
-            </span>
-          </div>
-          <div class="info-item">
-            <span class="info-key">Date génération</span>
-            <span class="info-val mono">{{ declarationSelectionnee?.dateGeneration | date:'dd/MM/yyyy HH:mm' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-key">Fichier</span>
-            <span class="info-val">
-              <div class="file-row" *ngIf="declarationSelectionnee?.nomFichier">
-                <span class="file-name">{{ declarationSelectionnee?.nomFichier }}</span>
-                <button class="btn-icon" (click)="download(declarationSelectionnee!)">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
-                </button>
-              </div>
-              <span *ngIf="!declarationSelectionnee?.nomFichier">—</span>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Motif rejet précédent -->
-      <div class="consult-section" *ngIf="declarationSelectionnee?.commentaireRejet">
-        <div class="section-title section-title--danger">Motif du rejet précédent</div>
-        <div class="rejet-box">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="min-width:13px;margin-top:1px">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-          </svg>
-          <span>{{ declarationSelectionnee?.commentaireRejet }}</span>
-        </div>
-      </div>
-
-      <!-- Timeline -->
-      <div class="consult-section">
-        <div class="section-title">Historique des actions</div>
-        <div class="timeline-loader" *ngIf="consultLogsLoading">
-          <div class="spinner-ring"></div><span>Chargement...</span>
-        </div>
-        <div class="empty-logs" *ngIf="!consultLogsLoading && consultLogs.length === 0">
-          Aucun événement enregistré.
-        </div>
-        <div class="mini-timeline" *ngIf="!consultLogsLoading && consultLogs.length > 0">
-          <div class="mtl-item" *ngFor="let h of consultLogs; let last = last">
-            <div class="mtl-spine" [class.last]="last"></div>
-            <div class="mtl-dot" [ngClass]="getActionClass(h.action)"></div>
-            <div class="mtl-body">
-              <div class="mtl-row">
-                <span class="mtl-action" [ngClass]="getActionClass(h.action)">{{ getActionLabel(h.action) }}</span>
-                <span class="mtl-date">{{ h.dateAction | date:'dd/MM/yy HH:mm' }}</span>
-              </div>
-              <div class="mtl-from-to">
-                <span class="mtl-state">{{ h.statutAvant }}</span>
-                →
-                <span class="mtl-state">{{ h.statutApres }}</span>
-              </div>
-              <div class="mtl-user" *ngIf="h.effectuePar">{{ h.effectuePar }}</div>
-              <div class="mtl-comment" *ngIf="h.commentaire">{{ h.commentaire }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-foot consult-foot">
-      <button class="btn-cancel" (click)="fermerConsultation()">Fermer</button>
-      <div class="foot-actions">
-        <button class="btn-reject" [disabled]="actionEnCours[declarationSelectionnee?.id!]" (click)="fermerEtRejeter()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-          Rejeter
-        </button>
-        <button class="btn-validate" [disabled]="actionEnCours[declarationSelectionnee?.id!]" (click)="fermerEtValider()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          {{ actionEnCours[declarationSelectionnee?.id!] ? 'Traitement...' : 'Valider' }}
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ════════════════════════════════
-     MODAL REJET
-════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════════
+     FEATURE 5 : MODAL REJET + TEMPLATES PRÉDÉFINIS
+════════════════════════════════════════════════════════════ -->
 <div class="modal-backdrop" *ngIf="showRejetModal" (click)="fermerRejet()">
-  <div class="modal-card" (click)="$event.stopPropagation()">
+  <div class="modal-card modal-rejet-wide" (click)="$event.stopPropagation()">
     <div class="modal-head modal-head--danger">
       <div class="modal-icon modal-icon--danger">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
         </svg>
       </div>
       <h3>Rejeter la déclaration #{{ declarationSelectionnee?.id }}</h3>
@@ -565,31 +623,39 @@
         </svg>
       </button>
     </div>
-    <div class="modal-body">
+
+    <div class="modal-body rejet-body">
+      <!-- Infos déclaration -->
       <div class="info-grid-3">
-        <div class="info-item">
-          <span class="info-key">Type</span>
-          <span class="info-val">{{ declarationSelectionnee?.declarationType?.nom }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-key">Période</span>
-          <span class="info-val">{{ declarationSelectionnee?.periode }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-key">Agent</span>
-          <span class="info-val">{{ declarationSelectionnee?.generePar }}</span>
+        <div class="info-item"><span class="info-key">Type</span><span class="info-val">{{ declarationSelectionnee?.declarationType?.nom }}</span></div>
+        <div class="info-item"><span class="info-key">Période</span><span class="info-val">{{ declarationSelectionnee?.periode }}</span></div>
+        <div class="info-item"><span class="info-key">Agent</span><span class="info-val">{{ declarationSelectionnee?.generePar }}</span></div>
+      </div>
+
+      <!-- Feature 5 : Templates de rejet -->
+      <div class="templates-section">
+        <div class="section-title">Motifs de rejet fréquents</div>
+        <div class="templates-grid">
+          <button class="template-chip"
+                  *ngFor="let t of rejectTemplates"
+                  [class.selected]="selectedTemplate === t.id"
+                  (click)="appliquerTemplate(t)"
+                  [title]="t.text">
+            {{ t.label }}
+          </button>
         </div>
       </div>
+
+      <!-- Textarea commentaire -->
       <label class="field-label">Motif du rejet <span class="required">*</span></label>
       <textarea [(ngModel)]="commentaireRejet"
-                placeholder="Précisez la raison du rejet afin que l'agent puisse corriger..."
-                rows="4" class="field-textarea"
+                placeholder="Précisez la raison du rejet, ou sélectionnez un motif ci-dessus..."
+                rows="5" class="field-textarea"
                 [class.field-error]="commentaireRejetTouched && !commentaireRejet.trim()">
       </textarea>
-      <span class="field-hint" *ngIf="commentaireRejetTouched && !commentaireRejet.trim()">
-        Ce champ est obligatoire
-      </span>
+      <span class="field-hint" *ngIf="commentaireRejetTouched && !commentaireRejet.trim()">Ce champ est obligatoire</span>
     </div>
+
     <div class="modal-foot">
       <button class="btn-cancel" (click)="fermerRejet()">Annuler</button>
       <button class="btn-danger" [disabled]="!commentaireRejet.trim() || rejetEnCours" (click)="confirmerRejet()">
@@ -602,9 +668,9 @@
   </div>
 </div>
 
-<!-- ════════════════════════════════
+<!-- ════════════════════════════════════════════════════════════
      MODAL HISTORIQUE
-════════════════════════════════ -->
+════════════════════════════════════════════════════════════ -->
 <div class="modal-backdrop" *ngIf="showHistoriqueModal" (click)="fermerHistorique()">
   <div class="modal-card modal-wide" (click)="$event.stopPropagation()">
     <div class="modal-head">
@@ -622,12 +688,8 @@
       </button>
     </div>
     <div class="modal-body">
-      <div class="timeline-loader" *ngIf="historiqueLoading">
-        <div class="spinner-ring"></div><span>Chargement...</span>
-      </div>
-      <div class="empty-logs" *ngIf="!historiqueLoading && historique.length === 0">
-        Aucun événement.
-      </div>
+      <div class="timeline-loader" *ngIf="historiqueLoading"><div class="spinner-ring"></div><span>Chargement...</span></div>
+      <div class="empty-logs" *ngIf="!historiqueLoading && historique.length === 0">Aucun événement.</div>
       <div class="mini-timeline" *ngIf="!historiqueLoading && historique.length > 0">
         <div class="mtl-item" *ngFor="let h of historique; let last = last">
           <div class="mtl-spine" [class.last]="last"></div>
@@ -638,9 +700,7 @@
               <span class="mtl-date">{{ h.dateAction | date:'dd/MM/yy HH:mm' }}</span>
             </div>
             <div class="mtl-from-to">
-              <span class="mtl-state">{{ h.statutAvant }}</span>
-              →
-              <span class="mtl-state">{{ h.statutApres }}</span>
+              <span class="mtl-state">{{ h.statutAvant }}</span> → <span class="mtl-state">{{ h.statutApres }}</span>
             </div>
             <div class="mtl-user" *ngIf="h.effectuePar">{{ h.effectuePar }}</div>
             <div class="mtl-comment" *ngIf="h.commentaire">{{ h.commentaire }}</div>

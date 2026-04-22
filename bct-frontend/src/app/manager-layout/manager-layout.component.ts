@@ -46,10 +46,9 @@ export class ManagerLayoutComponent implements OnInit, OnDestroy {
       ]
     },
     {
-      section: 'Système',
+      section: 'ML',
       links: [
-        { path: '/dashboard',            label: 'Admin Dashboard',  icon: 'admin',        badge: null },
-      ]
+        { path: '/manager/ml', label: 'IA / ML', icon: 'admin', badge: null }      ]
     }
   ];
 

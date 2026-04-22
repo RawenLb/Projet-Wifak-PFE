@@ -21,9 +21,8 @@ public class Declaration {
     private DeclarationStatut statut = DeclarationStatut.BROUILLON;
 
     @Column(nullable = false)
-    private String periode; // Ex: "2026-01" pour janvier 2026
+    private String periode;
 
-    // ✅ NOUVEAU — Période sous forme de dates pour la requête SQL
     private LocalDate dateDebut;
     private LocalDate dateFin;
 
@@ -32,12 +31,22 @@ public class Declaration {
     @Column(columnDefinition = "LONGTEXT")
     private String contenuFichier;
 
-    // ✅ NOUVEAU — Snapshot de la requête SQL utilisée lors de la génération
     @Column(columnDefinition = "TEXT")
     private String sqlQueryUsed;
 
-    // ✅ NOUVEAU — Snapshot du nom du XSD utilisé
     private String xsdFileNameUsed;
+
+    /**
+     * ✅ NOUVEAU — Mapping XSD ↔ SQL sérialisé en JSON.
+     * Permet de :
+     *  - tracer quel champ XSD est mappé sur quelle colonne SQL
+     *  - distinguer les champs statiques des champs dynamiques
+     *  - ré-générer la déclaration avec le même mapping
+     *
+     * Null pour CSV/TXT ou XML sans mapping explicite.
+     */
+    @Column(columnDefinition = "MEDIUMTEXT")
+    private String mappingJson;
 
     private LocalDateTime dateGeneration;
     private LocalDateTime dateValidation;
@@ -49,64 +58,73 @@ public class Declaration {
     @Column(columnDefinition = "TEXT")
     private String commentaireRejet;
 
+    // ══════════════════════════════════════════════════════════════
+    // ENUM STATUT
+    // ══════════════════════════════════════════════════════════════
+
     public enum DeclarationStatut {
-        BROUILLON,      // Agent vient de créer
-        GENEREE,        // Fichier généré automatiquement
-        EN_VALIDATION,  // Soumis au manager
-        VALIDEE,        // Manager a validé
-        REJETEE,        // Manager a rejeté
-        ENVOYEE         // Envoyé à la BCT
+        BROUILLON,
+        GENEREE,
+        EN_VALIDATION,
+        VALIDEE,
+        REJETEE,
+        ENVOYEE
     }
 
-    /* ================= GETTERS / SETTERS ================= */
+    // ══════════════════════════════════════════════════════════════
+    // GETTERS / SETTERS
+    // ══════════════════════════════════════════════════════════════
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId()                         { return id; }
+    public void setId(Long id)                  { this.id = id; }
 
     public DeclarationType getDeclarationType() { return declarationType; }
     public void setDeclarationType(DeclarationType declarationType) {
         this.declarationType = declarationType;
     }
 
-    public DeclarationStatut getStatut() { return statut; }
-    public void setStatut(DeclarationStatut statut) { this.statut = statut; }
+    public DeclarationStatut getStatut()                { return statut; }
+    public void setStatut(DeclarationStatut statut)     { this.statut = statut; }
 
-    public String getPeriode() { return periode; }
-    public void setPeriode(String periode) { this.periode = periode; }
+    public String getPeriode()                          { return periode; }
+    public void setPeriode(String periode)              { this.periode = periode; }
 
-    public LocalDate getDateDebut() { return dateDebut; }
-    public void setDateDebut(LocalDate dateDebut) { this.dateDebut = dateDebut; }
+    public LocalDate getDateDebut()                     { return dateDebut; }
+    public void setDateDebut(LocalDate dateDebut)       { this.dateDebut = dateDebut; }
 
-    public LocalDate getDateFin() { return dateFin; }
-    public void setDateFin(LocalDate dateFin) { this.dateFin = dateFin; }
+    public LocalDate getDateFin()                       { return dateFin; }
+    public void setDateFin(LocalDate dateFin)           { this.dateFin = dateFin; }
 
-    public String getNomFichier() { return nomFichier; }
-    public void setNomFichier(String nomFichier) { this.nomFichier = nomFichier; }
+    public String getNomFichier()                       { return nomFichier; }
+    public void setNomFichier(String nomFichier)        { this.nomFichier = nomFichier; }
 
-    public String getContenuFichier() { return contenuFichier; }
-    public void setContenuFichier(String contenuFichier) { this.contenuFichier = contenuFichier; }
+    public String getContenuFichier()                   { return contenuFichier; }
+    public void setContenuFichier(String contenuFichier){ this.contenuFichier = contenuFichier; }
 
-    public String getSqlQueryUsed() { return sqlQueryUsed; }
-    public void setSqlQueryUsed(String sqlQueryUsed) { this.sqlQueryUsed = sqlQueryUsed; }
+    public String getSqlQueryUsed()                     { return sqlQueryUsed; }
+    public void setSqlQueryUsed(String sqlQueryUsed)    { this.sqlQueryUsed = sqlQueryUsed; }
 
-    public String getXsdFileNameUsed() { return xsdFileNameUsed; }
-    public void setXsdFileNameUsed(String xsdFileNameUsed) { this.xsdFileNameUsed = xsdFileNameUsed; }
+    public String getXsdFileNameUsed()                  { return xsdFileNameUsed; }
+    public void setXsdFileNameUsed(String v)            { this.xsdFileNameUsed = v; }
 
-    public LocalDateTime getDateGeneration() { return dateGeneration; }
-    public void setDateGeneration(LocalDateTime dateGeneration) { this.dateGeneration = dateGeneration; }
+    public String getMappingJson()                      { return mappingJson; }
+    public void setMappingJson(String mappingJson)      { this.mappingJson = mappingJson; }
 
-    public LocalDateTime getDateValidation() { return dateValidation; }
-    public void setDateValidation(LocalDateTime dateValidation) { this.dateValidation = dateValidation; }
+    public LocalDateTime getDateGeneration()            { return dateGeneration; }
+    public void setDateGeneration(LocalDateTime v)      { this.dateGeneration = v; }
 
-    public LocalDateTime getDateEnvoi() { return dateEnvoi; }
-    public void setDateEnvoi(LocalDateTime dateEnvoi) { this.dateEnvoi = dateEnvoi; }
+    public LocalDateTime getDateValidation()            { return dateValidation; }
+    public void setDateValidation(LocalDateTime v)      { this.dateValidation = v; }
 
-    public String getGenerePar() { return generePar; }
-    public void setGenerePar(String generePar) { this.generePar = generePar; }
+    public LocalDateTime getDateEnvoi()                 { return dateEnvoi; }
+    public void setDateEnvoi(LocalDateTime v)           { this.dateEnvoi = v; }
 
-    public String getValidePar() { return validePar; }
-    public void setValidePar(String validePar) { this.validePar = validePar; }
+    public String getGenerePar()                        { return generePar; }
+    public void setGenerePar(String generePar)          { this.generePar = generePar; }
 
-    public String getCommentaireRejet() { return commentaireRejet; }
-    public void setCommentaireRejet(String commentaireRejet) { this.commentaireRejet = commentaireRejet; }
+    public String getValidePar()                        { return validePar; }
+    public void setValidePar(String validePar)          { this.validePar = validePar; }
+
+    public String getCommentaireRejet()                 { return commentaireRejet; }
+    public void setCommentaireRejet(String v)           { this.commentaireRejet = v; }
 }

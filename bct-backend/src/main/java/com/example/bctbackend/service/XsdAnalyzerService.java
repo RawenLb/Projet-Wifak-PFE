@@ -1,0 +1,476 @@
+package com.example.bctbackend.service;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
+@Service
+public class XsdAnalyzerService {
+
+    private static final Logger log = LoggerFactory.getLogger(XsdAnalyzerService.class);
+
+    private static final String XS_NS = "http://www.w3.org/2001/XMLSchema";
+
+    // ══════════════════════════════════════════════════════════════
+    // RÉSULTAT
+    // ══════════════════════════════════════════════════════════════
+
+    public static class XsdFieldInfo {
+        private String  name;
+        private String  path;
+        private String  type;
+        private boolean required;
+        private String  defaultValue;
+        private int     maxOccurs;
+
+        public XsdFieldInfo(String name, String path, String type,
+                            boolean required, String defaultValue, int maxOccurs) {
+            this.name         = name;
+            this.path         = path;
+            this.type         = type;
+            this.required     = required;
+            this.defaultValue = defaultValue;
+            this.maxOccurs    = maxOccurs;
+        }
+
+        public String  getName()         { return name; }
+        public String  getPath()         { return path; }
+        public String  getType()         { return type; }
+        public boolean isRequired()      { return required; }
+        public String  getDefaultValue() { return defaultValue; }
+        public int     getMaxOccurs()    { return maxOccurs; }
+    }
+
+    public static class MappingAnalysisResult {
+        private List<XsdFieldInfo>    xsdFields;
+        private List<String>          sqlColumns;
+        private Map<String, String>   autoMapped;
+        private List<String>          unmappedXsdFields;
+        private List<String>          unmappedSqlColumns;
+        private int                   compatibilityScore;
+        private String                summary;
+
+        public List<XsdFieldInfo>  getXsdFields()          { return xsdFields; }
+        public void setXsdFields(List<XsdFieldInfo> v)     { xsdFields = v; }
+        public List<String> getSqlColumns()                 { return sqlColumns; }
+        public void setSqlColumns(List<String> v)           { sqlColumns = v; }
+        public Map<String, String> getAutoMapped()          { return autoMapped; }
+        public void setAutoMapped(Map<String, String> v)    { autoMapped = v; }
+        public List<String> getUnmappedXsdFields()          { return unmappedXsdFields; }
+        public void setUnmappedXsdFields(List<String> v)    { unmappedXsdFields = v; }
+        public List<String> getUnmappedSqlColumns()         { return unmappedSqlColumns; }
+        public void setUnmappedSqlColumns(List<String> v)   { unmappedSqlColumns = v; }
+        public int  getCompatibilityScore()                 { return compatibilityScore; }
+        public void setCompatibilityScore(int v)            { compatibilityScore = v; }
+        public String getSummary()                          { return summary; }
+        public void setSummary(String v)                    { summary = v; }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // POINT D'ENTRÉE
+    // ══════════════════════════════════════════════════════════════
+
+    public MappingAnalysisResult analyzeCompatibility(String xsdContent,
+                                                      List<String> sqlColumns) {
+        log.info("🔍 Analyse XSD — {} colonnes SQL disponibles", sqlColumns.size());
+
+        List<XsdFieldInfo> xsdFields = parseXsdFields(xsdContent);
+        log.info("📋 {} champs XSD extraits", xsdFields.size());
+
+        Map<String, String> autoMapped    = buildAutoMapping(xsdFields, sqlColumns);
+        List<String>        unmappedXsd   = computeUnmappedXsd(xsdFields, autoMapped);
+        List<String>        unmappedSql   = computeUnmappedSql(sqlColumns, autoMapped);
+        int                 score         = computeScore(xsdFields, autoMapped);
+        String              summary       = buildSummary(xsdFields, autoMapped, score);
+
+        MappingAnalysisResult result = new MappingAnalysisResult();
+        result.setXsdFields(xsdFields);
+        result.setSqlColumns(new ArrayList<>(sqlColumns));
+        result.setAutoMapped(autoMapped);
+        result.setUnmappedXsdFields(unmappedXsd);
+        result.setUnmappedSqlColumns(unmappedSql);
+        result.setCompatibilityScore(score);
+        result.setSummary(summary);
+        return result;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // ✅ PARSING XSD — robuste avec ou sans prologue <?xml?>
+    // ══════════════════════════════════════════════════════════════
+
+    private List<XsdFieldInfo> parseXsdFields(String xsdContent) {
+        List<XsdFieldInfo> fields = new ArrayList<>();
+        if (xsdContent == null || xsdContent.trim().isEmpty()) {
+            log.warn("⚠️ XSD vide ou null");
+            return fields;
+        }
+
+        try {
+            Document doc = parseXml(xsdContent);
+
+            // Récupérer tous les xs:complexType nommés pour résolution des références
+            Map<String, Element> namedComplexTypes = collectNamedComplexTypes(doc);
+            log.debug("🗂️ {} complexType(s) nommé(s) trouvés", namedComplexTypes.size());
+
+            // Trouver l'élément racine (xs:element de niveau schema)
+            NodeList topElements = doc.getElementsByTagNameNS(XS_NS, "element");
+            for (int i = 0; i < topElements.getLength(); i++) {
+                Element el = (Element) topElements.item(i);
+                // Ne traiter que les éléments directs enfants de xs:schema
+                if (el.getParentNode() instanceof Element) {
+                    Element parent = (Element) el.getParentNode();
+                    String parentLocal = parent.getLocalName();
+                    if ("schema".equals(parentLocal)) {
+                        String rootName = el.getAttribute("name");
+                        String typeName = el.getAttribute("type");
+                        if (!typeName.isEmpty()) {
+                            // Résoudre via complexType nommé
+                            String typeNameLocal = stripNsPrefix(typeName);
+                            Element complexType = namedComplexTypes.get(typeNameLocal);
+                            if (complexType != null) {
+                                collectFieldsFromComplexType(
+                                        complexType, rootName, namedComplexTypes, fields, 0);
+                            }
+                        } else {
+                            // complexType inline
+                            Element inlineType = getFirstChildElement(el, "complexType");
+                            if (inlineType != null) {
+                                collectFieldsFromComplexType(
+                                        inlineType, rootName, namedComplexTypes, fields, 0);
+                            }
+                        }
+                        break; // Traiter seulement le premier élément racine
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("❌ Erreur parsing XSD : {}", e.getMessage(), e);
+        }
+
+        return fields;
+    }
+
+    /**
+     * ✅ Parse le XML en supprimant le prologue <?xml...?> si présent.
+     * C'est le correctif principal pour l'erreur
+     * "La cible de l'instruction de traitement correspondant à [xX][mM][lL] n'est pas autorisée."
+     */
+    private Document parseXml(String xsdContent) throws Exception {
+        String content = xsdContent.trim();
+
+        // ✅ Supprimer le prologue <?xml ... ?> s'il est présent
+        if (content.startsWith("<?xml") || content.startsWith("<?XML")) {
+            int prologEnd = content.indexOf("?>");
+            if (prologEnd != -1) {
+                content = content.substring(prologEnd + 2).trim();
+                log.debug("🔧 Prologue XML supprimé avant parsing");
+            }
+        }
+
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+
+        // Sécurité : désactiver les entités externes (XXE)
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+
+        DocumentBuilder builder = factory.newDocumentBuilder();
+
+        // Supprimer les messages d'erreur du parser vers stderr
+        builder.setErrorHandler(null);
+
+        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+        return builder.parse(new ByteArrayInputStream(bytes));
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // COLLECTE DES COMPLEXTYPE NOMMÉS
+    // ══════════════════════════════════════════════════════════════
+
+    private Map<String, Element> collectNamedComplexTypes(Document doc) {
+        Map<String, Element> map = new LinkedHashMap<>();
+        NodeList cts = doc.getElementsByTagNameNS(XS_NS, "complexType");
+        for (int i = 0; i < cts.getLength(); i++) {
+            Element ct = (Element) cts.item(i);
+            String name = ct.getAttribute("name");
+            if (!name.isEmpty()) {
+                map.put(name, ct);
+            }
+        }
+        return map;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // COLLECTE RÉCURSIVE DES CHAMPS
+    // ══════════════════════════════════════════════════════════════
+
+    private void collectFieldsFromComplexType(Element complexType,
+                                              String parentPath,
+                                              Map<String, Element> namedTypes,
+                                              List<XsdFieldInfo> fields,
+                                              int depth) {
+        if (depth > 10) return; // Protection anti-boucle infinie
+
+        // Chercher xs:sequence, xs:all, xs:choice
+        for (String groupTag : new String[]{"sequence", "all", "choice"}) {
+            Element group = getFirstChildElement(complexType, groupTag);
+            if (group != null) {
+                collectFieldsFromGroup(group, parentPath, namedTypes, fields, depth);
+                return;
+            }
+        }
+    }
+
+    private void collectFieldsFromGroup(Element group,
+                                        String parentPath,
+                                        Map<String, Element> namedTypes,
+                                        List<XsdFieldInfo> fields,
+                                        int depth) {
+        NodeList children = group.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            if (!(children.item(i) instanceof Element)) continue;
+            Element child = (Element) children.item(i);
+            String localName = child.getLocalName();
+            if (localName == null) continue;
+
+            switch (localName) {
+                case "element":
+                    processElement(child, parentPath, namedTypes, fields, depth);
+                    break;
+                case "sequence":
+                case "all":
+                case "choice":
+                    collectFieldsFromGroup(child, parentPath, namedTypes, fields, depth);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void processElement(Element el,
+                                String parentPath,
+                                Map<String, Element> namedTypes,
+                                List<XsdFieldInfo> fields,
+                                int depth) {
+        String name      = el.getAttribute("name");
+        String typeName  = el.getAttribute("type");
+        String minOccurs = el.getAttribute("minOccurs");
+        String maxOcc    = el.getAttribute("maxOccurs");
+        String defVal    = el.getAttribute("default");
+
+        if (name.isEmpty()) return;
+
+        String path      = parentPath.isEmpty() ? name : parentPath + "/" + name;
+        boolean required = !"0".equals(minOccurs);
+        int     maxO     = "unbounded".equals(maxOcc) ? Integer.MAX_VALUE
+                : (maxOcc.isEmpty() ? 1 : parseIntSafe(maxOcc, 1));
+
+        // Résoudre le type
+        String resolvedType = resolveSimpleTypeName(typeName);
+
+        // Vérifier si c'est un type complexe référencé
+        if (!typeName.isEmpty()) {
+            String localTypeName = stripNsPrefix(typeName);
+            Element namedType = namedTypes.get(localTypeName);
+            if (namedType != null) {
+                // C'est un sous-type complexe → descendre récursivement
+                collectFieldsFromComplexType(namedType, path, namedTypes, fields, depth + 1);
+                return;
+            }
+        }
+
+        // Chercher un complexType ou simpleType inline
+        Element inlineComplex = getFirstChildElement(el, "complexType");
+        if (inlineComplex != null) {
+            collectFieldsFromComplexType(inlineComplex, path, namedTypes, fields, depth + 1);
+            return;
+        }
+
+        Element inlineSimple = getFirstChildElement(el, "simpleType");
+        if (inlineSimple != null) {
+            // Extraire le type de base de la restriction
+            Element restriction = getFirstChildElement(inlineSimple, "restriction");
+            if (restriction != null) {
+                String base = stripNsPrefix(restriction.getAttribute("base"));
+                resolvedType = base.isEmpty() ? "string" : base;
+            }
+        }
+
+        // Champ feuille → ajouter à la liste
+        fields.add(new XsdFieldInfo(name, path, resolvedType, required,
+                defVal.isEmpty() ? null : defVal, maxO));
+        log.debug("  ✅ Champ: {} [{}] requis={}", path, resolvedType, required);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // AUTO-MAPPING XSD ↔ SQL
+    // ══════════════════════════════════════════════════════════════
+
+    private Map<String, String> buildAutoMapping(List<XsdFieldInfo> xsdFields,
+                                                 List<String> sqlColumns) {
+        Map<String, String> mapping = new LinkedHashMap<>();
+
+        // Index SQL normalisé → nom original
+        Map<String, String> sqlIndex = new LinkedHashMap<>();
+        for (String col : sqlColumns) {
+            sqlIndex.put(normalize(col), col);
+        }
+
+        for (XsdFieldInfo field : xsdFields) {
+            String normField = normalize(field.getName());
+
+            // 1) Correspondance exacte normalisée
+            if (sqlIndex.containsKey(normField)) {
+                mapping.put(field.getName(), sqlIndex.get(normField));
+                continue;
+            }
+
+            // 2) Recherche partielle (XSD ⊂ SQL ou SQL ⊂ XSD)
+            String best = null;
+            for (Map.Entry<String, String> entry : sqlIndex.entrySet()) {
+                String normSql = entry.getKey();
+                if (normSql.contains(normField) || normField.contains(normSql)) {
+                    best = entry.getValue();
+                    break;
+                }
+            }
+            if (best != null) {
+                mapping.put(field.getName(), best);
+            }
+        }
+
+        log.info("🔗 Auto-mapping : {}/{} champs mappés automatiquement",
+                mapping.size(), xsdFields.size());
+        return mapping;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // HELPERS CALCUL
+    // ══════════════════════════════════════════════════════════════
+
+    private List<String> computeUnmappedXsd(List<XsdFieldInfo> xsdFields,
+                                            Map<String, String> autoMapped) {
+        List<String> unmapped = new ArrayList<>();
+        for (XsdFieldInfo f : xsdFields) {
+            if (!autoMapped.containsKey(f.getName())) {
+                unmapped.add(f.getName());
+            }
+        }
+        return unmapped;
+    }
+
+    private List<String> computeUnmappedSql(List<String> sqlColumns,
+                                            Map<String, String> autoMapped) {
+        Set<String> usedSql = new HashSet<>(autoMapped.values());
+        List<String> unmapped = new ArrayList<>();
+        for (String col : sqlColumns) {
+            if (!usedSql.contains(col)) {
+                unmapped.add(col);
+            }
+        }
+        return unmapped;
+    }
+
+    private int computeScore(List<XsdFieldInfo> xsdFields,
+                             Map<String, String> autoMapped) {
+        if (xsdFields.isEmpty()) return 0;
+        long requiredTotal  = xsdFields.stream().filter(XsdFieldInfo::isRequired).count();
+        long requiredMapped = xsdFields.stream()
+                .filter(f -> f.isRequired() && autoMapped.containsKey(f.getName()))
+                .count();
+        if (requiredTotal == 0) {
+            // Pas de champs obligatoires : score basé sur tous les champs
+            return (int) Math.round((double) autoMapped.size() / xsdFields.size() * 100);
+        }
+        return (int) Math.round((double) requiredMapped / requiredTotal * 100);
+    }
+
+    private String buildSummary(List<XsdFieldInfo> xsdFields,
+                                Map<String, String> autoMapped,
+                                int score) {
+        long required = xsdFields.stream().filter(XsdFieldInfo::isRequired).count();
+        long requiredMapped = xsdFields.stream()
+                .filter(f -> f.isRequired() && autoMapped.containsKey(f.getName()))
+                .count();
+
+        if (score >= 80) {
+            return String.format("Excellente compatibilité — %d/%d champs obligatoires mappés automatiquement.",
+                    requiredMapped, required);
+        } else if (score >= 50) {
+            return String.format("Compatibilité partielle — %d/%d champs obligatoires mappés. Vérifiez les champs manquants.",
+                    requiredMapped, required);
+        } else {
+            return String.format("Faible compatibilité — seulement %d/%d champs obligatoires mappés. Configurez les mappings manuellement.",
+                    requiredMapped, required);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // UTILITAIRES
+    // ══════════════════════════════════════════════════════════════
+
+    /** Normalise un nom de champ pour la comparaison : minuscule, sans séparateurs. */
+    private String normalize(String name) {
+        if (name == null) return "";
+        return name.toLowerCase()
+                .replace("_", "")
+                .replace("-", "")
+                .replace(" ", "");
+    }
+
+    /** Supprime le préfixe d'espace de noms (ex: xs:string → string). */
+    private String stripNsPrefix(String typeName) {
+        if (typeName == null) return "";
+        int colon = typeName.lastIndexOf(':');
+        return colon >= 0 ? typeName.substring(colon + 1) : typeName;
+    }
+
+    /** Résout les types XSD simples en noms lisibles. */
+    private String resolveSimpleTypeName(String rawType) {
+        String t = stripNsPrefix(rawType);
+        switch (t) {
+            case "string":          return "string";
+            case "integer":
+            case "int":
+            case "long":            return "integer";
+            case "decimal":
+            case "float":
+            case "double":          return "decimal";
+            case "date":            return "date";
+            case "dateTime":        return "dateTime";
+            case "boolean":         return "boolean";
+            default:                return t.isEmpty() ? "string" : t;
+        }
+    }
+
+    /** Récupère le premier élément enfant direct d'un localName donné. */
+    private Element getFirstChildElement(Element parent, String localName) {
+        NodeList children = parent.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            if (children.item(i) instanceof Element) {
+                Element el = (Element) children.item(i);
+                if (localName.equals(el.getLocalName())) {
+                    return el;
+                }
+            }
+        }
+        return null;
+    }
+
+    private int parseIntSafe(String s, int defaultVal) {
+        try { return Integer.parseInt(s.trim()); }
+        catch (NumberFormatException e) { return defaultVal; }
+    }
+}

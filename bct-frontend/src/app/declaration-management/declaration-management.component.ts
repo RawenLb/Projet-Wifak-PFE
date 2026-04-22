@@ -1,5 +1,5 @@
 // src/app/declaration-management/declaration-management.component.ts
-// ✅ VERSION FINALE — badge Jira visible dès la génération
+// ✅ VERSION FINALE — Nouvelle interface mapping XSD ↔ SQL (Step 4)
 
 import { Component, OnInit } from '@angular/core';
 import {
@@ -11,6 +11,16 @@ import { DeclarationTypeService, DeclarationType } from '../services/declaration
 import { ValidationService } from '../services/Validation.service';
 import { JiraService, JiraTicketResponse } from '../services/jira.service';
 
+export interface FieldMapping {
+  xsdFieldName:  string;
+  xsdFieldPath:  string;
+  xsdType:       string;
+  required:      boolean;
+  source:        'SQL' | 'STATIC' | 'NONE';
+  sqlColumn:     string;
+  staticValue:   string;
+}
+
 @Component({
   selector:    'app-declaration-management',
   templateUrl: './declaration-management.component.html',
@@ -19,7 +29,7 @@ import { JiraService, JiraTicketResponse } from '../services/jira.service';
 export class DeclarationManagementComponent implements OnInit {
 
   // ── Données ────────────────────────────────────────────────────
-  declarations:     Declaration[]   = [];
+  declarations:     Declaration[]     = [];
   declarationTypes: DeclarationType[] = [];
 
   // ── États chargement ────────────────────────────────────────────
@@ -87,20 +97,6 @@ export class DeclarationManagementComponent implements OnInit {
   xsdPreviewContent = '';
   isDraggingXsd     = false;
 
-  // ── Config CSV ──────────────────────────────────────────────────
-  csvConfig = {
-    separator: ';', encoding: 'UTF-8', textQualifier: '"',
-    dateFormat: 'yyyy-MM-dd', includeHeader: true, includeBOM: true, columns: ''
-  };
-
-  // ── Config TXT ──────────────────────────────────────────────────
-  txtConfig = {
-    structure: 'DELIMITED', encoding: 'UTF-8', lineEnding: 'CRLF',
-    delimiter: '|', lineTemplate: '', fileHeader: '', fileFooter: '',
-    includeLineNumbers: false, includeTimestamp: true
-  };
-  txtLinePlaceholder = 'ex: {code_banque}|{nom_banque}|{periode}|{total_actifs}';
-
   // ── SQL (génération) ────────────────────────────────────────────
   sqlQuery:      string    = '';
   testDateDebut  = '';
@@ -111,6 +107,13 @@ export class DeclarationManagementComponent implements OnInit {
   // ── Jira ─────────────────────────────────────────────────────────
   jiraTickets:    Map<number, JiraTicketResponse> = new Map();
   jiraLoadingMap: Record<number, boolean>         = {};
+
+  // ── Mapping XSD ↔ SQL ────────────────────────────────────────────
+  mappingAnalysis:       any = null;
+  fieldMappings:         FieldMapping[] = [];
+  analyzingMapping       = false;
+  mappingAnalysisError:  string | null = null;
+  selectedMappingIndex:  number | null = null;
 
   constructor(
     private declarationService:     DeclarationService,
@@ -153,27 +156,20 @@ export class DeclarationManagementComponent implements OnInit {
 
   // ── Jira ──────────────────────────────────────────────────────
 
-  // ✅ FIX : GENEREE inclus — le ticket est créé dès la génération
   isJiraEligible(d: Declaration): boolean {
     return ['GENEREE', 'EN_VALIDATION', 'VALIDEE', 'REJETEE', 'ENVOYEE'].includes(d.statut);
   }
 
-  // ✅ FIX : délai de 1.5s pour les déclarations GENEREE très récentes
   private loadJiraTickets(declarations: Declaration[]): void {
     declarations
       .filter(d => this.isJiraEligible(d) && d.id)
       .forEach(d => {
         this.jiraLoadingMap[d.id!] = true;
-
-        // Petit délai pour laisser le temps au backend de créer le ticket
         const delay = d.statut === 'GENEREE' ? 1500 : 0;
-
         setTimeout(() => {
           this.jiraService.getTicketForDeclaration(d.id!).subscribe(ticket => {
             this.jiraLoadingMap[d.id!] = false;
-            if (ticket) {
-              this.jiraTickets.set(d.id!, ticket);
-            }
+            if (ticket) this.jiraTickets.set(d.id!, ticket);
           });
         }, delay);
       });
@@ -182,11 +178,6 @@ export class DeclarationManagementComponent implements OnInit {
   getJiraTicket(id: number | undefined): JiraTicketResponse | null {
     if (!id) return null;
     return this.jiraTickets.get(id) ?? null;
-  }
-
-  openJiraTicket(ticket: JiraTicketResponse, event: MouseEvent): void {
-    event.stopPropagation();
-    window.open(ticket.jiraTicketUrl, '_blank');
   }
 
   // ══════════════════════════════════════════════════════
@@ -230,11 +221,12 @@ export class DeclarationManagementComponent implements OnInit {
     this.sqlQuery                = '';
     this.sqlTestResult           = null;
     this.generateRequest         = { declarationTypeId: 0, periode: '', dateDebut: '', dateFin: '' };
-    this.csvConfig               = { separator: ';', encoding: 'UTF-8', textQualifier: '"',
-                                     dateFormat: 'yyyy-MM-dd', includeHeader: true, includeBOM: true, columns: '' };
-    this.txtConfig               = { structure: 'DELIMITED', encoding: 'UTF-8', lineEnding: 'CRLF',
-                                     delimiter: '|', lineTemplate: '', fileHeader: '', fileFooter: '',
-                                     includeLineNumbers: false, includeTimestamp: true };
+    // Reset mapping
+    this.mappingAnalysis         = null;
+    this.fieldMappings           = [];
+    this.analyzingMapping        = false;
+    this.mappingAnalysisError    = null;
+    this.selectedMappingIndex    = null;
 
     const now  = new Date();
     const m    = now.getMonth() === 0 ? 12 : now.getMonth();
@@ -246,27 +238,31 @@ export class DeclarationManagementComponent implements OnInit {
 
   // ── Stepper ────────────────────────────────────────────────────
 
-stepNext(): void {
-  this.formSubmitted = true;
-  if (this.currentStep === 1) {
-    if (!this.generateRequest.declarationTypeId || !this.generateRequest.periode) return;
-    this.formSubmitted = false;
-    this.currentStep   = 2;
-    return;
+  stepNext(): void {
+    this.formSubmitted = true;
+    if (this.currentStep === 1) {
+      if (!this.generateRequest.declarationTypeId || !this.generateRequest.periode) return;
+      this.formSubmitted = false;
+      this.currentStep   = 2;
+      return;
+    }
+    if (this.currentStep === 2) {
+      const fmt = this.selectedDeclarationType?.format;
+      if (fmt === 'XML' && !this.xsdFile) return;
+      this.formSubmitted = false;
+      this.currentStep   = 3;
+      return;
+    }
   }
-  if (this.currentStep === 2) {
-    const fmt = this.selectedDeclarationType?.format;
-    // ✅ CORRIGÉ — seul XML exige un XSD, CSV et TXT passent directement
-    if (fmt === 'XML' && !this.xsdFile) return;
-    // CSV et TXT : aucune validation supplémentaire à l'étape 2
-    this.formSubmitted = false;
-    this.currentStep   = 3;
-  }
-}
 
   stepBack(): void {
-    if (this.currentStep > 1) { this.currentStep--; }
-    else { this.closeGenerateModal(); }
+    if (this.currentStep === 4) {
+      this.currentStep = 3;
+    } else if (this.currentStep > 1) {
+      this.currentStep--;
+    } else {
+      this.closeGenerateModal();
+    }
   }
 
   onDeclarationTypeChange(): void {
@@ -290,7 +286,7 @@ stepNext(): void {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
-  // ── XSD (génération) ──────────────────────────────────────────
+  // ── XSD ──────────────────────────────────────────────────────
 
   onXsdFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -324,28 +320,7 @@ stepNext(): void {
     return `${(bytes / 1048576).toFixed(1)} Mo`;
   }
 
-  copyToClipboard(text: string): void {
-    navigator.clipboard.writeText(text).then(() => alert('Copié !'));
-  }
-
-  getCsvColumns(): string[] {
-    return (this.csvConfig.columns || '').split(',').filter(c => c.trim());
-  }
-
-  getTxtPreview(): string {
-    const lines: string[] = [];
-    if (this.txtConfig.fileHeader)       lines.push(this.txtConfig.fileHeader);
-    if (this.txtConfig.includeTimestamp) lines.push(`GENERE_LE=${new Date().toISOString().split('T')[0]}`);
-    if (this.txtConfig.lineTemplate) {
-      lines.push('--- DONNEES ---');
-      lines.push(this.txtConfig.lineTemplate.split('\n')[0]);
-      lines.push('...');
-    }
-    if (this.txtConfig.fileFooter) lines.push(this.txtConfig.fileFooter);
-    return lines.join('\n') || "(remplissez les champs pour voir l'aperçu)";
-  }
-
-  // ── SQL (génération) ──────────────────────────────────────────
+  // ── SQL ──────────────────────────────────────────────────────
 
   formatSql(): void {
     if (!this.sqlQuery) return;
@@ -390,40 +365,31 @@ stepNext(): void {
       });
   }
 
-  // ── Génération finale ──────────────────────────────────────────
+  // ── Génération standard (CSV/TXT) ──────────────────────────────
 
-generateDeclaration(): void {
-  this.formSubmitted = true;
-  const fmt = this.selectedDeclarationType?.format;
-
-  if (!this.generateRequest.declarationTypeId) { alert('Type obligatoire'); return; }
-  if (!this.generateRequest.periode)            { alert('Période obligatoire'); return; }
-  // ✅ CORRIGÉ — XSD uniquement requis pour XML
-  if (fmt === 'XML' && !this.xsdFile)           { alert('Fichier XSD obligatoire pour le format XML'); return; }
-  // ✅ Supprimé la validation CSV colonnes — plus nécessaire
-  if (!this.sqlQuery?.trim())                   { alert('Requête SQL obligatoire'); return; }
-  if (!this.sqlQuery.trim().toUpperCase().startsWith('SELECT')) {
-    alert('La requête doit commencer par SELECT');
-    return;
-  }
+  generateDeclaration(): void {
+    this.formSubmitted = true;
+    const fmt = this.selectedDeclarationType?.format;
+    if (!this.generateRequest.declarationTypeId) { alert('Type obligatoire'); return; }
+    if (!this.generateRequest.periode)            { alert('Période obligatoire'); return; }
+    if (fmt === 'XML' && !this.xsdFile)           { alert('Fichier XSD obligatoire'); return; }
+    if (!this.sqlQuery?.trim())                   { alert('Requête SQL obligatoire'); return; }
+    if (!this.sqlQuery.trim().toUpperCase().startsWith('SELECT')) {
+      alert('La requête doit commencer par SELECT'); return;
+    }
 
     this.loadingAction = true;
 
     const doGenerate = () => {
-      this.declarationTypeService
-        .saveSqlQuery(this.generateRequest.declarationTypeId, this.sqlQuery)
+      this.declarationTypeService.saveSqlQuery(this.generateRequest.declarationTypeId, this.sqlQuery)
         .subscribe({
           next: () => {
             this.declarationService.generateDeclaration(this.generateRequest).subscribe({
-              next: (saved) => {
+              next: (_saved) => {
                 alert('Déclaration générée avec succès !');
                 this.closeGenerateModal();
                 this.loadingAction = false;
-
-                // ✅ FIX : recharge après 2.5s pour laisser le ticket Jira se créer
-                setTimeout(() => {
-                  this.loadDeclarations();
-                }, 2500);
+                setTimeout(() => { this.loadDeclarations(); }, 2500);
               },
               error: (err) => {
                 alert('Erreur génération : ' + (err.error?.message || err.message || 'Erreur inconnue'));
@@ -446,6 +412,199 @@ generateDeclaration(): void {
         });
     } else {
       doGenerate();
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
+  // ÉTAPE 4 — MAPPING XSD ↔ SQL
+  // ══════════════════════════════════════════════════════
+
+  goToMappingStep(): void {
+    this.formSubmitted = true;
+    if (!this.sqlQuery?.trim()) { alert('La requête SQL est obligatoire'); return; }
+    if (!this.sqlQuery.trim().toUpperCase().startsWith('SELECT')) {
+      alert('La requête doit commencer par SELECT'); return;
+    }
+
+    this.analyzingMapping     = true;
+    this.mappingAnalysisError = null;
+    this.selectedMappingIndex = null;
+
+    this.declarationTypeService.saveSqlQuery(
+      this.generateRequest.declarationTypeId, this.sqlQuery
+    ).subscribe({
+      next: () => {
+        this.declarationService.analyzeMappingHttp({
+          declarationTypeId: this.generateRequest.declarationTypeId,
+          dateDebut:         this.generateRequest.dateDebut,
+          dateFin:           this.generateRequest.dateFin
+        }).subscribe({
+          next: (analysis: any) => {
+            this.mappingAnalysis  = analysis;
+            this.analyzingMapping = false;
+            this.buildFieldMappings(analysis);
+            this.currentStep = 4;
+          },
+          error: (err: any) => {
+            this.mappingAnalysisError = err.error?.error || err.message || 'Erreur analyse mapping';
+            this.analyzingMapping     = false;
+            this.currentStep = 4;
+          }
+        });
+      },
+      error: () => {
+        this.mappingAnalysisError = 'Impossible de sauvegarder la requête SQL';
+        this.analyzingMapping     = false;
+        this.currentStep          = 4;
+      }
+    });
+  }
+
+  private buildFieldMappings(analysis: any): void {
+    if (!analysis?.xsdFields) { this.fieldMappings = []; return; }
+    this.fieldMappings = (analysis.xsdFields as any[]).map((field: any) => {
+      const autoCol = analysis.autoMapped?.[field.name] ?? null;
+      return {
+        xsdFieldName: field.name,
+        xsdFieldPath: field.path,
+        xsdType:      field.type,
+        required:     field.required,
+        source:       autoCol ? 'SQL' : 'NONE',
+        sqlColumn:    autoCol ?? '',
+        staticValue:  ''
+      } as FieldMapping;
+    });
+  }
+
+  // ── Sélectionner un champ XSD ────────────────────────────────────
+  selectMappingField(index: number): void {
+    this.selectedMappingIndex = index;
+  }
+
+  // ── Assigner une colonne SQL au champ sélectionné ─────────────────
+  assignSqlColumn(col: string): void {
+    if (this.selectedMappingIndex === null) return;
+    const fm = this.fieldMappings[this.selectedMappingIndex];
+    if (fm.source === 'STATIC') return;
+
+    fm.source    = 'SQL';
+    fm.sqlColumn = col;
+
+    // Passer automatiquement au prochain champ non mappé
+    const next = this.fieldMappings.findIndex(
+      (f, i) => i > this.selectedMappingIndex! && f.source === 'NONE'
+    );
+    if (next !== -1) {
+      this.selectedMappingIndex = next;
+    }
+  }
+
+  // ── Vérifier si une colonne SQL est déjà utilisée ─────────────────
+  isSqlColumnUsed(col: string): boolean {
+    return this.fieldMappings.some(
+      (fm, i) => fm.source === 'SQL' && fm.sqlColumn === col && i !== this.selectedMappingIndex
+    );
+  }
+
+  // ── Changer le mode source d'un champ ────────────────────────────
+  setMappingSource(index: number, source: 'SQL' | 'STATIC' | 'NONE'): void {
+    this.fieldMappings[index].source = source;
+    if (source !== 'SQL')    this.fieldMappings[index].sqlColumn   = '';
+    if (source !== 'STATIC') this.fieldMappings[index].staticValue = '';
+    this.selectedMappingIndex = index;
+  }
+
+  // ── Compter les champs mappés ─────────────────────────────────────
+  countMappedFields(): number {
+    return this.fieldMappings.filter(m => m.source !== 'NONE').length;
+  }
+
+  // ── Colonnes SQL non utilisées ────────────────────────────────────
+  getUnusedSqlColumns(): string[] {
+    if (!this.mappingAnalysis?.sqlColumns) return [];
+    const usedCols = new Set(
+      this.fieldMappings
+        .filter(m => m.source === 'SQL' && m.sqlColumn)
+        .map(m => m.sqlColumn)
+    );
+    return (this.mappingAnalysis.sqlColumns as string[]).filter((c: string) => !usedCols.has(c));
+  }
+
+  // ── Champs obligatoires sans mapping ─────────────────────────────
+  getMissingRequiredCount(): number {
+    return this.fieldMappings.filter(m => m.required && m.source === 'NONE').length;
+  }
+
+  // ── Réinitialiser tous les mappings ──────────────────────────────
+  resetMapping(): void {
+    if (!confirm('Réinitialiser tous les mappings ?')) return;
+    if (this.mappingAnalysis) {
+      this.buildFieldMappings(this.mappingAnalysis);
+    }
+    this.selectedMappingIndex = null;
+  }
+
+  // ── Générer avec mapping ──────────────────────────────────────────
+  generateDeclarationWithMapping(): void {
+    this.formSubmitted = true;
+
+    const missing = this.getMissingRequiredCount();
+    if (missing > 0) {
+      alert(`${missing} champ(s) obligatoire(s) du XSD n'ont pas de valeur. Assignez une colonne SQL ou une valeur statique.`);
+      return;
+    }
+
+    const sqlWithoutCol = this.fieldMappings.filter(m => m.source === 'SQL' && !m.sqlColumn);
+    if (sqlWithoutCol.length > 0) {
+      alert(`${sqlWithoutCol.length} champ(s) marqués "SQL" n'ont pas de colonne sélectionnée.`);
+      return;
+    }
+
+    this.loadingAction = true;
+
+    const doUploadXsdThenGenerate = () => {
+      this.declarationTypeService
+        .saveSqlQuery(this.generateRequest.declarationTypeId, this.sqlQuery)
+        .subscribe({
+          next: () => {
+            this.declarationService.generateDeclarationWithMapping({
+              declarationTypeId: this.generateRequest.declarationTypeId,
+              periode:           this.generateRequest.periode,
+              dateDebut:         this.generateRequest.dateDebut,
+              dateFin:           this.generateRequest.dateFin,
+              mappings:          this.fieldMappings
+            }).subscribe({
+              next: (_saved: any) => {
+                alert('✅ Déclaration générée avec mapping !');
+                this.closeGenerateModal();
+                this.loadingAction = false;
+                setTimeout(() => this.loadDeclarations(), 2500);
+              },
+              error: (err: any) => {
+                alert('❌ Erreur génération : ' + (err.error?.error || err.message));
+                this.loadingAction = false;
+              }
+            });
+          },
+          error: (err: any) => {
+            alert('Erreur sauvegarde SQL : ' + (err.error?.error || err.message));
+            this.loadingAction = false;
+          }
+        });
+    };
+
+    if (this.xsdFile) {
+      this.declarationTypeService.uploadXsd(
+        this.generateRequest.declarationTypeId, this.xsdFile
+      ).subscribe({
+        next:  () => doUploadXsdThenGenerate(),
+        error: (err: any) => {
+          alert('Erreur upload XSD : ' + (err.error?.error || err.message));
+          this.loadingAction = false;
+        }
+      });
+    } else {
+      doUploadXsdThenGenerate();
     }
   }
 
@@ -559,30 +718,37 @@ generateDeclaration(): void {
   // ══════════════════════════════════════════════════════
   // CORRECT MODAL
   // ══════════════════════════════════════════════════════
-
-  canCorrect(d: Declaration): boolean { return d.statut === 'REJETEE'; }
-
+ canCorrect(d: Declaration): boolean { return d.statut === 'REJETEE'; }
+ 
   openCorrectModal(d: Declaration): void {
-    this.selectedDeclaration      = d;
-    this.correctSqlQuery          = d.sqlQueryUsed ?? '';
-    this.correctXsdFile           = null;
-    this.correctXsdPreviewContent = '';
-    this.correctSqlTestResult     = null;
-    this.correctTestingSQL        = false;
-    this.correctTestDateDebut     = d.dateDebut ?? '';
-    this.correctTestDateFin       = d.dateFin   ?? '';
-    this.formSubmitted            = false;
-    this.showCorrectModal         = true;
+    this.selectedDeclaration = d;
+    this.formSubmitted       = false;
+    this.showCorrectModal    = true;
   }
-
+ 
   closeCorrectModal(): void {
     this.showCorrectModal    = false;
     this.selectedDeclaration = null;
-    this.correctSqlQuery     = '';
-    this.correctSqlTestResult = null;
-    this.correctXsdFile      = null;
   }
 
+
+   onCorrectionSaved(updated: Declaration): void {
+    this.closeCorrectModal();
+    // Supprimer le ticket Jira en cache pour forcer un rechargement
+    if (updated.id) this.jiraTickets.delete(updated.id);
+    // Recharger la liste avec un petit délai pour laisser le backend traiter
+    setTimeout(() => this.loadDeclarations(), 1000);
+  }
+ 
+  /**
+   * Fermer en cliquant sur l'overlay (en dehors de la modal)
+   */
+  onCorrectOverlayClick(event: MouseEvent): void {
+    // La propagation est stopée sur modal-content, donc
+    // ce handler n'est déclenché que sur l'overlay lui-même
+    this.closeCorrectModal();
+  }
+  
   onCorrectXsdFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -665,7 +831,6 @@ generateDeclaration(): void {
             dateDebut:         decl.dateDebut ?? '',
             dateFin:           decl.dateFin   ?? ''
           };
-
           this.declarationService.updateDeclaration(decl.id!, req).subscribe({
             next: (updated) => {
               this.jiraTickets.delete(updated.id!);
@@ -677,10 +842,7 @@ generateDeclaration(): void {
                   this.loadingAction = false;
                 },
                 error: (err) => {
-                  alert('⚠️ Correction OK mais erreur lors de la soumission.\n' +
-                        'La déclaration est repassée en statut GÉNÉRÉE.\n' +
-                        'Vous pouvez la soumettre manuellement.\n\n' +
-                        'Détail : ' + (err.error?.message || err.message));
+                  alert('⚠️ Correction OK mais erreur soumission.\n' + (err.error?.message || err.message));
                   this.closeCorrectModal();
                   this.loadDeclarations();
                   this.loadingAction = false;
@@ -714,7 +876,7 @@ generateDeclaration(): void {
   }
 
   // ══════════════════════════════════════════════════════
-  // ACTIONS
+  // ACTIONS TABLE
   // ══════════════════════════════════════════════════════
 
   downloadDeclaration(declaration: Declaration): void {
