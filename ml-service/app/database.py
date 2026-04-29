@@ -185,17 +185,8 @@ def load_reject_logs_df() -> pd.DataFrame:
 def load_correction_history_df() -> pd.DataFrame:
     """
     Reconstruit l'historique REJECT → SUBMIT → VALIDATE depuis validation_logs.
-
-    Pour chaque rejet :
-      - Trouve le SUBMIT suivant → sa description = correction appliquée
-      - Trouve le VALIDATE suivant → indique si la correction a été acceptée
-      - Calcule le délai en heures
-
-    Colonnes retournées :
-      declaration_id | reject_comment | correction_applied | corrected_by |
-      validated_by   | validated_at   | correction_delay_hours
-
-    Retourne un DataFrame vide si aucune donnée.
+    VERSION CORRIGÉE : ne retourne une ligne que si le SUBMIT a un vrai commentaire
+    DIFFÉRENT du commentaire de rejet.
     """
     try:
         engine = get_validation_engine()
@@ -222,7 +213,7 @@ def load_correction_history_df() -> pd.DataFrame:
                     {'vl.' + date_col + ' AS date_action'   if date_col    else 'NOW() AS date_action'}
                 FROM validation_logs vl
                 WHERE vl.{action_col} IN ('REJECT', 'SUBMIT', 'VALIDATE')
-                ORDER BY vl.{decl_col}, {('vl.' + date_col) if date_col else 'vl.id'}
+                ORDER BY vl.id
             """
             df = pd.read_sql(text(query), conn)
 
@@ -236,44 +227,54 @@ def load_correction_history_df() -> pd.DataFrame:
         # ── Reconstruction séquentielle REJECT → SUBMIT → VALIDATE ────
         history_rows = []
         for decl_id, grp in df.groupby("declaration_id"):
-            grp       = grp.sort_values("date_action").reset_index(drop=True)
+            # Trier par id (plus fiable que date_action)
+            grp = grp.sort_values("id").reset_index(drop=True)
+
             rejects   = grp[grp["action"] == "REJECT"].to_dict("records")
             submits   = grp[grp["action"] == "SUBMIT"].to_dict("records")
             validates = grp[grp["action"] == "VALIDATE"].to_dict("records")
 
             for rej in rejects:
-                # Premier SUBMIT après ce rejet
+                rej_id = rej["id"]
+
+                # Premier SUBMIT dont l'id est SUPÉRIEUR à celui du REJECT
                 next_submit = next(
-                    (s for s in submits
-                     if pd.notna(s["date_action"])
-                     and pd.notna(rej["date_action"])
-                     and s["date_action"] > rej["date_action"]),
+                    (s for s in submits if s["id"] > rej_id),
                     None,
                 )
-                # Premier VALIDATE après ce SUBMIT
+
+                # Premier VALIDATE dont l'id est SUPÉRIEUR à celui du SUBMIT
                 next_validate = None
                 if next_submit:
                     next_validate = next(
-                        (v for v in validates
-                         if pd.notna(v["date_action"])
-                         and v["date_action"] > next_submit["date_action"]),
+                        (v for v in validates if v["id"] > next_submit["id"]),
                         None,
                     )
 
-                # La correction = commentaire du SUBMIT suivant (si renseigné)
-                # Sinon on réutilise le commentaire du rejet lui-même
+                # ── RÈGLE CRITIQUE : correction = commentaire du SUBMIT ──
+                # Ne jamais utiliser le commentaire du REJECT comme correction
                 correction_text = ""
                 if next_submit and next_submit.get("commentaire"):
-                    correction_text = str(next_submit["commentaire"]).strip()
-                elif rej.get("commentaire"):
-                    correction_text = str(rej["commentaire"]).strip()
+                    candidate = str(next_submit["commentaire"]).strip()
+                    reject_text = str(rej.get("commentaire") or "").strip()
+                    # Vérifier que c'est une vraie correction (≠ du reject comment)
+                    if len(candidate) >= 5 and candidate != reject_text:
+                        correction_text = candidate
+
+                # Si pas de correction réelle → ignorer cette ligne
+                if not correction_text:
+                    logger.debug(
+                        f"[DB] decl={decl_id} reject_id={rej_id}: "
+                        f"SUBMIT sans commentaire de correction — ignoré"
+                    )
+                    continue
 
                 # Délai rejet → resoumission
                 delay = None
                 if (
                     next_submit
-                    and pd.notna(rej["date_action"])
-                    and pd.notna(next_submit["date_action"])
+                    and pd.notna(rej.get("date_action"))
+                    and pd.notna(next_submit.get("date_action"))
                 ):
                     delta = next_submit["date_action"] - rej["date_action"]
                     delay = max(0, int(delta.total_seconds() / 3600))
@@ -282,7 +283,7 @@ def load_correction_history_df() -> pd.DataFrame:
                     "declaration_id":         int(decl_id),
                     "reject_comment":         str(rej.get("commentaire") or ""),
                     "correction_applied":     correction_text,
-                    "corrected_by":           str(next_submit["effectue_par"]) if next_submit   else "",
+                    "corrected_by":           str(next_submit["effectue_par"]) if next_submit else "",
                     "validated_by":           str(next_validate["effectue_par"]) if next_validate else "",
                     "validated_at":           next_validate["date_action"] if next_validate else None,
                     "correction_delay_hours": delay,
@@ -291,13 +292,18 @@ def load_correction_history_df() -> pd.DataFrame:
 
         result_df = pd.DataFrame(history_rows) if history_rows else pd.DataFrame()
 
-        # Ne garder que les lignes avec une vraie correction
         if not result_df.empty:
-            result_df = result_df[
-                result_df["correction_applied"].str.strip().str.len() >= 5
-            ].reset_index(drop=True)
+            logger.info(
+                f"✅ [DB] {len(result_df)} corrections historiques reconstruites "
+                f"({result_df['was_validated'].sum()} validées)"
+            )
+        else:
+            logger.warning(
+                "[DB] Aucune correction reconstruite. "
+                "Vérifiez que les SUBMIT ont un commentaire de correction "
+                "différent du commentaire de rejet."
+            )
 
-        logger.info(f"✅ [DB] {len(result_df)} corrections historiques reconstruites")
         return result_df
 
     except Exception as e:

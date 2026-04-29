@@ -1,17 +1,20 @@
 // src/app/declaration-management/declaration-management.component.ts
-// ✅ VERSION FINALE — Nouvelle interface mapping XSD ↔ SQL (Step 4)
+// ✅ VERSION CORRIGÉE — Flux XSD upload → SQL → Mapping → Génération
 
 import { Component, OnInit } from '@angular/core';
 import {
   DeclarationService,
   Declaration,
-  GenerateDeclarationRequest
+  GenerateDeclarationRequest,
+  FieldMapping,
+  MappingAnalysisResponse
 } from '../services/Declaration.service';
 import { DeclarationTypeService, DeclarationType } from '../services/declaration-type.service';
 import { ValidationService } from '../services/Validation.service';
 import { JiraService, JiraTicketResponse } from '../services/jira.service';
 
-export interface FieldMapping {
+// Re-export local interface for template usage
+export interface FieldMappingLocal {
   xsdFieldName:  string;
   xsdFieldPath:  string;
   xsdType:       string;
@@ -108,12 +111,18 @@ export class DeclarationManagementComponent implements OnInit {
   jiraTickets:    Map<number, JiraTicketResponse> = new Map();
   jiraLoadingMap: Record<number, boolean>         = {};
 
-  // ── Mapping XSD ↔ SQL ────────────────────────────────────────────
-  mappingAnalysis:       any = null;
-  fieldMappings:         FieldMapping[] = [];
-  analyzingMapping       = false;
-  mappingAnalysisError:  string | null = null;
-  selectedMappingIndex:  number | null = null;
+  // ── Mapping XSD ↔ SQL ─────────────────────────────────────────────
+  mappingAnalysis:      MappingAnalysisResponse | null = null;
+  fieldMappings:        FieldMappingLocal[]            = [];
+  analyzingMapping      = false;
+  mappingAnalysisError: string | null                  = null;
+  selectedMappingIndex: number | null                  = null;
+
+  // ── Flags internes ───────────────────────────────────────────────
+  /** XSD a été uploadé avec succès pendant l'étape 2 */
+   xsdUploaded = false;
+  /** SQL a été sauvegardé avec succès pendant l'étape 3 */
+   sqlSaved    = false;
 
   constructor(
     private declarationService:     DeclarationService,
@@ -204,11 +213,14 @@ export class DeclarationManagementComponent implements OnInit {
     return this.declarations.filter(d => d.statut === statut).length;
   }
 
+
+
+  
   // ══════════════════════════════════════════════════════
   // GENERATE MODAL
   // ══════════════════════════════════════════════════════
 
-  openGenerateModal(): void { this.resetGenerateModal(); this.showGenerateModal = true; }
+  openGenerateModal():  void { this.resetGenerateModal(); this.showGenerateModal = true; }
   closeGenerateModal(): void { this.showGenerateModal = false; this.resetGenerateModal(); }
 
   private resetGenerateModal(): void {
@@ -218,10 +230,11 @@ export class DeclarationManagementComponent implements OnInit {
     this.xsdFile                 = null;
     this.xsdPreviewContent       = '';
     this.isDraggingXsd           = false;
+    this.xsdUploaded             = false;
+    this.sqlSaved                = false;
     this.sqlQuery                = '';
     this.sqlTestResult           = null;
     this.generateRequest         = { declarationTypeId: 0, periode: '', dateDebut: '', dateFin: '' };
-    // Reset mapping
     this.mappingAnalysis         = null;
     this.fieldMappings           = [];
     this.analyzingMapping        = false;
@@ -236,19 +249,50 @@ export class DeclarationManagementComponent implements OnInit {
     this.testDateFin   = `${y}-${String(m).padStart(2, '0')}-${String(last).padStart(2, '0')}`;
   }
 
-  // ── Stepper ────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  // STEPPER — navigation entre étapes
+  // ════════════════════════════════════════════════════════════════
 
+  /**
+   * Avancement Étape 1→2→3 (puis 3→4 pour XML via goToMappingStep).
+   * Chaque transition valide et, si besoin, persiste les données côté serveur.
+   */
   stepNext(): void {
     this.formSubmitted = true;
+
+    // ── Étape 1 : valider type + période ──────────────────────────
     if (this.currentStep === 1) {
       if (!this.generateRequest.declarationTypeId || !this.generateRequest.periode) return;
       this.formSubmitted = false;
       this.currentStep   = 2;
       return;
     }
+
+    // ── Étape 2 : upload XSD (XML uniquement) ──────────────────────
     if (this.currentStep === 2) {
       const fmt = this.selectedDeclarationType?.format;
       if (fmt === 'XML' && !this.xsdFile) return;
+
+      if (fmt === 'XML' && this.xsdFile && !this.xsdUploaded) {
+        // Upload immédiat ici pour ne pas bloquer l'étape 4
+        this.loadingAction = true;
+        this.declarationTypeService.uploadXsd(
+          this.generateRequest.declarationTypeId, this.xsdFile
+        ).subscribe({
+          next: () => {
+            this.xsdUploaded   = true;
+            this.loadingAction = false;
+            this.formSubmitted = false;
+            this.currentStep   = 3;
+          },
+          error: (err: any) => {
+            this.loadingAction = false;
+            alert('Erreur upload XSD : ' + (err.error?.error || err.message));
+          }
+        });
+        return;
+      }
+
       this.formSubmitted = false;
       this.currentStep   = 3;
       return;
@@ -268,6 +312,8 @@ export class DeclarationManagementComponent implements OnInit {
   onDeclarationTypeChange(): void {
     const id = +this.generateRequest.declarationTypeId;
     this.selectedDeclarationType = this.declarationTypes.find(t => t.id === id) ?? null;
+    this.xsdUploaded = false; // Reset si on change de type
+    this.sqlSaved    = false;
     if (this.selectedDeclarationType?.sqlQuery) {
       this.sqlQuery = this.selectedDeclarationType.sqlQuery;
     }
@@ -292,7 +338,8 @@ export class DeclarationManagementComponent implements OnInit {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
     if (!file.name.toLowerCase().endsWith('.xsd')) { alert('Fichier .xsd uniquement'); return; }
-    this.xsdFile = file;
+    this.xsdFile     = file;
+    this.xsdUploaded = false; // Nouveau fichier → reset flag
     const reader = new FileReader();
     reader.onload = (e) => {
       const txt = e.target?.result as string;
@@ -308,7 +355,8 @@ export class DeclarationManagementComponent implements OnInit {
     this.isDraggingXsd = false;
     const file = event.dataTransfer?.files[0];
     if (!file?.name.toLowerCase().endsWith('.xsd')) { alert('Fichier .xsd uniquement'); return; }
-    this.xsdFile = file;
+    this.xsdFile     = file;
+    this.xsdUploaded = false;
     const reader = new FileReader();
     reader.onload = (e) => { this.xsdPreviewContent = (e.target?.result as string).substring(0, 800); };
     reader.readAsText(file);
@@ -332,20 +380,22 @@ export class DeclarationManagementComponent implements OnInit {
   }
 
   clearSql(): void {
-    if (confirm('Effacer la requête SQL ?')) { this.sqlQuery = ''; this.sqlTestResult = null; }
+    if (confirm('Effacer la requête SQL ?')) { this.sqlQuery = ''; this.sqlTestResult = null; this.sqlSaved = false; }
   }
 
   testSql(): void {
-    if (!this.sqlQuery?.trim())                  { alert('Saisissez une requête SQL'); return; }
-    if (!this.testDateDebut || !this.testDateFin) { alert('Saisissez les dates de test'); return; }
-    if (!this.generateRequest.declarationTypeId) { alert('Sélectionnez un type'); return; }
+    if (!this.sqlQuery?.trim())                   { alert('Saisissez une requête SQL'); return; }
+    if (!this.testDateDebut || !this.testDateFin)  { alert('Saisissez les dates de test'); return; }
+    if (!this.generateRequest.declarationTypeId)   { alert('Sélectionnez un type'); return; }
 
     this.testingSQL    = true;
     this.sqlTestResult = null;
+    this.sqlSaved      = false;
 
     this.declarationTypeService.saveSqlQuery(this.generateRequest.declarationTypeId, this.sqlQuery)
       .subscribe({
         next: () => {
+          this.sqlSaved = true;
           this.declarationTypeService.testSqlQuery(
             this.generateRequest.declarationTypeId,
             this.testDateDebut,
@@ -365,14 +415,179 @@ export class DeclarationManagementComponent implements OnInit {
       });
   }
 
-  // ── Génération standard (CSV/TXT) ──────────────────────────────
+  // ══════════════════════════════════════════════════════
+  // ÉTAPE 3 → 4  :  Sauvegarde SQL + Analyse Mapping
+  // ══════════════════════════════════════════════════════
+
+  /**
+   * ✅ CORRIGÉ — Flux complet :
+   *   1. Valide la requête SQL
+   *   2. Sauvegarde la SQL (si pas déjà fait via testSql)
+   *   3. Lance l'analyse XSD ↔ SQL via le backend
+   *   4. Construit les fieldMappings avec pré-remplissage auto
+   *   5. Passe à l'étape 4
+   */
+  goToMappingStep(): void {
+    this.formSubmitted = true;
+
+    if (!this.sqlQuery?.trim()) {
+      alert('La requête SQL est obligatoire');
+      return;
+    }
+    if (!this.sqlQuery.trim().toUpperCase().startsWith('SELECT')) {
+      alert('La requête doit commencer par SELECT');
+      return;
+    }
+
+    this.analyzingMapping     = true;
+    this.mappingAnalysisError = null;
+    this.selectedMappingIndex = null;
+
+    const runAnalysis = () => {
+      this.declarationService.analyzeMappingHttp({
+        declarationTypeId: this.generateRequest.declarationTypeId,
+        dateDebut:         this.generateRequest.dateDebut,
+        dateFin:           this.generateRequest.dateFin
+      }).subscribe({
+        next: (analysis: MappingAnalysisResponse) => {
+          this.mappingAnalysis  = analysis;
+          this.analyzingMapping = false;
+          this.buildFieldMappings(analysis);
+          this.currentStep = 4;
+        },
+        error: (err: any) => {
+          this.mappingAnalysisError = err.error?.error || err.message || 'Erreur analyse mapping';
+          this.analyzingMapping     = false;
+          // On passe quand même à l'étape 4 pour permettre un mapping manuel
+          this.currentStep = 4;
+        }
+      });
+    };
+
+    if (this.sqlSaved) {
+      // SQL déjà persistée → analyse directe
+      runAnalysis();
+    } else {
+      this.declarationTypeService.saveSqlQuery(
+        this.generateRequest.declarationTypeId, this.sqlQuery
+      ).subscribe({
+        next: () => {
+          this.sqlSaved = true;
+          runAnalysis();
+        },
+        error: () => {
+          this.mappingAnalysisError = 'Impossible de sauvegarder la requête SQL';
+          this.analyzingMapping     = false;
+          this.currentStep          = 4;
+        }
+      });
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
+  // CONSTRUCTION DES FIELD MAPPINGS
+  // ══════════════════════════════════════════════════════
+
+  /**
+   * Construit le tableau fieldMappings depuis l'analyse XSD ↔ SQL.
+   * Pré-remplit avec l'auto-mapping détecté par le backend.
+   * Les champs non trouvés en SQL restent en mode NONE (à configurer manuellement).
+   */
+  private buildFieldMappings(analysis: MappingAnalysisResponse): void {
+    if (!analysis?.xsdFields) { this.fieldMappings = []; return; }
+
+    this.fieldMappings = analysis.xsdFields.map((field) => {
+      const autoCol = analysis.autoMapped?.[field.name] ?? null;
+      return {
+        xsdFieldName: field.name,
+        xsdFieldPath: field.path,
+        xsdType:      field.type,
+        required:     field.required,
+        source:       autoCol ? 'SQL' : 'NONE',
+        sqlColumn:    autoCol ?? '',
+        staticValue:  ''
+      } as FieldMappingLocal;
+    });
+  }
+
+  // ── Interactions Mapping ─────────────────────────────────────────
+
+  selectMappingField(index: number): void {
+    this.selectedMappingIndex = index;
+  }
+
+  /**
+   * Assigne une colonne SQL au champ XSD sélectionné.
+   * Passe automatiquement au prochain champ obligatoire non mappé.
+   */
+  assignSqlColumn(col: string): void {
+    if (this.selectedMappingIndex === null) return;
+    const fm = this.fieldMappings[this.selectedMappingIndex];
+    if (fm.source === 'STATIC') return;   // en mode statique, pas de clic SQL
+
+    fm.source    = 'SQL';
+    fm.sqlColumn = col;
+
+    // Auto-avance vers le prochain champ obligatoire non mappé
+    const nextRequired = this.fieldMappings.findIndex(
+      (f, i) => i > this.selectedMappingIndex! && f.required && f.source === 'NONE'
+    );
+    if (nextRequired !== -1) {
+      this.selectedMappingIndex = nextRequired;
+    } else {
+      // Sinon prochain champ non mappé (obligatoire ou non)
+      const next = this.fieldMappings.findIndex(
+        (f, i) => i > this.selectedMappingIndex! && f.source === 'NONE'
+      );
+      if (next !== -1) this.selectedMappingIndex = next;
+    }
+  }
+
+  isSqlColumnUsed(col: string): boolean {
+    return this.fieldMappings.some(
+      (fm, i) => fm.source === 'SQL' && fm.sqlColumn === col && i !== this.selectedMappingIndex
+    );
+  }
+
+  setMappingSource(index: number, source: 'SQL' | 'STATIC' | 'NONE'): void {
+    const fm = this.fieldMappings[index];
+    fm.source = source;
+    if (source !== 'SQL')    fm.sqlColumn   = '';
+    if (source !== 'STATIC') fm.staticValue = '';
+    this.selectedMappingIndex = index;
+  }
+
+  countMappedFields(): number {
+    return this.fieldMappings.filter(m => m.source !== 'NONE').length;
+  }
+
+  getMissingRequiredCount(): number {
+    return this.fieldMappings.filter(m => m.required && m.source === 'NONE').length;
+  }
+
+  getUnusedSqlColumns(): string[] {
+    if (!this.mappingAnalysis?.sqlColumns) return [];
+    const usedCols = new Set(
+      this.fieldMappings.filter(m => m.source === 'SQL' && m.sqlColumn).map(m => m.sqlColumn)
+    );
+    return this.mappingAnalysis.sqlColumns.filter(c => !usedCols.has(c));
+  }
+
+  resetMapping(): void {
+    if (!confirm('Réinitialiser tous les mappings ?')) return;
+    if (this.mappingAnalysis) this.buildFieldMappings(this.mappingAnalysis);
+    this.selectedMappingIndex = null;
+  }
+
+  // ══════════════════════════════════════════════════════
+  // GÉNÉRATION CSV / TXT (sans mapping)
+  // ══════════════════════════════════════════════════════
 
   generateDeclaration(): void {
     this.formSubmitted = true;
     const fmt = this.selectedDeclarationType?.format;
     if (!this.generateRequest.declarationTypeId) { alert('Type obligatoire'); return; }
     if (!this.generateRequest.periode)            { alert('Période obligatoire'); return; }
-    if (fmt === 'XML' && !this.xsdFile)           { alert('Fichier XSD obligatoire'); return; }
     if (!this.sqlQuery?.trim())                   { alert('Requête SQL obligatoire'); return; }
     if (!this.sqlQuery.trim().toUpperCase().startsWith('SELECT')) {
       alert('La requête doit commencer par SELECT'); return;
@@ -389,7 +604,7 @@ export class DeclarationManagementComponent implements OnInit {
                 alert('Déclaration générée avec succès !');
                 this.closeGenerateModal();
                 this.loadingAction = false;
-                setTimeout(() => { this.loadDeclarations(); }, 2500);
+                setTimeout(() => this.loadDeclarations(), 2500);
               },
               error: (err) => {
                 alert('Erreur génération : ' + (err.error?.message || err.message || 'Erreur inconnue'));
@@ -404,10 +619,11 @@ export class DeclarationManagementComponent implements OnInit {
         });
     };
 
-    if (fmt === 'XML' && this.xsdFile) {
+    // CSV/TXT n'a pas de XSD
+    if (fmt === 'XML' && this.xsdFile && !this.xsdUploaded) {
       this.declarationTypeService.uploadXsd(this.generateRequest.declarationTypeId, this.xsdFile)
         .subscribe({
-          next:  () => doGenerate(),
+          next:  () => { this.xsdUploaded = true; doGenerate(); },
           error: (err) => { alert('Erreur upload XSD : ' + (err.error?.error || err.message)); this.loadingAction = false; }
         });
     } else {
@@ -416,195 +632,96 @@ export class DeclarationManagementComponent implements OnInit {
   }
 
   // ══════════════════════════════════════════════════════
-  // ÉTAPE 4 — MAPPING XSD ↔ SQL
+  // ✅ GÉNÉRATION XML AVEC MAPPING — Étape 4
   // ══════════════════════════════════════════════════════
 
-  goToMappingStep(): void {
-    this.formSubmitted = true;
-    if (!this.sqlQuery?.trim()) { alert('La requête SQL est obligatoire'); return; }
-    if (!this.sqlQuery.trim().toUpperCase().startsWith('SELECT')) {
-      alert('La requête doit commencer par SELECT'); return;
-    }
-
-    this.analyzingMapping     = true;
-    this.mappingAnalysisError = null;
-    this.selectedMappingIndex = null;
-
-    this.declarationTypeService.saveSqlQuery(
-      this.generateRequest.declarationTypeId, this.sqlQuery
-    ).subscribe({
-      next: () => {
-        this.declarationService.analyzeMappingHttp({
-          declarationTypeId: this.generateRequest.declarationTypeId,
-          dateDebut:         this.generateRequest.dateDebut,
-          dateFin:           this.generateRequest.dateFin
-        }).subscribe({
-          next: (analysis: any) => {
-            this.mappingAnalysis  = analysis;
-            this.analyzingMapping = false;
-            this.buildFieldMappings(analysis);
-            this.currentStep = 4;
-          },
-          error: (err: any) => {
-            this.mappingAnalysisError = err.error?.error || err.message || 'Erreur analyse mapping';
-            this.analyzingMapping     = false;
-            this.currentStep = 4;
-          }
-        });
-      },
-      error: () => {
-        this.mappingAnalysisError = 'Impossible de sauvegarder la requête SQL';
-        this.analyzingMapping     = false;
-        this.currentStep          = 4;
-      }
-    });
-  }
-
-  private buildFieldMappings(analysis: any): void {
-    if (!analysis?.xsdFields) { this.fieldMappings = []; return; }
-    this.fieldMappings = (analysis.xsdFields as any[]).map((field: any) => {
-      const autoCol = analysis.autoMapped?.[field.name] ?? null;
-      return {
-        xsdFieldName: field.name,
-        xsdFieldPath: field.path,
-        xsdType:      field.type,
-        required:     field.required,
-        source:       autoCol ? 'SQL' : 'NONE',
-        sqlColumn:    autoCol ?? '',
-        staticValue:  ''
-      } as FieldMapping;
-    });
-  }
-
-  // ── Sélectionner un champ XSD ────────────────────────────────────
-  selectMappingField(index: number): void {
-    this.selectedMappingIndex = index;
-  }
-
-  // ── Assigner une colonne SQL au champ sélectionné ─────────────────
-  assignSqlColumn(col: string): void {
-    if (this.selectedMappingIndex === null) return;
-    const fm = this.fieldMappings[this.selectedMappingIndex];
-    if (fm.source === 'STATIC') return;
-
-    fm.source    = 'SQL';
-    fm.sqlColumn = col;
-
-    // Passer automatiquement au prochain champ non mappé
-    const next = this.fieldMappings.findIndex(
-      (f, i) => i > this.selectedMappingIndex! && f.source === 'NONE'
-    );
-    if (next !== -1) {
-      this.selectedMappingIndex = next;
-    }
-  }
-
-  // ── Vérifier si une colonne SQL est déjà utilisée ─────────────────
-  isSqlColumnUsed(col: string): boolean {
-    return this.fieldMappings.some(
-      (fm, i) => fm.source === 'SQL' && fm.sqlColumn === col && i !== this.selectedMappingIndex
-    );
-  }
-
-  // ── Changer le mode source d'un champ ────────────────────────────
-  setMappingSource(index: number, source: 'SQL' | 'STATIC' | 'NONE'): void {
-    this.fieldMappings[index].source = source;
-    if (source !== 'SQL')    this.fieldMappings[index].sqlColumn   = '';
-    if (source !== 'STATIC') this.fieldMappings[index].staticValue = '';
-    this.selectedMappingIndex = index;
-  }
-
-  // ── Compter les champs mappés ─────────────────────────────────────
-  countMappedFields(): number {
-    return this.fieldMappings.filter(m => m.source !== 'NONE').length;
-  }
-
-  // ── Colonnes SQL non utilisées ────────────────────────────────────
-  getUnusedSqlColumns(): string[] {
-    if (!this.mappingAnalysis?.sqlColumns) return [];
-    const usedCols = new Set(
-      this.fieldMappings
-        .filter(m => m.source === 'SQL' && m.sqlColumn)
-        .map(m => m.sqlColumn)
-    );
-    return (this.mappingAnalysis.sqlColumns as string[]).filter((c: string) => !usedCols.has(c));
-  }
-
-  // ── Champs obligatoires sans mapping ─────────────────────────────
-  getMissingRequiredCount(): number {
-    return this.fieldMappings.filter(m => m.required && m.source === 'NONE').length;
-  }
-
-  // ── Réinitialiser tous les mappings ──────────────────────────────
-  resetMapping(): void {
-    if (!confirm('Réinitialiser tous les mappings ?')) return;
-    if (this.mappingAnalysis) {
-      this.buildFieldMappings(this.mappingAnalysis);
-    }
-    this.selectedMappingIndex = null;
-  }
-
-  // ── Générer avec mapping ──────────────────────────────────────────
+  /**
+   * ✅ CORRIGÉ — Validation complète puis envoi au backend.
+   *  - Vérifie champs obligatoires
+   *  - Vérifie champs SQL sans colonne sélectionnée
+   *  - Envoie le mapping au format attendu par le DTO Java
+   */
   generateDeclarationWithMapping(): void {
     this.formSubmitted = true;
 
-    const missing = this.getMissingRequiredCount();
-    if (missing > 0) {
-      alert(`${missing} champ(s) obligatoire(s) du XSD n'ont pas de valeur. Assignez une colonne SQL ou une valeur statique.`);
+    // ── Validation ────────────────────────────────────────────────
+    const missingRequired = this.fieldMappings.filter(m => m.required && m.source === 'NONE');
+    if (missingRequired.length > 0) {
+      alert(
+        `⚠️ ${missingRequired.length} champ(s) obligatoire(s) sans valeur :\n` +
+        missingRequired.map(m => `• ${m.xsdFieldName}`).join('\n') +
+        '\n\nAssignez une colonne SQL ou une valeur statique.'
+      );
+      // Sélectionner automatiquement le premier champ problématique
+      const idx = this.fieldMappings.findIndex(m => m.required && m.source === 'NONE');
+      if (idx !== -1) this.selectedMappingIndex = idx;
       return;
     }
 
-    const sqlWithoutCol = this.fieldMappings.filter(m => m.source === 'SQL' && !m.sqlColumn);
+    const sqlWithoutCol = this.fieldMappings.filter(m => m.source === 'SQL' && !m.sqlColumn.trim());
     if (sqlWithoutCol.length > 0) {
-      alert(`${sqlWithoutCol.length} champ(s) marqués "SQL" n'ont pas de colonne sélectionnée.`);
+      alert(
+        `⚠️ ${sqlWithoutCol.length} champ(s) en mode "SQL" sans colonne sélectionnée :\n` +
+        sqlWithoutCol.map(m => `• ${m.xsdFieldName}`).join('\n') +
+        '\n\nSélectionnez une colonne ou changez le mode.'
+      );
+      const idx = this.fieldMappings.findIndex(m => m.source === 'SQL' && !m.sqlColumn.trim());
+      if (idx !== -1) this.selectedMappingIndex = idx;
+      return;
+    }
+
+    const staticWithoutValue = this.fieldMappings.filter(
+      m => m.required && m.source === 'STATIC' && !m.staticValue.trim()
+    );
+    if (staticWithoutValue.length > 0) {
+      alert(
+        `⚠️ ${staticWithoutValue.length} champ(s) statique(s) obligatoire(s) sans valeur :\n` +
+        staticWithoutValue.map(m => `• ${m.xsdFieldName}`).join('\n')
+      );
+      const idx = this.fieldMappings.findIndex(
+        m => m.required && m.source === 'STATIC' && !m.staticValue.trim()
+      );
+      if (idx !== -1) this.selectedMappingIndex = idx;
       return;
     }
 
     this.loadingAction = true;
 
-    const doUploadXsdThenGenerate = () => {
-      this.declarationTypeService
-        .saveSqlQuery(this.generateRequest.declarationTypeId, this.sqlQuery)
-        .subscribe({
-          next: () => {
-            this.declarationService.generateDeclarationWithMapping({
-              declarationTypeId: this.generateRequest.declarationTypeId,
-              periode:           this.generateRequest.periode,
-              dateDebut:         this.generateRequest.dateDebut,
-              dateFin:           this.generateRequest.dateFin,
-              mappings:          this.fieldMappings
-            }).subscribe({
-              next: (_saved: any) => {
-                alert('✅ Déclaration générée avec mapping !');
-                this.closeGenerateModal();
-                this.loadingAction = false;
-                setTimeout(() => this.loadDeclarations(), 2500);
-              },
-              error: (err: any) => {
-                alert('❌ Erreur génération : ' + (err.error?.error || err.message));
-                this.loadingAction = false;
-              }
-            });
-          },
-          error: (err: any) => {
-            alert('Erreur sauvegarde SQL : ' + (err.error?.error || err.message));
-            this.loadingAction = false;
-          }
-        });
+    // ── Envoi au backend ──────────────────────────────────────────
+    const doGenerate = () => {
+      this.declarationService.generateDeclarationWithMapping({
+        declarationTypeId: this.generateRequest.declarationTypeId,
+        periode:           this.generateRequest.periode,
+        dateDebut:         this.generateRequest.dateDebut,
+        dateFin:           this.generateRequest.dateFin,
+        mappings:          this.fieldMappings as FieldMapping[]
+      }).subscribe({
+        next: (_saved: any) => {
+          alert('✅ Déclaration XML générée avec succès !');
+          this.closeGenerateModal();
+          this.loadingAction = false;
+          setTimeout(() => this.loadDeclarations(), 2500);
+        },
+        error: (err: any) => {
+          alert('❌ Erreur génération : ' + (err.error?.error || err.message));
+          this.loadingAction = false;
+        }
+      });
     };
 
-    if (this.xsdFile) {
-      this.declarationTypeService.uploadXsd(
-        this.generateRequest.declarationTypeId, this.xsdFile
+    // Sauvegarde SQL si nécessaire (peut avoir changé après l'étape 3)
+    if (!this.sqlSaved) {
+      this.declarationTypeService.saveSqlQuery(
+        this.generateRequest.declarationTypeId, this.sqlQuery
       ).subscribe({
-        next:  () => doUploadXsdThenGenerate(),
+        next:  () => { this.sqlSaved = true; doGenerate(); },
         error: (err: any) => {
-          alert('Erreur upload XSD : ' + (err.error?.error || err.message));
+          alert('Erreur sauvegarde SQL : ' + (err.error?.error || err.message));
           this.loadingAction = false;
         }
       });
     } else {
-      doUploadXsdThenGenerate();
+      doGenerate();
     }
   }
 
@@ -718,37 +835,45 @@ export class DeclarationManagementComponent implements OnInit {
   // ══════════════════════════════════════════════════════
   // CORRECT MODAL
   // ══════════════════════════════════════════════════════
- canCorrect(d: Declaration): boolean { return d.statut === 'REJETEE'; }
- 
+
+  canCorrect(d: Declaration): boolean { return d.statut === 'REJETEE'; }
+
   openCorrectModal(d: Declaration): void {
     this.selectedDeclaration = d;
     this.formSubmitted       = false;
     this.showCorrectModal    = true;
   }
- 
+
   closeCorrectModal(): void {
     this.showCorrectModal    = false;
     this.selectedDeclaration = null;
   }
 
+ onCorrectionSaved(event: { declaration: Declaration, comment: string }): void {
+  const updated = event.declaration;
+  const correctionComment = event.comment;
+  this.closeCorrectModal();
 
-   onCorrectionSaved(updated: Declaration): void {
-    this.closeCorrectModal();
-    // Supprimer le ticket Jira en cache pour forcer un rechargement
-    if (updated.id) this.jiraTickets.delete(updated.id);
-    // Recharger la liste avec un petit délai pour laisser le backend traiter
-    setTimeout(() => this.loadDeclarations(), 1000);
-  }
- 
-  /**
-   * Fermer en cliquant sur l'overlay (en dehors de la modal)
-   */
+  // Appel à la soumission avec le commentaire
+  this.validationService.submitForValidation(updated.id!, correctionComment).subscribe({
+    next: () => {
+      alert('✅ Déclaration corrigée et soumise pour validation !');
+      this.loadDeclarations();
+    },
+    error: (err) => {
+      alert('⚠️ Correction OK mais erreur soumission.\n' + (err.error?.message || err.message));
+      this.loadDeclarations();
+    }
+  });
+
+  if (updated.id) this.jiraTickets.delete(updated.id);
+  setTimeout(() => this.loadDeclarations(), 1000);
+}
+
   onCorrectOverlayClick(event: MouseEvent): void {
-    // La propagation est stopée sur modal-content, donc
-    // ce handler n'est déclenché que sur l'overlay lui-même
     this.closeCorrectModal();
   }
-  
+
   onCorrectXsdFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -948,7 +1073,7 @@ export class DeclarationManagementComponent implements OnInit {
   // HELPERS UI
   // ══════════════════════════════════════════════════════
 
-  getSqlColumns(): string        { return (this.sqlTestResult?.colonnesDisponibles ?? []).join(' - '); }
+  getSqlColumns():        string { return (this.sqlTestResult?.colonnesDisponibles ?? []).join(' - '); }
   getCorrectSqlColumns(): string { return (this.correctSqlTestResult?.colonnesDisponibles ?? []).join(' - '); }
 
   getStatusBadgeClass(s: string): string {

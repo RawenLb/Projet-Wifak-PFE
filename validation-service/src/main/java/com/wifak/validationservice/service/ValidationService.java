@@ -41,11 +41,9 @@ public class ValidationService {
     // ══════════════════════════════════════════════════════════════
     // 1. SOUMETTRE — GENEREE | REJETEE → EN_VALIDATION
     // ══════════════════════════════════════════════════════════════
-    public DeclarationDTO submitForValidation(Long declarationId) {
+    public DeclarationDTO submitForValidation(Long declarationId, String correctionComment) {
         String currentUser = getCurrentUsername();
-        log.info("📤 submitForValidation — ID: {}, user: {}", declarationId, currentUser);
-
-        DeclarationDTO decl = declarationClient.getById(declarationId);
+        log.info("📤 submitForValidation — ID: {}, user: {}, comment: {}", declarationId, currentUser, correctionComment);        DeclarationDTO decl = declarationClient.getById(declarationId);
         validateStatut(decl.getStatut(), "GENEREE", "REJETEE");
 
         if (!currentUser.equals(decl.getGenerePar()))
@@ -53,7 +51,7 @@ public class ValidationService {
 
         String statutAvant = decl.getStatut();
         DeclarationDTO updated = declarationClient.updateStatut(declarationId, "EN_VALIDATION", null, null);
-        saveLog(declarationId, "SUBMIT", statutAvant, "EN_VALIDATION", currentUser, null);
+        saveLog(declarationId, "SUBMIT", statutAvant, "EN_VALIDATION", currentUser, correctionComment);
 
         if ("GENEREE".equals(statutAvant)) {
             try {
@@ -201,9 +199,6 @@ public class ValidationService {
     // ══════════════════════════════════════════════════════════════
     // 11. TEMPLATES DE REJET PRÉDÉFINIS
     // ══════════════════════════════════════════════════════════════
-    public List<Map<String, String>> getRejectTemplates() {
-        return aiDeclarationService.getRejectTemplates();
-    }
 
     // ══════════════════════════════════════════════════════════════
     // UTILITAIRES PRIVÉS

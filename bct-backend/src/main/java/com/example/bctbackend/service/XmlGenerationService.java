@@ -23,9 +23,7 @@ import javax.xml.validation.Validator;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -65,7 +63,7 @@ public class XmlGenerationService {
     }
 
     // ════════════════════════════════════════════════════════════
-    // ✅ GÉNÉRATION AVEC MAPPING XSD ↔ SQL
+    // ✅ GÉNÉRATION AVEC MAPPING XSD ↔ SQL — CORRIGÉE
     // ════════════════════════════════════════════════════════════
 
     public String generateXmlFromMapping(
@@ -80,23 +78,24 @@ public class XmlGenerationService {
         log.info("🚀 Génération XML avec mapping — Déclaration: {}, Période: {}, {} mappings",
                 declarationCode, periode, mappings.size());
 
-        // ── Journaliser les mappings reçus pour diagnostic ─────────
-        mappings.forEach(m -> log.debug("  📌 Mapping reçu: {}", m));
+        mappings.forEach(m -> log.debug("  📌 Mapping: {}", m));
 
         // 1. Exécuter la SQL
         List<Map<String, Object>> rows = executeSqlQuery(sqlQuery, dateDebut, dateFin);
         log.info("✅ {} ligne(s) récupérée(s)", rows.size());
 
-        // ✅ 2. Filtrer avec getSource() null-safe (via le DTO corrigé)
+        // ── 2. Séparer mappings statiques / dynamiques / ignorés ──
         List<XsdSqlMappingRequest.FieldMapping> staticMappings = mappings.stream()
-                .filter(m -> m.getSource() == XsdSqlMappingRequest.MappingSource.STATIC)
+                .filter(m -> m.getSource() == XsdSqlMappingRequest.MappingSource.STATIC
+                        && !m.getStaticValue().isEmpty())
                 .collect(Collectors.toList());
 
         List<XsdSqlMappingRequest.FieldMapping> sqlMappings = mappings.stream()
-                .filter(m -> m.getSource() == XsdSqlMappingRequest.MappingSource.SQL)
+                .filter(m -> m.getSource() == XsdSqlMappingRequest.MappingSource.SQL
+                        && !m.getSqlColumn().isEmpty())
                 .collect(Collectors.toList());
 
-        log.info("📋 Mappings — {} statiques, {} SQL, {} ignorés",
+        log.info("📋 Mappings effectifs — {} statiques, {} SQL, {} ignorés",
                 staticMappings.size(), sqlMappings.size(),
                 mappings.size() - staticMappings.size() - sqlMappings.size());
 
@@ -107,15 +106,31 @@ public class XmlGenerationService {
         );
         log.info("✅ XML avec mapping généré ({} caractères)", xmlContent.length());
 
-        // 4. Validation XSD optionnelle (warning seulement)
+        // 4. Validation XSD optionnelle
         validateOptional(xmlContent, xsdContent);
         return xmlContent;
     }
 
     // ════════════════════════════════════════════════════════════
-    // CONSTRUCTION XML AVEC MAPPING — null-safe
+    // ✅ CONSTRUCTION XML AVEC MAPPING — structure correcte
+    //
+    //  <Declaration code="..." periode="...">
+    //    <Entete>
+    //      <CodeDeclaration>...</CodeDeclaration>
+    //      <!-- champs statiques ici -->
+    //    </Entete>
+    //    <Donnees>
+    //      <Ligne>
+    //        <!-- champs SQL par ligne -->
+    //      </Ligne>
+    //      ...
+    //    </Donnees>
+    //  </Declaration>
     // ════════════════════════════════════════════════════════════
-
+    private static final Set<String> AUTO_HEADER_FIELD_NAMES = new HashSet<>(Arrays.asList(
+            "CodeDeclaration", "Periode", "DateDebut", "DateFin",
+            "NombreLignes", "DateGeneration"
+    ));
     private String buildXmlWithMapping(
             String declarationCode,
             String periode,
@@ -127,7 +142,6 @@ public class XmlGenerationService {
     ) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            // ✅ Désactiver la validation DTD pour éviter des NPE internes
             factory.setValidating(false);
             factory.setFeature("http://xml.org/sax/features/namespaces", false);
             factory.setFeature("http://xml.org/sax/features/validation", false);
@@ -137,13 +151,13 @@ public class XmlGenerationService {
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.newDocument();
 
-            // ── Racine ────────────────────────────────────────────
+            // ── Racine ─────────────────────────────────────────
             Element root = doc.createElement("Declaration");
             root.setAttribute("code",    safeStr(declarationCode));
             root.setAttribute("periode", safeStr(periode));
             doc.appendChild(root);
 
-            // ── En-tête ───────────────────────────────────────────
+            // ── En-tête (toujours auto-généré) ─────────────────────
             Element entete = doc.createElement("Entete");
             addElement(doc, entete, "CodeDeclaration", safeStr(declarationCode));
             addElement(doc, entete, "Periode",         safeStr(periode));
@@ -152,57 +166,50 @@ public class XmlGenerationService {
             addElement(doc, entete, "NombreLignes",    String.valueOf(rows.size()));
             addElement(doc, entete, "DateGeneration",  java.time.LocalDateTime.now().toString());
 
-            // Champs statiques → en-tête
+            // ✅ Champs STATIQUES — exclure les champs d'en-tête (déjà ajoutés ci-dessus)
             for (XsdSqlMappingRequest.FieldMapping sm : staticMappings) {
+                if (AUTO_HEADER_FIELD_NAMES.contains(sm.getXsdFieldName())) {
+                    log.debug("⏭️ Champ auto ignoré dans static: {}", sm.getXsdFieldName());
+                    continue;
+                }
                 String tag   = sanitizeXmlTagName(sm.getXsdFieldName());
-                String value = sm.getStaticValue(); // getStaticValue() ne retourne jamais null
+                String value = sm.getStaticValue();
                 addElement(doc, entete, tag, value);
-                log.debug("📌 Statique en-tête : {} = '{}'", tag, value);
             }
             root.appendChild(entete);
 
-            // ── Données : une Ligne par enregistrement SQL ─────────
+            // ── Données ─────────────────────────────────────────────
             Element donnees = doc.createElement("Donnees");
-
             for (Map<String, Object> row : rows) {
                 Element ligne = doc.createElement("Ligne");
 
+                // ✅ Champs SQL — exclure également les champs auto
                 for (XsdSqlMappingRequest.FieldMapping fm : sqlMappings) {
-                    String col = fm.getSqlColumn(); // getSqlColumn() ne retourne jamais null
-                    if (col.isEmpty()) {
-                        log.warn("⚠️ Champ SQL '{}' sans colonne définie — ignoré", fm.getXsdFieldName());
-                        continue;
-                    }
+                    if (AUTO_HEADER_FIELD_NAMES.contains(fm.getXsdFieldName())) continue;
 
-                    // Recherche de la valeur — exacte puis insensible à la casse
+                    String col = fm.getSqlColumn();
                     Object val = row.get(col);
                     if (val == null) {
                         val = row.entrySet().stream()
                                 .filter(e -> col.equalsIgnoreCase(e.getKey()))
                                 .map(Map.Entry::getValue)
+                                .filter(v -> v != null)
                                 .findFirst()
                                 .orElse(null);
                     }
-
-                    String tag   = sanitizeXmlTagName(fm.getXsdFieldName());
-                    String value = val != null ? val.toString() : "";
-                    addElement(doc, ligne, tag, value);
+                    addElement(doc, ligne, sanitizeXmlTagName(fm.getXsdFieldName()),
+                            val != null ? val.toString() : "");
                 }
-
                 donnees.appendChild(ligne);
             }
-
             root.appendChild(donnees);
 
-            String xml = documentToString(doc);
-            log.debug("📄 Extrait XML généré :\n{}", xml.length() > 500 ? xml.substring(0, 500) + "..." : xml);
-            return xml;
+            return documentToString(doc);
 
         } catch (Exception e) {
             log.error("❌ Erreur construction XML avec mapping: {}", e.getMessage(), e);
             throw new RuntimeException("Erreur lors de la construction du XML: " + e.getMessage(), e);
-        }
-    }
+        }}
 
     // ════════════════════════════════════════════════════════════
     // CONSTRUCTION XML GÉNÉRIQUE (sans mapping)
@@ -234,8 +241,9 @@ public class XmlGenerationService {
             addElement(doc, entete, "DateDebut",       dateDebut != null ? dateDebut.toString() : "");
             addElement(doc, entete, "DateFin",         dateFin   != null ? dateFin.toString()   : "");
             addElement(doc, entete, "NombreLignes",    String.valueOf(rows.size()));
-            addElement(doc, entete, "DateGeneration",  java.time.LocalDateTime.now().toString());
-            root.appendChild(entete);
+            addElement(doc, entete, "DateGeneration",
+                    java.time.LocalDateTime.now()
+                            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));            root.appendChild(entete);
 
             Element donnees = doc.createElement("Donnees");
             for (Map<String, Object> row : rows) {
@@ -299,7 +307,7 @@ public class XmlGenerationService {
     }
 
     // ════════════════════════════════════════════════════════════
-    // EXTRACTION COLONNES (pour l'analyse mapping)
+    // EXTRACTION COLONNES
     // ════════════════════════════════════════════════════════════
 
     public List<String> extractColumnsFromSql(String sqlQuery, LocalDate dateDebut, LocalDate dateFin) {
@@ -369,10 +377,6 @@ public class XmlGenerationService {
         return writer.toString();
     }
 
-    /**
-     * Assainit un nom de colonne SQL pour en faire un nom d'élément XML valide.
-     * Règles XML : commence par lettre ou _, pas d'espaces, pas de caractères spéciaux.
-     */
     private String sanitizeXmlTagName(String columnName) {
         if (columnName == null || columnName.trim().isEmpty()) return "field";
         String s = columnName.trim().replace(" ", "_");
@@ -381,7 +385,6 @@ public class XmlGenerationService {
         return s.isEmpty() ? "field" : s;
     }
 
-    /** Retourne une chaîne vide si la valeur est null. */
     private String safeStr(String s) {
         return s != null ? s : "";
     }

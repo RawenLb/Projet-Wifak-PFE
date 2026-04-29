@@ -211,6 +211,14 @@ $sh-glow-crimson: 0 0 0 3px rgba(200,25,46,.15);
   }
 }
 
+.card {
+  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.75);
+}
+
+.stat-card:hover {
+  transform: translateY(-6px) scale(1.02);
+}
 // ============================================
 // STAT CARDS
 // ============================================
@@ -628,3 +636,4 @@ $sh-glow-crimson: 0 0 0 3px rgba(200,25,46,.15);
   .recent-table tbody td:nth-child(2) { display: none; }
   .alert-rejected-right { display: none; }
 }
+

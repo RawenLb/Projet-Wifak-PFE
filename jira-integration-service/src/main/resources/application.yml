@@ -48,18 +48,17 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka/
 
-# ?? Jira Cloud configuration ???????????????????????????????????????????????
 jira:
-  base-url: https://wifak-bct.atlassian.net          # ? remplace par ton domaine Atlassian
-  project-key: BCT                                      # ? clé du projet visible dans screenshot
-  user-email: rawene.labaoui@gmail.com                   # ? email du compte Atlassian
-  api-token: ATATT3xFfGF0OI5RjtaSblClyYoEMfGSHYjU-PxAIIn0duIEsecXr-f2kBnc87DkKqGukVkVtT4jIWFvS20_Rwjur5LpdYlfMBgqcD7KDbyXWLrfNMEA-W76bKa7Iul2DVHoUVJR6yFaLvFYftNU93KOG6AQ5HN-vVJmExxdhQGBwRmx62ezBYY=7BF92416
+  base-url: https://wifak-bct.atlassian.net
+  project-key: BCT
+  user-email: rawene.labaoui@gmail.com
+  api-token: ATATT3xFfGF0Ye1eE4kHMn2zhzMqLU43CPF5h59caFguJSIowzAM8KxSASDcpCoxmdYsmOrrBblXymauRqPBVaegi7m-7f5R9tNcH3272XzPcFfdAcbkVfL22U9H_EHawE3fGXG_qB1TdG85fUnU6nqqDaHYIVTBX4MiFDgOicU_EnWX2OOdVm0=51DDA206
   transitions:
-    to-do: "10001"          # TO DO
-    in-progress: "10002"    # IN PROGRESS (= EN_VALIDATION)
-    validee: "10003"        # VALIDÉE
-    rejetee: "10004"        # REJETÉE
-    envoyee: "2"            # ENVOYÉE
+    to-do: "10001"
+    in-progress: "10002"
+    validee: "10003"
+    rejetee: "10004"
+    envoyee: "2"
 
 feign:
   client:

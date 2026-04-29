@@ -30,9 +30,10 @@ public class ValidationController {
     // 1. SOUMETTRE
     @PostMapping("/{id}/submit")
     @PreAuthorize("hasRole('AGENT')")
-    public ResponseEntity<DeclarationDTO> submitForValidation(@PathVariable Long id) {
-        log.info("📤 [POST] /api/validation/{}/submit", id);
-        return ResponseEntity.ok(validationService.submitForValidation(id));
+    public ResponseEntity<DeclarationDTO> submitForValidation(
+            @PathVariable Long id,
+            @RequestParam(required = false) String correctionComment) {
+        return ResponseEntity.ok(validationService.submitForValidation(id, correctionComment));
     }
 
     // 2. VALIDER
@@ -111,11 +112,4 @@ public class ValidationController {
         return ResponseEntity.ok(validationService.compareWithPrevious(id, previousId));
     }
 
-    // 11. TEMPLATES DE REJET PRÉDÉFINIS (Feature 5)
-    @GetMapping("/reject-templates")
-    @PreAuthorize("hasRole('MANAGER')")
-    public ResponseEntity<List<Map<String, String>>> getRejectTemplates() {
-        log.info("📝 [GET] /api/validation/reject-templates");
-        return ResponseEntity.ok(validationService.getRejectTemplates());
-    }
-}
+ }

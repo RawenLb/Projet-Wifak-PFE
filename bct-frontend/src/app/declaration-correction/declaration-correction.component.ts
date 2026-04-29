@@ -16,9 +16,11 @@ export type CorrectionMode = 'inline-xml' | 'mapping-view' | 'sql-xsd-view';
 export class DeclarationCorrectionComponent implements OnInit, OnChanges {
 
   @Input() declaration!: Declaration;
-  @Output() correctionSaved   = new EventEmitter<Declaration>();
   @Output() correctionCancelled = new EventEmitter<void>();
+  @Output() correctionSaved = new EventEmitter<{ declaration: Declaration, comment: string }>();
 
+  // Ajoutez une propriété pour le commentaire
+correctionComment = '';
   // ── Mode d'affichage ────────────────────────────────────────────
   activeMode: CorrectionMode = 'inline-xml';
 
@@ -407,15 +409,10 @@ export class DeclarationCorrectionComponent implements OnInit, OnChanges {
   }
 
   private submitAndEmit(decl: Declaration): void {
-    this.validationService.submitForValidation(decl.id!).subscribe({
-      next: () => {
-        this.success = '✅ Correction sauvegardée et soumise pour validation.';
-        setTimeout(() => this.correctionSaved.emit(decl), 1200);
-      },
-      error: () => {
-        this.correctionSaved.emit(decl);
-      }
-    });
+  this.success = '✅ Correction sauvegardée.';
+  // On émet l'événement pour que le parent soumette avec le commentaire
+  this.correctionSaved.emit({ declaration: decl, comment: this.correctionComment });
+  setTimeout(() => this.correctionSaved.emit({ declaration: decl, comment: this.correctionComment }), 100);
   }
 
   cancel(): void { this.correctionCancelled.emit(); }

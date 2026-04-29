@@ -498,7 +498,16 @@
 
   </div>
   <!-- /corr-body -->
-
+  <!-- ══════════════════════════════════════════════════════════════
+       COMMENTAIRE DE CORRECTION (toujours visible)
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="form-group" style="margin: 0 1.5rem 1rem 1.5rem;">
+    <label>Commentaire de correction (obligatoire pour l’apprentissage)</label>
+    <textarea [(ngModel)]="correctionComment" rows="3" 
+              placeholder="Décrivez précisément la correction apportée (ex: Montant ramené à 25000, devise EUR ajoutée, taux corrigé à 2.5)">
+    </textarea>
+    <small class="form-hint">Ce commentaire permettra au système de suggérer cette correction pour des erreurs similaires.</small>
+  </div>
   <!-- ══════════════════════════════════════════════════════════════
        FOOTER ACTIONS
        ══════════════════════════════════════════════════════════════ -->

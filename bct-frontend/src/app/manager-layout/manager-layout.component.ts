@@ -44,11 +44,6 @@ export class ManagerLayoutComponent implements OnInit, OnDestroy {
         { path: '/manager/calendar',     label: 'Calendrier BCT',   icon: 'calendar',     badge: null },
         { path: '/manager/reports',      label: 'Rapports',         icon: 'reports',      badge: null },
       ]
-    },
-    {
-      section: 'ML',
-      links: [
-        { path: '/manager/ml', label: 'IA / ML', icon: 'admin', badge: null }      ]
     }
   ];
 

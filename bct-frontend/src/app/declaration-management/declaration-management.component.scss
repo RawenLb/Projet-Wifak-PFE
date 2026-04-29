@@ -340,6 +340,7 @@ $sh-glow: 0 0 0 3px rgba(27,79,188,.18);
 // ============================================
 // TABLE CARD
 // ============================================
+
 .table-card {
   background: $surface; border-radius: $r-xl;
   box-shadow: $sh-xs; border: 1px solid $border-lt;
@@ -2425,23 +2426,27 @@ $sh-glow: 0 0 0 3px rgba(27,79,188,.18);
 
 
 .modal-correction {
-  max-width:  1100px !important;
-  width:      95vw;
-  max-height: 92vh;
-  overflow:   hidden;
-  display:    flex;
+  max-width:      1100px !important;
+  width:          95vw;
+  max-height:     92vh;
+  overflow-y:     auto;       // ← était hidden
+  overflow-x:     hidden;
+  display:        flex;
   flex-direction: column;
 }
- 
+
 .correction-modal-body {
-  flex:       1;
-  overflow:   hidden;
-  padding:    0 !important;
-  display:    flex;
+  flex:           1;
+  overflow-y:     auto;       // ← était hidden
+  overflow-x:     hidden;
+  padding:        0 !important;
+  display:        flex;
   flex-direction: column;
+  min-height:     0;          // ← important pour que flex+overflow fonctionne
 }
- 
+
 .correction-modal-body app-declaration-correction {
-  flex: 1;
-  overflow: hidden;
+  flex:       1;
+  overflow-y: auto;           // ← était hidden
+  min-height: 0;
 }

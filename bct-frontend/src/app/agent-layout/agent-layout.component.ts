@@ -80,6 +80,9 @@ export class AgentLayoutComponent implements OnInit, OnDestroy {
     } else if (url.includes('/agent/calendar')) {
       this.pageTitle    = 'Calendrier des Échéances';
       this.pageSubtitle = 'Visualisez et suivez vos échéances déclaratives BCT';
+ } else if (url.includes('/agent/ml')) {
+      this.pageTitle    = 'Aide intelligente';
+      this.pageSubtitle = 'Corriger vos déclarations réglementaires';
     } else if (url.includes('/agent/types')) {
       this.pageTitle    = 'Types de Déclarations BCT';
       this.pageSubtitle = 'Catalogue des types de déclarations disponibles';

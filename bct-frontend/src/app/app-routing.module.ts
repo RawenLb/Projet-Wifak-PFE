@@ -79,6 +79,8 @@ const routes: Routes = [
       { path: 'dashboard',      component: AgentDashboardComponent },
       { path: 'declarations',   component: DeclarationManagementComponent },
       { path: 'calendar',       component: DeclarationCalendarComponent },
+      { path: 'ml', component: ManagerMlDashboardComponent },
+
 
       // ✅ Types BCT en lecture seule — réutilise le composant existant
 { path: 'types', component: AgentDeclarationTypesComponent },
@@ -119,7 +121,6 @@ const routes: Routes = [
       // ✅ Rapports & synthèse — US-19
       { path: 'reports',      component: ManagerReportsComponent },
 
-      { path: 'ml', component: ManagerMlDashboardComponent }
     ]
   },
 

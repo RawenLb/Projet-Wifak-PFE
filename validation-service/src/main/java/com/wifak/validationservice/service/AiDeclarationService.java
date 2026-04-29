@@ -43,45 +43,6 @@ public class AiDeclarationService {
     private static final Set<String> TYPES_CONTREP     = Set.of("ENTREPRISE", "BANQUE", "ETAT", "PARTICULIER");
     private static final Set<String> TYPES_ENGAGEMENT  = Set.of("BILAN", "HORS_BILAN");
 
-    // ── Templates de motifs de rejet (BF17) ──
-    public static final List<Map<String, String>> REJECT_TEMPLATES = List.of(
-            Map.of("id", "DONNEES_MANQUANTES_OU_VIDES",
-                    "label", "Données manquantes ou vides",
-                    "text",  "Les lignes de la déclaration contiennent des champs obligatoires vides ou nuls. " +
-                            "Selon le schéma XSD BCT, tous les champs requis doivent contenir des valeurs réelles " +
-                            "récupérées depuis la base de données. Veuillez régénérer la déclaration après vérification " +
-                            "des données sources."),
-            Map.of("id", "PROVISION_INSUFFISANTE",
-                    "label", "Provision insuffisante",
-                    "text",  "Les provisions déclarées sont inférieures au minimum réglementaire BCT pour la classe " +
-                            "de risque indiquée. Taux en vigueur : A=5%, B=10%, C=20%, D=50%. Veuillez recalculer " +
-                            "et soumettre à nouveau."),
-            Map.of("id", "MONTANT_IMPAYE_INCOHERENT",
-                    "label", "Montant impayé incohérent",
-                    "text",  "Le montant impayé déclaré dépasse le montant du crédit accordé. Veuillez vérifier " +
-                            "les données de la ligne concernée et corriger avant de resoumettre."),
-            Map.of("id", "CHAMP_OBLIGATOIRE_MANQUANT",
-                    "label", "Champ obligatoire manquant",
-                    "text",  "Des champs obligatoires selon le schéma XSD BCT sont absents dans le fichier soumis. " +
-                            "Veuillez compléter tous les champs requis et resoumettre."),
-            Map.of("id", "PERIODE_INCORRECTE",
-                    "label", "Période incorrecte",
-                    "text",  "Les dates de début et/ou de fin ne correspondent pas à la période déclarée. " +
-                            "La date de début doit être le 1er du mois et la date de fin le dernier jour du mois."),
-            Map.of("id", "FORMAT_XML_INVALIDE",
-                    "label", "Format XML invalide",
-                    "text",  "Le fichier XML soumis est malformé ou ne respecte pas le schéma XSD défini par la BCT. " +
-                            "Veuillez valider votre fichier avant toute soumission."),
-            Map.of("id", "VARIATION_ANORMALE",
-                    "label", "Variation anormale des montants",
-                    "text",  "Une variation supérieure à 50% des montants déclarés par rapport à la période précédente " +
-                            "a été détectée. Veuillez justifier cette évolution ou corriger si erreur de saisie."),
-            Map.of("id", "DONNEES_NON_REELLES",
-                    "label", "Données non réelles / données de test",
-                    "text",  "Le fichier semble contenir des données de test, fictives ou incomplètes. " +
-                            "Les déclarations BCT doivent contenir des données réelles extraites de la base de données " +
-                            "selon le type de déclaration concerné.")
-    );
 
     // ══════════════════════════════════════════════════════════════════════════
     // POINT D'ENTRÉE PRINCIPAL — BF10 + BF15
@@ -576,9 +537,7 @@ public class AiDeclarationService {
     // ══════════════════════════════════════════════════════════════════════════
     // BF17 — TEMPLATES DE MOTIFS DE REJET
     // ══════════════════════════════════════════════════════════════════════════
-    public List<Map<String, String>> getRejectTemplates() {
-        return REJECT_TEMPLATES;
-    }
+
 
     // ══════════════════════════════════════════════════════════════════════════
     // HELPERS — Vérification des champs

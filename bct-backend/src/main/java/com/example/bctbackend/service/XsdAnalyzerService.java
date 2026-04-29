@@ -12,13 +12,31 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class XsdAnalyzerService {
 
     private static final Logger log = LoggerFactory.getLogger(XsdAnalyzerService.class);
-
     private static final String XS_NS = "http://www.w3.org/2001/XMLSchema";
+
+    /**
+     * Champs générés automatiquement par le backend dans l'en-tête XML.
+     * Ils ne doivent PAS apparaître dans le panneau de mapping utilisateur.
+     */
+    private static final Set<String> AUTO_HEADER_FIELDS = new HashSet<>(Arrays.asList(
+            "codedeclaration", "periode", "datedebut", "datefin",
+            "nombreligne", "nombreslignes", "nombresdeligne",
+            "dategeneration", "datecreation"
+    ));
+
+    private boolean isAutoHeaderField(String fieldName) {
+        if (fieldName == null) return false;
+        String normalized = fieldName.toLowerCase()
+                .replace("_", "").replace("-", "").replace(" ", "");
+        return AUTO_HEADER_FIELDS.contains(normalized);
+    }
+
 
     // ══════════════════════════════════════════════════════════════
     // RÉSULTAT
@@ -79,12 +97,18 @@ public class XsdAnalyzerService {
     // POINT D'ENTRÉE
     // ══════════════════════════════════════════════════════════════
 
-    public MappingAnalysisResult analyzeCompatibility(String xsdContent,
-                                                      List<String> sqlColumns) {
+    public MappingAnalysisResult analyzeCompatibility(String xsdContent, List<String> sqlColumns) {
         log.info("🔍 Analyse XSD — {} colonnes SQL disponibles", sqlColumns.size());
 
-        List<XsdFieldInfo> xsdFields = parseXsdFields(xsdContent);
-        log.info("📋 {} champs XSD extraits", xsdFields.size());
+        List<XsdFieldInfo> allFields  = parseXsdFields(xsdContent);
+
+        // ✅ Filtrer les champs d'en-tête auto-gérés par le backend
+        List<XsdFieldInfo> xsdFields = allFields.stream()
+                .filter(f -> !isAutoHeaderField(f.getName()))
+                .collect(Collectors.toList());
+
+        log.info("📋 {} champs XSD mappables ({} ignorés car auto-générés)",
+                xsdFields.size(), allFields.size() - xsdFields.size());
 
         Map<String, String> autoMapped    = buildAutoMapping(xsdFields, sqlColumns);
         List<String>        unmappedXsd   = computeUnmappedXsd(xsdFields, autoMapped);

@@ -1,6 +1,6 @@
 <!-- ════════════════════════════════════════════════════════════════════
      manager-ml-dashboard.component.html — BF17
-     Tableau de bord : Clustering erreurs + Suggestions de correction
+     Redesign 2025 · Luminous Slate · Indigo + Amber + Teal
      ════════════════════════════════════════════════════════════════════ -->
 <div class="bf17-shell">
 
@@ -31,7 +31,8 @@
   </div>
 
   <!-- Message entraînement -->
-  <div class="train-banner" *ngIf="trainMessage" [class.train-error]="trainMessage.startsWith('❌')">
+  <div class="train-banner" *ngIf="trainMessage"
+       [class.train-error]="trainMessage.startsWith('❌')">
     {{ trainMessage }}
   </div>
 
@@ -40,12 +41,10 @@
        ══════════════════════════════════════════════════ -->
   <div class="health-bar">
 
-    <!-- Chargement -->
     <div class="health-loading" *ngIf="healthLoading">
       <i class="spin-sm"></i> Connexion au ML Service...
     </div>
 
-    <!-- Service disponible -->
     <ng-container *ngIf="!healthLoading && health && !serviceDown">
       <div class="health-item">
         <span class="health-dot dot-up"></span>
@@ -67,7 +66,6 @@
       <button class="btn-refresh" (click)="loadHealth()" title="Actualiser">↻</button>
     </ng-container>
 
-    <!-- Service indisponible -->
     <div class="health-down" *ngIf="!healthLoading && serviceDown">
       ❌ {{ serviceDownMessage }}
       <button class="btn-refresh" (click)="loadHealth()">Réessayer</button>
@@ -83,29 +81,24 @@
       <span class="metric-label">Commentaires analysés</span>
       <span class="metric-val">{{ stats.total_reject_comments }}</span>
     </div>
-    <span class="metric-sep"></span>
     <div class="metric">
       <span class="metric-label">Clusters identifiés</span>
       <span class="metric-val">{{ stats.n_clusters }}</span>
     </div>
-    <span class="metric-sep"></span>
     <div class="metric">
       <span class="metric-label">Corrections capitalisées</span>
       <span class="metric-val">{{ stats.correction_history_size }}</span>
     </div>
-    <span class="metric-sep"></span>
     <div class="metric">
       <span class="metric-label">Validées BCT</span>
       <span class="metric-val">{{ stats.validated_corrections }}</span>
     </div>
-    <span class="metric-sep"></span>
     <div class="metric">
       <span class="metric-label">Taux résolution global</span>
       <span class="metric-val" [ngClass]="rateClass(stats.global_resolution_rate)">
         {{ formatRate(stats.global_resolution_rate) }}
       </span>
     </div>
-    <span class="metric-sep"></span>
     <div class="metric">
       <span class="metric-label">Silhouette</span>
       <span class="metric-val mono">{{ stats.silhouette_score | number:'1.2-2' }}</span>
@@ -117,12 +110,11 @@
        ══════════════════════════════════════════════════ -->
   <div class="main-grid">
 
-    <!-- ── Panneau gauche : saisie ────────────────────────────────── -->
+    <!-- ── Panneau gauche : saisie ──────────────────── -->
     <div class="panel input-panel">
 
       <div class="panel-title">🔧 Analyser un commentaire de rejet</div>
 
-      <!-- Zone de texte -->
       <div class="field-group">
         <label class="field-label">Commentaire de rejet BCT</label>
         <textarea
@@ -130,7 +122,7 @@
           [(ngModel)]="commentInput"
           rows="7"
           [disabled]="serviceDown"
-(keydown.enter)="onEnter($event)"
+          (keydown.enter)="onEnter($event)"
           placeholder="Collez ici le commentaire de rejet reçu...&#10;&#10;Exemples :&#10;• Le montant brut est négatif pour plusieurs lignes...&#10;• La provision est insuffisante pour la classe D...&#10;• Format de date incorrect pour DateEcheance...">
         </textarea>
         <div class="field-hint">
@@ -138,7 +130,6 @@
         </div>
       </div>
 
-      <!-- Exemples rapides -->
       <div class="examples-section">
         <span class="examples-label">Exemples rapides :</span>
         <div class="examples-chips">
@@ -147,18 +138,17 @@
             *ngFor="let ex of quickExamples"
             (click)="loadExample(ex)"
             [title]="ex">
-            {{ ex | slice:0:32 }}...
+            {{ ex | slice:0:32 }}…
           </button>
         </div>
       </div>
 
-      <!-- Bouton analyser -->
       <div class="action-row">
         <button
           class="btn-analyze"
           [disabled]="!canAnalyze"
           (click)="analyze()">
-          <span *ngIf="!analysisLoading">▶ Analyser et suggérer des corrections</span>
+          <span *ngIf="!analysisLoading">▶&nbsp; Analyser et suggérer des corrections</span>
           <span *ngIf="analysisLoading" class="btn-loading">
             <i class="spin-xs"></i> Analyse en cours...
           </span>
@@ -172,12 +162,10 @@
         </button>
       </div>
 
-      <!-- Erreur d'analyse -->
       <div class="error-banner" *ngIf="analysisError">
         ⚠️ {{ analysisError }}
       </div>
 
-      <!-- Explication du fonctionnement -->
       <div class="how-it-works">
         <div class="hiw-title">Comment ça marche ?</div>
         <div class="hiw-steps">
@@ -195,17 +183,17 @@
           </div>
           <div class="hiw-step">
             <span class="hiw-num">4</span>
-            <span>Les corrections qui ont fonctionné sont proposées en priorité</span>
+            <span>Les corrections validées sont proposées en priorité</span>
           </div>
         </div>
       </div>
 
     </div>
 
-    <!-- ── Panneau droit : résultat ───────────────────────────────── -->
+    <!-- ── Panneau droit : placeholder ou résultat ─── -->
 
-    <!-- Placeholder si pas encore de résultat -->
-    <div class="panel placeholder-panel" *ngIf="!analysisResult && !analysisLoading">
+    <div class="panel placeholder-panel"
+         *ngIf="!analysisResult && !analysisLoading">
       <div class="placeholder-body">
         <div class="placeholder-icon">🗂️</div>
         <p>Saisissez un commentaire de rejet<br>et cliquez sur <strong>Analyser</strong></p>
@@ -217,29 +205,29 @@
       </div>
     </div>
 
-    <!-- Skeleton loader -->
+    <!-- Skeleton -->
     <div class="panel placeholder-panel" *ngIf="analysisLoading">
       <div class="placeholder-body">
         <i class="spin-lg"></i>
-        <p>Analyse en cours...</p>
+        <p>Analyse en cours…</p>
       </div>
     </div>
 
-    <!-- Résultat de l'analyse -->
-    <div class="panel result-panel" *ngIf="analysisResult && !analysisLoading">
+    <!-- ══ RÉSULTAT ══ -->
+    <div class="panel result-panel"
+         *ngIf="analysisResult && !analysisLoading">
 
-      <!-- En-tête résultat -->
       <div class="result-header">
         <div class="result-title">📋 Résultat d'analyse</div>
-        <span
-          class="success-badge"
-          [ngClass]="rateClass(analysisResult.success_rate)">
+        <span class="success-badge"
+              [ngClass]="rateClass(analysisResult.success_rate)">
           {{ formatRate(analysisResult.success_rate) }} résolus
         </span>
       </div>
 
       <!-- Cluster détecté -->
-      <div class="cluster-card" [style.border-color]="clusterColor(analysisResult.cluster_id)">
+      <div class="cluster-card"
+           [style.border-left-color]="clusterColor(analysisResult.cluster_id)">
         <span class="cluster-icon">🗂️</span>
         <div class="cluster-info">
           <div class="cluster-label">{{ analysisResult.cluster_label }}</div>
@@ -254,71 +242,111 @@
         </div>
       </div>
 
-      <!-- Mots-clés du cluster -->
-      <div class="keywords-row" *ngIf="analysisResult.cluster_keywords.length > 0">
-        <span
-          class="kw-chip"
-          *ngFor="let kw of analysisResult.cluster_keywords">
+      <!-- Mots-clés -->
+      <div class="keywords-row"
+           *ngIf="analysisResult.cluster_keywords.length > 0">
+        <span class="kw-chip"
+              *ngFor="let kw of analysisResult.cluster_keywords">
           {{ kw }}
         </span>
       </div>
 
-      <!-- Message BF17 — Format "Dans X% des cas..." -->
-      <div class="bf17-message">{{ analysisResult.message }}</div>
+      <!-- Stat banner -->
+      <div class="stat-banner">
+        <div class="stat-left">
+          <div class="stat-pct">{{ mainSuccessPercent }}%</div>
+          <div class="stat-sub">des cas<br>résolus</div>
+        </div>
+        <div class="stat-right">
+          <div class="stat-intro">
+            Dans {{ mainSuccessPercent }}% des cas similaires, la correction appliquée avec succès a été :
+          </div>
+          <div class="stat-correction"
+               *ngIf="analysisResult.suggestions.length > 0">
+            {{ analysisResult.suggestions[0].correction_applied }}
+          </div>
+          <div class="stat-correction no-data"
+               *ngIf="analysisResult.suggestions.length === 0">
+            Aucune correction similaire dans l'historique.
+          </div>
+        </div>
+      </div>
 
       <!-- Onglets -->
       <div class="tabs">
-        <button
-          class="tab"
-          [class.tab-active]="resultTab === 'suggestions'"
-          (click)="resultTab = 'suggestions'">
+        <button class="tab"
+                [class.tab-active]="resultTab === 'suggestions'"
+                (click)="resultTab = 'suggestions'">
           💡 Suggestions ({{ analysisResult.suggestions.length }})
         </button>
-        <button
-          class="tab"
-          [class.tab-active]="resultTab === 'cluster'"
-          (click)="resultTab = 'cluster'">
+        <button class="tab"
+                [class.tab-active]="resultTab === 'cluster'"
+                (click)="resultTab = 'cluster'">
           📊 Détails cluster
         </button>
       </div>
 
-      <!-- Onglet suggestions -->
+      <!-- ── Onglet suggestions ── -->
       <ng-container *ngIf="resultTab === 'suggestions'">
 
-        <!-- Liste des suggestions -->
-        <div class="suggestions" *ngIf="analysisResult.suggestions.length > 0">
-          <div
-            class="suggestion"
-            *ngFor="let s of analysisResult.suggestions; trackBy: trackBySuggestion">
+        <div class="suggestions"
+             *ngIf="analysisResult.suggestions.length > 0">
+          <ng-container
+            *ngFor="let s of analysisResult.suggestions;
+                    let i = index;
+                    trackBy: trackBySuggestion">
 
-            <div class="sug-header">
-              <span class="sug-rank">#{{ s.rank }}</span>
-              <span class="sug-sim">{{ formatRate(s.similarity_score) }} similarité</span>
-              <span class="sug-validated" *ngIf="s.was_validated">✅ Validée BCT</span>
-              <span class="sug-delay" *ngIf="s.delay_hours !== null">
-                ⏱ {{ formatDelay(s.delay_hours) }}
-              </span>
+            <div class="suggestion"
+                 [class.suggestion-active]="activeSuggestion === i"
+                 (click)="toggleSuggestion(i)">
+
+              <div class="sug-header">
+                <span class="sug-rank">#{{ s.rank }}</span>
+                <div class="sug-main">
+                  <div class="sug-correction">{{ s.correction_applied }}</div>
+                  <div class="sug-footer">
+                    Corrigé par <strong>{{ s.corrected_by || '—' }}</strong>
+                    &nbsp;·&nbsp; {{ s.cluster_label }}
+                    <span *ngIf="s.delay_hours !== null">
+                      &nbsp;·&nbsp; ⏱ {{ formatDelay(s.delay_hours) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="sug-right">
+                  <div class="sim-bar-wrap">
+                    <div class="sim-bar-fill"
+                         [style.width.%]="s.similarity_score * 100"></div>
+                  </div>
+                  <div class="sug-sim">{{ formatRate(s.similarity_score) }}</div>
+                  <span class="sug-validated" *ngIf="s.was_validated">
+                    ✅ Validée BCT
+                  </span>
+                </div>
+              </div>
+
             </div>
 
-            <!-- Commentaire original similaire -->
-            <div class="sug-original">
-              <span class="sug-orig-label">Erreur similaire :</span>
-              {{ s.reject_comment }}
+            <!-- Détail expandable -->
+            <div class="sug-detail" *ngIf="activeSuggestion === i">
+              <div class="detail-row">
+                <span class="detail-key">Erreur similaire :</span>
+                <span class="detail-val">{{ s.reject_comment }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-key">Correction appliquée :</span>
+                <span class="detail-val">{{ s.correction_applied }}</span>
+              </div>
+              <div class="detail-row" *ngIf="s.delay_hours !== null">
+                <span class="detail-key">Délai de résolution :</span>
+                <span class="detail-val">{{ formatDelay(s.delay_hours) }}</span>
+              </div>
             </div>
 
-            <!-- Correction appliquée avec succès -->
-            <div class="sug-correction">{{ s.correction_applied }}</div>
-
-            <div class="sug-footer">
-              Corrigé par <strong>{{ s.corrected_by || '—' }}</strong>
-              &nbsp;·&nbsp; Cluster : {{ s.cluster_label }}
-            </div>
-
-          </div>
+          </ng-container>
         </div>
 
-        <!-- Aucune suggestion -->
-        <div class="no-suggestions" *ngIf="analysisResult.suggestions.length === 0">
+        <div class="no-suggestions"
+             *ngIf="analysisResult.suggestions.length === 0">
           <div class="no-sug-icon">📭</div>
           <p>Aucune correction similaire dans l'historique.</p>
           <p class="no-sug-sub">
@@ -329,7 +357,7 @@
 
       </ng-container>
 
-      <!-- Onglet détails cluster -->
+      <!-- ── Onglet détails cluster ── -->
       <ng-container *ngIf="resultTab === 'cluster'">
         <div class="cluster-details">
           <div class="detail-row">
@@ -342,7 +370,9 @@
           </div>
           <div class="detail-row">
             <span class="detail-key">Mots-clés</span>
-            <span class="detail-val">{{ analysisResult.cluster_keywords.join(', ') }}</span>
+            <span class="detail-val">
+              {{ analysisResult.cluster_keywords.join(', ') }}
+            </span>
           </div>
           <div class="detail-row">
             <span class="detail-key">Cas similaires</span>
@@ -350,13 +380,16 @@
           </div>
           <div class="detail-row">
             <span class="detail-key">Taux de résolution</span>
-            <span class="detail-val" [ngClass]="rateClass(analysisResult.success_rate)">
+            <span class="detail-val"
+                  [ngClass]="rateClass(analysisResult.success_rate)">
               {{ formatRate(analysisResult.success_rate) }}
             </span>
           </div>
           <div class="detail-row" *ngIf="analysisResult.avg_delay_hours !== null">
             <span class="detail-key">Délai moyen correction</span>
-            <span class="detail-val mono">{{ formatDelay(analysisResult.avg_delay_hours) }}</span>
+            <span class="detail-val mono">
+              {{ formatDelay(analysisResult.avg_delay_hours) }}
+            </span>
           </div>
         </div>
       </ng-container>
@@ -378,16 +411,14 @@
       </div>
     </div>
 
-    <!-- Skeleton -->
     <div class="clusters-loading" *ngIf="clustersLoading">
       <i class="spin-sm"></i> Chargement des clusters...
     </div>
 
-    <!-- Grille des clusters -->
-    <div class="clusters-grid" *ngIf="!clustersLoading && clusters.length > 0">
-      <div
-        class="cluster-tile"
-        *ngFor="let c of clusters; let i = index; trackBy: trackByCluster">
+    <div class="clusters-grid"
+         *ngIf="!clustersLoading && clusters.length > 0">
+      <div class="cluster-tile"
+           *ngFor="let c of clusters; let i = index; trackBy: trackByCluster">
 
         <div class="tile-accent" [style.background]="clusterColor(i)"></div>
 
@@ -395,7 +426,8 @@
           <div class="tile-label">{{ c.label }}</div>
 
           <div class="tile-keywords">
-            <span class="kw-chip-sm" *ngFor="let kw of c.keywords.slice(0, 3)">{{ kw }}</span>
+            <span class="kw-chip-sm"
+                  *ngFor="let kw of c.keywords.slice(0, 3)">{{ kw }}</span>
           </div>
 
           <div class="tile-stats">
@@ -409,15 +441,15 @@
           </div>
 
           <div class="tile-example" *ngIf="c.example">
-            « {{ c.example | slice:0:100 }}{{ c.example.length > 100 ? '...' : '' }} »
+            « {{ c.example | slice:0:100 }}{{ c.example.length > 100 ? '…' : '' }} »
           </div>
         </div>
 
       </div>
     </div>
 
-    <!-- Vide -->
-    <div class="empty-state" *ngIf="!clustersLoading && clusters.length === 0">
+    <div class="empty-state"
+         *ngIf="!clustersLoading && clusters.length === 0">
       Aucun cluster disponible — lancez un ré-entraînement ou attendez l'entraînement automatique.
     </div>
 

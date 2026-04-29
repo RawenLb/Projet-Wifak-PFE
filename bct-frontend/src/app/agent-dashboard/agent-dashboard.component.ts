@@ -112,6 +112,8 @@ export class AgentDashboardComponent implements OnInit {
     return `${days}j`;
   }
 
+
+  
   getStatusBadgeClass(s: string): string {
     const m: Record<string, string> = {
       BROUILLON:     'status-draft',
@@ -157,3 +159,4 @@ export class AgentDashboardComponent implements OnInit {
   goToCalendar():            void { this.router.navigate(['/agent/calendar']); }
   openNewDeclaration():      void { this.router.navigate(['/agent/declarations']); }
 }
+
