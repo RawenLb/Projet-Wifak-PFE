@@ -1,3 +1,4 @@
+
 import { Component, OnInit } from '@angular/core';
 import { KeycloakAdminService, KeycloakUser, CreateUserRequest, RoleDTO } from '../services/keycloak-admin.service';
 
@@ -430,6 +431,36 @@ export class UserManagementComponent implements OnInit {
     });
   }
 
+  // ========== ROLE PICKER HELPERS ==========
+
+  getRoleKey(roleName: string): string {
+    const name = roleName.replace('ROLE_', '').toLowerCase();
+    if (name.includes('admin'))   return 'admin';
+    if (name.includes('manager')) return 'manager';
+    if (name.includes('agent'))   return 'agent';
+    if (name.includes('auditor')) return 'auditor';
+    return name;
+  }
+
+  getRoleDefaultDesc(roleName: string): string {
+    const key = this.getRoleKey(roleName);
+    const descs: Record<string, string> = {
+      admin:   'Accès complet à toutes les fonctionnalités',
+      manager: 'Validation et supervision des déclarations',
+      agent:   'Soumission et gestion des déclarations BCT',
+      auditor: 'Consultation et audit du journal des opérations',
+    };
+    return descs[key] || 'Accès selon les permissions configurées';
+  }
+
+  getSelectedRolesCount(): number {
+    return this.newUser.roles.length;
+  }
+
+  getSelectedRoleNames(): string[] {
+    return this.newUser.roles;
+  }
+
   // ========== LOGOUT ==========
 
   logout(): void {
@@ -437,3 +468,4 @@ export class UserManagementComponent implements OnInit {
     this.kcAdmin.logout();
   }
 }
+

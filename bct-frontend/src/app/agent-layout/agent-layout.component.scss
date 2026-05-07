@@ -1,8 +1,6 @@
 // src/app/agent-layout/agent-layout.component.scss
 // Wifak Bank brand — Navy #0D2B5E · Royal #1B4FBC · Crimson #C8192E · Silver #8A9BB0
 
-@import '../user-management/user-management.component.scss';
-
 // ── Brand tokens ──────────────────────────────────────────────
 $navy:    #091D42;
 $navy-dk: #091D42;
@@ -10,6 +8,9 @@ $navy-lt: #1B3E78;
 $royal:   #1B4FBC;
 $crimson: #C8192E;
 $silver:  #8A9BB0;
+
+$sidebar-w:   255px;
+$sidebar-col: 68px;
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -23,163 +24,297 @@ $silver:  #8A9BB0;
   to { transform: rotate(360deg); }
 }
 
-// ── Layout global ─────────────────────────────────────────────
+// ── Root shell ────────────────────────────────────────────────
 .dashboard-container {
-  min-height: unset !important;
+  display: flex !important;
   height: 100vh !important;
+  width: 100vw !important;
   overflow: hidden !important;
+  background: #F2F5FA !important;
 }
 
+// ── Main content area ─────────────────────────────────────────
 .main-content {
-  flex: 1;
+  flex: 1 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
   height: 100vh !important;
-  overflow-y: auto !important;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  background: #F0F4FA !important;
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────
 .sidebar {
-  overflow: visible !important;
+  width: $sidebar-w !important;
+  min-width: $sidebar-w !important;
+  height: 100vh !important;
   background: $navy-dk !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex-shrink: 0 !important;
+  overflow: hidden !important;
+  transition: width .27s cubic-bezier(.4,0,.2,1), min-width .27s cubic-bezier(.4,0,.2,1) !important;
   border-right: 1px solid rgba(255,255,255,.06) !important;
 
-  .logo-section {
-    border-bottom: 1px solid rgba(255,255,255,.08) !important;
-  }
+  &.collapsed {
+    width: $sidebar-col !important;
+    min-width: $sidebar-col !important;
 
-  .bank-name {
-    color: #fff !important;
-    font-weight: 800 !important;
-    letter-spacing: .04em !important;
+    .logo-text, .nav-text, .nav-badge, .user-info, .bank-subtitle {
+      opacity: 0 !important; width: 0 !important; overflow: hidden !important; pointer-events: none !important;
+    }
+    .logo          { justify-content: center !important; }
+    .toggle-btn    { display: none !important; }
+    .nav-item      { justify-content: center !important; padding: 11px 0 !important; }
+    .nav-icon      { margin: 0 !important; }
+    .user-profile  { justify-content: center !important; padding: 8px !important; }
+    .user-avatar   { margin: 0 !important; }
+    .sidebar-footer { padding: 8px !important; }
+    .btn-logout    { justify-content: center !important; padding: 9px !important; }
   }
+}
 
-  .bank-subtitle {
-    color: rgba(255,255,255,.55) !important;
-    font-weight: 500 !important;
-    font-size: .7rem !important;
-    letter-spacing: .06em !important;
-    text-transform: uppercase !important;
-  }
+// Logo section
+.logo-section {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px 14px !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  min-height: 68px !important;
+  flex-shrink: 0 !important;
+}
 
-  // Active nav item — Wifak royal blue strip
-  .nav-item.active {
+.logo {
+  display: flex !important;
+  align-items: center !important;
+  gap: 11px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.logo-icon {
+  width: 36px !important; height: 36px !important;
+  background: linear-gradient(135deg, #1565C0, #003875) !important;
+  border-radius: 9px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  flex-shrink: 0 !important;
+  font-size: 18px !important;
+}
+
+.logo-text { overflow: hidden !important; transition: opacity .2s, width .27s !important; white-space: nowrap !important; }
+
+.bank-name {
+  font-size: 12px !important; font-weight: 800 !important; color: #fff !important;
+  letter-spacing: 0.6px !important; line-height: 1.2 !important;
+}
+
+.bank-subtitle {
+  font-size: 10px !important; color: rgba(255,255,255,.45) !important;
+  font-weight: 500 !important; margin-top: 1px !important;
+  text-transform: uppercase !important; letter-spacing: .06em !important;
+  transition: opacity .2s, width .27s !important;
+}
+
+.toggle-btn {
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  width: 28px !important; height: 28px !important;
+  border-radius: 7px !important; cursor: pointer !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  flex-shrink: 0 !important;
+  svg { color: rgba(255,255,255,.55) !important; width: 16px !important; height: 16px !important; }
+  &:hover { background: rgba(255,255,255,.1) !important; }
+}
+
+// Nav menu
+.nav-menu {
+  flex: 1 !important;
+  padding: 10px 9px !important;
+  overflow-y: auto !important; overflow-x: hidden !important;
+  &::-webkit-scrollbar { width: 3px; }
+  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 2px; }
+}
+
+.nav-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 9px 11px !important;
+  margin-bottom: 2px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-size: 13px !important; font-weight: 500 !important;
+  color: rgba(255,255,255,.6) !important;
+  text-decoration: none !important;
+  transition: all .15s !important;
+  white-space: nowrap !important;
+  position: relative !important;
+
+  &:hover { background: rgba(255,255,255,.06) !important; color: rgba(255,255,255,.9) !important; }
+
+  &.active {
     background: linear-gradient(90deg, rgba($royal,.25), rgba($royal,.10)) !important;
     border-left: 3px solid $royal !important;
     color: #fff !important;
-
+    font-weight: 600 !important;
     .nav-icon svg { color: lighten($royal, 25%) !important; }
   }
-
-  .nav-item:not(.active):hover {
-    background: rgba(255,255,255,.06) !important;
-  }
-
-  // Footer divider
-  .sidebar-footer {
-    border-top: 1px solid rgba(255,255,255,.08) !important;
-  }
 }
 
-// ── TOPBAR ────────────────────────────────────────────────────
-.agent-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 56px;
-  min-height: 56px;
-  padding: 0 24px;
-  background: $navy;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-  flex-shrink: 0;
-  position: relative;
-  z-index: 100;
-
-  // Subtle accent line at bottom
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, $crimson 0%, $royal 50%, transparent 100%);
-    opacity: .7;
-  }
+.nav-icon {
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  width: 20px !important; height: 20px !important; flex-shrink: 0 !important;
+  svg { width: 18px !important; height: 18px !important; stroke: currentColor !important; }
 }
 
-.topbar-left {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.topbar-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #E8EDF8;
-  margin: 0;
-  letter-spacing: .01em;
-  font-family: 'Plus Jakarta Sans', 'Plus Jakarta Sans', sans-serif;
-}
-
-.topbar-subtitle {
-  font-size: 11px;
-  color: rgba(255,255,255,.35);
-  margin: 0;
-  letter-spacing: .02em;
-}
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+.nav-text { flex: 1 !important; overflow: hidden !important; transition: opacity .2s, width .27s !important; }
 
 // ── Nav badge ─────────────────────────────────────────────────
 .nav-badge {
-  margin-left: auto;
-  background: $crimson;
-  color: #fff;
-  font-size: .625rem;
-  font-weight: 800;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 99px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-  flex-shrink: 0;
-  animation: pulse 2s ease infinite;
-  box-shadow: 0 2px 10px rgba($crimson, .50);
-  line-height: 1;
+  margin-left: auto !important;
+  background: $crimson !important;
+  color: #fff !important;
+  font-size: .625rem !important;
+  font-weight: 800 !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  border-radius: 99px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 5px !important;
+  flex-shrink: 0 !important;
+  animation: pulse 2s ease infinite !important;
+  box-shadow: 0 2px 10px rgba($crimson, .50) !important;
+  line-height: 1 !important;
+
+  &.nav-badge-blue {
+    background: rgba(27,79,188,.25) !important;
+    color: #93C5FD !important;
+    box-shadow: none !important;
+    animation: none !important;
+  }
 }
 
 .nav-item.active .nav-badge {
-  background: rgba(255,255,255,.92);
-  color: $crimson;
-  box-shadow: 0 2px 6px rgba(0,0,0,.15);
-  animation: none;
+  background: rgba(255,255,255,.92) !important;
+  color: $crimson !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15) !important;
+  animation: none !important;
 }
 
-// ── User profile ──────────────────────────────────────────────
+// ── Sidebar footer ────────────────────────────────────────────
+.sidebar-footer {
+  padding: 10px 9px !important;
+  border-top: 1px solid rgba(255,255,255,.08) !important;
+  flex-shrink: 0 !important;
+  display: flex !important; flex-direction: column !important; gap: 7px !important;
+}
+
 .user-profile {
-  .user-avatar {
-    background: linear-gradient(135deg, $royal 0%, $navy-lt 100%) !important;
-    border: 2px solid rgba(255,255,255,.15) !important;
-    font-weight: 700 !important;
-  }
-  .user-name   { color: #E8EDF8 !important; }
-  .user-role   { color: rgba(255,255,255,.45) !important; }
+  display: flex !important; align-items: center !important; gap: 9px !important;
+  padding: 9px 10px !important;
+  background: rgba(255,255,255,.06) !important;
+  border-radius: 8px !important; cursor: pointer !important;
+  overflow: hidden !important; transition: background .15s !important;
+  &:hover { background: rgba(255,255,255,.1) !important; }
 }
 
-// ── Logout button ─────────────────────────────────────────────
+.user-avatar {
+  width: 32px !important; height: 32px !important;
+  background: linear-gradient(135deg, $royal 0%, $navy-lt 100%) !important;
+  border: 2px solid rgba(255,255,255,.15) !important;
+  border-radius: 50% !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  font-size: 11px !important; font-weight: 700 !important; color: white !important; flex-shrink: 0 !important;
+}
+
+.user-info { overflow: hidden !important; transition: opacity .2s, width .27s !important; white-space: nowrap !important; min-width: 0 !important; }
+.user-name { font-size: 12px !important; font-weight: 600 !important; color: #E8EDF8 !important; line-height: 1.2 !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+.user-role { font-size: 10px !important; color: rgba(255,255,255,.45) !important; margin-top: 1px !important; }
+
 .btn-logout {
+  display: flex !important; align-items: center !important; gap: 8px !important;
+  width: 100% !important; padding: 8px 10px !important;
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  border-radius: 7px !important;
   color: rgba(255,255,255,.45) !important;
-  border-color: rgba(255,255,255,.10) !important;
+  font-size: 12px !important; font-weight: 500 !important;
+  cursor: pointer !important; overflow: hidden !important;
+  white-space: nowrap !important; transition: all .2s !important;
+  svg { flex-shrink: 0 !important; width: 15px !important; height: 15px !important; }
   &:hover {
     background: rgba($crimson,.15) !important;
     border-color: rgba($crimson,.30) !important;
     color: lighten($crimson, 20%) !important;
   }
+}
+
+// ── Scroll container for routed pages ────────────────────────
+.page-scroll-area {
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: #D4DCE4; border-radius: 3px; }
+  &::-webkit-scrollbar-thumb:hover { background: #A8B4C0; }
+  scrollbar-width: thin;
+  scrollbar-color: #D4DCE4 transparent;
+}
+
+// ── TOPBAR ────────────────────────────────────────────────────
+.agent-topbar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  height: 56px !important;
+  min-height: 56px !important;
+  padding: 0 24px !important;
+  background: $navy !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  z-index: 100 !important;
+
+  &::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: 0; left: 0; right: 0 !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, $crimson 0%, $royal 50%, transparent 100%) !important;
+    opacity: .7 !important;
+  }
+}
+
+.topbar-left { display: flex !important; flex-direction: column !important; gap: 1px !important; }
+
+.topbar-title {
+  font-size: 15px !important; font-weight: 700 !important;
+  color: #E8EDF8 !important; margin: 0 !important; letter-spacing: .01em !important;
+}
+
+.topbar-subtitle {
+  font-size: 11px !important; color: rgba(255,255,255,.35) !important;
+  margin: 0 !important; letter-spacing: .02em !important;
+}
+
+.topbar-right { display: flex !important; align-items: center !important; gap: 10px !important; }
+
+// ── Responsive ────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .sidebar { width: $sidebar-col !important; min-width: $sidebar-col !important; }
+  .logo-text, .nav-text, .nav-badge, .user-info, .bank-subtitle { opacity: 0 !important; width: 0 !important; overflow: hidden !important; }
+  .logo { justify-content: center !important; }
+  .nav-item { justify-content: center !important; padding: 11px 0 !important; }
+  .user-profile { justify-content: center !important; padding: 8px !important; }
+  .btn-logout { justify-content: center !important; padding: 9px !important; }
 }

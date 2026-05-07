@@ -1,6 +1,6 @@
 <div class="dash-home">
 
-  <!-- TOP HEADER -->
+  <!-- ══ PAGE HEADER ══ -->
   <header class="top-header">
     <div class="header-left">
       <p class="page-subtitle">{{ today }} — Wifak Bank</p>
@@ -13,92 +13,169 @@
         </svg>
         <input type="text" placeholder="Rechercher..." [(ngModel)]="searchQuery"/>
       </div>
-      <button class="btn-new" (click)="navigateTo('/declaration-type-management')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        Nouveau
-      </button>
     </div>
   </header>
 
-  <!-- TAB BAR -->
+  <!-- ══ TAB BAR ══ -->
   <div class="tab-bar">
-    <button class="tab" [class.active]="activeTab==='overview'" (click)="activeTab='overview'">Aperçu</button>
-    <button class="tab" [class.active]="activeTab==='declarations'" (click)="activeTab='declarations'">Déclarations</button>
-    <button class="tab" [class.active]="activeTab==='types'" (click)="activeTab='types'">Types BCT</button>
+    <button class="tab" [class.active]="activeTab==='overview'" (click)="activeTab='overview'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Aperçu
+    </button>
+    <button class="tab" [class.active]="activeTab==='declarations'" (click)="activeTab='declarations'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      Déclarations
+    </button>
+    <button class="tab" [class.active]="activeTab==='types'" (click)="activeTab='types'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+      Types BCT
+    </button>
   </div>
 
+  <!-- ══ CONTENT ══ -->
   <div class="content-area">
 
-    <!-- ══════ TAB: APERÇU ══════ -->
+    <!-- ── TAB: APERÇU ── -->
     <div *ngIf="activeTab==='overview'">
 
-      <!-- Metric cards (stats réelles) -->
+      <!-- KPI Cards -->
       <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-label">Total déclarations</div>
-          <div class="metric-val">{{ stats.total }}</div>
-          <div class="metric-sub">
-            <span class="chip chip-blue">{{ stats.generees }} générées</span>
+        <div class="metric-card mc-navy">
+          <div class="mc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
           </div>
+          <div class="mc-body">
+            <div class="metric-val">{{ stats.total }}</div>
+            <div class="metric-label">Total déclarations</div>
+          </div>
+          <span class="mc-chip mc-chip-blue">{{ stats.generees }} générées</span>
         </div>
-        <div class="metric-card">
-          <div class="metric-label">En attente validation</div>
-          <div class="metric-val metric-amber">{{ stats.enValidation }}</div>
-          <div class="metric-sub">
-            <span class="chip chip-amber" *ngIf="stats.enValidation > 0">À traiter</span>
-            <span class="chip chip-green" *ngIf="stats.enValidation === 0">Aucune</span>
+
+        <div class="metric-card mc-amber">
+          <div class="mc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
           </div>
+          <div class="mc-body">
+            <div class="metric-val metric-amber">{{ stats.enValidation }}</div>
+            <div class="metric-label">En attente validation</div>
+          </div>
+          <span class="mc-chip mc-chip-amber" *ngIf="stats.enValidation > 0">À traiter</span>
+          <span class="mc-chip mc-chip-green" *ngIf="stats.enValidation === 0">Aucune</span>
         </div>
-        <div class="metric-card">
-          <div class="metric-label">Envoyées BCT</div>
-          <div class="metric-val metric-green">{{ stats.envoyees }}</div>
-          <div class="metric-sub">
-            <span class="chip chip-green">{{ stats.validees }} validées</span>
+
+        <div class="metric-card mc-green">
+          <div class="mc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <polyline points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
           </div>
+          <div class="mc-body">
+            <div class="metric-val metric-green">{{ stats.envoyees }}</div>
+            <div class="metric-label">Envoyées BCT</div>
+          </div>
+          <span class="mc-chip mc-chip-green">{{ stats.validees }} validées</span>
         </div>
-        <div class="metric-card">
-          <div class="metric-label">Rejetées</div>
-          <div class="metric-val metric-red">{{ stats.rejetees }}</div>
-          <div class="metric-sub">
-            <span class="chip chip-red" *ngIf="stats.rejetees > 0">Action requise</span>
-            <span class="chip chip-green" *ngIf="stats.rejetees === 0">Aucune</span>
+
+        <div class="metric-card mc-red">
+          <div class="mc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
           </div>
+          <div class="mc-body">
+            <div class="metric-val metric-red">{{ stats.rejetees }}</div>
+            <div class="metric-label">Rejetées</div>
+          </div>
+          <span class="mc-chip mc-chip-red" *ngIf="stats.rejetees > 0">Action requise</span>
+          <span class="mc-chip mc-chip-green" *ngIf="stats.rejetees === 0">Aucune</span>
         </div>
       </div>
 
+      <!-- Admin modules -->
+      <div class="section-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+          <polyline points="13 2 13 9 20 9"/>
+        </svg>
+        Modules d'administration
+      </div>
+      <div class="modules-grid">
+        <button class="module-card" (click)="navigateTo('/user-management')">
+          <div class="mod-icon mod-icon-navy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="mod-body">
+            <span class="mod-title">Gestion des Utilisateurs</span>
+            <span class="mod-desc">Créer, modifier et gérer les comptes et rôles</span>
+          </div>
+          <svg class="mod-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+
+        <button class="module-card" (click)="navigateTo('/declaration-type-management')">
+          <div class="mod-icon mod-icon-teal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <div class="mod-body">
+            <span class="mod-title">Types de Déclarations BCT</span>
+            <span class="mod-desc">Configurer les types, formats et fréquences</span>
+          </div>
+          <svg class="mod-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Two-col: recent declarations + recent users -->
       <div class="two-col">
 
-        <!-- Déclarations récentes (réelles) -->
         <div class="card">
           <div class="card-head">
-            <span class="card-title">Déclarations récentes</span>
+            <span class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              Déclarations récentes
+            </span>
             <button class="card-link" (click)="activeTab='declarations'">Voir tout →</button>
           </div>
-
-          <div *ngIf="loadingDeclarations" class="mini-loader">
-            <div class="spinner-sm"></div>
-          </div>
-
+          <div *ngIf="loadingDeclarations" class="mini-loader"><div class="spinner-sm"></div></div>
           <table class="data-table" *ngIf="!loadingDeclarations">
             <thead>
-              <tr>
-                <th>Code</th>
-                <th>Type</th>
-                <th>Statut</th>
-                <th>Période</th>
-              </tr>
+              <tr><th>Code</th><th>Fréquence</th><th>Statut</th><th>Période</th></tr>
             </thead>
             <tbody>
               <tr *ngFor="let d of recentDeclarations">
                 <td><span class="code-badge">{{ d.declarationType?.code || '—' }}</span></td>
                 <td class="text-muted">{{ d.declarationType?.frequence || '—' }}</td>
-                <td>
-                  <span class="status-chip" [ngClass]="getStatutClass(d.statut)">
-                    {{ d.statut }}
-                  </span>
-                </td>
+                <td><span class="status-chip" [ngClass]="getStatutClass(d.statut)">{{ d.statut }}</span></td>
                 <td class="text-sm text-muted">{{ d.periode }}</td>
               </tr>
               <tr *ngIf="recentDeclarations.length === 0">
@@ -108,109 +185,67 @@
           </table>
         </div>
 
-        <!-- Types de déclarations actifs (réels) -->
-        <div class="card">
+        <div class="card" *ngIf="isAdmin()">
           <div class="card-head">
-            <span class="card-title">Types de déclarations BCT</span>
-            <button class="card-link" (click)="navigateTo('/declaration-type-management')">Gérer →</button>
+            <span class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+              </svg>
+              Utilisateurs récents
+            </span>
+            <button class="card-link" (click)="navigateTo('/user-management')">Gérer →</button>
           </div>
-
-          <div *ngIf="loadingTypes" class="mini-loader">
-            <div class="spinner-sm"></div>
-          </div>
-
-          <div class="types-list" *ngIf="!loadingTypes">
-            <div class="type-row" *ngFor="let t of recentDeclarationTypes">
-              <span class="code-badge">{{ t.code }}</span>
-              <div class="type-info">
-                <div class="type-name">{{ t.nom }}</div>
-                <div class="type-meta">
-                  <span class="fmt-chip" [ngClass]="getFormatClass(t.format)">{{ t.format }}</span>
-                  <span class="freq-chip" [ngClass]="getFreqClass(t.frequence)">{{ t.frequence }}</span>
-                </div>
-              </div>
-              <span class="status-dot-sm" [class.dot-green]="t.actif" [class.dot-gray]="!t.actif"></span>
-            </div>
-            <div *ngIf="recentDeclarationTypes.length === 0" class="empty-row">
-              Aucun type configuré
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="two-col">
-
-        <!-- Utilisateurs récents (réels) -->
-<!-- then in template -->
-<div class="card" *ngIf="isAdmin()">
-    <div class="card-head">
-    <span class="card-title">Utilisateurs récents</span>
-    <button class="card-link" (click)="navigateTo('/user-management')">Gérer →</button>
-  </div>
-
-          <div *ngIf="loadingUsers" class="mini-loader">
-            <div class="spinner-sm"></div>
-          </div>
-
+          <div *ngIf="loadingUsers" class="mini-loader"><div class="spinner-sm"></div></div>
           <div class="user-list" *ngIf="!loadingUsers">
             <div class="user-row" *ngFor="let u of recentUsers">
-              <div class="user-av" [style.background]="getAvatarColor(u.username)">
-                {{ getInitials(u) }}
-              </div>
+              <div class="user-av" [style.background]="getAvatarColor(u.username)">{{ getInitials(u) }}</div>
               <div class="user-info">
                 <div class="user-name">{{ u.firstName }} {{ u.lastName }}</div>
                 <div class="user-email">{{ u.email }}</div>
               </div>
-              <span class="role-chip" [ngClass]="getRoleClass(u)">
-                {{ getPrimaryRole(u) }}
-              </span>
-              <span class="status-dot-sm"
-                    [class.dot-green]="u.enabled"
-                    [class.dot-gray]="!u.enabled">
-              </span>
+              <span class="role-chip" [ngClass]="getRoleClass(u)">{{ getPrimaryRole(u) }}</span>
+              <span class="status-dot-sm" [class.dot-green]="u.enabled" [class.dot-gray]="!u.enabled"></span>
             </div>
-            <div *ngIf="recentUsers.length === 0" class="empty-row">
-              Aucun utilisateur
-            </div>
-          </div>
-        </div>
-
-        <!-- Échéances à venir (depuis les types actifs) -->
-        <div class="card">
-          <div class="card-head">
-            <span class="card-title">Prochaines échéances</span>
-            <button class="card-link" (click)="navigateTo('/agent/calendar')">Calendrier →</button>
-          </div>
-          <div class="echeances-list">
-            <div class="ech-item ech-blue" *ngFor="let t of upcomingDeadlines">
-              <div class="ech-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-              </div>
-              <div class="ech-body">
-                <div class="ech-code">{{ t.code }}</div>
-                <div class="ech-name">{{ t.nom }}</div>
-                <div class="ech-status">{{ t.dateLimite }}</div>
-              </div>
-              <span class="freq-chip" [ngClass]="getFreqClass(t.frequence)">
-                {{ t.frequence }}
-              </span>
-            </div>
-            <div *ngIf="upcomingDeadlines.length === 0" class="empty-row">
-              Aucune échéance configurée
-            </div>
+            <div *ngIf="recentUsers.length === 0" class="empty-row">Aucun utilisateur</div>
           </div>
         </div>
 
       </div>
+
+      <!-- Types BCT actifs -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            Types de déclarations BCT
+          </span>
+          <button class="card-link" (click)="navigateTo('/declaration-type-management')">Gérer →</button>
+        </div>
+        <div *ngIf="loadingTypes" class="mini-loader"><div class="spinner-sm"></div></div>
+        <div class="types-list" *ngIf="!loadingTypes">
+          <div class="type-row" *ngFor="let t of recentDeclarationTypes">
+            <span class="code-badge">{{ t.code }}</span>
+            <div class="type-info">
+              <div class="type-name">{{ t.nom }}</div>
+              <div class="type-meta">
+                <span class="fmt-chip" [ngClass]="getFormatClass(t.format)">{{ t.format }}</span>
+                <span class="freq-chip" [ngClass]="getFreqClass(t.frequence)">{{ t.frequence }}</span>
+              </div>
+            </div>
+            <span class="status-dot-sm" [class.dot-green]="t.actif" [class.dot-gray]="!t.actif"></span>
+          </div>
+          <div *ngIf="recentDeclarationTypes.length === 0" class="empty-row">Aucun type configuré</div>
+        </div>
+      </div>
+
     </div>
 
-    <!-- ══════ TAB: DÉCLARATIONS ══════ -->
+    <!-- ── TAB: DÉCLARATIONS ── -->
     <div *ngIf="activeTab==='declarations'">
       <div class="filter-row">
         <div class="search-box">
@@ -220,11 +255,7 @@
           <input type="text" placeholder="Rechercher une déclaration..." [(ngModel)]="searchQuery"/>
         </div>
       </div>
-
-      <div *ngIf="loadingDeclarations" class="mini-loader">
-        <div class="spinner-sm"></div>
-      </div>
-
+      <div *ngIf="loadingDeclarations" class="mini-loader"><div class="spinner-sm"></div></div>
       <div class="card" style="padding:0" *ngIf="!loadingDeclarations">
         <table class="data-table full-table">
           <thead>
@@ -251,7 +282,7 @@
       </div>
     </div>
 
-    <!-- ══════ TAB: TYPES BCT ══════ -->
+    <!-- ── TAB: TYPES BCT ── -->
     <div *ngIf="activeTab==='types'">
       <div class="card" style="padding:0">
         <table class="data-table full-table">

@@ -3,7 +3,13 @@
   <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
     <div class="logo-section">
       <div class="logo">
-        <div class="logo-icon">🏛️</div>
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 40 40" fill="none">
+            <path d="M20 4C20 4 29 13 29 21c0 7-4.5 11-9 13-4.5-2-9-6-9-13C11 13 20 4 20 4z" fill="#C8192E" opacity=".9"/>
+            <path d="M20 10c0 0 6 7 6 12s-3 8-6 9.5c-3-1.5-6-4.5-6-9.5s6-12 6-12z" fill="#A8B4C0" opacity=".75"/>
+            <path d="M20 17c0 0 3 4 3 6.5S21.5 27 20 28c-1.5-1-3-2.5-3-4.5s3-6.5 3-6.5z" fill="white" opacity=".85"/>
+          </svg>
+        </div>
         <div class="logo-text">
           <div class="bank-name">WIFAK BANK</div>
           <div class="bank-subtitle">Espace Agent</div>
@@ -146,6 +152,8 @@
         <app-notification-bell></app-notification-bell>
       </div>
     </div>
-    <router-outlet></router-outlet>
+    <div class="page-scroll-area">
+      <router-outlet></router-outlet>
+    </div>
   </div>
 </div>

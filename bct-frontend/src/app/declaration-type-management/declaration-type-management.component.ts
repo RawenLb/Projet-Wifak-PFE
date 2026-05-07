@@ -1,3 +1,4 @@
+
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DeclarationTypeService, DeclarationType, CreateDeclarationTypeRequest } from '../services/declaration-type.service';
@@ -289,6 +290,21 @@ export class DeclarationTypeManagementComponent implements OnInit {
   closeDetailsModal(): void {
     this.showDetailsModal = false;
     this.selectedDeclarationType = null;
+  }
+
+  get activeDeclarationTypes(): DeclarationType[] {
+    return this.declarationTypes.filter(d => d.actif).slice(0, 6);
+  }
+
+  getFreqKpiClass(colorClass: string): string {
+    const map: Record<string, string> = {
+      'fill-blue':   'kpi-navy',
+      'fill-amber':  'kpi-amber',
+      'fill-green':  'kpi-green',
+      'fill-purple': 'kpi-purple',
+      'fill-gray':   'kpi-neutral',
+    };
+    return map[colorClass] || 'kpi-neutral';
   }
 
   // ========== UTILITIES ==========

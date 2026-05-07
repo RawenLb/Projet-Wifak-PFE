@@ -1,32 +1,32 @@
 // ============================================
-// IMPORTS & VARIABLES
+// WIFAK BANK — Calendar Styles
 // ============================================
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-$primary:    #2563eb;
-$primary-dk: #1d4ed8;
-$primary-lt: #eff6ff;
-$success:    #059669;
-$danger:     #dc2626;
-$warning:    #d97706;
-$info:       #0284c7;
-$purple:     #7c3aed;
+$primary:    #1B4FBC;
+$primary-dk: #0D2B5E;
+$primary-lt: #EBF0FD;
+$success:    #0A7A5A;
+$danger:     #C8192E;
+$warning:    #B8651A;
+$info:       #0F72C2;
+$purple:     #5B35C2;
 
 // Status colors
-$c-validated: #059669;
-$c-sent:      #7c3aed;
-$c-pending:   #d97706;
-$c-generated: #2563eb;
+$c-validated: #0A7A5A;
+$c-sent:      #5B35C2;
+$c-pending:   #B8651A;
+$c-generated: #1B4FBC;
 $c-draft:     #64748b;
-$c-rejected:  #dc2626;
-$c-overdue:   #dc2626;
+$c-rejected:  #C8192E;
+$c-overdue:   #C8192E;
 
 $surface:  #ffffff;
-$bg:       #f0f4f8;
-$border:   #e2e8f0;
-$text-1:   #0f172a;
-$text-2:   #475569;
-$text-3:   #94a3b8;
+$bg:       #F0F4FA;
+$border:   #D8E0EC;
+$text-1:   #0D1E35;
+$text-2:   #3D5068;
+$text-3:   #8A9BB0;
 
 $r-sm: 6px;
 $r-md: 10px;
@@ -52,13 +52,13 @@ $sh-glow: 0 0 0 3px rgba($primary,.15);
 @keyframes scaleIn  { from { opacity:0; transform:scale(.95); } to { opacity:1; transform:none; } }
 
 .calendar-page {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   color: $text-1;
   background: $bg;
   padding: 1.75rem 2.25rem 3rem;
   animation: fadeIn .4s ease both;
-  // ← حذف overflow-y و height تماماً
-  // الـ scroll يجي من .main-content فوقيه
+  min-height: 100%;
+  width: 100%;
 }
 
 // ============================================
@@ -81,10 +81,9 @@ $sh-glow: 0 0 0 3px rgba($primary,.15);
 }
 
 .page-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em;
-  background: linear-gradient(135deg, $text-1 0%, #334155 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.625rem; font-weight: 800; letter-spacing: -.02em;
+  color: $text-1;
   margin-bottom: .25rem;
 }
 
@@ -92,10 +91,10 @@ $sh-glow: 0 0 0 3px rgba($primary,.15);
 
 .btn-today {
   display: inline-flex; align-items: center; gap: .5rem;
-  padding: .625rem 1.25rem;
+  padding: .5625rem 1.125rem;
   background: $surface; border: 1.5px solid $border;
   border-radius: $r-md; color: $text-1;
-  font-family: 'DM Sans', sans-serif; font-size: .875rem; font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: .875rem; font-weight: 600;
   cursor: pointer; transition: all .2s;
   svg { width: 16px; height: 16px; }
   &:hover { border-color: $primary; color: $primary; background: $primary-lt; }
@@ -176,13 +175,13 @@ $sh-glow: 0 0 0 3px rgba($primary,.15);
 }
 
 .cal-month-name {
-  font-family: 'Syne', sans-serif;
-  font-size: 1.375rem; font-weight: 800; color: $text-1;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.25rem; font-weight: 800; color: $text-1;
 }
 
 .cal-year {
-  font-size: 1rem; font-weight: 600; color: $text-3;
-  font-family: 'DM Mono', monospace;
+  font-size: .9375rem; font-weight: 600; color: $text-3;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .view-toggle {
@@ -193,7 +192,7 @@ $sh-glow: 0 0 0 3px rgba($primary,.15);
   button {
     display: inline-flex; align-items: center; gap: .375rem;
     padding: .375rem .75rem; border: none; border-radius: $r-sm;
-    font-family: 'DM Sans', sans-serif; font-size: .8125rem; font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: .8125rem; font-weight: 600;
     color: $text-2; background: transparent; cursor: pointer; transition: all .2s;
     svg { width: 14px; height: 14px; }
     &.active { background: $primary; color: #fff; box-shadow: $sh-xs; }
@@ -377,8 +376,6 @@ $sh-glow: 0 0 0 3px rgba($primary,.15);
     font-size: .75rem; font-weight: 600; color: $text-3;
     &.overdue { color: $c-overdue; }
   }
-
-  // Variant color bars
   &.item-validated  .list-item-status-bar { background: $c-validated; }
   &.item-sent       .list-item-status-bar { background: $c-sent; }
   &.item-pending    .list-item-status-bar { background: $c-pending; }
@@ -393,7 +390,7 @@ $sh-glow: 0 0 0 3px rgba($primary,.15);
   padding: .3125rem .75rem;
   background: #dbeafe; color: #1e40af;
   border-radius: $r-sm; font-weight: 700;
-  font-size: .75rem; font-family: 'DM Mono', monospace;
+  font-size: .75rem; font-family: 'JetBrains Mono', monospace;
   white-space: nowrap; flex-shrink: 0;
 }
 
@@ -476,8 +473,8 @@ $sh-glow: 0 0 0 3px rgba($primary,.15);
 }
 
 .modal-header h2 {
-  font-family: 'Syne', sans-serif;
-  font-size: 1.125rem; font-weight: 800; color: $text-1; margin: 0 0 2px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.0625rem; font-weight: 800; color: $text-1; margin: 0 0 2px;
 }
 .modal-subtitle { font-size: .8125rem; color: $text-2; margin: 0; }
 
@@ -503,7 +500,7 @@ $sh-glow: 0 0 0 3px rgba($primary,.15);
 .btn-secondary {
   padding: .5625rem 1.25rem; background: $surface;
   border: 1.5px solid $border; border-radius: $r-md;
-  font-family: 'DM Sans', sans-serif; font-size: .875rem; font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: .875rem; font-weight: 600;
   color: $text-2; cursor: pointer; transition: all .2s;
   &:hover { background: $bg; border-color: #cbd5e1; color: $text-1; }
 }
@@ -511,7 +508,7 @@ $sh-glow: 0 0 0 3px rgba($primary,.15);
 .btn-download, .btn-submit {
   display: inline-flex; align-items: center; gap: .5rem;
   padding: .5625rem 1.25rem; border: none; border-radius: $r-md;
-  font-family: 'DM Sans', sans-serif; font-size: .875rem; font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: .875rem; font-weight: 600;
   cursor: pointer; transition: all .2s;
   svg { width: 15px; height: 15px; }
 }
@@ -549,7 +546,7 @@ $sh-glow: 0 0 0 3px rgba($primary,.15);
   }
   .detail-value {
     font-size: .9375rem; font-weight: 500; color: $text-1;
-    &.deadline-value { font-family: 'DM Mono', monospace; font-size: .875rem; }
+    &.deadline-value { font-family: 'JetBrains Mono', monospace; font-size: .875rem; }
     &.overdue-text { color: $c-overdue; font-weight: 700; }
   }
 }

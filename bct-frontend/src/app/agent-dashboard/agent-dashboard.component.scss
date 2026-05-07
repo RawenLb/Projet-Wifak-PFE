@@ -1,545 +1,360 @@
-// ============================================
-// FONTS
-// ============================================
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-// ============================================
-// WIFAK BANK — BRAND VARIABLES
-// ============================================
-$navy:       #0D2B5E;   // Logo deep navy
-$navy-dk:    #091D42;   // Darker navy
-$navy-lt:    #1B3E78;   // Lighter navy
-$royal:      #1B4FBC;   // Logo royal blue
-$royal-lt:   #E8EFFD;   // Royal blue tint
-$crimson:    #C8192E;   // Logo red
-$crimson-lt: #FDECED;   // Red tint
-$silver:     #8A9BB0;   // Logo silver
-$silver-lt:  #EEF1F6;   // Silver tint
-
+// ── Wifak Brand ───────────────────────────────────────────────
+$navy:       #0D2B5E;
+$navy-dk:    #091D42;
+$navy-lt:    #1B3E78;
+$royal:      #1B4FBC;
+$royal-lt:   #EBF0FD;
+$crimson:    #C8192E;
+$crimson-lt: #FDECED;
+$silver:     #8A9BB0;
+$silver-lt:  #EEF1F6;
 $success:    #0A7A5A;
+$success-lt: #E6F5F0;
 $warning:    #B8651A;
+$warning-lt: #FEF3E8;
 $purple:     #5B35C2;
-$info:       #0F72C2;
+$purple-lt:  #EDE9FB;
+$green:      #0D7A4E;
+$green-lt:   #E6F5F0;
 
-$surface:    #FFFFFF;
-$bg:         #F2F5FA;
-$bg-deep:    #E8EDF5;
-$border:     #D4DCE8;
-$border-lt:  #E8EDF5;
-$text-1:     #0D1E35;
-$text-2:     #3D5068;
-$text-3:     #8A9BB0;
+$surface:   #FFFFFF;
+$bg:        #F0F4FA;
+$bg-card:   #FFFFFF;
+$border:    #D8E0EC;
+$border-lt: #EBF0F8;
+$text-1:    #0D1E35;
+$text-2:    #3D5068;
+$text-3:    #8A9BB0;
 
 $r-sm:  6px;
 $r-md:  10px;
 $r-lg:  14px;
 $r-xl:  18px;
-$r-2xl: 24px;
 
-$sh-xs: 0 1px 4px rgba(13,43,94,.06), 0 1px 2px rgba(13,43,94,.04);
-$sh-sm: 0 4px 12px rgba(13,43,94,.10), 0 2px 4px rgba(13,43,94,.05);
-$sh-md: 0 12px 28px rgba(13,43,94,.12), 0 4px 8px rgba(13,43,94,.06);
-$sh-glow-royal: 0 0 0 3px rgba(27,79,188,.18);
-$sh-glow-crimson: 0 0 0 3px rgba(200,25,46,.15);
+$sh-xs: 0 1px 3px rgba(13,43,94,.05), 0 1px 2px rgba(13,43,94,.03);
+$sh-sm: 0 4px 12px rgba(13,43,94,.08), 0 2px 4px rgba(13,43,94,.04);
+$sh-md: 0 10px 24px rgba(13,43,94,.10), 0 4px 8px rgba(13,43,94,.05);
 
-// ============================================
-// ANIMATIONS
-// ============================================
-@keyframes fadeIn  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
-@keyframes slideIn { from { opacity:0; transform:translateX(-6px); } to { opacity:1; transform:none; } }
-@keyframes slideUp { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:none; } }
+@keyframes fadeIn  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+@keyframes slideIn { from { opacity:0; transform:translateX(-4px); } to { opacity:1; transform:none; } }
+@keyframes slideUp { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
 @keyframes spin    { to { transform: rotate(360deg); } }
-@keyframes pulse   { 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:.5; transform:scale(1.2); } }
+@keyframes pulse   { 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:.5; transform:scale(1.3); } }
 @keyframes barGrow { from { width: 0; } }
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
 
-// ============================================
-// PAGE WRAPPER
-// ============================================
+// ── Page wrapper ──────────────────────────────────────────────
 .dashboard-page {
   font-family: 'Plus Jakarta Sans', sans-serif;
   color: $text-1;
   background: $bg;
-  padding: 1.75rem 2.25rem 3rem;
-  animation: fadeIn .45s ease both;
+  padding: 1.75rem 2rem 3rem;
+  animation: fadeIn .4s ease both;
   min-height: 100%;
+  width: 100%;
 }
 
-// ============================================
-// HEADER
-// ============================================
+// ── Header ────────────────────────────────────────────────────
 .dash-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
 }
 
 .dash-header-left { flex: 1; }
-.dash-header-right { display: flex; gap: .75rem; align-items: center; padding-top: .25rem; }
+.dash-header-right { display: flex; gap: .625rem; align-items: center; padding-top: .25rem; flex-shrink: 0; }
 
-.breadcrumb {
-  display: flex; align-items: center; gap: .375rem;
-  font-size: .75rem; font-weight: 500; color: $text-3; margin-bottom: .5rem;
-  &-item { transition: color .2s;
-    &.active { color: $royal; font-weight: 600; }
-  }
-  &-separator { color: $border; font-size: .625rem; }
+.dash-greeting {
+  display: inline-flex; align-items: center; gap: .375rem;
+  font-size: .75rem; font-weight: 700; color: $royal;
+  text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: .5rem;
+  svg { width: 13px; height: 13px; }
 }
 
 .page-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.875rem; font-weight: 800; letter-spacing: -.01em;
-  color: $navy;
-  margin-bottom: .3rem;
-  position: relative;
-  display: inline-block;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -4px; left: 0;
-    width: 40px; height: 3px;
-    background: linear-gradient(90deg, $crimson, $royal);
-    border-radius: 2px;
-  }
+  font-size: 1.625rem; font-weight: 800; letter-spacing: -.02em;
+  color: $navy; margin: 0 0 .25rem; line-height: 1.2;
 }
 
-.page-subtitle {
-  font-size: .875rem; color: $text-2;
-  margin-top: .75rem;
-}
+.page-subtitle { font-size: .875rem; color: $text-2; margin: 0; }
 
 .btn-refresh {
-  display: inline-flex; align-items: center; gap: .5rem;
-  padding: .5rem 1.125rem;
-  background: $surface;
-  border: 1.5px solid $border; border-radius: $r-md;
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .5rem 1rem;
+  background: $surface; border: 1.5px solid $border; border-radius: $r-md;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: .8125rem; font-weight: 600;
-  color: $text-2; cursor: pointer; transition: all .2s;
+  font-size: .8125rem; font-weight: 600; color: $text-2;
+  cursor: pointer; transition: all .2s;
   svg { width: 14px; height: 14px; }
-  &:hover {
-    background: $navy; border-color: $navy; color: #fff;
-    svg { animation: spin .6s linear; }
-  }
+  &:hover { background: $navy; border-color: $navy; color: #fff; svg { animation: spin .6s linear; } }
 }
 
 .btn-new-decl {
-  display: inline-flex; align-items: center; gap: .5rem;
-  padding: .625rem 1.375rem;
-  background: linear-gradient(135deg, $royal 0%, $navy 100%);
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .5625rem 1.25rem;
+  background: linear-gradient(135deg, $royal, $navy);
   color: #fff; border: none; border-radius: $r-md;
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-weight: 700; font-size: .875rem;
-  cursor: pointer; transition: all .25s ease;
-  box-shadow: 0 4px 16px rgba($royal,.40);
-  position: relative; overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute; top: 0; left: -100%;
-    width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
-    transition: left .4s ease;
-  }
-
-  svg { width: 18px; height: 18px; transition: transform .25s; }
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba($royal,.50);
-    &::before { left: 100%; }
-    svg { transform: rotate(90deg); }
-  }
+  cursor: pointer; transition: all .22s ease;
+  box-shadow: 0 3px 14px rgba($royal,.38);
+  svg { width: 16px; height: 16px; transition: transform .22s; }
+  &:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba($royal,.48); svg { transform: rotate(90deg); } }
 }
 
-// ============================================
-// LOADING
-// ============================================
+// ── Loading ───────────────────────────────────────────────────
 .loading-overlay {
-  display: flex; flex-direction: column; align-items: center;
-  justify-content: center; padding: 5rem;
-  .spinner {
-    width: 44px; height: 44px;
-    border: 3px solid $border; border-top-color: $royal;
-    border-radius: 50%; animation: spin .8s linear infinite;
-  }
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5rem;
+  .spinner { width: 40px; height: 40px; border: 3px solid $border; border-top-color: $royal; border-radius: 50%; animation: spin .8s linear infinite; }
   p { margin-top: 1rem; color: $text-2; font-size: .875rem; font-weight: 500; }
 }
 
-// ============================================
-// BANNIÈRE REJETÉES
-// ============================================
+// ── Alert rejetées ────────────────────────────────────────────
 .alert-rejected-banner {
   display: flex; align-items: center; justify-content: space-between;
   background: linear-gradient(135deg, $crimson-lt, #FADADC);
-  border: 1.5px solid rgba($crimson,.30);
-  border-left: 4px solid $crimson;
-  border-radius: $r-lg; padding: 1rem 1.375rem;
-  margin-bottom: 1.75rem; cursor: pointer;
-  transition: all .22s ease;
+  border: 1.5px solid rgba($crimson,.28); border-left: 4px solid $crimson;
+  border-radius: $r-lg; padding: .875rem 1.25rem;
+  margin-bottom: 1.5rem; cursor: pointer; transition: all .2s;
   animation: slideUp .3s ease both;
-
-  &:hover {
-    transform: translateX(3px);
-    box-shadow: $sh-sm;
-    background: linear-gradient(135deg, #FADADC, #FAC5C9);
-  }
+  &:hover { transform: translateX(3px); box-shadow: $sh-sm; }
 
   .alert-rejected-left {
-    display: flex; align-items: center; gap: .875rem; color: darken($crimson, 10%);
-    strong { display: block; font-size: .9375rem; font-weight: 700; margin-bottom: 2px; }
-    span   { font-size: .8125rem; color: $crimson; }
+    display: flex; align-items: center; gap: .75rem; color: darken($crimson, 10%);
+    strong { display: block; font-size: .9rem; font-weight: 700; margin-bottom: 1px; }
+    span   { font-size: .8rem; color: $crimson; }
   }
-
   .alert-rejected-icon {
-    width: 42px; height: 42px;
-    background: rgba($crimson,.12);
-    border-radius: $r-md;
+    width: 38px; height: 38px; background: rgba($crimson,.12); border-radius: $r-md;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    svg { width: 20px; height: 20px; color: $crimson; }
+    svg { width: 18px; height: 18px; color: $crimson; }
   }
-
   .alert-rejected-right {
-    display: flex; align-items: center; gap: .4rem;
-    font-size: .8125rem; font-weight: 700; color: darken($crimson, 10%);
-    white-space: nowrap; flex-shrink: 0;
+    display: flex; align-items: center; gap: .35rem;
+    font-size: .8rem; font-weight: 700; color: darken($crimson, 10%); white-space: nowrap; flex-shrink: 0;
   }
 }
 
-.card {
-  backdrop-filter: blur(10px);
-  background: rgba(255,255,255,0.75);
-}
-
-.stat-card:hover {
-  transform: translateY(-6px) scale(1.02);
-}
-// ============================================
-// STAT CARDS
-// ============================================
+// ── KPI Cards ─────────────────────────────────────────────────
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.25rem;
-  margin-bottom: 1.75rem;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .stat-card {
   background: $surface; border-radius: $r-xl;
-  padding: 1.5rem 1.625rem;
-  display: flex; align-items: center; gap: 1.125rem;
-  box-shadow: $sh-xs;
-  border: 1px solid $border-lt;
-  transition: all .3s cubic-bezier(.34,1.56,.64,1);
-  position: relative; overflow: hidden;
-  cursor: default;
+  padding: 1.25rem 1.375rem;
+  display: flex; align-items: center; gap: 1rem;
+  box-shadow: $sh-xs; border: 1px solid $border-lt;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+  position: relative; overflow: hidden; cursor: default;
 
-  // Subtle top accent line
   &::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
     border-radius: $r-xl $r-xl 0 0;
   }
 
-  // Decorative circle bg
-  &::after {
-    content: ''; position: absolute;
-    right: -20px; bottom: -20px;
-    width: 80px; height: 80px;
-    border-radius: 50%;
-    opacity: .05;
-    transition: all .4s ease;
-  }
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: $sh-md;
-    &::after { transform: scale(1.5); opacity: .08; }
-    .stat-icon { transform: scale(1.1) rotate(-5deg); }
-  }
-
+  &:hover { transform: translateY(-3px); box-shadow: $sh-md; }
   &.stat-total, &.stat-rejected { cursor: pointer; }
-
-  .stat-icon {
-    width: 52px; height: 52px; border-radius: $r-lg; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
-    svg { width: 22px; height: 22px; }
-  }
-
-  .stat-info { flex: 1; min-width: 0; }
-  .stat-label {
-    font-size: .6875rem; font-weight: 700; letter-spacing: .08em;
-    text-transform: uppercase; color: $text-3; margin-bottom: .3rem;
-  }
-  .stat-value {
-    font-family: 'Playfair Display', serif;
-    font-size: 2.375rem; font-weight: 800;
-    color: $navy; line-height: 1; margin-bottom: .25rem;
-  }
-  .stat-sub { font-size: .75rem; color: $text-3; font-weight: 500; }
-
-  .stat-arrow { color: $text-3; flex-shrink: 0;
-    svg { width: 16px; height: 16px; } }
-
-  // ── Variants — Wifak Brand ──
-  &.stat-total {
-    &::before { background: linear-gradient(90deg, $navy, $royal); }
-    &::after  { background: $navy; }
-    .stat-icon { background: rgba($navy,.08); color: $navy; }
-    .stat-value { color: $navy; }
-  }
-  &.stat-pending {
-    &::before { background: linear-gradient(90deg, $warning, #E08A2E); }
-    &::after  { background: $warning; }
-    .stat-icon { background: rgba($warning,.08); color: $warning; }
-  }
-  &.stat-validated {
-    &::before { background: linear-gradient(90deg, $success, #14A87A); }
-    &::after  { background: $success; }
-    .stat-icon { background: rgba($success,.08); color: $success; }
-  }
-  &.stat-rejected {
-    &::before { background: linear-gradient(90deg, $crimson, #E03048); }
-    &::after  { background: $crimson; }
-    .stat-icon { background: rgba($crimson,.08); color: $crimson; }
-  }
 }
 
-.stat-pulse {
-  position: absolute; top: 14px; right: 14px;
-  width: 10px; height: 10px; border-radius: 50%;
+.stat-icon-wrap {
+  width: 46px; height: 46px; border-radius: $r-lg; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+  svg { width: 20px; height: 20px; }
+  .stat-card:hover & { transform: scale(1.1) rotate(-5deg); }
+}
+
+.stat-body { flex: 1; min-width: 0; }
+.stat-value {
+  display: block; font-size: 2rem; font-weight: 800; color: $navy; line-height: 1; margin-bottom: .2rem;
+}
+.stat-label { display: block; font-size: .6875rem; font-weight: 700; color: $text-3; text-transform: uppercase; letter-spacing: .07em; }
+
+.stat-trend { color: $text-3; flex-shrink: 0; }
+
+.stat-pulse-dot {
+  position: absolute; top: 12px; right: 12px;
+  width: 9px; height: 9px; border-radius: 50%;
   background: $warning; animation: pulse 1.8s ease infinite;
   &.stat-pulse-danger { background: $crimson; }
 }
 
-// ============================================
-// DASHBOARD 2-COLUMN GRID
-// ============================================
+.stat-total {
+  &::before { background: linear-gradient(90deg, $navy, $royal); }
+  .stat-icon-wrap { background: rgba($navy,.08); color: $navy; }
+}
+.stat-pending {
+  &::before { background: linear-gradient(90deg, $warning, #E08A2E); }
+  .stat-icon-wrap { background: $warning-lt; color: $warning; }
+}
+.stat-validated {
+  &::before { background: linear-gradient(90deg, $success, #14A87A); }
+  .stat-icon-wrap { background: $success-lt; color: $success; }
+}
+.stat-rejected {
+  &::before { background: linear-gradient(90deg, $crimson, #E03048); }
+  .stat-icon-wrap { background: $crimson-lt; color: $crimson; }
+}
+
+// ── Dashboard grid ────────────────────────────────────────────
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1fr 390px;
-  gap: 1.25rem;
+  grid-template-columns: 1fr 360px;
+  gap: 1rem;
   align-items: start;
 }
 
-.dashboard-col-main { display: flex; flex-direction: column; gap: 1.25rem; }
-.dashboard-col-side  { display: flex; flex-direction: column; gap: 1.25rem; }
+.dashboard-col-main { display: flex; flex-direction: column; gap: 1rem; }
+.dashboard-col-side  { display: flex; flex-direction: column; gap: 1rem; }
 
-// ============================================
-// CARDS
-// ============================================
+// ── Cards ─────────────────────────────────────────────────────
 .card {
   background: $surface; border-radius: $r-xl;
   border: 1px solid $border-lt; box-shadow: $sh-xs;
-  overflow: hidden;
-  animation: fadeIn .45s ease both;
+  overflow: hidden; animation: fadeIn .4s ease both;
 }
 
 .card-header {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 1.125rem 1.625rem;
-  border-bottom: 1px solid $border-lt;
+  padding: 1rem 1.375rem; border-bottom: 1px solid $border-lt;
   background: linear-gradient(to bottom, #FAFBFD, $surface);
 }
 
 .card-header-left {
-  display: flex; align-items: center; gap: .875rem;
-  h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: .9375rem; font-weight: 700;
-    color: $navy; margin: 0 0 2px;
-  }
-  p { font-size: .75rem; color: $text-3; margin: 0; }
+  display: flex; align-items: center; gap: .75rem;
+  h3 { font-size: .9375rem; font-weight: 700; color: $navy; margin: 0 0 1px; }
+  p  { font-size: .75rem; color: $text-3; margin: 0; }
 }
 
 .card-icon {
-  width: 38px; height: 38px; border-radius: $r-md; flex-shrink: 0;
+  width: 36px; height: 36px; border-radius: $r-md; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  svg { width: 17px; height: 17px; }
-
-  &.card-icon-blue   { background: rgba($royal,.10); color: $royal; }
-  &.card-icon-orange { background: rgba($warning,.10); color: $warning; }
-  &.card-icon-purple { background: rgba($navy,.10); color: $navy; }
+  svg { width: 16px; height: 16px; }
+  &.card-icon-blue   { background: $royal-lt;   color: $royal; }
+  &.card-icon-orange { background: $warning-lt; color: $warning; }
+  &.card-icon-purple { background: $purple-lt;  color: $purple; }
+  &.card-icon-green  { background: $green-lt;   color: $green; }
 }
 
-.card-body { padding: 1.25rem 1.625rem; }
+.card-body { padding: 1.125rem 1.375rem; }
 
 .btn-see-all {
   display: inline-flex; align-items: center; gap: .3rem;
-  padding: .375rem .75rem;
-  background: $silver-lt; border: 1.5px solid $border;
-  border-radius: $r-sm;
+  padding: .3125rem .6875rem;
+  background: $silver-lt; border: 1.5px solid $border; border-radius: $r-sm;
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: .75rem; font-weight: 600; color: $text-2;
   cursor: pointer; transition: all .2s;
-  svg { width: 12px; height: 12px; }
+  svg { width: 11px; height: 11px; }
   &:hover { background: $navy; border-color: $navy; color: #fff; }
 }
 
-// ============================================
-// RECENT TABLE
-// ============================================
+// ── Recent table ──────────────────────────────────────────────
 .recent-table {
   width: 100%; border-collapse: collapse;
 
   thead th {
-    padding: .6875rem 1rem; text-align: left;
+    padding: .5625rem .875rem; text-align: left;
     font-size: .625rem; font-weight: 700; color: $silver;
     text-transform: uppercase; letter-spacing: .10em;
-    border-bottom: 2px solid $border-lt;
-    background: #FAFBFD;
-    white-space: nowrap;
+    border-bottom: 2px solid $border-lt; background: #FAFBFD; white-space: nowrap;
   }
 
   tbody tr {
-    border-bottom: 1px solid $border-lt;
-    transition: background .15s;
+    border-bottom: 1px solid $border-lt; transition: background .15s;
     animation: slideIn .3s ease both;
     &:hover { background: $royal-lt; }
     &:last-child { border-bottom: none; }
   }
 
-  tbody td {
-    padding: .9375rem 1rem;
-    font-size: .8125rem; color: $text-1; vertical-align: middle;
-  }
+  tbody td { padding: .8125rem .875rem; font-size: .8125rem; color: $text-1; vertical-align: middle; }
 }
 
 .code-badge {
   display: inline-flex; align-items: center;
-  padding: .25rem .675rem;
+  padding: .2rem .6rem;
   background: rgba($navy,.08); color: $navy;
-  border: 1px solid rgba($navy,.15);
-  border-radius: $r-sm;
+  border: 1px solid rgba($navy,.14); border-radius: $r-sm;
   font-weight: 800; font-size: .6875rem;
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: .02em;
+  font-family: 'JetBrains Mono', monospace; letter-spacing: .02em;
 }
 
-.type-name    { font-weight: 500; color: $text-1; }
+.type-name    { font-weight: 500; color: $text-1; font-size: .8125rem; }
 .periode-text { color: $text-2; font-size: .75rem; font-weight: 600; }
 .date-text    { color: $text-3; font-size: .75rem; font-family: 'JetBrains Mono', monospace; }
 
-// ============================================
-// STATUS BADGES
-// ============================================
+// ── Status badges ─────────────────────────────────────────────
 .status-badge {
-  display: inline-flex; align-items: center; gap: .375rem;
-  padding: .25rem .8125rem; border-radius: 20px;
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .2rem .7rem; border-radius: 20px;
   font-size: .6875rem; font-weight: 700; white-space: nowrap;
 
-  .status-dot {
-    width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
-    animation: pulse 2s ease infinite;
-  }
+  .status-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; animation: pulse 2s ease infinite; }
 
-  &.status-draft {
-    background: $silver-lt; color: $text-2;
-    .status-dot { background: $silver; animation: none; }
-  }
-  &.status-generated {
-    background: rgba($royal,.10); color: darken($royal, 10%);
-    .status-dot { background: $royal; }
-  }
-  &.status-pending {
-    background: rgba($warning,.10); color: darken($warning, 12%);
-    .status-dot { background: $warning; }
-  }
-  &.status-validated {
-    background: rgba($success,.10); color: darken($success, 8%);
-    .status-dot { background: $success; }
-  }
-  &.status-rejected {
-    background: rgba($crimson,.10); color: darken($crimson, 8%);
-    .status-dot { background: $crimson; }
-  }
-  &.status-sent {
-    background: linear-gradient(135deg, rgba($navy,.12), rgba($royal,.10));
-    color: $navy;
-    .status-dot { background: $navy; }
-  }
+  &.status-draft      { background: $silver-lt;              color: $text-2;              .status-dot { background: $silver;  animation: none; } }
+  &.status-generated  { background: $royal-lt;               color: darken($royal,10%);   .status-dot { background: $royal; } }
+  &.status-pending    { background: $warning-lt;             color: darken($warning,12%); .status-dot { background: $warning; } }
+  &.status-validated  { background: $success-lt;             color: darken($success,8%);  .status-dot { background: $success; } }
+  &.status-rejected   { background: $crimson-lt;             color: darken($crimson,8%);  .status-dot { background: $crimson; } }
+  &.status-sent       { background: linear-gradient(135deg, rgba($navy,.10), rgba($royal,.08)); color: $navy; .status-dot { background: $navy; } }
 }
 
-// ============================================
-// DEADLINE LIST
-// ============================================
-.deadline-list { display: flex; flex-direction: column; gap: .625rem; }
+// ── Deadline list ─────────────────────────────────────────────
+.deadline-list { display: flex; flex-direction: column; gap: .5rem; }
 
 .deadline-item {
   display: flex; align-items: center; justify-content: space-between;
-  padding: .8125rem 1rem;
-  background: #FAFBFD;
-  border: 1px solid $border-lt;
-  border-radius: $r-md; transition: all .2s; gap: .75rem;
-
-  &:hover { background: $royal-lt; border-color: rgba($royal,.25); }
-
-  &.deadline-overdue {
-    background: $crimson-lt; border-color: rgba($crimson,.25);
-    &:hover { background: #FADADC; }
-  }
+  padding: .75rem .875rem;
+  background: #FAFBFD; border: 1px solid $border-lt; border-radius: $r-md;
+  transition: all .2s; gap: .625rem;
+  &:hover { background: $royal-lt; border-color: rgba($royal,.22); }
+  &.deadline-overdue { background: $crimson-lt; border-color: rgba($crimson,.22); &:hover { background: #FADADC; } }
 }
 
-.deadline-left {
-  display: flex; align-items: center; gap: .75rem; flex: 1; min-width: 0;
-}
-
+.deadline-left  { display: flex; align-items: center; gap: .625rem; flex: 1; min-width: 0; }
 .deadline-code-wrap { flex-shrink: 0; }
 
 .deadline-code {
-  display: inline-flex; padding: .25rem .625rem;
-  background: rgba($navy,.08); color: $navy;
-  border: 1px solid rgba($navy,.15);
-  border-radius: $r-sm; font-weight: 800;
-  font-size: .6875rem; font-family: 'JetBrains Mono', monospace;
-  white-space: nowrap;
+  display: inline-flex; padding: .2rem .55rem;
+  background: rgba($navy,.08); color: $navy; border: 1px solid rgba($navy,.14);
+  border-radius: $r-sm; font-weight: 800; font-size: .6875rem;
+  font-family: 'JetBrains Mono', monospace; white-space: nowrap;
 }
 
-.deadline-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.deadline-name   {
-  font-size: .8125rem; font-weight: 600; color: $text-1;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
+.deadline-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.deadline-name   { font-size: .8125rem; font-weight: 600; color: $text-1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .deadline-period { font-size: .6875rem; color: $text-3; font-weight: 500; }
 
-.deadline-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.deadline-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
 
 .deadline-badge {
   display: inline-flex; align-items: center; gap: .25rem;
-  padding: .25rem .625rem; border-radius: 99px;
+  padding: .2rem .55rem; border-radius: 99px;
   font-size: .6875rem; font-weight: 700;
   background: rgba($royal,.08); color: $royal;
-
-  &.deadline-badge-overdue {
-    background: rgba($crimson,.10); color: $crimson;
-    animation: pulse 2s ease infinite;
-  }
-  &.deadline-badge-urgent {
-    background: rgba($warning,.10); color: darken($warning, 8%);
-  }
+  &.deadline-badge-overdue { background: rgba($crimson,.10); color: $crimson; animation: pulse 2s ease infinite; }
+  &.deadline-badge-urgent  { background: rgba($warning,.10); color: darken($warning,8%); }
 }
 
-.deadline-date {
-  font-size: .6875rem; color: $text-3;
-  font-family: 'JetBrains Mono', monospace;
-}
+.deadline-date { font-size: .6875rem; color: $text-3; font-family: 'JetBrains Mono', monospace; }
 
-// ============================================
-// DISTRIBUTION BARS
-// ============================================
-.distrib-list { display: flex; flex-direction: column; gap: .9375rem; }
+// ── Distribution bars ─────────────────────────────────────────
+.distrib-list { display: flex; flex-direction: column; gap: .875rem; }
 
-.distrib-row { display: flex; align-items: center; gap: .75rem; }
+.distrib-row { display: flex; align-items: center; gap: .625rem; }
 
 .distrib-label {
-  display: flex; align-items: center; gap: .5rem;
+  display: flex; align-items: center; gap: .4rem;
   font-size: .75rem; font-weight: 600; color: $text-2;
-  min-width: 105px; flex-shrink: 0;
+  min-width: 100px; flex-shrink: 0;
 }
 
 .distrib-dot {
@@ -551,89 +366,109 @@ $sh-glow-crimson: 0 0 0 3px rgba(200,25,46,.15);
   &.dot-sent      { background: $navy; }
 }
 
-.distrib-bar-wrap {
-  flex: 1; height: 7px; background: $bg-deep;
-  border-radius: 99px; overflow: hidden;
-}
+.distrib-bar-wrap { flex: 1; height: 6px; background: #E8EDF5; border-radius: 99px; overflow: hidden; }
 
 .distrib-bar {
   height: 100%; border-radius: 99px; min-width: 3px;
   transition: width .9s cubic-bezier(.4,0,.2,1);
   animation: barGrow .9s cubic-bezier(.4,0,.2,1) both;
-
-  &.bar-generated { background: linear-gradient(90deg, $royal, lighten($royal, 15%)); }
+  &.bar-generated { background: linear-gradient(90deg, $royal, lighten($royal,15%)); }
   &.bar-pending   { background: linear-gradient(90deg, $warning, #E08A2E); }
   &.bar-validated { background: linear-gradient(90deg, $success, #14A87A); }
-  &.bar-rejected  { background: linear-gradient(90deg, $crimson, lighten($crimson, 15%)); }
+  &.bar-rejected  { background: linear-gradient(90deg, $crimson, lighten($crimson,15%)); }
   &.bar-sent      { background: linear-gradient(90deg, $navy, $navy-lt); }
 }
 
 .distrib-count {
-  font-family: 'Playfair Display', serif;
-  font-size: .9375rem; font-weight: 800;
-  color: $navy; min-width: 26px; text-align: right; flex-shrink: 0;
+  font-size: .9rem; font-weight: 800; color: $navy;
+  min-width: 22px; text-align: right; flex-shrink: 0;
 }
 
-// ============================================
-// EMPTY STATES
-// ============================================
-.empty-state {
-  text-align: center; padding: 3rem 1.5rem;
-  .empty-icon {
-    width: 52px; height: 52px; margin: 0 auto 1rem;
-    color: $silver; opacity: .45;
-    svg { width: 100%; height: 100%; }
+// ── Quick actions ─────────────────────────────────────────────
+.qa-body { display: flex; flex-direction: column; gap: .5rem; padding: 1rem 1.125rem; }
+
+.qa-btn {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .75rem .875rem;
+  background: #FAFBFD; border: 1.5px solid $border-lt; border-radius: $r-md;
+  cursor: pointer; transition: all .2s; text-align: left; font-family: 'Plus Jakarta Sans', sans-serif;
+
+  &:hover { background: $royal-lt; border-color: rgba($royal,.25); transform: translateX(3px); }
+
+  &.qa-primary {
+    background: linear-gradient(135deg, $royal, $navy);
+    border-color: transparent; color: #fff;
+    box-shadow: 0 3px 12px rgba($royal,.35);
+    &:hover { box-shadow: 0 5px 18px rgba($royal,.45); transform: translateY(-2px) translateX(0); }
+    .qa-icon { background: rgba(255,255,255,.18); color: #fff; }
+    .qa-title { color: #fff; }
+    .qa-sub   { color: rgba(255,255,255,.7); }
+    .qa-arrow { color: rgba(255,255,255,.7); }
   }
-  p { font-size: .875rem; color: $text-2; font-weight: 500; margin-bottom: 1.25rem; }
+}
+
+.qa-icon {
+  width: 34px; height: 34px; border-radius: $r-sm; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: $silver-lt; color: $text-2;
+  svg { width: 16px; height: 16px; }
+  &.qa-icon-blue   { background: $royal-lt;   color: $royal; }
+  &.qa-icon-orange { background: $warning-lt; color: $warning; }
+}
+
+.qa-text { flex: 1; }
+.qa-title { display: block; font-size: .8125rem; font-weight: 700; color: $text-1; }
+.qa-sub   { display: block; font-size: .6875rem; color: $text-3; margin-top: 1px; }
+.qa-arrow { color: $text-3; flex-shrink: 0; }
+
+// ── Empty states ──────────────────────────────────────────────
+.empty-state {
+  text-align: center; padding: 2.5rem 1.5rem;
+  .empty-icon { width: 48px; height: 48px; margin: 0 auto .875rem; color: $silver; opacity: .4; svg { width: 100%; height: 100%; } }
+  p { font-size: .875rem; color: $text-2; font-weight: 500; margin-bottom: 1.125rem; }
 }
 
 .btn-create-first {
-  display: inline-flex; align-items: center; gap: .5rem;
-  padding: .625rem 1.25rem;
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .5625rem 1.125rem;
   background: linear-gradient(135deg, $royal, $navy);
   color: #fff; border: none; border-radius: $r-md;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-weight: 700; font-size: .875rem;
+  font-weight: 700; font-size: .8125rem;
   cursor: pointer; transition: all .2s;
-  box-shadow: 0 3px 12px rgba($royal,.35);
-  &:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba($royal,.45); }
+  box-shadow: 0 3px 10px rgba($royal,.32);
+  &:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba($royal,.42); }
 }
 
 .empty-deadlines {
   display: flex; flex-direction: column; align-items: center;
-  padding: 1.5rem; color: $silver; gap: .5rem;
-  svg { opacity: .4; }
+  padding: 1.25rem; color: $silver; gap: .4rem;
+  svg { opacity: .35; }
   p { font-size: .8125rem; font-weight: 500; margin: 0; }
 }
 
-.distrib-empty {
-  text-align: center; padding: 1.5rem;
-  p { font-size: .8125rem; color: $text-3; margin: 0; }
-}
+.distrib-empty { text-align: center; padding: 1.25rem; p { font-size: .8125rem; color: $text-3; margin: 0; } }
 
-// ============================================
-// RESPONSIVE
-// ============================================
+// ── Responsive ────────────────────────────────────────────────
 @media (max-width: 1200px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .dashboard-grid { grid-template-columns: 1fr; }
-  .dashboard-col-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .dashboard-col-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 }
 
 @media (max-width: 900px) {
   .dashboard-page { padding: 1.25rem; }
-  .dash-header { flex-direction: column; gap: .875rem; }
+  .dash-header { flex-direction: column; gap: .75rem; }
   .dash-header-right { align-self: stretch; }
   .btn-new-decl { flex: 1; justify-content: center; }
   .dashboard-col-side { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {
-  .stats-grid { grid-template-columns: 1fr 1fr; gap: .875rem; }
-  .stat-value { font-size: 1.875rem; }
-  .card-body { padding: 1rem; }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .stat-value { font-size: 1.625rem; }
+  .card-body { padding: .875rem; }
   .recent-table thead th:nth-child(2),
   .recent-table tbody td:nth-child(2) { display: none; }
   .alert-rejected-right { display: none; }
 }
-

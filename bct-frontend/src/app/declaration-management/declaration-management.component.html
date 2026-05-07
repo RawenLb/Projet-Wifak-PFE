@@ -166,101 +166,99 @@
             </tr>
           </thead>
           <tbody>
-            <ng-container *ngFor="let decl of declarations">
-              <tr *ngIf="matchesFilters(decl)" [class.row-rejected]="decl.statut === 'REJETEE'">
-                <td><span class="code-badge">{{ decl.declarationType?.code }}</span></td>
-                <td><div class="type-cell">{{ decl.declarationType?.nom }}</div></td>
-                <td><span class="periode-text">{{ decl.periode }}</span></td>
-                <td><span class="date-text">{{ formatDate(decl.dateGeneration) }}</span></td>
-                <td>
-                  <div class="statut-jira-cell">
-                    <span class="status-badge" [ngClass]="getStatusBadgeClass(decl.statut)">
-                      <span class="status-dot"></span>{{ getStatusLabel(decl.statut) }}
-                    </span>
-                    <a *ngIf="getJiraTicket(decl.id)"
-                       [href]="getJiraTicket(decl.id)!.jiraTicketUrl"
-                       target="_blank" class="jira-badge"
-                       [title]="'Voir ' + getJiraTicket(decl.id)!.jiraTicketKey"
-                       (click)="$event.stopPropagation()">
-                      <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
-                        <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
-                        <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
-                      </svg>
-                      {{ getJiraTicket(decl.id)!.jiraTicketKey }}
-                    </a>
-                    <span class="jira-loading-dot"
-                          *ngIf="!getJiraTicket(decl.id) && isJiraEligible(decl) && jiraLoadingMap[decl.id!]">
-                      <span class="spinner-xs"></span>
-                    </span>
-                  </div>
-                  <div class="reject-reason-preview"
-                       *ngIf="decl.statut === 'REJETEE' && decl.commentaireRejet">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11">
-                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            <tr *ngFor="let decl of paginatedDeclarations" [class.row-rejected]="decl.statut === 'REJETEE'">
+              <td><span class="code-badge">{{ decl.declarationType?.code }}</span></td>
+              <td><div class="type-cell">{{ decl.declarationType?.nom }}</div></td>
+              <td><span class="periode-text">{{ decl.periode }}</span></td>
+              <td><span class="date-text">{{ formatDate(decl.dateGeneration) }}</span></td>
+              <td>
+                <div class="statut-jira-cell">
+                  <span class="status-badge" [ngClass]="getStatusBadgeClass(decl.statut)">
+                    <span class="status-dot"></span>{{ getStatusLabel(decl.statut) }}
+                  </span>
+                  <a *ngIf="getJiraTicket(decl.id)"
+                     [href]="getJiraTicket(decl.id)!.jiraTicketUrl"
+                     target="_blank" class="jira-badge"
+                     [title]="'Voir ' + getJiraTicket(decl.id)!.jiraTicketKey"
+                     (click)="$event.stopPropagation()">
+                    <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+                      <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
+                      <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
                     </svg>
-                    <span>{{ decl.commentaireRejet | slice:0:60 }}{{ decl.commentaireRejet!.length > 60 ? '…' : '' }}</span>
-                  </div>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    <!-- Détails -->
-                    <button (click)="openDetailsModal(decl)" class="btn-action btn-details" title="Détails">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                      </svg>
-                    </button>
-                    <!-- Télécharger -->
-                    <button (click)="downloadDeclaration(decl)" class="btn-action btn-download" title="Télécharger">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                      </svg>
-                    </button>
-                    <!-- Modifier (GENEREE seulement) -->
-                    <button *ngIf="canEdit(decl)" (click)="openEditModal(decl)" class="btn-action btn-edit" title="Modifier">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                    </button>
-                    <!-- Corriger (REJETEE seulement) -->
-                    <button *ngIf="canCorrect(decl)" (click)="openCorrectModal(decl)" class="btn-action btn-correct" title="Corriger et resoumettre">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 20h9"/>
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                      </svg>
-                    </button>
-                    <!-- Soumettre (GENEREE seulement) -->
-                    <button *ngIf="canSubmit(decl)" (click)="submitForValidation(decl)" class="btn-action btn-submit" title="Soumettre pour validation">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9 11 12 14 22 4"/>
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-                      </svg>
-                    </button>
-                    <!-- Envoyer BCT (VALIDEE seulement) -->
-                    <button *ngIf="canSendToBCT(decl)" (click)="sendToBCT(decl)" class="btn-action btn-send" title="Envoyer à la BCT" [disabled]="loadingAction">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="22" y1="2" x2="11" y2="13"/>
-                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                      </svg>
-                    </button>
-                    <!-- Supprimer (BROUILLON / GENEREE / REJETEE seulement) -->
-                    <button *ngIf="canDelete(decl)" (click)="openDeleteModal(decl); $event.stopPropagation()" class="btn-action btn-delete" title="Supprimer">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                        <path d="M10 11v6"/><path d="M14 11v6"/>
-                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </ng-container>
+                    {{ getJiraTicket(decl.id)!.jiraTicketKey }}
+                  </a>
+                  <span class="jira-loading-dot"
+                        *ngIf="!getJiraTicket(decl.id) && isJiraEligible(decl) && jiraLoadingMap[decl.id!]">
+                    <span class="spinner-xs"></span>
+                  </span>
+                </div>
+                <div class="reject-reason-preview"
+                     *ngIf="decl.statut === 'REJETEE' && decl.commentaireRejet">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <span>{{ decl.commentaireRejet | slice:0:60 }}{{ decl.commentaireRejet!.length > 60 ? '…' : '' }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <!-- Détails -->
+                  <button (click)="openDetailsModal(decl)" class="btn-action btn-details" title="Détails">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                  <!-- Télécharger -->
+                  <button (click)="downloadDeclaration(decl)" class="btn-action btn-download" title="Télécharger">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                  </button>
+                  <!-- Modifier (GENEREE seulement) -->
+                  <button *ngIf="canEdit(decl)" (click)="openEditModal(decl)" class="btn-action btn-edit" title="Modifier">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </button>
+                  <!-- Corriger (REJETEE seulement) -->
+                  <button *ngIf="canCorrect(decl)" (click)="openCorrectModal(decl)" class="btn-action btn-correct" title="Corriger et resoumettre">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                  </button>
+                  <!-- Soumettre (GENEREE seulement) -->
+                  <button *ngIf="canSubmit(decl)" (click)="submitForValidation(decl)" class="btn-action btn-submit" title="Soumettre pour validation">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 11 12 14 22 4"/>
+                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                    </svg>
+                  </button>
+                  <!-- Envoyer BCT (VALIDEE seulement) -->
+                  <button *ngIf="canSendToBCT(decl)" (click)="sendToBCT(decl)" class="btn-action btn-send" title="Envoyer à la BCT" [disabled]="loadingAction">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="22" y1="2" x2="11" y2="13"/>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                  </button>
+                  <!-- Supprimer (BROUILLON / GENEREE / REJETEE seulement) -->
+                  <button *ngIf="canDelete(decl)" (click)="openDeleteModal(decl); $event.stopPropagation()" class="btn-action btn-delete" title="Supprimer">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                      <path d="M10 11v6"/><path d="M14 11v6"/>
+                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
 
-            <tr *ngIf="!loadingDeclarations && declarations.length === 0">
+            <tr *ngIf="!loadingDeclarations && filteredDeclarations.length === 0">
               <td colspan="6" class="empty-state">
                 <div class="empty-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -275,6 +273,37 @@
             </tr>
           </tbody>
         </table>
+
+        <!-- ── PAGINATION ── -->
+        <div class="pagination-bar" *ngIf="filteredDeclarations.length > 0">
+          <div class="pg-info">
+            <span>{{ paginationStart }}–{{ paginationEnd }} sur <strong>{{ filteredDeclarations.length }}</strong></span>
+            <select class="pg-per-page" [(ngModel)]="itemsPerPage" (change)="changeItemsPerPage(itemsPerPage)">
+              <option [value]="5">5 / page</option>
+              <option [value]="10">10 / page</option>
+              <option [value]="20">20 / page</option>
+              <option [value]="50">50 / page</option>
+            </select>
+          </div>
+
+          <div class="pg-controls">
+            <button class="pg-btn" [disabled]="currentPage === 1" (click)="prevPage()" title="Page précédente">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+
+            <ng-container *ngFor="let p of pageNumbers">
+              <button *ngIf="p !== -1"
+                      class="pg-btn pg-num"
+                      [class.pg-active]="p === currentPage"
+                      (click)="goToPage(p)">{{ p }}</button>
+              <span *ngIf="p === -1" class="pg-ellipsis">…</span>
+            </ng-container>
+
+            <button class="pg-btn" [disabled]="currentPage === totalPages" (click)="nextPage()" title="Page suivante">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

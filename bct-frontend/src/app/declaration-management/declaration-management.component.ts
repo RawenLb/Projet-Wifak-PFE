@@ -213,12 +213,56 @@ export class DeclarationManagementComponent implements OnInit {
     return this.declarations.filter(d => d.statut === statut).length;
   }
 
-
-
-  
   // ══════════════════════════════════════════════════════
-  // GENERATE MODAL
+  // PAGINATION
   // ══════════════════════════════════════════════════════
+
+  get filteredDeclarations(): Declaration[] {
+    return this.declarations.filter(d => this.matchesFilters(d));
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredDeclarations.length / this.itemsPerPage));
+  }
+
+  get paginatedDeclarations(): Declaration[] {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredDeclarations.slice(start, start + this.itemsPerPage);
+  }
+
+  get paginationStart(): number {
+    return this.filteredDeclarations.length === 0 ? 0 : (this.currentPage - 1) * this.itemsPerPage + 1;
+  }
+
+  get paginationEnd(): number {
+    return Math.min(this.currentPage * this.itemsPerPage, this.filteredDeclarations.length);
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const pages: number[] = [];
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (current > 3) pages.push(-1); // ellipsis
+      for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+      if (current < total - 2) pages.push(-1); // ellipsis
+      pages.push(total);
+    }
+    return pages;
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
+  nextPage(): void { if (this.currentPage < this.totalPages) this.currentPage++; }
+  prevPage(): void { if (this.currentPage > 1) this.currentPage--; }
+
+  changeItemsPerPage(n: number): void { this.itemsPerPage = n; this.currentPage = 1; }
 
   openGenerateModal():  void { this.resetGenerateModal(); this.showGenerateModal = true; }
   closeGenerateModal(): void { this.showGenerateModal = false; this.resetGenerateModal(); }

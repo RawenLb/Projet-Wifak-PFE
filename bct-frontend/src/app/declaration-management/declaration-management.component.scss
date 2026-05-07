@@ -2450,3 +2450,113 @@ $sh-glow: 0 0 0 3px rgba(27,79,188,.18);
   overflow-y: auto;           // ← était hidden
   min-height: 0;
 }
+
+// ============================================
+// PAGINATION BAR
+// ============================================
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .875rem 1.75rem;
+  border-top: 1px solid $border-lt;
+  background: linear-gradient(to bottom, #FAFBFD, $surface);
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+
+.pg-info {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+  font-size: .8125rem;
+  color: $text-2;
+  font-weight: 500;
+
+  strong { color: $text-1; font-weight: 700; }
+}
+
+.pg-per-page {
+  padding: .3125rem .625rem;
+  border: 1.5px solid $border;
+  border-radius: $r-sm;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .75rem;
+  font-weight: 600;
+  color: $text-1;
+  background: $surface;
+  cursor: pointer;
+  transition: border-color .2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238A9BB0' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 22px;
+
+  &:focus { outline: none; border-color: $royal; }
+}
+
+.pg-controls {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+}
+
+.pg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid $border;
+  border-radius: $r-sm;
+  background: $surface;
+  color: $text-2;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s ease;
+  flex-shrink: 0;
+
+  svg { width: 14px; height: 14px; }
+
+  &:hover:not(:disabled) {
+    background: $royal-lt;
+    border-color: rgba($royal, .35);
+    color: $royal;
+  }
+
+  &:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+  }
+
+  &.pg-num {
+    min-width: 32px;
+    width: auto;
+    padding: 0 .5rem;
+  }
+
+  &.pg-active {
+    background: linear-gradient(135deg, $royal, $navy);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba($royal, .35);
+    cursor: default;
+
+    &:hover { background: linear-gradient(135deg, $royal, $navy); color: #fff; }
+  }
+}
+
+.pg-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: .875rem;
+  color: $text-3;
+  letter-spacing: .05em;
+  user-select: none;
+}
