@@ -39,6 +39,8 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/ws/chat").permitAll()
+                        .requestMatchers("/api/chat/files/**").permitAll()  // chat files served without auth (UUID names)
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(internalSecretFilter, UsernamePasswordAuthenticationFilter.class)

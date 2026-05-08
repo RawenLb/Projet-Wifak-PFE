@@ -60,9 +60,13 @@ app:
     allowed-origins: http://localhost:4200
   frontend-client-id: bct-frontend
   internal-secret: ${INTERNAL_SECRET:wifak-internal-secret-2024}
+  chat:
+    ws-path: /ws/chat
+    max-history: 200
 
 file:
   upload-dir: uploads/templates
+  chat-upload-dir: uploads/templates/chat
 
 eureka:
   instance:

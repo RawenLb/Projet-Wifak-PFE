@@ -25,6 +25,8 @@ import { ManagerHistoryComponent } from './manager-history/manager-history.compo
 import { ManagerPendingComponent } from './manager-pending/manager-pending.component';
 import { ManagerMlDashboardComponent } from './manager-ml-dashboard/manager-ml-dashboard.component';
 import { DeclarationCorrectionComponent } from './declaration-correction/declaration-correction.component';
+import { ChatComponent } from './chat/chat.component';
+import { CallComponent } from './chat/call.component';
 export function kcFactory() {
   return () =>
     keycloak.init({
@@ -79,6 +81,8 @@ export function kcFactory() {
     ManagerPendingComponent,
     ManagerMlDashboardComponent,
     DeclarationCorrectionComponent,
+    ChatComponent,
+    CallComponent,
   ],
   imports: [
     BrowserModule,

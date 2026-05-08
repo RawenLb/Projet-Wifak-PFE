@@ -1,0 +1,294 @@
+// src/app/chat/call.component.scss — WebRTC Call UI — Wifak Bank
+
+$navy:    #0D2B5E;
+$royal:   #1B4FBC;
+$crimson: #C8202F;
+$success: #0A7A5A;
+$surface: #FFFFFF;
+$text-3:  #8A9BB0;
+
+// ── Éléments vidéo permanents (hors overlay) ─────────────────
+// Toujours dans le DOM pour que @ViewChild fonctionne
+// Déplacés dans l'overlay via JS quand l'appel est actif
+.call-remote-video-hidden,
+.call-local-video-hidden {
+  display: none;
+  position: absolute;
+  pointer-events: none;
+}
+
+// ── Miroirs vidéo dans l'overlay ──────────────────────────────
+.call-video-mirror {
+  position: absolute;
+  inset: 0;
+  background: #000;
+
+  video, .call-remote-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.call-video-pip {
+  position: absolute;
+  bottom: 100px;
+  right: 20px;
+  width: 160px;
+  height: 120px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,.3);
+  box-shadow: 0 4px 20px rgba(0,0,0,.5);
+  background: #111;
+  z-index: 2;
+
+  video, .call-local-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+@keyframes ringPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(27,79,188,.5); }
+  70%  { box-shadow: 0 0 0 20px rgba(27,79,188,0); }
+  100% { box-shadow: 0 0 0 0 rgba(27,79,188,0); }
+}
+@keyframes statusDot {
+  0%, 80%, 100% { opacity: .3; transform: scale(.8); }
+  40%           { opacity: 1;  transform: scale(1.2); }
+}
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: scale(.9) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+// ── Overlay ───────────────────────────────────────────────────
+.call-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(9,29,66,.85);
+  backdrop-filter: blur(12px);
+  animation: overlayIn .25s ease both;
+
+  &.call-active {
+    background: rgba(0,0,0,.75);
+  }
+}
+
+// ── Video streams ─────────────────────────────────────────────
+.call-video-area {
+  position: absolute;
+  inset: 0;
+}
+
+.call-remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.call-local-video {
+  position: absolute;
+  bottom: 100px;
+  right: 20px;
+  width: 160px;
+  height: 120px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,.3);
+  box-shadow: 0 4px 20px rgba(0,0,0,.5);
+  background: #111;
+  cursor: move;
+}
+
+// ── Card ──────────────────────────────────────────────────────
+.call-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 40px 48px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 28px;
+  backdrop-filter: blur(20px);
+  min-width: 320px;
+  animation: cardIn .3s cubic-bezier(.34,1.56,.64,1) both;
+
+  &.call-card-video {
+    background: transparent;
+    border-color: transparent;
+    backdrop-filter: none;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    border-radius: 0;
+    flex-direction: row;
+    justify-content: center;
+    background: linear-gradient(to top, rgba(0,0,0,.8), transparent);
+  }
+}
+
+// ── Avatar ────────────────────────────────────────────────────
+.call-avatar-ring {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(27,79,188,.2);
+  border: 2px solid rgba(27,79,188,.4);
+
+  &.ring-pulse {
+    animation: ringPulse 1.5s ease infinite;
+  }
+}
+
+.call-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $royal, $navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: .02em;
+}
+
+// ── Info ──────────────────────────────────────────────────────
+.call-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.call-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -.01em;
+}
+
+.call-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: rgba(255,255,255,.65);
+  font-variant-numeric: tabular-nums;
+  min-height: 20px;
+}
+
+.status-dots {
+  display: inline-flex;
+  gap: 3px;
+  span {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: rgba(255,255,255,.65);
+    animation: statusDot 1.2s ease infinite;
+    &:nth-child(2) { animation-delay: .2s; }
+    &:nth-child(3) { animation-delay: .4s; }
+  }
+}
+
+.call-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,.45);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  svg { opacity: .6; }
+}
+
+// ── Actions ───────────────────────────────────────────────────
+.call-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.call-ring-timer {
+  font-size: 12px;
+  color: rgba(255,255,255,.45);
+  font-variant-numeric: tabular-nums;
+  min-width: 28px;
+  text-align: center;
+}
+
+// Main call buttons (accept / reject / hang up)
+.call-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .2s cubic-bezier(.34,1.56,.64,1);
+  svg { width: 24px; height: 24px; }
+
+  &:hover { transform: scale(1.12); }
+  &:active { transform: scale(.95); }
+
+  &.call-btn-accept {
+    background: linear-gradient(135deg, $success, darken($success, 10%));
+    box-shadow: 0 4px 16px rgba(10,122,90,.45);
+    color: #fff;
+  }
+
+  &.call-btn-reject {
+    background: linear-gradient(135deg, $crimson, darken($crimson, 10%));
+    box-shadow: 0 4px 16px rgba(200,25,46,.45);
+    color: #fff;
+  }
+}
+
+// Control buttons (mute, camera)
+.call-ctrl-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.85);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .18s;
+  svg { width: 18px; height: 18px; }
+
+  &:hover { background: rgba(255,255,255,.22); }
+
+  &.ctrl-active {
+    background: rgba(200,25,46,.25);
+    border-color: rgba(200,25,46,.5);
+    color: #ff8080;
+  }
+}
