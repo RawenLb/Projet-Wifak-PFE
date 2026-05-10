@@ -4,45 +4,77 @@
    Typographie : Sora (display) + IBM Plex Sans (corps) + IBM Plex Mono
    ════════════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :host {
-  /* ── Palette principale ── */
-  --indigo:        #4f46e5;
-  --indigo-soft:   #6366f1;
-  --indigo-pale:   #e0e7ff;
-  --indigo-faint:  rgba(79, 70, 229, 0.06);
-  --indigo-glow:   rgba(99, 102, 241, 0.15);
+  // Wifak Bank — palette agent (light theme)
+  --royal:      #1B4FBC;
+  --royal-lt:   #EBF0FD;
+  --navy:       #0D2B5E;
+  --crimson:    #C8192E;
+  --crimson-lt: #FDECED;
+  --success:    #0A7A5A;
+  --success-lt: #E6F5F0;
+  --warning:    #B8651A;
+  --warning-lt: #FEF3E8;
+  --purple:     #5B35C2;
+  --purple-lt:  #EDE9FB;
+  --silver:     #8A9BB0;
+  --silver-lt:  #EEF1F6;
 
-  --amber:         #d97706;
-  --amber-light:   #fbbf24;
-  --amber-faint:   rgba(217, 119, 6, 0.08);
-  --amber-pale:    #fef3c7;
+  // Map old variable names to new palette
+  --blue:       #1B4FBC;
+  --blue-faint: rgba(27,79,188,0.08);
+  --blue-glow:  rgba(27,79,188,0.16);
+  --amber:      #B8651A;
+  --red:        #C8192E;
+  --red-soft:   #C8192E;
+  --green:      #0A7A5A;
+  --green-soft: #0A7A5A;
 
-  --rose:          #e11d48;
-  --rose-faint:    rgba(225, 29, 72, 0.08);
+  --bg-card:    #FFFFFF;
+  --bg-surface: #EBF0F8;
+  --bg:         #F0F4FA;
+  --bg2:        #FFFFFF;
+  --bg3:        #EBF0F8;
+  --border-sub: rgba(27,79,188,0.09);
+  --border-soft:rgba(27,79,188,0.16);
+  --bd:         rgba(27,79,188,0.09);
+  --bd2:        rgba(27,79,188,0.16);
+  --text-1:     #0D1E35;
+  --text-2:     #3D5068;
+  --text-3:     #8A9BB0;
+  --t1:         #0D1E35;
+  --t2:         #3D5068;
+  --t3:         #8A9BB0;
+  --t4:         #B0BCCC;
 
-  --teal:          #0d9488;
-  --teal-faint:    rgba(13, 148, 136, 0.08);
-  --teal-pale:     #ccfbf1;
+  // ML dashboard specific — mapped to new palette
+  --indigo:        #1B4FBC;
+  --indigo-soft:   #1B4FBC;
+  --indigo-pale:   #EBF0FD;
+  --indigo-faint:  rgba(27,79,188,0.06);
+  --indigo-glow:   rgba(27,79,188,0.15);
 
-  /* ── Surfaces ── */
-  --bg:            #f8f9fb;
-  --surface:       #ffffff;
-  --surface2:      #f1f3f8;
-  --surface3:      #e8ebf4;
+  --amber-light:   #B8651A;
+  --amber-faint:   rgba(184,101,26,0.08);
+  --amber-pale:    #FEF3E8;
 
-  /* ── Bordures ── */
-  --border:        rgba(79, 70, 229, 0.10);
-  --border2:       rgba(79, 70, 229, 0.18);
-  --border-gray:   #e2e6f0;
-  --border-strong: rgba(79, 70, 229, 0.35);
+  --rose:          #C8192E;
+  --rose-faint:    rgba(200,25,46,0.08);
 
-  /* ── Texte ── */
-  --t1:  #0f0f23;
-  --t2:  #3d3d6e;
-  --t3:  #8b92b8;
-  --t4:  #b8bdda;
+  --teal:          #0A7A5A;
+  --teal-faint:    rgba(10,122,90,0.08);
+  --teal-pale:     #E6F5F0;
+
+  --surface:       #FFFFFF;
+  --surface2:      #EBF0F8;
+  --surface3:      #D8E0EC;
+
+  --border:        rgba(27,79,188,0.10);
+  --border2:       rgba(27,79,188,0.18);
+  --border-gray:   #D8E0EC;
+  --border-strong: rgba(27,79,188,0.35);
 
   /* ── Rayon ── */
   --r-xs:  4px;
@@ -51,37 +83,18 @@
   --r-lg:  16px;
   --r-xl:  22px;
   --r-2xl: 28px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 
   /* ── Typographie ── */
-  --font:    'IBM Plex Sans', system-ui, sans-serif;
-  --display: 'Sora', system-ui, sans-serif;
-  --mono:    'IBM Plex Mono', 'Cascadia Code', monospace;
+  --font:      'Plus Jakarta Sans', system-ui, sans-serif;
+  --display:   'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-ui:   'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --mono:      'JetBrains Mono', monospace;
 
   --tr: all 0.20s cubic-bezier(.4, 0, .2, 1);
-}
-
-/* ── Dark mode ── */
-:host-context(body.theme-dark),
-:host-context(body[data-theme="dark"]) {
-  --bg:       #0d0e1a;
-  --surface:  #13152a;
-  --surface2: #191c34;
-  --surface3: #1f2440;
-
-  --border:      rgba(99, 102, 241, 0.12);
-  --border2:     rgba(99, 102, 241, 0.22);
-  --border-gray: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(99, 102, 241, 0.45);
-
-  --indigo-faint: rgba(99, 102, 241, 0.10);
-  --indigo-pale:  rgba(99, 102, 241, 0.18);
-  --amber-faint:  rgba(251, 191, 36, 0.08);
-  --amber-pale:   rgba(251, 191, 36, 0.12);
-
-  --t1: #eef0ff;
-  --t2: #a5aacc;
-  --t3: #5a6088;
-  --t4: #363b5a;
 }
 
 *, *::before, *::after { box-sizing: border-box; }

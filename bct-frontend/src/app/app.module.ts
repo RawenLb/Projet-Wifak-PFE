@@ -27,6 +27,15 @@ import { ManagerMlDashboardComponent } from './manager-ml-dashboard/manager-ml-d
 import { DeclarationCorrectionComponent } from './declaration-correction/declaration-correction.component';
 import { ChatComponent } from './chat/chat.component';
 import { CallComponent } from './chat/call.component';
+
+// ── Auditor ──────────────────────────────────────────────────
+import { AuditorLayoutComponent }    from './auditor-layout/auditor-layout.component';
+import { AuditorDashboardComponent } from './auditor-dashboard/auditor-dashboard.component';
+import { AuditorHistoryComponent }   from './auditor-history/auditor-history.component';
+import { AuditorLogsComponent }      from './auditor-logs/auditor-logs.component';
+import { AuditorArchivesComponent }  from './auditor-archives/auditor-archives.component';
+import { AuditorSearchComponent }    from './auditor-search/auditor-search.component';
+import { AuditorExportComponent }    from './auditor-export/auditor-export.component';
 export function kcFactory() {
   return () =>
     keycloak.init({
@@ -83,6 +92,14 @@ export function kcFactory() {
     DeclarationCorrectionComponent,
     ChatComponent,
     CallComponent,
+    // ── Auditor ──────────────────────────────────────────────
+    AuditorLayoutComponent,
+    AuditorDashboardComponent,
+    AuditorHistoryComponent,
+    AuditorLogsComponent,
+    AuditorArchivesComponent,
+    AuditorSearchComponent,
+    AuditorExportComponent,
   ],
   imports: [
     BrowserModule,

@@ -72,7 +72,7 @@ public class ValidationController {
 
     // 6. STATS
     @GetMapping("/stats")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'AUDITOR')")
     public ResponseEntity<ValidationStatsDTO> getStats() {
         log.info("📊 [GET] /api/validation/stats");
         return ResponseEntity.ok(validationService.getStats());
@@ -80,7 +80,7 @@ public class ValidationController {
 
     // 7. HISTORY
     @GetMapping("/{id}/history")
-    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN', 'AUDITOR')")
     public ResponseEntity<List<ValidationLog>> getHistory(@PathVariable Long id) {
         log.info("📜 [GET] /api/validation/{}/history", id);
         return ResponseEntity.ok(validationService.getHistory(id));

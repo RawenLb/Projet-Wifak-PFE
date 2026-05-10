@@ -25,6 +25,15 @@ import { ManagerReportsComponent } from './manager-reports/manager-reports.compo
 import { ManagerPendingComponent } from './manager-pending/manager-pending.component';
 import { ManagerMlDashboardComponent } from './manager-ml-dashboard/manager-ml-dashboard.component';
 
+// ── Auditor imports ──────────────────────────────────────────
+import { AuditorLayoutComponent }    from './auditor-layout/auditor-layout.component';
+import { AuditorDashboardComponent } from './auditor-dashboard/auditor-dashboard.component';
+import { AuditorHistoryComponent }   from './auditor-history/auditor-history.component';
+import { AuditorLogsComponent }      from './auditor-logs/auditor-logs.component';
+import { AuditorArchivesComponent }  from './auditor-archives/auditor-archives.component';
+import { AuditorSearchComponent }    from './auditor-search/auditor-search.component';
+import { AuditorExportComponent }    from './auditor-export/auditor-export.component';
+
 const routes: Routes = [
 
   // ── Root : redirige selon le rôle ──────────────────────────
@@ -127,10 +136,18 @@ const routes: Routes = [
   // ── Auditor ─────────────────────────────────────────────────
   {
     path: 'auditor',
-    component: DashboardLayoutComponent,
+    component: AuditorLayoutComponent,
     canActivate: [RoleGuard],
     data: { roles: ['ROLE_AUDITOR'] },
-    children: [{ path: '', component: HomeComponent }]
+    children: [
+      { path: '',          redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', component: AuditorDashboardComponent },
+      { path: 'history',   component: AuditorHistoryComponent   },
+      { path: 'logs',      component: AuditorLogsComponent      },
+      { path: 'archives',  component: AuditorArchivesComponent  },
+      { path: 'search',    component: AuditorSearchComponent    },
+      { path: 'export',    component: AuditorExportComponent    },
+    ]
   },
 
   // ── Fallback ────────────────────────────────────────────────

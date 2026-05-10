@@ -214,7 +214,7 @@ public class DeclarationController {
     // ─────────────────────────────────────────────────────────────────
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'AUDITOR')")
     public ResponseEntity<List<Declaration>> getAllDeclarations() {
         return ResponseEntity.ok(declarationService.getAllDeclarations());
     }
@@ -224,7 +224,7 @@ public class DeclarationController {
     // ─────────────────────────────────────────────────────────────────
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN', 'INTERNAL')")
+    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN', 'INTERNAL', 'AUDITOR')")
     public ResponseEntity<Declaration> getDeclarationById(@PathVariable Long id) {
         return ResponseEntity.ok(declarationService.findById(id));
     }
@@ -310,7 +310,7 @@ public class DeclarationController {
     // ─────────────────────────────────────────────────────────────────
 
     @GetMapping("/stats")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'AUDITOR')")
     public ResponseEntity<DeclarationService.DeclarationStats> getStats() {
         return ResponseEntity.ok(declarationService.getStats());
     }
@@ -320,7 +320,7 @@ public class DeclarationController {
     // ─────────────────────────────────────────────────────────────────
 
     @GetMapping("/{id}/download")
-    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN', 'INTERNAL')")
+    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN', 'INTERNAL', 'AUDITOR')")
     public ResponseEntity<byte[]> downloadDeclaration(@PathVariable Long id) {
         Declaration d = declarationService.findById(id);
         if (d.getContenuFichier() == null || d.getContenuFichier().isEmpty()) {

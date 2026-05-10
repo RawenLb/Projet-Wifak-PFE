@@ -1,7 +1,7 @@
 // src/app/manager-layout/manager-layout.component.ts
-// ✅ MISE À JOUR — navItems complétés avec toutes les routes
+// Wifak Bank — même style que agent-layout
 
-import { Component, OnInit, OnDestroy, HostBinding } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { KeycloakAdminService } from '../services/keycloak-admin.service';
 import { NotificationService } from '../services/notification.service';
@@ -15,84 +15,49 @@ import { filter } from 'rxjs/operators';
 })
 export class ManagerLayoutComponent implements OnInit, OnDestroy {
 
-  today            = new Date();
   sidebarCollapsed = false;
   currentRoute     = '';
-  isLightTheme     = false;
   pendingCount     = 0;
 
-  @HostBinding('class.theme-light')
-  get themeLight(): boolean { return this.isLightTheme; }
+  pageTitle    = 'Tableau de bord';
+  pageSubtitle = 'Vue d\'ensemble des déclarations BCT';
 
   currentUserName     = '';
   currentUserInitials = '';
-  currentUserEmail    = '';
-
-  // ✅ SIDEBAR COMPLÈTE — toutes les routes du CDC
-  navItems = [
-    {
-      section: 'Supervision',
-      links: [
-        { path: '/manager/dashboard',    label: 'Tableau de bord',  icon: 'dashboard',    badge: null },
-        { path: '/manager/pending',      label: 'Validation',       icon: 'validation',   badge: '●'  },
-        { path: '/manager/history',      label: 'Historique',       icon: 'history',      badge: null },
-      ]
-    },
-    {
-      section: 'Analyse',
-      links: [
-        { path: '/manager/calendar',     label: 'Calendrier BCT',   icon: 'calendar',     badge: null },
-        { path: '/manager/reports',      label: 'Rapports',         icon: 'reports',      badge: null },
-      ]
-    }
-  ];
 
   constructor(
-    private router: Router,
-    private kcAdmin: KeycloakAdminService,
-    public notifSvc: NotificationService,
+    private router:            Router,
+    private kcAdmin:           KeycloakAdminService,
+    public  notifSvc:          NotificationService,
     private validationService: ValidationService
   ) {}
 
   ngOnInit(): void {
     this.router.events
       .pipe(filter(e => e instanceof NavigationEnd))
-      .subscribe((e: any) => { this.currentRoute = e.urlAfterRedirects; });
+      .subscribe((e: any) => {
+        this.currentRoute = e.urlAfterRedirects;
+        this.updatePageInfo(e.urlAfterRedirects);
+      });
 
     this.currentRoute = this.router.url;
+    this.updatePageInfo(this.router.url);
     this.loadProfile();
     this.notifSvc.loadManagerNotifications();
 
-    // Charger le nombre de déclarations en attente pour le badge
     this.validationService.getPendingDeclarations().subscribe({
-      next: (data) => {
-        this.pendingCount = data.length;
-        // Mettre à jour le badge dynamiquement
-        const pendingLink = this.navItems[0].links.find(l => l.path === '/manager/pending');
-        if (pendingLink && this.pendingCount > 0) {
-          pendingLink.badge = String(this.pendingCount);
-        }
-      },
+      next: (data) => { this.pendingCount = data.length; },
       error: () => {}
     });
-
-    const saved = localStorage.getItem('wifak-theme');
-    if (saved === 'light') {
-      this.isLightTheme = true;
-      this.applyBodyClass(true);
-    }
   }
 
-  ngOnDestroy(): void {
-    this.applyBodyClass(false);
-  }
+  ngOnDestroy(): void {}
 
   private loadProfile(): void {
     try {
-      this.currentUserName     = this.kcAdmin.getFullName();
-      this.currentUserEmail    = this.kcAdmin.getEmail();
-      const nameParts          = this.currentUserName.split(' ');
-      this.currentUserInitials = nameParts
+      this.currentUserName     = this.kcAdmin.getFullName() || this.kcAdmin.getUsername();
+      const parts              = this.currentUserName.split(' ');
+      this.currentUserInitials = parts
         .filter(p => p.length > 0)
         .slice(0, 2)
         .map(p => p.charAt(0).toUpperCase())
@@ -103,27 +68,34 @@ export class ManagerLayoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleTheme(): void {
-    this.isLightTheme = !this.isLightTheme;
-    localStorage.setItem('wifak-theme', this.isLightTheme ? 'light' : 'dark');
-    this.applyBodyClass(this.isLightTheme);
+  updatePageInfo(url: string): void {
+    if (url.includes('/manager/dashboard') || url === '/manager' || url === '/manager/') {
+      this.pageTitle    = 'Tableau de bord';
+      this.pageSubtitle = 'Vue d\'ensemble des déclarations BCT';
+    } else if (url.includes('/manager/pending')) {
+      this.pageTitle    = 'Validation';
+      this.pageSubtitle = 'Déclarations en attente de validation';
+    } else if (url.includes('/manager/history')) {
+      this.pageTitle    = 'Historique';
+      this.pageSubtitle = 'Journal d\'audit des déclarations';
+    } else if (url.includes('/manager/calendar')) {
+      this.pageTitle    = 'Calendrier BCT';
+      this.pageSubtitle = 'Échéances et planification des déclarations';
+    } else if (url.includes('/manager/reports')) {
+      this.pageTitle    = 'Rapports';
+      this.pageSubtitle = 'Synthèse et analyse des déclarations';
+    } else {
+      this.pageTitle    = 'Espace Responsable';
+      this.pageSubtitle = 'Supervision des déclarations BCT';
+    }
   }
 
-  private applyBodyClass(light: boolean): void {
-    if (light) document.body.classList.add('theme-light');
-    else       document.body.classList.remove('theme-light');
-  }
-
-  isActive(path: string): boolean {
-    return this.currentRoute.startsWith(path);
-  }
-
+  isActive(path: string): boolean { return this.currentRoute.startsWith(path); }
   toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
   navigate(path: string): void { this.router.navigate([path]); }
 
   logout(): void {
     if (!confirm('Voulez-vous vous déconnecter ?')) return;
-    this.applyBodyClass(false);
     this.kcAdmin.logout();
   }
 }

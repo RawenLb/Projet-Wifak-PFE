@@ -52,7 +52,7 @@ jira:
   base-url: https://wifak-bct.atlassian.net
   project-key: BCT
   user-email: rawene.labaoui@gmail.com
-  api-token: ATATT3xFfGF0Ye1eE4kHMn2zhzMqLU43CPF5h59caFguJSIowzAM8KxSASDcpCoxmdYsmOrrBblXymauRqPBVaegi7m-7f5R9tNcH3272XzPcFfdAcbkVfL22U9H_EHawE3fGXG_qB1TdG85fUnU6nqqDaHYIVTBX4MiFDgOicU_EnWX2OOdVm0=51DDA206
+  api-token: ATATT3xFfGF0UVSZvQVI2t9HROjHGkcwd4v_fwaRn-COM9ARnLL_yuskLYajF4Ah68fi5XEGzGsc7ZetuWkynScY3b4e1gyS5S9yAU1-GNIUQM2pINPUup7csQgycgvCoeXS_JvD_TAywtK2m5LoqEs21dIsvaS0gjMyioadlEo9P7qSS0XNHCY=F664B0C6
   transitions:
     to-do: "10001"
     in-progress: "10002"

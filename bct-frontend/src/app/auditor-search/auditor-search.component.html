@@ -1,0 +1,197 @@
+<!-- src/app/auditor-search/auditor-search.component.html -->
+<!-- BF9 / US-14 — Recherche et filtrage avancé -->
+<div class="dashboard-page">
+
+  <!-- ── Header ─────────────────────────────────────────── -->
+  <div class="dash-header">
+    <div class="dash-header-left">
+      <h1 class="page-title">Recherche avancée</h1>
+      <p class="page-subtitle">Filtrage des déclarations par type, période, statut et agent</p>
+    </div>
+    <div class="dash-header-right">
+      <button class="btn-export" (click)="exportCSV()" [disabled]="loading || filteredDeclarations.length === 0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Exporter ({{ filteredDeclarations.length }})
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Panneau de filtres ──────────────────────────────── -->
+  <div class="filters-panel">
+    <div class="fp-title">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+      </svg>
+      Filtres
+      <button class="fp-reset" *ngIf="hasActiveFilters" (click)="resetFilters()">
+        Réinitialiser
+      </button>
+    </div>
+
+    <div class="fp-grid">
+
+      <!-- Recherche texte -->
+      <div class="fp-field fp-field--wide">
+        <label>Recherche libre</label>
+        <div class="fp-search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" placeholder="ID, type, code, agent, période..."
+                 [(ngModel)]="searchQuery" (ngModelChange)="onFilterChange()">
+          <button class="fp-clear" *ngIf="searchQuery" (click)="searchQuery=''; onFilterChange()">✕</button>
+        </div>
+      </div>
+
+      <!-- Type -->
+      <div class="fp-field">
+        <label>Type (BCT_01, BCT_02…)</label>
+        <select [(ngModel)]="filterType" (ngModelChange)="onFilterChange()">
+          <option value="">Tous les types</option>
+          <option *ngFor="let t of uniqueTypes" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+
+      <!-- Période -->
+      <div class="fp-field">
+        <label>Période</label>
+        <select [(ngModel)]="filterPeriode" (ngModelChange)="onFilterChange()">
+          <option value="">Toutes les périodes</option>
+          <option *ngFor="let p of uniquePeriodes" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+
+      <!-- Statut -->
+      <div class="fp-field">
+        <label>Statut</label>
+        <select [(ngModel)]="filterStatut" (ngModelChange)="onFilterChange()">
+          <option value="">Tous les statuts</option>
+          <option value="GENEREE">Brouillon / Générée</option>
+          <option value="EN_VALIDATION">En validation</option>
+          <option value="VALIDEE">Validée</option>
+          <option value="REJETEE">Rejetée</option>
+          <option value="ENVOYEE">Envoyée BCT</option>
+        </select>
+      </div>
+
+      <!-- Agent -->
+      <div class="fp-field">
+        <label>Agent créateur</label>
+        <select [(ngModel)]="filterAgent" (ngModelChange)="onFilterChange()">
+          <option value="">Tous les agents</option>
+          <option *ngFor="let a of uniqueAgents" [value]="a">{{ a }}</option>
+        </select>
+      </div>
+
+      <!-- Date de -->
+      <div class="fp-field">
+        <label>Date génération — de</label>
+        <input type="date" [(ngModel)]="filterDateFrom" (ngModelChange)="onFilterChange()">
+      </div>
+
+      <!-- Date à -->
+      <div class="fp-field">
+        <label>Date génération — à</label>
+        <input type="date" [(ngModel)]="filterDateTo" (ngModelChange)="onFilterChange()">
+      </div>
+
+    </div>
+
+    <!-- Résumé des filtres actifs -->
+    <div class="fp-active-filters" *ngIf="hasActiveFilters">
+      <span class="af-label">Filtres actifs :</span>
+      <span class="af-chip" *ngIf="searchQuery">Recherche: "{{ searchQuery }}"</span>
+      <span class="af-chip" *ngIf="filterType">Type: {{ filterType }}</span>
+      <span class="af-chip" *ngIf="filterPeriode">Période: {{ filterPeriode }}</span>
+      <span class="af-chip" *ngIf="filterStatut">Statut: {{ getStatutLabel(filterStatut) }}</span>
+      <span class="af-chip" *ngIf="filterAgent">Agent: {{ filterAgent }}</span>
+      <span class="af-chip" *ngIf="filterDateFrom">De: {{ filterDateFrom }}</span>
+      <span class="af-chip" *ngIf="filterDateTo">À: {{ filterDateTo }}</span>
+    </div>
+  </div>
+
+  <!-- ── Résultats ───────────────────────────────────────── -->
+  <div class="results-section">
+    <div class="rs-header">
+      <span class="rs-count">
+        <span class="rs-n">{{ filteredDeclarations.length }}</span>
+        résultat{{ filteredDeclarations.length !== 1 ? 's' : '' }}
+        <span class="rs-total" *ngIf="filteredDeclarations.length !== allDeclarations.length">
+          sur {{ allDeclarations.length }}
+        </span>
+      </span>
+    </div>
+
+    <!-- Loader -->
+    <div class="results-loader" *ngIf="loading">
+      <div class="spin-md"></div><span>Chargement...</span>
+    </div>
+
+    <!-- Empty -->
+    <div class="results-empty" *ngIf="!loading && filteredDeclarations.length === 0">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <p>Aucune déclaration ne correspond aux critères</p>
+    </div>
+
+    <!-- Table -->
+    <div class="card" *ngIf="!loading && filteredDeclarations.length > 0">
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Nom</th>
+            <th>Période</th>
+            <th>Statut</th>
+            <th>Généré par</th>
+            <th>Validé par</th>
+            <th>Date génération</th>
+            <th>Date validation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of pagedDeclarations; trackBy: trackById"
+              [class.selected]="selectedDeclaration?.id === d.id"
+              (click)="selectDeclaration(d)">
+            <td class="td-id">#{{ d.id }}</td>
+            <td><span class="td-code">{{ d.declarationType?.code }}</span></td>
+            <td class="td-name">{{ d.declarationType?.nom }}</td>
+            <td class="td-per">{{ d.periode }}</td>
+            <td>
+              <span class="li-badge" [ngClass]="getBadgeClass(d.statut)">{{ getStatutLabel(d.statut) }}</span>
+            </td>
+            <td class="td-user">{{ d.generePar || '—' }}</td>
+            <td class="td-user">{{ d.validePar || '—' }}</td>
+            <td class="td-date">{{ d.dateGeneration | date:'dd/MM/yyyy' }}</td>
+            <td class="td-date">{{ d.dateValidation ? (d.dateValidation | date:'dd/MM/yyyy') : '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button class="pg-btn" [disabled]="currentPage === 1" (click)="currentPage = currentPage - 1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <ng-container *ngFor="let p of pages">
+          <span class="pg-sep" *ngIf="p === -1">…</span>
+          <button class="pg-btn" [class.active]="p === currentPage" *ngIf="p !== -1" (click)="currentPage = p">{{ p }}</button>
+        </ng-container>
+        <button class="pg-btn" [disabled]="currentPage === totalPages" (click)="currentPage = currentPage + 1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+        <span class="pg-info">{{ (currentPage - 1) * pageSize + 1 }}–{{ currentPage * pageSize > filteredDeclarations.length ? filteredDeclarations.length : currentPage * pageSize }} / {{ filteredDeclarations.length }}</span>
+      </div>
+    </div>
+  </div>
+
+</div>

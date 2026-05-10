@@ -1,48 +1,57 @@
 /* manager-pending.component.scss — Version sans IA, avec panneau lecteur */
 
-:host {
-  --blue:       #3b82f6;
-  --blue-faint: rgba(59,130,246,0.08);
-  --blue-glow:  rgba(59,130,246,0.16);
-  --amber:      #fbbf24;
-  --red-soft:   #f87171;
-  --green-soft: #34d399;
-  --purple:     #a78bfa;
-  --orange:     #fb923c;
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-  --bg-card:     #0f1828;
-  --bg-surface:  #182338;
-  --border-sub:  rgba(255,255,255,0.06);
-  --border-soft: rgba(255,255,255,0.10);
-  --text-1:      #e2e8f5;
-  --text-2:      #7e90b0;
-  --text-3:      #3d5070;
+:host {
+  // Wifak Bank — palette agent (light theme)
+  --royal:      #1B4FBC;
+  --royal-lt:   #EBF0FD;
+  --navy:       #0D2B5E;
+  --crimson:    #C8192E;
+  --crimson-lt: #FDECED;
+  --success:    #0A7A5A;
+  --success-lt: #E6F5F0;
+  --warning:    #B8651A;
+  --warning-lt: #FEF3E8;
+  --purple:     #5B35C2;
+  --purple-lt:  #EDE9FB;
+  --silver:     #8A9BB0;
+  --silver-lt:  #EEF1F6;
+
+  // Map old variable names to new palette
+  --blue:       #1B4FBC;
+  --blue-faint: rgba(27,79,188,0.08);
+  --blue-glow:  rgba(27,79,188,0.16);
+  --amber:      #B8651A;
+  --red:        #C8192E;
+  --red-soft:   #C8192E;
+  --green:      #0A7A5A;
+  --green-soft: #0A7A5A;
+
+  --bg-card:    #FFFFFF;
+  --bg-surface: #EBF0F8;
+  --bg:         #F0F4FA;
+  --bg2:        #FFFFFF;
+  --bg3:        #EBF0F8;
+  --border-sub: rgba(27,79,188,0.09);
+  --border-soft:rgba(27,79,188,0.16);
+  --bd:         rgba(27,79,188,0.09);
+  --bd2:        rgba(27,79,188,0.16);
+  --text-1:     #0D1E35;
+  --text-2:     #3D5068;
+  --text-3:     #8A9BB0;
+  --t1:         #0D1E35;
+  --t2:         #3D5068;
+  --t3:         #8A9BB0;
 
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
-  --font-ui:   'Sora', sans-serif;
+  --font-ui:   'Plus Jakarta Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+  --font:      'Plus Jakarta Sans', sans-serif;
+  --mono:      'JetBrains Mono', monospace;
   --tr:        all 0.18s ease;
-}
-
-:host-context(body.theme-light) {
-  --blue:       #1a56db;
-  --blue-faint: rgba(26,86,219,0.07);
-  --blue-glow:  rgba(26,86,219,0.12);
-  --amber:      #d97706;
-  --red-soft:   #dc2626;
-  --green-soft: #16a34a;
-  --purple:     #6d28d9;
-  --orange:     #ea580c;
-
-  --bg-card:     #ffffff;
-  --bg-surface:  #e8edf8;
-  --border-sub:  rgba(26,86,219,0.09);
-  --border-soft: rgba(26,86,219,0.16);
-  --text-1:      #0c1a35;
-  --text-2:      #2d4470;
-  --text-3:      #7a90b8;
 }
 
 *, *::before, *::after { box-sizing: border-box; }

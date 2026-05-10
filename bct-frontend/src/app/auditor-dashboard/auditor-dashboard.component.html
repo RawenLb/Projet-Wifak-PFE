@@ -1,0 +1,307 @@
+<!-- src/app/auditor-dashboard/auditor-dashboard.component.html -->
+<div class="dashboard-page">
+
+  <!-- ── Header ─────────────────────────────────────────── -->
+  <div class="dash-header">
+    <div class="dash-header-left">
+      <div class="dash-greeting">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        Espace Auditeur — Lecture seule
+      </div>
+      <h1 class="page-title">Tableau de bord</h1>
+      <p class="page-subtitle">Vue d'ensemble des déclarations BCT et des journaux d'actions</p>
+    </div>
+    <div class="dash-header-right">
+      <button class="btn-refresh" (click)="loadStats(); loadRecent()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Loading ────────────────────────────────────────── -->
+  <div class="loading-overlay" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des données...</p>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- ── KPI Cards ──────────────────────────────────────── -->
+    <div class="stats-grid">
+
+      <div class="stat-card stat-total">
+        <div class="stat-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ stats.totalDeclarations }}</span>
+          <span class="stat-label">Total déclarations</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-validated">
+        <div class="stat-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ stats.validees }}</span>
+          <span class="stat-label">Validées</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-sent">
+        <div class="stat-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ stats.envoyees }}</span>
+          <span class="stat-label">Envoyées BCT</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-pending">
+        <div class="stat-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ stats.enValidation }}</span>
+          <span class="stat-label">En validation</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-rejected">
+        <div class="stat-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ stats.rejetees }}</span>
+          <span class="stat-label">Rejetées</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-logs">
+        <div class="stat-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ stats.totalLogs }}</span>
+          <span class="stat-label">Actions tracées</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Taux ───────────────────────────────────────────── -->
+    <div class="rates-row">
+      <div class="rate-card">
+        <div class="rate-label">Taux de validation</div>
+        <div class="rate-bar-wrap">
+          <div class="rate-bar rate-bar--green" [style.width.%]="tauxValidation"></div>
+        </div>
+        <div class="rate-value rate-value--green">{{ tauxValidation }}%</div>
+      </div>
+      <div class="rate-card">
+        <div class="rate-label">Taux de rejet</div>
+        <div class="rate-bar-wrap">
+          <div class="rate-bar rate-bar--red" [style.width.%]="tauxRejet"></div>
+        </div>
+        <div class="rate-value rate-value--red">{{ tauxRejet }}%</div>
+      </div>
+    </div>
+
+    <!-- ── Logs KPI ───────────────────────────────────────── -->
+    <div class="logs-kpi-row">
+      <div class="lk-card">
+        <div class="lk-icon lk-icon--total">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div class="lk-body">
+          <span class="lk-n">{{ stats.totalLogs }}</span>
+          <span class="lk-l">Total actions</span>
+        </div>
+      </div>
+      <div class="lk-card">
+        <div class="lk-icon lk-icon--sub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </div>
+        <div class="lk-body">
+          <span class="lk-n lk-n--sub">{{ stats.totalSoumissions }}</span>
+          <span class="lk-l">Soumissions</span>
+        </div>
+      </div>
+      <div class="lk-card">
+        <div class="lk-icon lk-icon--val">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="lk-body">
+          <span class="lk-n lk-n--val">{{ stats.totalValidations }}</span>
+          <span class="lk-l">Validations</span>
+        </div>
+      </div>
+      <div class="lk-card">
+        <div class="lk-icon lk-icon--rej">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <div class="lk-body">
+          <span class="lk-n lk-n--rej">{{ stats.totalRejets }}</span>
+          <span class="lk-l">Rejets</span>
+        </div>
+      </div>
+      <div class="lk-card">
+        <div class="lk-icon lk-icon--snd">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 2 11 13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </div>
+        <div class="lk-body">
+          <span class="lk-n lk-n--snd">{{ stats.totalEnvois }}</span>
+          <span class="lk-l">Envois BCT</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Déclarations récentes ──────────────────────────── -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-left">
+          <div class="card-icon card-icon-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="12 8 12 12 14 14"/>
+              <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
+            </svg>
+          </div>
+          <div>
+            <h3>Déclarations récentes</h3>
+            <p>Les 8 dernières déclarations enregistrées</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table class="recent-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Code</th>
+              <th>Nom déclaration</th>
+              <th>Période</th>
+              <th>Généré par</th>
+              <th>Validé par</th>
+              <th>Date génération</th>
+              <th>Date validation</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of recentDeclarations">
+
+              <!-- ID -->
+              <td>
+                <span class="id-badge">#{{ d.id }}</span>
+              </td>
+
+              <!-- Code type -->
+              <td>
+                <span class="code-badge">{{ d.declarationType?.code || '—' }}</span>
+              </td>
+
+              <!-- Nom -->
+              <td class="td-name">{{ d.declarationType?.nom || '—' }}</td>
+
+              <!-- Période -->
+              <td>
+                <span class="periode-chip">{{ d.periode || '—' }}</span>
+              </td>
+
+              <!-- Généré par -->
+              <td>
+                <div class="user-cell" *ngIf="d.generePar">
+                  <div class="user-av">{{ d.generePar.charAt(0).toUpperCase() }}</div>
+                  <span class="user-name-text">{{ d.generePar }}</span>
+                </div>
+                <span class="td-empty" *ngIf="!d.generePar">—</span>
+              </td>
+
+              <!-- Validé par -->
+              <td>
+                <div class="user-cell user-cell--green" *ngIf="d.validePar">
+                  <div class="user-av user-av--green">{{ d.validePar.charAt(0).toUpperCase() }}</div>
+                  <span class="user-name-text">{{ d.validePar }}</span>
+                </div>
+                <span class="td-empty" *ngIf="!d.validePar">—</span>
+              </td>
+
+              <!-- Date génération -->
+              <td class="td-date">{{ d.dateGeneration | date:'dd/MM/yyyy' }}</td>
+
+              <!-- Date validation -->
+              <td class="td-date">
+                {{ d.dateValidation ? (d.dateValidation | date:'dd/MM/yyyy') : '—' }}
+              </td>
+
+              <!-- Statut -->
+              <td>
+                <span class="status-badge" [ngClass]="getBadgeClass(d.statut)">
+                  <span class="status-dot"></span>
+                  {{ getStatutLabel(d.statut) }}
+                </span>
+              </td>
+
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="table-empty" *ngIf="recentDeclarations.length === 0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <p>Aucune déclaration disponible</p>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>
