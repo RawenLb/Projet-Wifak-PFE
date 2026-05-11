@@ -861,3 +861,271 @@ $sh-lg: 0 16px 48px rgba(13,43,94,.18), 0 6px 16px rgba(13,43,94,.10);
     cursor: not-allowed !important;
   }
 }
+
+// ── Message deleted ───────────────────────────────────────────
+.msg-deleted {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-style: italic;
+  opacity: .55;
+  svg { flex-shrink: 0; }
+}
+
+// ── Message edited label ──────────────────────────────────────
+.msg-edited {
+  font-size: 10px;
+  color: $text-3;
+  font-style: italic;
+  margin-left: 2px;
+}
+
+// ── Forwarded label ───────────────────────────────────────────
+.msg-forwarded-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-style: italic;
+  opacity: .6;
+  margin-bottom: 3px;
+  svg { flex-shrink: 0; }
+}
+
+// ── Edit input inside bubble ──────────────────────────────────
+.msg-edit-input {
+  width: 100%;
+  border: 1.5px solid rgba(255,255,255,.35);
+  border-radius: $r-sm;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 13px;
+  background: rgba(255,255,255,.12);
+  color: inherit;
+  resize: none;
+  outline: none;
+  line-height: 1.4;
+  min-height: 40px;
+  max-height: 100px;
+
+  .msg-bubble:not(.msg-bubble-mine) & {
+    background: $bg;
+    color: $text-1;
+    border-color: $border;
+  }
+}
+
+.msg-edit-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  justify-content: flex-end;
+}
+
+.msg-edit-btn {
+  padding: 3px 10px;
+  border-radius: $r-sm;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+
+  &.msg-edit-cancel {
+    background: rgba(255,255,255,.15);
+    color: rgba(255,255,255,.8);
+    .msg-bubble:not(.msg-bubble-mine) & {
+      background: $border;
+      color: $text-2;
+    }
+    &:hover { background: rgba(255,255,255,.25); }
+  }
+
+  &.msg-edit-confirm {
+    background: rgba(255,255,255,.9);
+    color: $royal;
+    .msg-bubble:not(.msg-bubble-mine) & {
+      background: $royal;
+      color: #fff;
+    }
+    &:hover { background: #fff; }
+  }
+}
+
+// ── Context menu ──────────────────────────────────────────────
+.msg-ctx-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+}
+
+.msg-ctx-menu {
+  position: fixed;
+  z-index: 9995;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $r-md;
+  box-shadow: $sh-lg;
+  min-width: 160px;
+  overflow: hidden;
+  animation: fadeIn .12s ease both;
+}
+
+.msg-ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: $text-1;
+  cursor: pointer;
+  text-align: left;
+  transition: background .12s;
+  font-family: inherit;
+
+  &:hover { background: $royal-lt; color: $royal; }
+
+  &.msg-ctx-delete {
+    color: $crimson;
+    &:hover { background: rgba($crimson, .06); color: $crimson; }
+  }
+}
+
+// ── Forward modal ─────────────────────────────────────────────
+.forward-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  background: rgba(9,29,66,.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn .18s ease both;
+}
+
+.forward-modal {
+  background: $surface;
+  border-radius: $r-xl;
+  box-shadow: $sh-lg;
+  width: 340px;
+  max-height: 480px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: cardIn .22s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: scale(.92) translateY(16px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.forward-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid $border-lt;
+  font-size: 14px;
+  font-weight: 700;
+  color: $text-1;
+}
+
+.forward-modal-close {
+  width: 28px;
+  height: 28px;
+  border-radius: $r-sm;
+  border: 1px solid $border;
+  background: $bg;
+  color: $text-3;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  &:hover { border-color: $crimson; color: $crimson; }
+}
+
+.forward-modal-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: $bg;
+  font-size: 12px;
+  color: $text-2;
+  border-bottom: 1px solid $border-lt;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  svg { flex-shrink: 0; color: $royal; }
+}
+
+.forward-modal-list {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: $border transparent;
+}
+
+.forward-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid $border-lt;
+  transition: background .12s;
+  font-size: 13px;
+  color: $text-1;
+
+  &:hover { background: $royal-lt; }
+  &:last-child { border-bottom: none; }
+
+  span:first-of-type { flex: 1; font-weight: 500; }
+}
+
+// ── Message actions button (hover) ───────────────────────────
+.msg-row {
+  &:hover .msg-actions-btn { opacity: 1; }
+}
+
+.msg-actions-btn-wrap {
+  display: flex;
+  align-items: center;
+  align-self: flex-end;
+  margin-bottom: 18px; // align with bubble bottom
+  order: -1; // appears before bubble for "mine" rows
+
+  .msg-mine & {
+    order: 1; // appears after bubble for "mine" rows
+  }
+}
+
+.msg-actions-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid $border;
+  background: $surface;
+  color: $text-3;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .15s, background .15s;
+  flex-shrink: 0;
+
+  &:hover {
+    background: $royal-lt;
+    color: $royal;
+    border-color: $royal;
+  }
+}

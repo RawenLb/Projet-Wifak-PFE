@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 /**
- * Feign Client vers bct-backend pour récupérer les détails d'une déclaration.
+ * Feign Client vers workflow-declaration pour récupérer les détails d'une déclaration.
  */
-@FeignClient(name = "bct-backend", configuration = com.wifak.jiraintegrationservice.config.FeignConfig.class)
+@FeignClient(name = "workflow-declaration", configuration = com.wifak.jiraintegrationservice.config.FeignConfig.class)
 public interface DeclarationFeignClient {
 
     /**

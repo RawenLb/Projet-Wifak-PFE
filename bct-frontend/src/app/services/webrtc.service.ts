@@ -155,7 +155,9 @@ export class WebRtcService implements OnDestroy {
     const state = this.callState$.value;
     if (call && state !== 'IDLE' && state !== 'ENDED') {
       const durationSec = call.duration ?? 0;
-      this.ws.sendCallEnd(call.callId, call.remoteId, call.callType, this.wasAnswered, durationSec);
+      // wasAnswered = true seulement si l'appel a été actif (ACTIVE ou CONNECTING après acceptation)
+      const answered = this.wasAnswered;
+      this.ws.sendCallEnd(call.callId, call.remoteId, call.callType, answered, durationSec);
     }
     this.cleanUp(false);
   }
@@ -257,6 +259,8 @@ export class WebRtcService implements OnDestroy {
       case 'CALL_BUSY': {
         if (sig.toId !== myId) return;
         clearTimeout(this.noAnswerTimer);
+        // Ne pas appeler cleanUp si l'appel était déjà actif et que c'est un CALL_END normal
+        // (le backend envoie séparément un MESSAGE CALL_ENDED dans ce cas)
         this.cleanUp(false);
         break;
       }

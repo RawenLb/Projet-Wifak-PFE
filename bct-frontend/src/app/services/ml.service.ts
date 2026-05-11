@@ -95,8 +95,8 @@ export interface TrainResponse {
 @Injectable({ providedIn: 'root' })
 export class MlService {
 
-  /** URL de base — pointe vers validation-service qui proxifie vers ML Service */
-private readonly base = `http://localhost:8084/api/ml`;
+  /** URL de base — passe par le Gateway (8088) → workflow-declaration → ML Service */
+private readonly base = `http://localhost:8088/api/ml`;
   constructor(private http: HttpClient) {}
 
   // ── Headers ────────────────────────────────────────────────────────

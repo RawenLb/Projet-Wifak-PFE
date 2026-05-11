@@ -8,27 +8,68 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: bct-backend
-          uri: lb://bct-backend
+        # ── workflow-declaration (port 8084) ──────────────────────────
+        # IMPORTANT: routes plus spécifiques AVANT les routes génériques
+
+        - id: workflow-declaration-types
+          uri: lb://workflow-declaration
           predicates:
-            - Path=/api/declarations/**, /api/admin/**
+            - Path=/api/admin/declaration-types/**
           filters:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
-        - id: validation-service
-          uri: lb://validation-service
+        - id: workflow-declarations
+          uri: lb://workflow-declaration
+          predicates:
+            - Path=/api/declarations/**
+          filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+        - id: workflow-validation
+          uri: lb://workflow-declaration
           predicates:
             - Path=/api/validation/**
           filters:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
-        - id: audit-service
-          uri: lb://validation-service
+        - id: workflow-audit
+          uri: lb://workflow-declaration
           predicates:
             - Path=/api/audit/**
           filters:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
+        - id: workflow-templates
+          uri: lb://workflow-declaration
+          predicates:
+            - Path=/api/templates/**
+          filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+        - id: workflow-ml
+          uri: lb://workflow-declaration
+          predicates:
+            - Path=/api/ml/**
+          filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+        # ── authentification-service (port 8082) ─────────────────────
+        - id: authentification-service
+          uri: lb://authentification-service
+          predicates:
+            - Path=/api/admin/**
+          filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+        # ── chat-service (port 8083) ──────────────────────────────────
+        - id: chat-service
+          uri: lb://chat-service
+          predicates:
+            - Path=/api/chat/**
+          filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+        # ── notification-service ──────────────────────────────────────
         - id: notification-service
           uri: lb://notification-service
           predicates:
@@ -36,6 +77,7 @@ spring:
           filters:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
+        # ── jira-integration-service ──────────────────────────────────
         - id: jira-integration-service
           uri: lb://jira-integration-service
           predicates:
@@ -61,7 +103,7 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
             maxAge: 3600
-        add-to-simple-url-handler-mapping: true   # ← AJOUT CRITIQUE
+        add-to-simple-url-handler-mapping: true
 
     loadbalancer:
       cache:

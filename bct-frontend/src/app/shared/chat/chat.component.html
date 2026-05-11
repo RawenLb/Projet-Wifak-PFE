@@ -161,78 +161,130 @@
           </div>
 
           <div class="msg-bubble-wrap">
-            <div class="msg-bubble" [class.msg-bubble-mine]="msg.senderId === myId">
-
-              <!-- IMAGE — renders inline, click to open full size -->
-              <div *ngIf="msg.type === 'IMAGE'" class="msg-image" (click)="openFile(msg.fileUrl!)">
-                <img [src]="msg.fileUrl"
-                     [alt]="msg.fileName || msg.content"
-                     class="msg-img-preview"
-                     (error)="onImgError($event)"/>
-                <div class="msg-img-overlay">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                    <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                  </svg>
-                </div>
-              </div>
-
-              <!-- VOICE — audio player -->
-              <div *ngIf="msg.type === 'VOICE'" class="msg-voice">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                  <line x1="12" y1="19" x2="12" y2="23"/>
-                  <line x1="8" y1="23" x2="16" y2="23"/>
+            <!-- Bouton actions (hover) -->
+            <div class="msg-actions-btn-wrap" *ngIf="!msg.isDeleted && editingMsgId !== msg.id">
+              <button class="msg-actions-btn"
+                      (click)="openContextMenu($event, msg)"
+                      title="Actions">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+                  <circle cx="12" cy="5" r="1" fill="currentColor"/>
+                  <circle cx="12" cy="12" r="1" fill="currentColor"/>
+                  <circle cx="12" cy="19" r="1" fill="currentColor"/>
                 </svg>
-                <audio [src]="msg.fileUrl" controls class="msg-audio" preload="metadata"></audio>
+              </button>
+            </div>
+
+            <div class="msg-bubble" [class.msg-bubble-mine]="msg.senderId === myId"
+                 (contextmenu)="openContextMenu($event, msg)">
+
+              <!-- MESSAGE SUPPRIMÉ -->
+              <div *ngIf="msg.isDeleted" class="msg-deleted">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                  <path d="M10 11v6"/><path d="M14 11v6"/>
+                  <path d="M9 6V4h6v2"/>
+                </svg>
+                Message supprimé
               </div>
 
-              <!-- FILE — download card -->
-              <div *ngIf="msg.type === 'FILE'" class="msg-file"
-                   (click)="downloadFile(msg.fileUrl!, msg.fileName || msg.content)">
-                <div class="msg-file-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                  </svg>
+              <!-- MODE ÉDITION -->
+              <ng-container *ngIf="!msg.isDeleted && editingMsgId === msg.id">
+                <textarea [id]="'edit-input-' + msg.id"
+                          class="msg-edit-input"
+                          [(ngModel)]="editingContent"
+                          (keydown.enter)="$event.preventDefault(); confirmEdit(msg)"
+                          (keydown.escape)="cancelEdit()"
+                          rows="2"></textarea>
+                <div class="msg-edit-actions">
+                  <button class="msg-edit-btn msg-edit-cancel" (click)="cancelEdit()">Annuler</button>
+                  <button class="msg-edit-btn msg-edit-confirm" (click)="confirmEdit(msg)">Enregistrer</button>
                 </div>
-                <div class="msg-file-info">
-                  <span class="msg-file-name">{{ msg.fileName || msg.content }}</span>
-                  <span class="msg-file-action">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                      <polyline points="7 10 12 15 17 10"/>
-                      <line x1="12" y1="15" x2="12" y2="3"/>
+              </ng-container>
+
+              <!-- CONTENU NORMAL -->
+              <ng-container *ngIf="!msg.isDeleted && editingMsgId !== msg.id">
+
+                <!-- IMAGE -->
+                <div *ngIf="msg.type === 'IMAGE'" class="msg-image" (click)="openFile(msg.fileUrl!)">
+                  <img [src]="msg.fileUrl"
+                       [alt]="msg.fileName || msg.content"
+                       class="msg-img-preview"
+                       (error)="onImgError($event)"/>
+                  <div class="msg-img-overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                      <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
                     </svg>
-                    Télécharger
-                  </span>
+                  </div>
                 </div>
-              </div>
 
-              <!-- TEXT -->
-              <span *ngIf="msg.type === 'TEXT' || msg.type === 'SYSTEM'">{{ msg.content }}</span>
+                <!-- VOICE -->
+                <div *ngIf="msg.type === 'VOICE'" class="msg-voice">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                  </svg>
+                  <audio [src]="msg.fileUrl" controls class="msg-audio" preload="metadata"></audio>
+                </div>
 
-              <!-- MISSED CALL -->
-              <div *ngIf="msg.type === 'MISSED_CALL'" class="msg-missed-call">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-                  <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6"/>
-                  <line x1="1" y1="1" x2="23" y2="23"/>
-                </svg>
-                {{ msg.content }}
-              </div>
+                <!-- FILE -->
+                <div *ngIf="msg.type === 'FILE'" class="msg-file"
+                     (click)="downloadFile(msg.fileUrl!, msg.fileName || msg.content)">
+                  <div class="msg-file-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                  </div>
+                  <div class="msg-file-info">
+                    <span class="msg-file-name">{{ msg.fileName || msg.content }}</span>
+                    <span class="msg-file-action">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                      Télécharger
+                    </span>
+                  </div>
+                </div>
 
-              <!-- CALL ENDED -->
-              <div *ngIf="msg.type === 'CALL_ENDED'" class="msg-call-ended">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.18 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-                </svg>
-                {{ msg.content }}
-              </div>
+                <!-- TEXT -->
+                <ng-container *ngIf="msg.type === 'TEXT' || msg.type === 'SYSTEM'">
+                  <div *ngIf="msg.isForwarded" class="msg-forwarded-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11">
+                      <polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/>
+                    </svg>
+                    Transféré
+                  </div>
+                  {{ msg.content }}
+                </ng-container>
+
+                <!-- MISSED CALL -->
+                <div *ngIf="msg.type === 'MISSED_CALL'" class="msg-missed-call">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                    <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                  {{ msg.content }}
+                </div>
+
+                <!-- CALL ENDED -->
+                <div *ngIf="msg.type === 'CALL_ENDED'" class="msg-call-ended">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.18 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                  {{ msg.content }}
+                </div>
+
+              </ng-container>
             </div>
 
             <div class="msg-meta">
               <span class="msg-time">{{ formatMsgTime(msg.timestamp) }}</span>
+              <span class="msg-edited" *ngIf="msg.editedAt && !msg.isDeleted">modifié</span>
               <span class="msg-read" *ngIf="msg.senderId === myId">
                 <svg *ngIf="msg.read" viewBox="0 0 24 24" fill="none" stroke="#1B4FBC"
                      stroke-width="2.5" width="12" height="12">
@@ -331,3 +383,68 @@
 
 <!-- WebRTC call overlay -->
 <app-call></app-call>
+
+<!-- ── Context menu ── -->
+<div class="msg-ctx-menu" *ngIf="contextMenu"
+     [style.left.px]="contextMenu.x"
+     [style.top.px]="contextMenu.y"
+     (click)="$event.stopPropagation()">
+  <button class="msg-ctx-item" (click)="startForward(contextMenu.msg)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+      <polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/>
+    </svg>
+    Transférer
+  </button>
+  <ng-container *ngIf="canEditOrDelete(contextMenu.msg)">
+    <button class="msg-ctx-item" *ngIf="contextMenu.msg.type === 'TEXT'"
+            (click)="startEdit(contextMenu.msg)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      </svg>
+      Modifier
+    </button>
+    <button class="msg-ctx-item msg-ctx-delete" (click)="confirmDelete(contextMenu.msg)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+        <path d="M10 11v6"/><path d="M14 11v6"/>
+        <path d="M9 6V4h6v2"/>
+      </svg>
+      Supprimer
+    </button>
+  </ng-container>
+</div>
+
+<!-- ── Backdrop to close context menu ── -->
+<div class="msg-ctx-backdrop" *ngIf="contextMenu" (click)="closeContextMenu()"></div>
+
+<!-- ── Forward modal ── -->
+<div class="forward-modal-overlay" *ngIf="forwardingMsg" (click)="cancelForward()">
+  <div class="forward-modal" (click)="$event.stopPropagation()">
+    <div class="forward-modal-header">
+      <span>Transférer le message</span>
+      <button class="forward-modal-close" (click)="cancelForward()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="forward-modal-preview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+        <polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/>
+      </svg>
+      {{ forwardingMsg.content || forwardingMsg.fileName || '(fichier)' }}
+    </div>
+    <div class="forward-modal-list">
+      <div class="forward-contact-item"
+           *ngFor="let c of contacts"
+           (click)="confirmForward(c)">
+        <div class="contact-avatar contact-avatar-sm" [style.background]="getAvatarColor(c.username)">
+          {{ getInitials(c.fullName) }}
+        </div>
+        <span>{{ c.fullName }}</span>
+        <span class="contact-role-badge">{{ c.role }}</span>
+      </div>
+    </div>
+  </div>
+</div>

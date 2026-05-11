@@ -296,6 +296,74 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.rtc.startCall(conv.partner.id, conv.partner.fullName, 'VIDEO');
   }
 
+  // ── Message context menu ──────────────────────────────────────
+
+  contextMenu: { x: number; y: number; msg: any } | null = null;
+  editingMsgId: string | null = null;
+  editingContent = '';
+  forwardingMsg: any | null = null;
+
+  openContextMenu(event: MouseEvent, msg: any): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.contextMenu = { x: event.clientX, y: event.clientY, msg };
+  }
+
+  closeContextMenu(): void {
+    this.contextMenu = null;
+  }
+
+  startEdit(msg: any): void {
+    this.editingMsgId   = msg.id;
+    this.editingContent = msg.content;
+    this.contextMenu    = null;
+    setTimeout(() => {
+      const el = document.getElementById(`edit-input-${msg.id}`) as HTMLTextAreaElement;
+      if (el) { el.focus(); el.select(); }
+    }, 50);
+  }
+
+  confirmEdit(msg: any): void {
+    if (!this.editingContent.trim() || this.editingContent === msg.content) {
+      this.cancelEdit();
+      return;
+    }
+    this.chatSvc.editMessage(msg.id, this.editingContent.trim());
+    this.editingMsgId   = null;
+    this.editingContent = '';
+  }
+
+  cancelEdit(): void {
+    this.editingMsgId   = null;
+    this.editingContent = '';
+  }
+
+  confirmDelete(msg: any): void {
+    this.contextMenu = null;
+    if (confirm('Supprimer ce message ?')) {
+      this.chatSvc.deleteMessage(msg.id);
+    }
+  }
+
+  startForward(msg: any): void {
+    this.forwardingMsg = msg;
+    this.contextMenu   = null;
+  }
+
+  confirmForward(targetContact: any): void {
+    if (!this.forwardingMsg) return;
+    this.chatSvc.forwardMessage(this.forwardingMsg.id, targetContact.id);
+    this.forwardingMsg = null;
+  }
+
+  cancelForward(): void {
+    this.forwardingMsg = null;
+  }
+
+  canEditOrDelete(msg: any): boolean {
+    return msg.senderId === this.myId && !msg.isDeleted;
+  }
+
   // ── Helpers ───────────────────────────────────────────────────
 
   get filteredContacts(): ChatUser[] {

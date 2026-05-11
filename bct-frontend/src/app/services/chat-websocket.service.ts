@@ -5,17 +5,20 @@ import { Subject, BehaviorSubject } from 'rxjs';
 import keycloak from './keycloak.service';
 
 export interface ChatMessage {
-  id:          string;
-  senderId:    string;
-  senderName:  string;
-  senderRole:  string;
-  recipientId: string;
-  content:     string;
-  timestamp:   string;
-  read:        boolean;
-  type:        'TEXT' | 'FILE' | 'IMAGE' | 'VOICE' | 'SYSTEM' | 'MISSED_CALL' | 'CALL_ENDED';
-  fileName?:   string;
-  fileUrl?:    string;
+  id:           string;
+  senderId:     string;
+  senderName:   string;
+  senderRole:   string;
+  recipientId:  string;
+  content:      string;
+  timestamp:    string;
+  read:         boolean;
+  type:         'TEXT' | 'FILE' | 'IMAGE' | 'VOICE' | 'SYSTEM' | 'MISSED_CALL' | 'CALL_ENDED';
+  fileName?:    string;
+  fileUrl?:     string;
+  editedAt?:    string;
+  isDeleted?:   boolean;
+  isForwarded?: boolean;
 }
 
 export interface TypingEvent {
@@ -73,8 +76,10 @@ export class ChatWebSocketService implements OnDestroy {
   readonly connected$  = new BehaviorSubject<boolean>(false);
   readonly callSignal$ = new Subject<CallSignal>();
   readonly iceSignal$  = new Subject<IceSignal>();
+  readonly msgEdit$    = new Subject<ChatMessage>();
+  readonly msgDelete$  = new Subject<{ messageId: string }>();
 
-  private readonly WS_URL = 'ws://localhost:8082/ws/chat';
+  private readonly WS_URL = 'ws://localhost:8083/ws/chat';
 
   // ── Connect ───────────────────────────────────────────────────
 
@@ -223,6 +228,20 @@ export class ChatWebSocketService implements OnDestroy {
     });
   }
 
+  // ── Message actions ───────────────────────────────────────────
+
+  sendEditMessage(messageId: string, content: string): void {
+    this.send({ type: 'MSG_EDIT', payload: { messageId, content } });
+  }
+
+  sendDeleteMessage(messageId: string): void {
+    this.send({ type: 'MSG_DELETE', payload: { messageId } });
+  }
+
+  sendForwardMessage(messageId: string, targetId: string): void {
+    this.send({ type: 'MSG_FORWARD', payload: { messageId, targetId } });
+  }
+
   // ── Dispatch ──────────────────────────────────────────────────
 
   private dispatch(envelope: WsEnvelope): void {
@@ -237,6 +256,8 @@ export class ChatWebSocketService implements OnDestroy {
       case 'CALL_END':
       case 'CALL_BUSY':     this.callSignal$.next(envelope.payload); break;
       case 'ICE_CANDIDATE': this.iceSignal$.next(envelope.payload);  break;
+      case 'MSG_EDIT':      this.msgEdit$.next(envelope.payload);    break;
+      case 'MSG_DELETE':    this.msgDelete$.next(envelope.payload);  break;
       default:
         console.debug('[WS] Unhandled type:', envelope.type);
     }

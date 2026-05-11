@@ -1,0 +1,67 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: authentification-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/wifak_PFE?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/bct-realm
+          jwk-set-uri: http://localhost:8081/realms/bct-realm/protocol/openid-connect/certs
+
+  cloud:
+    inetutils:
+      preferred-networks:
+        - 127.0.0
+
+keycloak:
+  auth-server-url: http://localhost:8081
+  realm: bct-realm
+  admin-username: admin
+  admin-password: admin
+  admin-client-id: bct-backend
+  admin-client-secret: UQIUjf1lHznBjmmdUlNleh8N9yMwzBaG
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.example.bctbackend: INFO
+    org.keycloak: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+app:
+  cors:
+    allowed-origins: http://localhost:4200
+  frontend-client-id: bct-frontend
+  internal-secret: ${INTERNAL_SECRET:wifak-internal-secret-2024}
+
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+    instance-id: authentification-service:8082
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

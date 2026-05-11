@@ -31,8 +31,8 @@ export interface Conversation {
 @Injectable({ providedIn: 'root' })
 export class ChatService implements OnDestroy {
 
-  private readonly API    = 'http://localhost:8082/api/chat';
-  private readonly UPLOAD = 'http://localhost:8082/api/chat/upload';
+  private readonly API    = 'http://localhost:8083/api/chat';
+  private readonly UPLOAD = 'http://localhost:8083/api/chat/upload';
 
   readonly contacts$    = new BehaviorSubject<ChatUser[]>([]);
   readonly activeConv$  = new BehaviorSubject<Conversation | null>(null);
@@ -56,7 +56,6 @@ export class ChatService implements OnDestroy {
     if (this.initialized) return;
     this.initialized = true;
 
-    // WS already connected in constructor — just ensure it's up
     this.ws.connect();
     this.loadContacts();
 
@@ -64,7 +63,9 @@ export class ChatService implements OnDestroy {
       this.ws.message$.subscribe(msg  => this.onMessage(msg)),
       this.ws.typing$.subscribe(evt   => this.onTyping(evt)),
       this.ws.presence$.subscribe(evt => this.onPresence(evt)),
-      this.ws.history$.subscribe(msgs => this.onHistory(msgs))
+      this.ws.history$.subscribe(msgs => this.onHistory(msgs)),
+      this.ws.msgEdit$.subscribe(msg  => this.onMsgEdit(msg)),
+      this.ws.msgDelete$.subscribe(ev => this.onMsgDelete(ev))
     );
   }
 
@@ -208,6 +209,38 @@ export class ChatService implements OnDestroy {
     this.ws.sendTyping(conv.partner.id, typing);
   }
 
+  // ── Message actions ───────────────────────────────────────────
+
+  editMessage(messageId: string, newContent: string): void {
+    this.ws.sendEditMessage(messageId, newContent);
+    // Optimistic update
+    const conv = this.activeConv$.value;
+    if (!conv) return;
+    const msgs = conv.messages.map(m =>
+      m.id === messageId
+        ? { ...m, content: newContent, editedAt: new Date().toISOString() }
+        : m
+    );
+    this.activeConv$.next({ ...conv, messages: msgs });
+  }
+
+  deleteMessage(messageId: string): void {
+    this.ws.sendDeleteMessage(messageId);
+    // Optimistic update
+    const conv = this.activeConv$.value;
+    if (!conv) return;
+    const msgs = conv.messages.map(m =>
+      m.id === messageId
+        ? { ...m, isDeleted: true, content: '', fileName: undefined, fileUrl: undefined }
+        : m
+    );
+    this.activeConv$.next({ ...conv, messages: msgs });
+  }
+
+  forwardMessage(messageId: string, targetPartnerId: string): void {
+    this.ws.sendForwardMessage(messageId, targetPartnerId);
+  }
+
   // ── WS event handlers ─────────────────────────────────────────
 
   private onMessage(msg: ChatMessage): void {
@@ -258,6 +291,25 @@ export class ChatService implements OnDestroy {
     this.activeConv$.next({ ...conv, messages: normalized });
   }
 
+  private onMsgEdit(updated: any): void {
+    const conv = this.activeConv$.value;
+    if (!conv) return;
+    const normalized = this.normalizeMessage(updated);
+    const msgs = conv.messages.map(m => m.id === normalized.id ? normalized : m);
+    this.activeConv$.next({ ...conv, messages: msgs });
+  }
+
+  private onMsgDelete(ev: { messageId: string }): void {
+    const conv = this.activeConv$.value;
+    if (!conv) return;
+    const msgs = conv.messages.map(m =>
+      String(m.id) === String(ev.messageId)
+        ? { ...m, isDeleted: true, content: '', fileName: undefined, fileUrl: undefined }
+        : m
+    );
+    this.activeConv$.next({ ...conv, messages: msgs });
+  }
+
   private appendMessage(msg: ChatMessage): void {
     const conv = this.activeConv$.value;
     if (!conv) return;
@@ -289,8 +341,6 @@ export class ChatService implements OnDestroy {
   private normalizeMessage(raw: any): ChatMessage {
     let type = ((raw.type ?? 'TEXT') as string).toUpperCase();
 
-    // Upgrade FILE → IMAGE if the filename/url has an image extension
-    // (handles old messages saved before IMAGE enum was added)
     if (type === 'FILE') {
       const name = (raw.fileName ?? raw.content ?? raw.fileUrl ?? '') as string;
       if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(name)) {
@@ -312,8 +362,11 @@ export class ChatService implements OnDestroy {
       timestamp:   this.normalizeDate(raw.timestamp ?? raw.sentAt),
       read:        raw.read ?? raw.isRead ?? false,
       type:        type as any,
-      fileName:    raw.fileName ?? undefined,
-      fileUrl:     raw.fileUrl  ?? undefined
+      fileName:    raw.fileName   ?? undefined,
+      fileUrl:     raw.fileUrl    ?? undefined,
+      editedAt:    raw.editedAt   ? this.normalizeDate(raw.editedAt) : undefined,
+      isDeleted:   raw.isDeleted  ?? false,
+      isForwarded: raw.isForwarded ?? false
     };
   }
 

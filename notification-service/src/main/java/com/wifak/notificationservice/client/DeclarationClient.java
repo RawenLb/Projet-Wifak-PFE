@@ -9,11 +9,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
 
 /**
- * Feign Client vers le declaration-service (enregistré dans Eureka sous "bct-backend").
- * Utilisé pour lire les déclarations et leurs métadonnées.
+ * Feign Client vers workflow-declaration pour lire les déclarations et leurs métadonnées.
  */
 @FeignClient(
-        name = "bct-backend",
+        name = "workflow-declaration",
         path = "/api/declarations",
         configuration = FeignConfig.class
 )

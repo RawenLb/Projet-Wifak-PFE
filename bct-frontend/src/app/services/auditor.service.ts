@@ -1,8 +1,8 @@
 // src/app/services/auditor.service.ts
 // Service dédié à l'espace auditeur — lecture seule
-// Routes backend : /api/audit/** → validation-service (port 8084)
-//                  /api/declarations/** → bct-backend (port 8082)
-//                  /api/validation/** → validation-service (port 8084)
+// Routes backend : /api/audit/** → workflow-declaration (port 8084)
+//                  /api/declarations/** → workflow-declaration (port 8084)
+//                  /api/validation/** → workflow-declaration (port 8084)
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
