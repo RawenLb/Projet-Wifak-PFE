@@ -21,7 +21,6 @@ scipy==1.13.0
 joblib==1.4.2
 
 # NLP (BF17 - clustering commentaires)
-scikit-learn==1.4.2   # TF-IDF + KMeans déjà inclus
 nltk==3.8.1
 
 # Time Series / Anomaly Detection (BF15)
@@ -32,7 +31,7 @@ apscheduler==3.10.4
 
 # HTTP
 httpx==0.27.0
-requests==2.31.0A
+requests==2.31.0
 
 # Logging & Config
 python-dotenv==1.0.1
