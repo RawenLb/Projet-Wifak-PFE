@@ -47,11 +47,12 @@ spring:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
         - id: workflow-ml
-          uri: lb://workflow-declaration
+          uri: http://wifak-ml:8090
           predicates:
             - Path=/api/ml/**
           filters:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+            - RewritePath=/api/ml/(?<segment>.*), /${segment}
 
         # ── authentification-service (port 8082) ─────────────────────
         - id: authentification-service

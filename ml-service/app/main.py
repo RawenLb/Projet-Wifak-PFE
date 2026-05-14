@@ -161,44 +161,62 @@ def diagnostics():
     "/bf17/analyze",
     tags=["BF17 — Clustering Erreurs"],
     summary="Analyser un commentaire de rejet BCT",
-    description=(
-        "Analyse un commentaire de rejet, identifie le cluster d'erreur "
-        "et retourne les corrections déjà appliquées avec succès dans des cas similaires.\n\n"
-        "Exemple de message retourné : "
-        "\"Dans 80% des cas similaires, la correction appliquée a été : ajustement du champ X\""
-    ),
 )
 def analyze_error(req: AnalyzeCommentRequest):
-    """
-    Point d'entrée principal BF17.
-
-    Corps :
-      - reject_comment        : commentaire de rejet à analyser (obligatoire)
-      - declaration_type_code : code du type BCT (optionnel, pour enrichissement futur)
-      - top_k                 : nombre de suggestions (1–10, défaut 5)
-    """
     try:
         svc = get_clustering_service()
-
         if svc.vectorizer is None:
-            raise HTTPException(
-                status_code=503,
-                detail=(
-                    "Modèle BF17 non encore entraîné. "
-                    "Vérifiez que validation_logs contient des rejets, "
-                    "puis lancez POST /bf17/train."
-                ),
-            )
-
+            raise HTTPException(status_code=503, detail="Modèle BF17 non encore entraîné.")
         result = svc.analyze(req.reject_comment, req.top_k)
         return result.to_dict()
-
     except HTTPException:
         raise
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"❌ [BF17] /bf17/analyze : {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post(
+    "/bf17/analyze-comment",
+    tags=["BF17 — Clustering Erreurs"],
+    summary="Alias /bf17/analyze (compatibilité frontend)",
+)
+def analyze_comment(req: AnalyzeCommentRequest):
+    """Alias vers /bf17/analyze pour compatibilité avec le frontend Angular."""
+    return analyze_error(req)
+
+
+@app.get(
+    "/bf17/declaration/{declaration_id}/suggestions",
+    tags=["BF17 — Clustering Erreurs"],
+    summary="Suggestions pour une déclaration rejetée",
+)
+def get_suggestions_for_declaration(declaration_id: int, top_k: int = 5):
+    """
+    Récupère le commentaire de rejet d'une déclaration depuis la BD
+    et retourne les suggestions de correction BF17.
+    """
+    try:
+        from app.database import get_reject_comment_for_declaration
+        comment = get_reject_comment_for_declaration(declaration_id)
+        if not comment:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Aucun commentaire de rejet trouvé pour la déclaration {declaration_id}"
+            )
+        svc = get_clustering_service()
+        if svc.vectorizer is None:
+            raise HTTPException(status_code=503, detail="Modèle BF17 non encore entraîné.")
+        result = svc.analyze(comment, top_k)
+        response = result.to_dict()
+        response["declaration_id"] = declaration_id
+        return response
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [BF17] /bf17/declaration/{declaration_id}/suggestions : {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

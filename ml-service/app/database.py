@@ -309,3 +309,43 @@ def load_correction_history_df() -> pd.DataFrame:
     except Exception as e:
         logger.error(f"❌ [DB] Erreur chargement historique corrections : {e}")
         return pd.DataFrame()
+
+
+# ══════════════════════════════════════════════════════════════════════
+# BF17 — Récupération du commentaire de rejet d'une déclaration
+# ══════════════════════════════════════════════════════════════════════
+
+def get_reject_comment_for_declaration(declaration_id: int) -> str | None:
+    """
+    Récupère le commentaire de rejet d'une déclaration depuis la BD.
+    Utilisé par /bf17/declaration/{id}/suggestions.
+    """
+    try:
+        engine = get_validation_engine()
+        with engine.connect() as conn:
+            # Essayer d'abord dans declarations.commentaire_rejet
+            result = conn.execute(
+                text("SELECT commentaire_rejet FROM declarations WHERE id = :id"),
+                {"id": declaration_id}
+            ).fetchone()
+
+            if result and result[0]:
+                return str(result[0]).strip()
+
+            # Sinon chercher dans validation_logs
+            result = conn.execute(
+                text("""
+                    SELECT commentaire FROM validation_logs
+                    WHERE declaration_id = :id AND action = 'REJECT'
+                    ORDER BY id DESC LIMIT 1
+                """),
+                {"id": declaration_id}
+            ).fetchone()
+
+            if result and result[0]:
+                return str(result[0]).strip()
+
+        return None
+    except Exception as e:
+        logger.error(f"❌ [DB] get_reject_comment_for_declaration({declaration_id}) : {e}")
+        return None
