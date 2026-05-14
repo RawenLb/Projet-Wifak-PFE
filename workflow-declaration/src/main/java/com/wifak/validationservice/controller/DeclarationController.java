@@ -1,7 +1,4 @@
-& "C:\xampp2\mysql\bin\mysql.exe" -u root -e "
-DESCRIBE wifak_pfe.chat_messages;
-DESCRIBE wifak_chat.chatmessages;
-" 2>&1package com.wifak.validationservice.controller;
+package com.wifak.validationservice.controller;
 
 import com.wifak.validationservice.dto.GenerateDeclarationRequest;
 import com.wifak.validationservice.dto.XsdSqlMappingRequest;

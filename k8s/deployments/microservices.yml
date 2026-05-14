@@ -1,0 +1,417 @@
+---
+# ── Authentification Service ───────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentification-service
+  namespace: wifak
+  labels:
+    app: authentification-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: authentification-service
+  template:
+    metadata:
+      labels:
+        app: authentification-service
+    spec:
+      containers:
+        - name: authentification-service
+          image: wifak/authentification-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/wifak_PFE?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wifak-secrets
+                  key: MYSQL_ROOT_PASSWORD
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: wifak-config
+                  key: EUREKA_URL
+            - name: KEYCLOAK_AUTH_SERVER_URL
+              value: "http://keycloak:8080"
+            - name: INTERNAL_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: wifak-secrets
+                  key: INTERNAL_SECRET
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+# ── Chat Service ───────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service
+  namespace: wifak
+  labels:
+    app: chat-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chat-service
+  template:
+    metadata:
+      labels:
+        app: chat-service
+    spec:
+      containers:
+        - name: chat-service
+          image: wifak/chat-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/wifak_chat?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wifak-secrets
+                  key: MYSQL_ROOT_PASSWORD
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: wifak-config
+                  key: EUREKA_URL
+            - name: INTERNAL_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: wifak-secrets
+                  key: INTERNAL_SECRET
+          volumeMounts:
+            - name: chat-uploads
+              mountPath: /app/uploads
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+      volumes:
+        - name: chat-uploads
+          persistentVolumeClaim:
+            claimName: chat-uploads-pvc
+---
+# ── Workflow Declaration ───────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workflow-declaration
+  namespace: wifak
+  labels:
+    app: workflow-declaration
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: workflow-declaration
+  template:
+    metadata:
+      labels:
+        app: workflow-declaration
+    spec:
+      containers:
+        - name: workflow-declaration
+          image: wifak/workflow-declaration:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8084
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/wifak_validation?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wifak-secrets
+                  key: MYSQL_ROOT_PASSWORD
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: wifak-config
+                  key: EUREKA_URL
+            - name: INTERNAL_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: wifak-secrets
+                  key: INTERNAL_SECRET
+          volumeMounts:
+            - name: declaration-uploads
+              mountPath: /app/uploads
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+      volumes:
+        - name: declaration-uploads
+          persistentVolumeClaim:
+            claimName: declaration-uploads-pvc
+---
+# ── Notification Service ───────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: wifak
+  labels:
+    app: notification-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: wifak/notification-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8086
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/wifak_notification?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wifak-secrets
+                  key: MYSQL_ROOT_PASSWORD
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: wifak-config
+                  key: EUREKA_URL
+            - name: SPRING_MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wifak-secrets
+                  key: MAIL_PASSWORD
+            - name: INTERNAL_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: wifak-secrets
+                  key: INTERNAL_SECRET
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8086
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+# ── Jira Integration Service ───────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jira-integration-service
+  namespace: wifak
+  labels:
+    app: jira-integration-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jira-integration-service
+  template:
+    metadata:
+      labels:
+        app: jira-integration-service
+    spec:
+      containers:
+        - name: jira-integration-service
+          image: wifak/jira-integration-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8085
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/wifak_jira?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wifak-secrets
+                  key: MYSQL_ROOT_PASSWORD
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: wifak-config
+                  key: EUREKA_URL
+            - name: JIRA_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: wifak-secrets
+                  key: JIRA_API_TOKEN
+            - name: INTERNAL_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: wifak-secrets
+                  key: INTERNAL_SECRET
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+# ── ML Service ─────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-service
+  namespace: wifak
+  labels:
+    app: ml-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-service
+  template:
+    metadata:
+      labels:
+        app: ml-service
+    spec:
+      containers:
+        - name: ml-service
+          image: wifak/ml-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8090
+          env:
+            - name: DB_HOST
+              value: "mysql"
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              value: "wifak_PFE"
+            - name: DB_USER
+              value: "root"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wifak-secrets
+                  key: MYSQL_ROOT_PASSWORD
+            - name: BCT_BACKEND_URL
+              value: "http://authentification-service:8082"
+            - name: VALIDATION_SERVICE_URL
+              value: "http://workflow-declaration:8084"
+          volumeMounts:
+            - name: ml-models
+              mountPath: /app/models/saved
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+      volumes:
+        - name: ml-models
+          persistentVolumeClaim:
+            claimName: ml-models-pvc
+---
+# ── Frontend ───────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: wifak
+  labels:
+    app: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: wifak/frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"

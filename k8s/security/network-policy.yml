@@ -1,0 +1,57 @@
+---
+# Only allow traffic to MySQL from microservices (not from frontend)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mysql-network-policy
+  namespace: wifak
+spec:
+  podSelector:
+    matchLabels:
+      app: mysql
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: authentification-service
+        - podSelector:
+            matchLabels:
+              app: chat-service
+        - podSelector:
+            matchLabels:
+              app: workflow-declaration
+        - podSelector:
+            matchLabels:
+              app: notification-service
+        - podSelector:
+            matchLabels:
+              app: jira-integration-service
+        - podSelector:
+            matchLabels:
+              app: ml-service
+        - podSelector:
+            matchLabels:
+              app: keycloak
+      ports:
+        - protocol: TCP
+          port: 3306
+---
+# Only allow external traffic to enter via the Gateway
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: microservices-ingress-policy
+  namespace: wifak
+spec:
+  podSelector:
+    matchLabels: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow all intra-namespace traffic (microservices can call each other)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: wifak

@@ -1,0 +1,298 @@
+networks:
+  wifak-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  keycloak-data:
+  ml-models:
+  chat-uploads:
+  declaration-uploads:
+  prometheus-data:
+  grafana-data:
+  maven-cache:
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: wifak-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-wifak2024}
+      MYSQL_USER: ${MYSQL_USER:-wifak}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-wifak2024}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - wifak-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pwifak2024"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.3
+    container_name: wifak-keycloak
+    restart: unless-stopped
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-rawene}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+    ports:
+      - "8081:8080"
+    networks:
+      - wifak-network
+
+  eureka-server:
+    build:
+      context: ./EurekaServer
+      dockerfile: Dockerfile
+    container_name: wifak-eureka
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8761:8761"
+    networks:
+      - wifak-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  api-gateway:
+    build:
+      context: ./Gateway
+      dockerfile: Dockerfile
+    container_name: wifak-gateway
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8081/realms/bct-realm
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://charming_sinoussi:8080/realms/bct-realm/protocol/openid-connect/certs
+    ports:
+      - "8088:8088"
+    networks:
+      - wifak-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+
+  authentification-service:
+    build:
+      context: ./Authentification
+      dockerfile: Dockerfile
+    container_name: wifak-auth
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/wifak_PFE?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-wifak2024}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8081/realms/bct-realm
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://charming_sinoussi:8080/realms/bct-realm/protocol/openid-connect/certs
+      KEYCLOAK_AUTH_SERVER_URL: http://charming_sinoussi:8080
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-wifak-internal-secret-2024}
+    ports:
+      - "8082:8082"
+    networks:
+      - wifak-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  chat-service:
+    build:
+      context: ./Chat-Service
+      dockerfile: Dockerfile
+    container_name: wifak-chat
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/wifak_chat?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-wifak2024}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8081/realms/bct-realm
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://charming_sinoussi:8080/realms/bct-realm/protocol/openid-connect/certs
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-wifak-internal-secret-2024}
+    ports:
+      - "8083:8083"
+    volumes:
+      - chat-uploads:/app/uploads
+    networks:
+      - wifak-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  workflow-declaration:
+    build:
+      context: ./workflow-declaration
+      dockerfile: Dockerfile
+    container_name: wifak-workflow
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/wifak_validation?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-wifak2024}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8081/realms/bct-realm
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://charming_sinoussi:8080/realms/bct-realm/protocol/openid-connect/certs
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-wifak-internal-secret-2024}
+    ports:
+      - "8084:8084"
+    networks:
+      - wifak-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: wifak-notification
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/wifak_notification?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-wifak2024}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8081/realms/bct-realm
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://charming_sinoussi:8080/realms/bct-realm/protocol/openid-connect/certs
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME:-rawene.labaoui@gmail.com}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD:-vjjt srre beng aium}
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-wifak-internal-secret-2024}
+    ports:
+      - "8086:8086"
+    networks:
+      - wifak-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  jira-integration-service:
+    build:
+      context: ./jira-integration-service
+      dockerfile: Dockerfile
+    container_name: wifak-jira
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/wifak_jira?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-wifak2024}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8081/realms/bct-realm
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://charming_sinoussi:8080/realms/bct-realm/protocol/openid-connect/certs
+      JIRA_API_TOKEN: ${JIRA_API_TOKEN:-changeme}
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-wifak-internal-secret-2024}
+    ports:
+      - "8085:8085"
+    networks:
+      - wifak-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: wifak-ml
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: wifak_PFE
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-wifak2024}
+      VALIDATION_DB_NAME: wifak_validation
+      ML_SERVICE_HOST: 0.0.0.0
+      ML_SERVICE_PORT: 8090
+      BCT_BACKEND_URL: http://authentification-service:8082
+      VALIDATION_SERVICE_URL: http://workflow-declaration:8084
+    ports:
+      - "8090:8090"
+    volumes:
+      - ml-models:/app/models/saved
+    networks:
+      - wifak-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./bct-frontend
+      dockerfile: Dockerfile
+    container_name: wifak-frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    networks:
+      - wifak-network
+    depends_on:
+      - api-gateway
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: wifak-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    networks:
+      - wifak-network
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: wifak-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-wifak2024}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    networks:
+      - wifak-network
+    depends_on:
+      - prometheus

@@ -1,5 +1,5 @@
 server:
-  port: 8083
+  port: 8085
 
 spring:
   application:
@@ -47,6 +47,27 @@ eureka:
     registry-fetch-interval-seconds: 5
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    inetutils:
+      preferred-networks:
+        - 172.
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: jira-integration-service:8085
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
 
 jira:
   base-url: https://wifak-bct.atlassian.net

@@ -2,17 +2,18 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
-# Cache Maven dependencies between builds
-RUN --mount=type=cache,target=/root/.m2 mvn dependency:go-offline -B
+RUN mvn dependency:go-offline -B
 COPY src ./src
-RUN --mount=type=cache,target=/root/.m2 mvn clean package -DskipTests -B
+RUN mvn clean package -DskipTests -B
 
 # ── Stage 2: Runtime ──────────────────────────────────────────
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 RUN addgroup -S wifak && adduser -S wifak -G wifak
-COPY --from=build /app/target/EurekaServerApplication-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/*.jar app.jar
+# Volume for chat file uploads
+VOLUME /app/uploads
 RUN chown wifak:wifak app.jar
 USER wifak
-EXPOSE 8761
+EXPOSE 8083
 ENTRYPOINT ["java", "-jar", "app.jar"]
