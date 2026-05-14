@@ -39,7 +39,7 @@ services:
     image: quay.io/keycloak/keycloak:24.0.3
     container_name: wifak-keycloak
     restart: unless-stopped
-    command: start-dev
+    command: start-dev --import-realm
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-rawene}
@@ -47,6 +47,8 @@ services:
       KC_HTTP_ENABLED: "true"
     ports:
       - "8081:8080"
+    volumes:
+      - ./docker/keycloak/bct-realm-export.json:/opt/keycloak/data/import/bct-realm-export.json:ro
     networks:
       - wifak-network
 
