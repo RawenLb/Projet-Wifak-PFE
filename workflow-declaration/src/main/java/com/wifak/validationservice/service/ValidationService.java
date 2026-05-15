@@ -1,5 +1,6 @@
 package com.wifak.validationservice.service;
 
+import com.wifak.validationservice.client.NotificationClient;
 import com.wifak.validationservice.dto.AiValidationResult;
 import com.wifak.validationservice.dto.DeclarationDTO;
 import com.wifak.validationservice.dto.ValidationStatsDTO;
@@ -31,16 +32,19 @@ public class ValidationService {
     private final DeclarationService         declarationService;
     private final JiraIntegrationFeignClient jiraClient;
     private final ValidationLogRepository   logRepository;
+    private final NotificationClient        notificationClient;
 
     @Autowired
     private AiDeclarationService aiDeclarationService;
 
     public ValidationService(DeclarationService declarationService,
                              JiraIntegrationFeignClient jiraClient,
-                             ValidationLogRepository logRepository) {
-        this.declarationService = declarationService;
-        this.jiraClient         = jiraClient;
-        this.logRepository      = logRepository;
+                             ValidationLogRepository logRepository,
+                             NotificationClient notificationClient) {
+        this.declarationService   = declarationService;
+        this.jiraClient           = jiraClient;
+        this.logRepository        = logRepository;
+        this.notificationClient   = notificationClient;
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -73,6 +77,14 @@ public class ValidationService {
             try {
                 jiraClient.transitionTicket(new TransitionJiraTicketRequest(declarationId, "RESOUMISE", null, currentUser));
             } catch (Exception e) { log.warn("⚠️ Jira resoumission échouée: {}", e.getMessage()); }
+        }
+
+        // Notifier les managers qu'une déclaration est en attente de validation
+        try {
+            notificationClient.notifyPendingValidation(Map.of("declarationId", declarationId));
+            log.info("📧 Notification managers envoyée pour déclaration {}", declarationId);
+        } catch (Exception e) {
+            log.warn("⚠️ Notification pending-validation échouée: {}", e.getMessage());
         }
 
         return updated;
@@ -117,6 +129,17 @@ public class ValidationService {
         try {
             jiraClient.transitionTicket(new TransitionJiraTicketRequest(declarationId, "REJETEE", commentaire, currentUser));
         } catch (Exception e) { log.warn("⚠️ Jira sync échouée: {}", e.getMessage()); }
+
+        // Notifier l'agent que sa déclaration a été rejetée
+        try {
+            notificationClient.notifyRejection(Map.of(
+                "declarationId", declarationId,
+                "commentaire", commentaire != null ? commentaire : ""
+            ));
+            log.info("📧 Notification rejet envoyée pour déclaration {}", declarationId);
+        } catch (Exception e) {
+            log.warn("⚠️ Notification rejection échouée: {}", e.getMessage());
+        }
 
         return updated;
     }

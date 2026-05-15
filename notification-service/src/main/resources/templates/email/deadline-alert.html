@@ -1,11 +1,168 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<body>
-<h2>Bonjour <span th:text="${agentName}">Agent</span>,</h2>
-<p>Votre déclaration <strong th:text="${declarationCode}">CODE</strong> arrive à échéance.</p>
-<p>Période : <span th:text="${periode}">PERIODE</span></p>
-<p>Date limite : <span th:text="${dateFin}">DATE</span></p>
-<p>Jours restants : <span th:text="${daysLeft}">0</span></p>
-<a th:href="${appUrl}">Accéder à l'application</a>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Alerte Échéance — Banque Wifak</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f6f9;font-family:'Segoe UI',Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f9;padding:30px 0;">
+    <tr>
+      <td align="center">
+        <table width="620" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#1a3a6b 0%,#2563a8 100%);padding:28px 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <div style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0.5px;">🏦 Banque Wifak</div>
+                    <div style="color:#a8c4e8;font-size:12px;margin-top:4px;letter-spacing:1px;text-transform:uppercase;">Plateforme BCT — Gestion des Déclarations</div>
+                  </td>
+                  <td align="right">
+                    <div style="background:rgba(255,255,255,0.15);border-radius:50px;padding:6px 14px;">
+                      <span style="color:#ffffff;font-size:11px;font-weight:600;">CONFIDENTIEL</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Status Banner — dynamique selon urgence -->
+          <tr th:if="${daysLeft == 0}">
+            <td style="background:#dc2626;padding:14px 36px;">
+              <span style="color:#ffffff;font-size:15px;font-weight:600;">🔴 URGENT — Échéance Aujourd'hui</span>
+            </td>
+          </tr>
+          <tr th:if="${daysLeft > 0}">
+            <td style="background:#d97706;padding:14px 36px;">
+              <span style="color:#ffffff;font-size:15px;font-weight:600;">⚠️ Alerte Échéance — <span th:text="${daysLeft}">X</span> jour(s) restant(s)</span>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:36px;">
+
+              <p style="margin:0 0 20px;color:#374151;font-size:15px;">
+                Bonjour <strong th:text="${agentName}">Agent</strong>,
+              </p>
+
+              <p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.6;">
+                Nous vous rappelons que la déclaration réglementaire ci-dessous arrive à échéance.
+                Veuillez vous assurer qu'elle est soumise et validée dans les délais impartis par la Banque Centrale de Tunisie.
+              </p>
+
+              <!-- Declaration Info Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <div style="font-size:12px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px;font-weight:600;">Détails de la Déclaration</div>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding:6px 0;width:40%;">
+                          <span style="color:#6b7280;font-size:13px;">Référence</span>
+                        </td>
+                        <td style="padding:6px 0;">
+                          <span style="color:#1e293b;font-size:13px;font-weight:600;" th:text="${declarationCode}">BCT_XX_YY</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;border-top:1px solid #e2e8f0;">
+                          <span style="color:#6b7280;font-size:13px;">Période</span>
+                        </td>
+                        <td style="padding:6px 0;border-top:1px solid #e2e8f0;">
+                          <span style="color:#1e293b;font-size:13px;" th:text="${periode}">2024-01</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;border-top:1px solid #e2e8f0;">
+                          <span style="color:#6b7280;font-size:13px;">Date limite</span>
+                        </td>
+                        <td style="padding:6px 0;border-top:1px solid #e2e8f0;">
+                          <span style="color:#dc2626;font-size:13px;font-weight:600;" th:text="${dateFin}">DATE</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;border-top:1px solid #e2e8f0;">
+                          <span style="color:#6b7280;font-size:13px;">Statut actuel</span>
+                        </td>
+                        <td style="padding:6px 0;border-top:1px solid #e2e8f0;">
+                          <span style="background:#fef3c7;color:#d97706;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;" th:text="${statut}">STATUT</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;border-top:1px solid #e2e8f0;">
+                          <span style="color:#6b7280;font-size:13px;">Jours restants</span>
+                        </td>
+                        <td style="padding:6px 0;border-top:1px solid #e2e8f0;">
+                          <span th:if="${daysLeft == 0}" style="color:#dc2626;font-size:13px;font-weight:700;">Aujourd'hui !</span>
+                          <span th:if="${daysLeft > 0}" style="color:#d97706;font-size:13px;font-weight:700;" th:text="${daysLeft} + ' jour(s)'">X jour(s)</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td align="center">
+                    <a th:href="${appUrl}" style="display:inline-block;background:linear-gradient(135deg,#1a3a6b,#2563a8);color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:6px;font-size:14px;font-weight:600;letter-spacing:0.3px;">
+                      Accéder à ma déclaration →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 36px;">
+              <hr style="border:none;border-top:1px solid #e2e8f0;margin:0;"/>
+            </td>
+          </tr>
+
+          <!-- Signature -->
+          <tr>
+            <td style="padding:24px 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-left:3px solid #2563a8;padding-left:16px;">
+                    <div style="color:#1e293b;font-size:14px;font-weight:700;">Banque Wifak</div>
+                    <div style="color:#6b7280;font-size:12px;margin-top:2px;">Direction des Systèmes d'Information</div>
+                    <div style="color:#6b7280;font-size:12px;margin-top:6px;">
+                      📍 Rue du Lac Windermere, Les Berges du Lac, 1053 Tunis, Tunisie<br/>
+                      📞 +216 71 160 400<br/>
+                      🌐 <a href="https://www.wifakbank.com" style="color:#2563a8;text-decoration:none;">www.wifakbank.com</a>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f8fafc;padding:16px 36px;border-top:1px solid #e2e8f0;">
+              <p style="margin:0;color:#9ca3af;font-size:11px;text-align:center;line-height:1.6;">
+                Cet email est généré automatiquement par la Plateforme BCT de Banque Wifak.<br/>
+                Merci de ne pas répondre directement à ce message.<br/>
+                © 2025 Banque Wifak — Tous droits réservés
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
 </body>
 </html>

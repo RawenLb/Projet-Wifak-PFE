@@ -214,7 +214,7 @@ public class DeclarationController {
     // ─────────────────────────────────────────────────────────────────
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'AUDITOR')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'AUDITOR', 'INTERNAL')")
     public ResponseEntity<List<Declaration>> getAllDeclarations() {
         return ResponseEntity.ok(declarationService.getAllDeclarations());
     }
