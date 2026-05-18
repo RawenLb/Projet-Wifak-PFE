@@ -5,6 +5,8 @@ import {
   ValidationService, ValidationStats, ValidationLog, RejectTemplate
 } from '../../services/Validation.service';
 import { JiraService, JiraTicketResponse } from '../../services/jira.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
+import { ToastService } from '../../services/toast.service';
 
 type SortField     = 'id' | 'type' | 'periode' | 'date';
 type SortDir       = 'asc' | 'desc';
@@ -79,6 +81,7 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
   historiqueLoading   = false;
 
   // ── Toast ──────────────────────────────────────────────
+  // (kept for template compatibility — delegates to ToastService)
   message      = '';
   messageType: 'success' | 'error' | 'info' = 'success';
 
@@ -90,7 +93,9 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
   constructor(
     private declarationService: DeclarationService,
     private validationService: ValidationService,
-    public jiraService: JiraService
+    public jiraService: JiraService,
+    private confirmDialog: ConfirmDialogService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -125,7 +130,7 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading = false;
-        if (!silent) this.showToast('Erreur chargement des déclarations en attente', 'error');
+        if (!silent) this.toast.error('Erreur chargement des déclarations en attente');
       }
     });
   }
@@ -243,22 +248,31 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
   // ── Actions CRUD ───────────────────────────────────────
   valider(d: Declaration): void {
     if (!d.id) return;
-    if (!confirm(`Valider la déclaration #${d.id} — ${d.declarationType?.nom} (${d.periode}) ?`)) return;
-    this.actionEnCours[d.id] = true;
-    this.validationService.validateDeclaration(d.id).subscribe({
-      next: () => {
-        this.pending = this.pending.filter(x => x.id !== d.id);
-        this.actionEnCours[d.id!] = false;
-        // Fermer le lecteur si la déclaration validée est celle ouverte
-        if (this.readerDeclaration?.id === d.id) this.fermerLecteur();
-        this.rafraichirStats();
-        this.jiraService.invalidateCache(d.id!);
-        this.showToast(`✅ Déclaration #${d.id} validée avec succès.`, 'success');
-      },
-      error: err => {
-        this.actionEnCours[d.id!] = false;
-        this.showToast('❌ ' + (err.error?.error || err.message), 'error');
+    this.confirmDialog.confirm(
+      'Valider la déclaration',
+      `Valider la déclaration #${d.id} — ${d.declarationType?.nom} ?`,
+      {
+        detail: `Période : ${d.periode}\nAgent : ${d.generePar ?? '-'}`,
+        confirmLabel: 'Valider',
+        type: 'info'
       }
+    ).then(confirmed => {
+      if (!confirmed) return;
+      this.actionEnCours[d.id!] = true;
+      this.validationService.validateDeclaration(d.id!).subscribe({
+        next: () => {
+          this.pending = this.pending.filter(x => x.id !== d.id);
+          this.actionEnCours[d.id!] = false;
+          if (this.readerDeclaration?.id === d.id) this.fermerLecteur();
+          this.rafraichirStats();
+          this.jiraService.invalidateCache(d.id!);
+          this.toast.success(`Déclaration #${d.id} validée avec succès.`);
+        },
+        error: err => {
+          this.actionEnCours[d.id!] = false;
+          this.toast.error(err.error?.error || err.message || 'Erreur lors de la validation');
+        }
+      });
     });
   }
 
@@ -295,11 +309,11 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
         if (this.readerDeclaration?.id === id) this.fermerLecteur();
         this.rafraichirStats();
         this.jiraService.invalidateCache(id);
-        this.showToast(`❌ Déclaration #${id} rejetée.`, 'error');
+        this.toast.error(`Déclaration #${id} rejetée.`);
       },
       error: err => {
         this.rejetEnCours = false;
-        this.showToast('Erreur : ' + (err.error?.error || err.message), 'error');
+        this.toast.error('Erreur : ' + (err.error?.error || err.message));
       }
     });
   }
@@ -320,7 +334,12 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
   async validerSelection(): Promise<void> {
     if (this.selectedIds.size === 0) return;
     const ids = [...this.selectedIds];
-    if (!confirm(`Valider les ${ids.length} déclaration(s) sélectionnée(s) ?`)) return;
+    const confirmed = await this.confirmDialog.confirm(
+      'Validation groupée',
+      `Valider les ${ids.length} déclaration(s) sélectionnée(s) ?`,
+      { confirmLabel: 'Valider tout', type: 'info' }
+    );
+    if (!confirmed) return;
     this.bulkLoading = true;
     let success = 0, errors = 0;
     for (const id of ids) {
@@ -334,12 +353,11 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
     }
     this.bulkLoading = false;
     this.rafraichirStats();
-    this.showToast(
-      errors === 0
-        ? `✅ ${success} déclaration(s) validée(s).`
-        : `✅ ${success} validée(s), ❌ ${errors} erreur(s).`,
-      errors === 0 ? 'success' : 'error'
-    );
+    if (errors === 0) {
+      this.toast.success(`${success} déclaration(s) validée(s) avec succès.`);
+    } else {
+      this.toast.warning(`${success} validée(s), ${errors} erreur(s).`);
+    }
   }
 
   // ── Modal Historique standalone ────────────────────────
@@ -378,7 +396,7 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
         a.download = d.nomFichier || `declaration_${d.id}`; a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: () => this.showToast('❌ Erreur téléchargement', 'error')
+      error: () => this.toast.error('Erreur téléchargement')
     });
   }
 
@@ -420,6 +438,10 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
   }
 
   private showToast(msg: string, type: 'success' | 'error' | 'info'): void {
+    // Delegates to ToastService — kept for any remaining template references
+    if (type === 'success') this.toast.success(msg);
+    else if (type === 'error') this.toast.error(msg);
+    else this.toast.info(msg);
     this.message = msg; this.messageType = type;
     setTimeout(() => this.message = '', 5000);
   }

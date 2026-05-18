@@ -1,11 +1,10 @@
-// src/app/manager-dashboard/manager-dashboard.component.ts
-// Tableau de bord analytique — redesign complet
-
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { DeclarationService, Declaration } from '../../services/Declaration.service';
 import { ValidationService, ValidationStats, ValidationLog } from '../../services/Validation.service';
 import { JiraService, JiraTicketResponse } from '../../services/jira.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
+import { ToastService } from '../../services/toast.service';
 
 export interface WeekData { label: string; ok: number; rej: number; enc: number; }
 export interface AgentStat { nom: string; initiales: string; total: number; tauxValidation: number; }
@@ -57,7 +56,9 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private declarationService: DeclarationService,
     private validationService: ValidationService,
-    public jiraService: JiraService
+    public jiraService: JiraService,
+    private confirmDialog: ConfirmDialogService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -100,7 +101,7 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
         });
       },
       error: (err) => {
-        this.showMessage('Erreur chargement : ' + err.message, 'error');
+        this.toast.error('Erreur chargement : ' + err.message);
         this.loading = false;
       }
     });
@@ -228,20 +229,30 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
 
   valider(d: Declaration): void {
     if (!d.id) return;
-    if (!confirm(`Valider la déclaration #${d.id} ?`)) return;
-    this.actionEnCours[d.id] = true;
-    this.validationService.validateDeclaration(d.id).subscribe({
-      next: (updated) => {
-        this.mettreAJourListe(updated);
-        this.actionEnCours[d.id!] = false;
-        this.rafraichirStats();
-        this.jiraService.invalidateCache(d.id!);
-        this.showMessage(`✅ Déclaration #${d.id} validée.`, 'success');
-      },
-      error: (err) => {
-        this.actionEnCours[d.id!] = false;
-        this.showMessage('❌ ' + (err.error?.error || err.message), 'error');
+    this.confirmDialog.confirm(
+      'Valider la déclaration',
+      `Valider la déclaration #${d.id} — ${d.declarationType?.nom} ?`,
+      {
+        detail: `Période : ${d.periode}\nAgent : ${d.generePar ?? '-'}`,
+        confirmLabel: 'Valider',
+        type: 'info'
       }
+    ).then(confirmed => {
+      if (!confirmed) return;
+      this.actionEnCours[d.id!] = true;
+      this.validationService.validateDeclaration(d.id!).subscribe({
+        next: (updated) => {
+          this.mettreAJourListe(updated);
+          this.actionEnCours[d.id!] = false;
+          this.rafraichirStats();
+          this.jiraService.invalidateCache(d.id!);
+          this.toast.success(`Déclaration #${d.id} validée avec succès.`);
+        },
+        error: (err) => {
+          this.actionEnCours[d.id!] = false;
+          this.toast.error(err.error?.error || err.message || 'Erreur lors de la validation');
+        }
+      });
     });
   }
 
@@ -272,11 +283,11 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
         this.fermerRejet();
         this.rafraichirStats();
         this.jiraService.invalidateCache(id);
-        this.showMessage(`❌ Déclaration #${id} rejetée.`, 'error');
+        this.toast.error(`Déclaration #${id} rejetée.`);
       },
       error: (err) => {
         this.rejetEnCours = false;
-        this.showMessage('Erreur : ' + (err.error?.error || err.message), 'error');
+        this.toast.error('Erreur : ' + (err.error?.error || err.message));
       }
     });
   }
@@ -313,7 +324,7 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
         a.download = d.nomFichier || `declaration_${d.id}`; a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: () => this.showMessage('❌ Erreur téléchargement', 'error')
+      error: () => this.toast.error('Erreur téléchargement')
     });
   }
 
@@ -394,6 +405,8 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
   }
 
   private showMessage(msg: string, type: 'success' | 'error'): void {
+    if (type === 'success') this.toast.success(msg);
+    else this.toast.error(msg);
     this.message = msg;
     this.messageType = type;
     setTimeout(() => this.message = '', 5000);

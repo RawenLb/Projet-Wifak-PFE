@@ -6,6 +6,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { KeycloakAdminService } from '../../services/keycloak-admin.service';
 import { NotificationService } from '../../services/notification.service';
 import { ValidationService } from '../../services/Validation.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { filter } from 'rxjs/operators';
 
 @Component({
@@ -29,7 +30,8 @@ export class ManagerLayoutComponent implements OnInit, OnDestroy {
     private router:            Router,
     private kcAdmin:           KeycloakAdminService,
     public  notifSvc:          NotificationService,
-    private validationService: ValidationService
+    private validationService: ValidationService,
+    private confirmDialog:     ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -95,7 +97,12 @@ export class ManagerLayoutComponent implements OnInit, OnDestroy {
   navigate(path: string): void { this.router.navigate([path]); }
 
   logout(): void {
-    if (!confirm('Voulez-vous vous déconnecter ?')) return;
-    this.kcAdmin.logout();
+    this.confirmDialog.confirm(
+      'Déconnexion',
+      'Voulez-vous vous déconnecter ?',
+      { confirmLabel: 'Déconnecter', type: 'warning' }
+    ).then(confirmed => {
+      if (confirmed) this.kcAdmin.logout();
+    });
   }
 }
