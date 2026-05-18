@@ -1,9 +1,7 @@
-// src/app/manager-reports/manager-reports.component.ts
-// US-19 — Rapport d'audit & traçabilité — redesign complet
-
 import { Component, OnInit } from '@angular/core';
 import { DeclarationService, Declaration } from '../../services/Declaration.service';
 import { ValidationService, ValidationStats, ValidationLog } from '../../services/Validation.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-manager-reports',
@@ -30,9 +28,13 @@ export class ManagerReportsComponent implements OnInit {
   message = '';
   messageType: 'success' | 'error' = 'success';
 
+  // Export state
+  exporting = false;
+
   constructor(
     private declarationService: DeclarationService,
-    private validationService: ValidationService
+    private validationService: ValidationService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -217,12 +219,91 @@ export class ManagerReportsComponent implements OnInit {
   }
 
   exporterPDF(): void {
-    this.showToast('Export PDF en cours de développement.', 'success');
+    if (this.exporting) return;
+    this.exporting = true;
+
+    try {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('fr-FR').replace(/\//g, '-');
+      const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+
+      // ── Feuille 1 : Déclarations ──────────────────────────────
+      const declHeaders = ['ID', 'Type (code)', 'Type (nom)', 'Période', 'Statut', 'Agent', 'Date génération', 'Date validation', 'Commentaire rejet'];
+      const declRows = this.filteredDeclarations.map(d => [
+        d.id ?? '',
+        d.declarationType?.code ?? '',
+        d.declarationType?.nom ?? '',
+        d.periode ?? '',
+        this.getStatutLabel(d.statut),
+        d.generePar ?? '',
+        d.dateGeneration ? new Date(d.dateGeneration).toLocaleString('fr-FR') : '',
+        d.dateValidation ? new Date(d.dateValidation).toLocaleString('fr-FR') : '',
+        (d.commentaireRejet ?? '').replace(/"/g, '""')
+      ]);
+
+      // ── Feuille 2 : Journal d'audit ───────────────────────────
+      const logHeaders = ['Action', 'Déclaration ID', 'Effectué par', 'Date', 'Commentaire'];
+      const logRows = this.filteredLogs.map(l => [
+        this.getActionLabel(l.action),
+        (l as any).declarationId ?? '',
+        l.effectuePar ?? '',
+        l.dateAction ? new Date(l.dateAction).toLocaleString('fr-FR') : '',
+        (l.commentaire ?? '').replace(/"/g, '""')
+      ]);
+
+      // ── Feuille 3 : Conformité par type ──────────────────────
+      const confHeaders = ['Type', 'Total', 'Validées', 'Taux (%)'];
+      const confRows = this.typeConformite.map(t => [t.code, t.total, t.validees, t.taux]);
+
+      // ── Assemblage CSV multi-section ──────────────────────────
+      const escape = (v: any) => {
+        const s = String(v ?? '');
+        return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s}"` : s;
+      };
+      const toCSV = (headers: string[], rows: any[][]) =>
+        [headers, ...rows].map(r => r.map(escape).join(',')).join('\n');
+
+      const separator = '\n\n';
+      const csvContent =
+        `RAPPORT D'AUDIT — WIFAK BANK BCT\nGénéré le : ${now.toLocaleString('fr-FR')}\n` +
+        `Période filtrée : ${this.periodeFiltre || 'Toutes'}\n` +
+        `Taux de conformité : ${this.tauxConformite}% | Taux de rejet : ${this.tauxRejet}%\n` +
+        separator +
+        `=== DÉCLARATIONS (${this.filteredDeclarations.length}) ===\n` +
+        toCSV(declHeaders, declRows) +
+        separator +
+        `=== JOURNAL D'AUDIT (${this.filteredLogs.length} événements) ===\n` +
+        toCSV(logHeaders, logRows) +
+        separator +
+        `=== CONFORMITÉ PAR TYPE ===\n` +
+        toCSV(confHeaders, confRows);
+
+      // ── Téléchargement ────────────────────────────────────────
+      const BOM = '\uFEFF'; // UTF-8 BOM pour Excel
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rapport-audit-wifak-${dateStr}-${timeStr}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      this.toast.success(`Rapport exporté — ${this.filteredDeclarations.length} déclarations, ${this.filteredLogs.length} événements.`);
+    } catch (err) {
+      this.toast.error('Erreur lors de l\'export. Veuillez réessayer.');
+      console.error('Export error:', err);
+    } finally {
+      this.exporting = false;
+    }
   }
 
   voirDeclaration(_d: Declaration): void {}
 
   private showToast(msg: string, type: 'success' | 'error'): void {
+    if (type === 'success') this.toast.success(msg);
+    else this.toast.error(msg);
     this.message = msg;
     this.messageType = type;
     setTimeout(() => this.message = '', 4000);

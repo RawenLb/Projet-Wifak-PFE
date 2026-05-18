@@ -441,3 +441,81 @@ input::placeholder { color: var(--g400) !important; font-weight: 300 !important;
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============================================================
+   RESET PASSWORD PAGE — login-reset-credentials.ftl
+   ============================================================ */
+
+/* Icon centré au-dessus du titre */
+.wf-reset-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #EBF0FD 0%, #dce6fb 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: var(--navy);
+  animation: fadeIn 0.4s ease 0.15s both;
+}
+
+/* Actions row : bouton retour + bouton submit côte à côte */
+.wf-reset-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  animation: fadeIn 0.4s ease 0.5s both;
+}
+
+.wf-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--g600) !important;
+  text-decoration: none !important;
+  transition: color var(--t);
+  white-space: nowrap;
+}
+.wf-back-link:hover {
+  color: var(--navy) !important;
+}
+.wf-back-link svg {
+  flex-shrink: 0;
+  transition: transform var(--t);
+}
+.wf-back-link:hover svg {
+  transform: translateX(-3px);
+}
+
+/* Override submit button width for reset page */
+.wf-reset-actions #kc-login {
+  width: auto;
+  padding: 13px 24px;
+  flex-shrink: 0;
+}
+
+/* Info box at the bottom */
+.wf-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 14px 16px;
+  background: #EFF6FF;
+  border-radius: var(--r);
+  border-left: 3px solid #3B82F6;
+  font-size: 12.5px;
+  color: #1D4ED8;
+  line-height: 1.5;
+  animation: fadeIn 0.4s ease 0.6s both;
+}
+.wf-info-box svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #3B82F6;
+}
