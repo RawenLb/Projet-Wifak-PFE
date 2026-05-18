@@ -12,6 +12,7 @@ import {
 import { DeclarationTypeService, DeclarationType } from '../../services/declaration-type.service';
 import { ValidationService } from '../../services/Validation.service';
 import { JiraService, JiraTicketResponse } from '../../services/jira.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 
 // Re-export local interface for template usage
 export interface FieldMappingLocal {
@@ -128,7 +129,8 @@ export class DeclarationManagementComponent implements OnInit {
     private declarationService:     DeclarationService,
     private declarationTypeService: DeclarationTypeService,
     private validationService:      ValidationService,
-    private jiraService:            JiraService
+    private jiraService:            JiraService,
+    private confirmDialog:          ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -423,8 +425,8 @@ export class DeclarationManagementComponent implements OnInit {
     this.sqlQuery = q.trim();
   }
 
-  clearSql(): void {
-    if (confirm('Effacer la requête SQL ?')) { this.sqlQuery = ''; this.sqlTestResult = null; this.sqlSaved = false; }
+  async clearSql(): Promise<void> {
+    if (await this.confirmDialog.confirm('Effacer la requête SQL', 'Effacer la requête SQL ?', { confirmLabel: 'Effacer', type: 'warning' })) { this.sqlQuery = ''; this.sqlTestResult = null; this.sqlSaved = false; }
   }
 
   testSql(): void {
@@ -617,8 +619,8 @@ export class DeclarationManagementComponent implements OnInit {
     return this.mappingAnalysis.sqlColumns.filter(c => !usedCols.has(c));
   }
 
-  resetMapping(): void {
-    if (!confirm('Réinitialiser tous les mappings ?')) return;
+  async resetMapping(): Promise<void> {
+    if (!await this.confirmDialog.confirm('Réinitialiser le mapping', 'Réinitialiser tous les mappings ?', { confirmLabel: 'Réinitialiser', type: 'warning' })) return;
     if (this.mappingAnalysis) this.buildFieldMappings(this.mappingAnalysis);
     this.selectedMappingIndex = null;
   }
@@ -1073,9 +1075,13 @@ export class DeclarationManagementComponent implements OnInit {
     window.URL.revokeObjectURL(url);
   }
 
-  submitForValidation(declaration: Declaration): void {
+  async submitForValidation(declaration: Declaration): Promise<void> {
     if (!declaration.id) return;
-    if (!confirm(`Soumettre pour validation ?\n\nType : ${declaration.declarationType?.nom}\nPériode : ${declaration.periode}`)) return;
+    if (!await this.confirmDialog.confirm(
+      'Soumettre pour validation',
+      'Soumettre cette déclaration pour validation ?',
+      { detail: `Type : ${declaration.declarationType?.nom}\nPériode : ${declaration.periode}`, confirmLabel: 'Soumettre', type: 'info' }
+    )) return;
     this.loadingAction = true;
     this.jiraTickets.delete(declaration.id);
     this.validationService.submitForValidation(declaration.id).subscribe({
@@ -1095,9 +1101,13 @@ export class DeclarationManagementComponent implements OnInit {
   canDownload(d: Declaration): boolean  { return !!d.id && !!d.nomFichier; }
   canSendToBCT(d: Declaration): boolean { return d.statut === 'VALIDEE'; }
 
-  sendToBCT(declaration: Declaration): void {
+  async sendToBCT(declaration: Declaration): Promise<void> {
     if (!declaration.id) return;
-    if (!confirm(`Envoyer à la BCT ?\n\nType : ${declaration.declarationType?.nom}\nPériode : ${declaration.periode}\n\n⚠️ Action irréversible.`)) return;
+    if (!await this.confirmDialog.confirm(
+      'Envoyer à la BCT',
+      'Envoyer cette déclaration à la BCT ?',
+      { detail: `Type : ${declaration.declarationType?.nom}\nPériode : ${declaration.periode}\n\n⚠️ Action irréversible.`, confirmLabel: 'Envoyer', type: 'danger' }
+    )) return;
     this.loadingAction = true;
     this.validationService.markAsSent(declaration.id).subscribe({
       next: () => {
