@@ -4,6 +4,7 @@ import feign.RequestInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.Authentication;
@@ -17,9 +18,15 @@ public class FeignConfig {
 
     private static final Logger log = LoggerFactory.getLogger(FeignConfig.class);
 
+    @Value("${app.internal-secret:wifak-internal-secret-2024}")
+    private String internalSecret;
+
     @Bean
     public RequestInterceptor jwtRequestInterceptor() {
         return requestTemplate -> {
+
+            // ✅ Toujours envoyer le secret inter-services
+            requestTemplate.header("X-Internal-Secret", internalSecret);
 
             // ── Stratégie 1 : depuis SecurityContextHolder (thread courant) ──
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -42,7 +49,7 @@ public class FeignConfig {
                 }
             }
 
-            log.warn("⚠️ Feign : aucun JWT disponible pour la requête vers declaration-service");
+            log.debug("ℹ️ Feign : appel inter-service via X-Internal-Secret uniquement");
         };
     }
 }

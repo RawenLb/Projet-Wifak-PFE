@@ -312,18 +312,47 @@ public class XmlGenerationService {
 
     public List<String> extractColumnsFromSql(String sqlQuery, LocalDate dateDebut, LocalDate dateFin) {
         try {
-            String wrappedSql = "SELECT * FROM (" +
-                    sqlQuery.replace(":dateDebut", "?").replace(":dateFin", "?") +
-                    ") AS _tmp_extract LIMIT 1";
-            List<Object> args = buildArgsInOrder(sqlQuery, dateDebut, dateFin);
-            List<Map<String, Object>> result = jdbcTemplate.queryForList(wrappedSql, args.toArray());
-            if (!result.isEmpty()) {
-                List<String> columns = new ArrayList<>(result.get(0).keySet());
-                log.info("✅ Colonnes extraites: {}", columns);
+            String dateDébutStr = dateDebut != null ? dateDebut.toString() : "2000-01-01";
+            String dateFinStr   = dateFin   != null ? dateFin.toString()   : "2099-12-31";
+
+            // ✅ Résoudre les paramètres nommés en valeurs littérales
+            String resolvedSql = sqlQuery
+                    .replace(":dateDebut", "'" + dateDébutStr + "'")
+                    .replace(":dateFin",   "'" + dateFinStr   + "'");
+
+            // ✅ Supprimer le ORDER BY final — MySQL interdit ORDER BY dans une sous-requête
+            // sans LIMIT, et LIMIT 0 avec ORDER BY cause aussi des erreurs selon la version
+            String sqlWithoutOrderBy = resolvedSql.replaceAll("(?i)\\s+ORDER\\s+BY\\s+[^)]+$", "").trim();
+
+            // Essai 1 : LIMIT 1 sans ORDER BY (le plus compatible)
+            String wrappedSql = "SELECT * FROM (" + sqlWithoutOrderBy + ") AS _tmp_extract LIMIT 1";
+            try {
+                List<Map<String, Object>> result = jdbcTemplate.queryForList(wrappedSql);
+                if (!result.isEmpty()) {
+                    List<String> columns = new ArrayList<>(result.get(0).keySet());
+                    log.info("✅ Colonnes extraites: {}", columns);
+                    return columns;
+                }
+            } catch (Exception e1) {
+                log.warn("⚠️ Tentative 1 échouée: {}", e1.getMessage());
+            }
+
+            // Essai 2 : plage de dates large pour garantir au moins une ligne
+            String wideSql = sqlQuery
+                    .replace(":dateDebut", "'2000-01-01'")
+                    .replace(":dateFin",   "'2099-12-31'")
+                    .replaceAll("(?i)\\s+ORDER\\s+BY\\s+[^)]+$", "").trim();
+            String wideFallback = "SELECT * FROM (" + wideSql + ") AS _tmp_extract LIMIT 1";
+            List<Map<String, Object>> wideResult = jdbcTemplate.queryForList(wideFallback);
+            if (!wideResult.isEmpty()) {
+                List<String> columns = new ArrayList<>(wideResult.get(0).keySet());
+                log.info("✅ Colonnes extraites (plage large): {}", columns);
                 return columns;
             }
+
             log.warn("⚠️ Aucune donnée — colonnes non disponibles");
             return new ArrayList<>();
+
         } catch (Exception e) {
             log.error("❌ Erreur extraction colonnes: {}", e.getMessage(), e);
             throw new RuntimeException("Impossible d'extraire les colonnes: " + e.getMessage(), e);

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!-- Déclaration BCT_01 — Risques de Change et de Taux -->
+  <xs:element name="DeclarationRisques">
+    <xs:complexType>
+      <xs:sequence>
+
+        <!-- En-tête (auto-générée par le backend) -->
+        <xs:element name="CodeDeclaration"  type="xs:string"/>
+        <xs:element name="Periode"          type="xs:string"/>
+        <xs:element name="DateDebut"        type="xs:date"/>
+        <xs:element name="DateFin"          type="xs:date"/>
+        <xs:element name="DateGeneration"   type="xs:date"/>
+
+        <!-- Lignes d'exposition -->
+        <xs:element name="Expositions">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Exposition" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="IdClient"          type="xs:string"/>
+                    <xs:element name="NomClient"         type="xs:string"/>
+                    <xs:element name="TypeRisque"        type="xs:string"/>
+                    <xs:element name="TypeTaux"          type="xs:string"/>
+                    <xs:element name="Devise"            type="xs:string"/>
+                    <xs:element name="Maturite"          type="xs:string"/>
+                    <xs:element name="MontantEncours"    type="xs:decimal"/>
+                    <xs:element name="TauxContractuel"   type="xs:decimal"/>
+                    <xs:element name="TauxReference"     type="xs:decimal"/>
+                    <xs:element name="EcartTaux"         type="xs:decimal" minOccurs="0"/>
+                    <xs:element name="DateOperation"     type="xs:date"/>
+                    <xs:element name="DateEcheance"      type="xs:date"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

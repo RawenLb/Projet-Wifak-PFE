@@ -32,8 +32,9 @@ public class InternalSecretFilter extends OncePerRequestFilter {
 
         String secret = request.getHeader("X-Internal-Secret");
 
-        if (internalSecret.equals(secret)
-                && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (internalSecret.equals(secret)) {
+            // ✅ Toujours écraser l'auth avec ROLE_INTERNAL si le secret est valide
+            // (même si un JWT est aussi présent dans la requête)
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(
                             "internal-service",
