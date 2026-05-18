@@ -519,3 +519,82 @@ input::placeholder { color: var(--g400) !important; font-weight: 300 !important;
   margin-top: 1px;
   color: #3B82F6;
 }
+
+/* ============================================================
+   UPDATE PASSWORD PAGE — login-update-password.ftl
+   ============================================================ */
+
+/* Strength bar */
+.wf-strength-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -6px 0 18px;
+  animation: fadeIn 0.4s ease 0.45s both;
+}
+
+.wf-strength-bar {
+  flex: 1;
+  height: 5px;
+  background: var(--g200);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.wf-strength-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 99px;
+  transition: width 0.35s ease, background 0.35s ease;
+}
+
+.wf-strength-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--g400);
+  white-space: nowrap;
+  min-width: 80px;
+  text-align: right;
+  transition: color 0.3s;
+}
+
+/* Password rules checklist */
+.wf-rules {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  margin-bottom: 24px;
+  animation: fadeIn 0.4s ease 0.48s both;
+}
+
+.wf-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--g400);
+  transition: color 0.2s;
+}
+
+.wf-rule-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--g200);
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.wf-rule-ok {
+  color: #16a34a;
+}
+.wf-rule-ok .wf-rule-dot {
+  background: #22c55e;
+}
+
+.wf-rule-fail {
+  color: var(--red);
+}
+.wf-rule-fail .wf-rule-dot {
+  background: var(--red);
+}
