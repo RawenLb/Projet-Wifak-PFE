@@ -13,6 +13,7 @@ import { DeclarationTypeService, DeclarationType } from '../../services/declarat
 import { ValidationService } from '../../services/Validation.service';
 import { JiraService, JiraTicketResponse } from '../../services/jira.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
+import { ToastService } from '../../services/toast.service';
 
 // Re-export local interface for template usage
 export interface FieldMappingLocal {
@@ -130,7 +131,8 @@ export class DeclarationManagementComponent implements OnInit {
     private declarationTypeService: DeclarationTypeService,
     private validationService:      ValidationService,
     private jiraService:            JiraService,
-    private confirmDialog:          ConfirmDialogService
+    private confirmDialog:          ConfirmDialogService,
+    private toast:                  ToastService
   ) {}
 
   ngOnInit(): void {
@@ -333,7 +335,7 @@ export class DeclarationManagementComponent implements OnInit {
           },
           error: (err: any) => {
             this.loadingAction = false;
-            alert('Erreur upload XSD : ' + (err.error?.error || err.message));
+            this.toast.error('Erreur upload XSD : ' + (err.error?.error || err.message));
           }
         });
         return;
@@ -383,7 +385,7 @@ export class DeclarationManagementComponent implements OnInit {
   onXsdFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    if (!file.name.toLowerCase().endsWith('.xsd')) { alert('Fichier .xsd uniquement'); return; }
+    if (!file.name.toLowerCase().endsWith('.xsd')) { this.toast.warning('Fichier .xsd uniquement'); return; }
     this.xsdFile     = file;
     this.xsdUploaded = false; // Nouveau fichier → reset flag
     const reader = new FileReader();
@@ -400,7 +402,7 @@ export class DeclarationManagementComponent implements OnInit {
     event.preventDefault();
     this.isDraggingXsd = false;
     const file = event.dataTransfer?.files[0];
-    if (!file?.name.toLowerCase().endsWith('.xsd')) { alert('Fichier .xsd uniquement'); return; }
+    if (!file?.name.toLowerCase().endsWith('.xsd')) { this.toast.warning('Fichier .xsd uniquement'); return; }
     this.xsdFile     = file;
     this.xsdUploaded = false;
     const reader = new FileReader();
@@ -430,9 +432,9 @@ export class DeclarationManagementComponent implements OnInit {
   }
 
   testSql(): void {
-    if (!this.sqlQuery?.trim())                   { alert('Saisissez une requête SQL'); return; }
-    if (!this.testDateDebut || !this.testDateFin)  { alert('Saisissez les dates de test'); return; }
-    if (!this.generateRequest.declarationTypeId)   { alert('Sélectionnez un type'); return; }
+    if (!this.sqlQuery?.trim())                   { this.toast.warning('Saisissez une requête SQL'); return; }
+    if (!this.testDateDebut || !this.testDateFin)  { this.toast.warning('Saisissez les dates de test'); return; }
+    if (!this.generateRequest.declarationTypeId)   { this.toast.warning('Sélectionnez un type'); return; }
 
     this.testingSQL    = true;
     this.sqlTestResult = null;
@@ -477,11 +479,11 @@ export class DeclarationManagementComponent implements OnInit {
     this.formSubmitted = true;
 
     if (!this.sqlQuery?.trim()) {
-      alert('La requête SQL est obligatoire');
+      this.toast.warning('La requête SQL est obligatoire');
       return;
     }
     if (!this.sqlQuery.trim().toUpperCase().startsWith('SELECT')) {
-      alert('La requête doit commencer par SELECT');
+      this.toast.warning('La requête doit commencer par SELECT');
       return;
     }
 
@@ -632,11 +634,11 @@ export class DeclarationManagementComponent implements OnInit {
   generateDeclaration(): void {
     this.formSubmitted = true;
     const fmt = this.selectedDeclarationType?.format;
-    if (!this.generateRequest.declarationTypeId) { alert('Type obligatoire'); return; }
-    if (!this.generateRequest.periode)            { alert('Période obligatoire'); return; }
-    if (!this.sqlQuery?.trim())                   { alert('Requête SQL obligatoire'); return; }
+    if (!this.generateRequest.declarationTypeId) { this.toast.warning('Type obligatoire'); return; }
+    if (!this.generateRequest.periode)            { this.toast.warning('Période obligatoire'); return; }
+    if (!this.sqlQuery?.trim())                   { this.toast.warning('Requête SQL obligatoire'); return; }
     if (!this.sqlQuery.trim().toUpperCase().startsWith('SELECT')) {
-      alert('La requête doit commencer par SELECT'); return;
+      this.toast.warning('La requête doit commencer par SELECT'); return;
     }
 
     this.loadingAction = true;
@@ -647,19 +649,19 @@ export class DeclarationManagementComponent implements OnInit {
           next: () => {
             this.declarationService.generateDeclaration(this.generateRequest).subscribe({
               next: (_saved) => {
-                alert('Déclaration générée avec succès !');
+                this.toast.success('Déclaration générée avec succès !');
                 this.closeGenerateModal();
                 this.loadingAction = false;
                 setTimeout(() => this.loadDeclarations(), 2500);
               },
               error: (err) => {
-                alert('Erreur génération : ' + (err.error?.message || err.message || 'Erreur inconnue'));
+                this.toast.error('Erreur génération : ' + (err.error?.message || err.message || 'Erreur inconnue'));
                 this.loadingAction = false;
               }
             });
           },
           error: (err) => {
-            alert('Erreur sauvegarde SQL : ' + (err.error?.error || err.message));
+            this.toast.error('Erreur sauvegarde SQL : ' + (err.error?.error || err.message));
             this.loadingAction = false;
           }
         });
@@ -670,7 +672,7 @@ export class DeclarationManagementComponent implements OnInit {
       this.declarationTypeService.uploadXsd(this.generateRequest.declarationTypeId, this.xsdFile)
         .subscribe({
           next:  () => { this.xsdUploaded = true; doGenerate(); },
-          error: (err) => { alert('Erreur upload XSD : ' + (err.error?.error || err.message)); this.loadingAction = false; }
+          error: (err) => { this.toast.error('Erreur upload XSD : ' + (err.error?.error || err.message)); this.loadingAction = false; }
         });
     } else {
       doGenerate();
@@ -693,12 +695,7 @@ export class DeclarationManagementComponent implements OnInit {
     // ── Validation ────────────────────────────────────────────────
     const missingRequired = this.fieldMappings.filter(m => m.required && m.source === 'NONE');
     if (missingRequired.length > 0) {
-      alert(
-        `⚠️ ${missingRequired.length} champ(s) obligatoire(s) sans valeur :\n` +
-        missingRequired.map(m => `• ${m.xsdFieldName}`).join('\n') +
-        '\n\nAssignez une colonne SQL ou une valeur statique.'
-      );
-      // Sélectionner automatiquement le premier champ problématique
+      this.toast.warning(`${missingRequired.length} champ(s) obligatoire(s) sans valeur : ${missingRequired.map(m => m.xsdFieldName).join(', ')}`);
       const idx = this.fieldMappings.findIndex(m => m.required && m.source === 'NONE');
       if (idx !== -1) this.selectedMappingIndex = idx;
       return;
@@ -706,11 +703,7 @@ export class DeclarationManagementComponent implements OnInit {
 
     const sqlWithoutCol = this.fieldMappings.filter(m => m.source === 'SQL' && !m.sqlColumn.trim());
     if (sqlWithoutCol.length > 0) {
-      alert(
-        `⚠️ ${sqlWithoutCol.length} champ(s) en mode "SQL" sans colonne sélectionnée :\n` +
-        sqlWithoutCol.map(m => `• ${m.xsdFieldName}`).join('\n') +
-        '\n\nSélectionnez une colonne ou changez le mode.'
-      );
+      this.toast.warning(`${sqlWithoutCol.length} champ(s) SQL sans colonne : ${sqlWithoutCol.map(m => m.xsdFieldName).join(', ')}`);
       const idx = this.fieldMappings.findIndex(m => m.source === 'SQL' && !m.sqlColumn.trim());
       if (idx !== -1) this.selectedMappingIndex = idx;
       return;
@@ -720,10 +713,7 @@ export class DeclarationManagementComponent implements OnInit {
       m => m.required && m.source === 'STATIC' && !m.staticValue.trim()
     );
     if (staticWithoutValue.length > 0) {
-      alert(
-        `⚠️ ${staticWithoutValue.length} champ(s) statique(s) obligatoire(s) sans valeur :\n` +
-        staticWithoutValue.map(m => `• ${m.xsdFieldName}`).join('\n')
-      );
+      this.toast.warning(`${staticWithoutValue.length} champ(s) statique(s) sans valeur : ${staticWithoutValue.map(m => m.xsdFieldName).join(', ')}`);
       const idx = this.fieldMappings.findIndex(
         m => m.required && m.source === 'STATIC' && !m.staticValue.trim()
       );
@@ -743,13 +733,13 @@ export class DeclarationManagementComponent implements OnInit {
         mappings:          this.fieldMappings as FieldMapping[]
       }).subscribe({
         next: (_saved: any) => {
-          alert('✅ Déclaration XML générée avec succès !');
+          this.toast.success('Déclaration XML générée avec succès !');
           this.closeGenerateModal();
           this.loadingAction = false;
           setTimeout(() => this.loadDeclarations(), 2500);
         },
         error: (err: any) => {
-          alert('❌ Erreur génération : ' + (err.error?.error || err.message));
+          this.toast.error('Erreur génération : ' + (err.error?.error || err.message));
           this.loadingAction = false;
         }
       });
@@ -762,7 +752,7 @@ export class DeclarationManagementComponent implements OnInit {
       ).subscribe({
         next:  () => { this.sqlSaved = true; doGenerate(); },
         error: (err: any) => {
-          alert('Erreur sauvegarde SQL : ' + (err.error?.error || err.message));
+          this.toast.error('Erreur sauvegarde SQL : ' + (err.error?.error || err.message));
           this.loadingAction = false;
         }
       });
@@ -826,13 +816,13 @@ export class DeclarationManagementComponent implements OnInit {
       .updateDeclaration(this.selectedDeclaration.id, this.editForm)
       .subscribe({
         next: () => {
-          alert('Déclaration mise à jour avec succès !');
+          this.toast.success('Déclaration mise à jour avec succès !');
           this.closeEditModal();
           this.loadDeclarations();
           this.loadingAction = false;
         },
         error: (err) => {
-          alert('Erreur : ' + (err.error?.message || err.message || 'Erreur inconnue'));
+          this.toast.error('Erreur : ' + (err.error?.message || err.message || 'Erreur inconnue'));
           this.loadingAction = false;
         }
       });
@@ -872,7 +862,7 @@ export class DeclarationManagementComponent implements OnInit {
         this.loadingAction = false;
       },
       error: (err) => {
-        alert('Erreur suppression : ' + (err.error?.message || err.message));
+        this.toast.error('Erreur suppression : ' + (err.error?.message || err.message));
         this.loadingAction = false;
       }
     });
@@ -903,11 +893,11 @@ export class DeclarationManagementComponent implements OnInit {
   // Appel à la soumission avec le commentaire
   this.validationService.submitForValidation(updated.id!, correctionComment).subscribe({
     next: () => {
-      alert('✅ Déclaration corrigée et soumise pour validation !');
+      this.toast.success('Déclaration corrigée et soumise pour validation !');
       this.loadDeclarations();
     },
     error: (err) => {
-      alert('⚠️ Correction OK mais erreur soumission.\n' + (err.error?.message || err.message));
+      this.toast.warning('Correction OK mais erreur soumission : ' + (err.error?.message || err.message));
       this.loadDeclarations();
     }
   });
@@ -923,7 +913,7 @@ export class DeclarationManagementComponent implements OnInit {
   onCorrectXsdFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    if (!file.name.toLowerCase().endsWith('.xsd')) { alert('Fichier .xsd uniquement'); return; }
+    if (!file.name.toLowerCase().endsWith('.xsd')) { this.toast.warning('Fichier .xsd uniquement'); return; }
     this.correctXsdFile = file;
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -939,7 +929,7 @@ export class DeclarationManagementComponent implements OnInit {
     event.preventDefault();
     this.correctIsDraggingXsd = false;
     const file = event.dataTransfer?.files[0];
-    if (!file?.name.toLowerCase().endsWith('.xsd')) { alert('Fichier .xsd uniquement'); return; }
+    if (!file?.name.toLowerCase().endsWith('.xsd')) { this.toast.warning('Fichier .xsd uniquement'); return; }
     this.correctXsdFile = file;
     const reader = new FileReader();
     reader.onload = (e) => { this.correctXsdPreviewContent = (e.target?.result as string).substring(0, 600); };
@@ -947,8 +937,8 @@ export class DeclarationManagementComponent implements OnInit {
   }
 
   testCorrectSql(): void {
-    if (!this.correctSqlQuery?.trim())                          { alert('Saisissez une requête SQL'); return; }
-    if (!this.correctTestDateDebut || !this.correctTestDateFin) { alert('Saisissez les dates de test'); return; }
+    if (!this.correctSqlQuery?.trim())                          { this.toast.warning('Saisissez une requête SQL'); return; }
+    if (!this.correctTestDateDebut || !this.correctTestDateFin) { this.toast.warning('Saisissez les dates de test'); return; }
     if (!this.selectedDeclaration?.declarationType?.id)         return;
 
     this.correctTestingSQL    = true;
@@ -985,7 +975,7 @@ export class DeclarationManagementComponent implements OnInit {
 
   saveAndResubmit(): void {
     this.formSubmitted = true;
-    if (!this.correctSqlQuery?.trim()) { alert('La requête SQL est obligatoire'); return; }
+    if (!this.correctSqlQuery?.trim()) { this.toast.warning('La requête SQL est obligatoire'); return; }
     if (!this.selectedDeclaration?.id) return;
     if (!this.selectedDeclaration?.declarationType?.id) return;
 
@@ -1007,13 +997,13 @@ export class DeclarationManagementComponent implements OnInit {
               this.jiraTickets.delete(updated.id!);
               this.validationService.submitForValidation(updated.id!).subscribe({
                 next: () => {
-                  alert('✅ Déclaration corrigée et soumise pour validation !');
+                  this.toast.success('Déclaration corrigée et soumise pour validation !');
                   this.closeCorrectModal();
                   this.loadDeclarations();
                   this.loadingAction = false;
                 },
                 error: (err) => {
-                  alert('⚠️ Correction OK mais erreur soumission.\n' + (err.error?.message || err.message));
+                  this.toast.warning('Correction OK mais erreur soumission : ' + (err.error?.message || err.message));
                   this.closeCorrectModal();
                   this.loadDeclarations();
                   this.loadingAction = false;
@@ -1021,13 +1011,13 @@ export class DeclarationManagementComponent implements OnInit {
               });
             },
             error: (err) => {
-              alert('❌ Erreur régénération : ' + (err.error?.message || err.message));
+              this.toast.error('Erreur régénération : ' + (err.error?.message || err.message));
               this.loadingAction = false;
             }
           });
         },
         error: (err) => {
-          alert('❌ Erreur sauvegarde SQL : ' + (err.error?.error || err.message));
+          this.toast.error('Erreur sauvegarde SQL : ' + (err.error?.error || err.message));
           this.loadingAction = false;
         }
       });
@@ -1037,7 +1027,7 @@ export class DeclarationManagementComponent implements OnInit {
       this.declarationTypeService.uploadXsd(typeId, this.correctXsdFile).subscribe({
         next:  () => doCorrectAndResubmit(),
         error: (err) => {
-          alert('❌ Erreur upload XSD : ' + (err.error?.error || err.message));
+          this.toast.error('Erreur upload XSD : ' + (err.error?.error || err.message));
           this.loadingAction = false;
         }
       });
@@ -1060,7 +1050,7 @@ export class DeclarationManagementComponent implements OnInit {
     }
     this.declarationService.downloadDeclaration(declaration.id).subscribe({
       next:  (blob) => this.triggerDownload(blob, declaration.nomFichier || 'declaration'),
-      error: ()     => alert('Erreur lors du téléchargement')
+      error: ()     => this.toast.error('Erreur lors du téléchargement')
     });
   }
 
@@ -1086,12 +1076,12 @@ export class DeclarationManagementComponent implements OnInit {
     this.jiraTickets.delete(declaration.id);
     this.validationService.submitForValidation(declaration.id).subscribe({
       next: () => {
-        alert('Soumis pour validation !');
+        this.toast.success('Soumis pour validation !');
         this.loadDeclarations();
         this.loadingAction = false;
       },
       error: (err) => {
-        alert('Erreur : ' + (err.error?.message || err.message));
+        this.toast.error('Erreur : ' + (err.error?.message || err.message));
         this.loadingAction = false;
       }
     });
@@ -1111,13 +1101,13 @@ export class DeclarationManagementComponent implements OnInit {
     this.loadingAction = true;
     this.validationService.markAsSent(declaration.id).subscribe({
       next: () => {
-        alert(`✅ Déclaration ${declaration.declarationType?.code} envoyée à la BCT !`);
+        this.toast.success(`Déclaration ${declaration.declarationType?.code} envoyée à la BCT !`);
         this.jiraTickets.delete(declaration.id!);
         this.loadDeclarations();
         this.loadingAction = false;
       },
       error: (err) => {
-        alert('Erreur : ' + (err.error?.message || err.message));
+        this.toast.error('Erreur : ' + (err.error?.message || err.message));
         this.loadingAction = false;
       }
     });

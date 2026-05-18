@@ -2,6 +2,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DeclarationTypeService, DeclarationType, CreateDeclarationTypeRequest } from '../../services/declaration-type.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-declaration-type-management',
@@ -53,7 +55,9 @@ export class DeclarationTypeManagementComponent implements OnInit {
 
   constructor(
     private declarationTypeService: DeclarationTypeService,
-    private router: Router
+    private router: Router,
+    private confirmDialog: ConfirmDialogService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -138,7 +142,7 @@ export class DeclarationTypeManagementComponent implements OnInit {
       error: (err) => {
         console.error('Erreur chargement types:', err);
         this.loading = false;
-        alert('Erreur lors du chargement des types de déclaration.');
+        this.toast.error('Erreur lors du chargement des types de déclaration.');
       }
     });
   }
@@ -194,14 +198,14 @@ export class DeclarationTypeManagementComponent implements OnInit {
     this.loading = true;
     this.declarationTypeService.create(this.newDeclarationType).subscribe({
       next: () => {
-        alert('Type de déclaration créé avec succès !');
+        this.toast.success('Type de déclaration créé avec succès !');
         this.closeCreateModal();
         this.loadDeclarationTypes();
         this.loading = false;
       },
       error: (err) => {
         const msg = err.error?.message || err.message || 'Erreur inconnue';
-        alert('Erreur lors de la création:\n\n' + msg);
+        this.toast.error('Erreur lors de la création: ' + msg);
         this.loading = false;
       }
     });
@@ -221,20 +225,20 @@ export class DeclarationTypeManagementComponent implements OnInit {
   saveDeclarationType(): void {
     if (!this.editDeclarationType.id) return;
     if (!this.editDeclarationType.nom || !this.editDeclarationType.dateLimite) {
-      alert('Veuillez remplir tous les champs obligatoires');
+      this.toast.warning('Veuillez remplir tous les champs obligatoires');
       return;
     }
     this.loading = true;
     this.declarationTypeService.update(this.editDeclarationType.id, this.editDeclarationType).subscribe({
       next: () => {
-        alert('Type de déclaration modifié avec succès !');
+        this.toast.success('Type de déclaration modifié avec succès !');
         this.closeEditModal();
         this.loadDeclarationTypes();
         this.loading = false;
       },
       error: (err) => {
         const msg = err.error?.message || err.message || 'Erreur inconnue';
-        alert('Erreur lors de la modification:\n\n' + msg);
+        this.toast.error('Erreur lors de la modification: ' + msg);
         this.loading = false;
       }
     });
@@ -244,19 +248,25 @@ export class DeclarationTypeManagementComponent implements OnInit {
 
   deleteDeclarationType(type: DeclarationType): void {
     if (!type.id) return;
-    if (!confirm(`Supprimer le type "${type.nom}" ?\n\nCette action est irréversible !`)) return;
-    this.loading = true;
-    this.declarationTypeService.delete(type.id).subscribe({
-      next: () => {
-        alert('Type supprimé avec succès !');
-        this.loadDeclarationTypes();
-        this.loading = false;
-      },
-      error: (err) => {
-        const msg = err.error?.message || err.message;
-        alert('Erreur lors de la suppression:\n\n' + msg);
-        this.loading = false;
-      }
+    this.confirmDialog.confirm(
+      'Supprimer le type',
+      `Supprimer le type "${type.nom}" ?`,
+      { detail: 'Cette action est irréversible !', confirmLabel: 'Supprimer', type: 'danger' }
+    ).then(confirmed => {
+      if (!confirmed) return;
+      this.loading = true;
+      this.declarationTypeService.delete(type.id!).subscribe({
+        next: () => {
+          this.toast.success('Type supprimé avec succès !');
+          this.loadDeclarationTypes();
+          this.loading = false;
+        },
+        error: (err) => {
+          const msg = err.error?.message || err.message;
+          this.toast.error('Erreur lors de la suppression: ' + msg);
+          this.loading = false;
+        }
+      });
     });
   }
 
@@ -265,18 +275,24 @@ export class DeclarationTypeManagementComponent implements OnInit {
   toggleStatus(type: DeclarationType): void {
     if (!type.id) return;
     const action = type.actif ? 'désactiver' : 'activer';
-    if (!confirm(`Voulez-vous ${action} le type "${type.nom}" ?`)) return;
-    this.loading = true;
-    this.declarationTypeService.toggleStatus(type.id).subscribe({
-      next: () => {
-        alert(`Type ${action} avec succès !`);
-        this.loadDeclarationTypes();
-        this.loading = false;
-      },
-      error: () => {
-        alert(`Erreur lors de l'opération`);
-        this.loading = false;
-      }
+    this.confirmDialog.confirm(
+      `${type.actif ? 'Désactiver' : 'Activer'} le type`,
+      `Voulez-vous ${action} le type "${type.nom}" ?`,
+      { confirmLabel: type.actif ? 'Désactiver' : 'Activer', type: 'warning' }
+    ).then(confirmed => {
+      if (!confirmed) return;
+      this.loading = true;
+      this.declarationTypeService.toggleStatus(type.id!).subscribe({
+        next: () => {
+          this.toast.success(`Type ${action} avec succès !`);
+          this.loadDeclarationTypes();
+          this.loading = false;
+        },
+        error: () => {
+          this.toast.error(`Erreur lors de l'opération`);
+          this.loading = false;
+        }
+      });
     });
   }
 

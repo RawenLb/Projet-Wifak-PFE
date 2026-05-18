@@ -1,6 +1,8 @@
 
 import { Component, OnInit } from '@angular/core';
 import { KeycloakAdminService, KeycloakUser, CreateUserRequest, RoleDTO } from '../../services/keycloak-admin.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-user-management',
@@ -48,7 +50,11 @@ export class UserManagementComponent implements OnInit {
   selectedRoles: string[] = [];
   userCurrentRoles: RoleDTO[] = [];
 
-  constructor(private kcAdmin: KeycloakAdminService) {}
+  constructor(
+    private kcAdmin: KeycloakAdminService,
+    private confirmDialog: ConfirmDialogService,
+    private toast: ToastService
+  ) {}
 
   ngOnInit(): void {
     this.loadUsers();
@@ -191,7 +197,7 @@ export class UserManagementComponent implements OnInit {
       error: (error) => {
         console.error('Erreur chargement utilisateurs:', error);
         this.loading = false;
-        alert('Erreur lors du chargement des utilisateurs.');
+        this.toast.error('Erreur lors du chargement des utilisateurs.');
       }
     });
   }
@@ -243,24 +249,24 @@ export class UserManagementComponent implements OnInit {
   createUser(): void {
     this.formSubmitted = true;
     if (!this.newUser.username || !this.newUser.email) {
-      alert("Veuillez remplir tous les champs obligatoires (nom d'utilisateur, email)");
+      this.toast.warning("Veuillez remplir tous les champs obligatoires (nom d'utilisateur, email)");
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(this.newUser.email)) {
-      alert('Veuillez entrer une adresse email valide');
+      this.toast.warning('Veuillez entrer une adresse email valide');
       return;
     }
     this.loading = true;
     this.kcAdmin.createUser(this.newUser).subscribe({
       next: () => {
-        alert(`Compte créé avec succès !\n\nUn email d'activation a été envoyé à ${this.newUser.email}.`);
+        this.toast.success(`Compte créé avec succès ! Un email d'activation a été envoyé à ${this.newUser.email}.`);
         this.closeCreateModal();
         this.loadUsers();
         this.loading = false;
       },
       error: (error) => {
-        alert('Erreur lors de la création: ' + (error.error?.error || error.message));
+        this.toast.error('Erreur lors de la création: ' + (error.error?.error || error.message));
         this.loading = false;
       }
     });
@@ -295,21 +301,21 @@ export class UserManagementComponent implements OnInit {
     if (this.editUser.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(this.editUser.email)) {
-        alert('Veuillez entrer une adresse email valide');
+        this.toast.warning('Veuillez entrer une adresse email valide');
         return;
       }
     }
     this.loading = true;
     this.kcAdmin.updateUser(this.editUser.id, this.editUser).subscribe({
       next: () => {
-        alert('Utilisateur modifié avec succès !');
+        this.toast.success('Utilisateur modifié avec succès !');
         this.closeEditModal();
         this.loadUsers();
         this.loading = false;
       },
       error: (error) => {
         console.error('Erreur modification:', error);
-        alert('Erreur lors de la modification');
+        this.toast.error('Erreur lors de la modification');
         this.loading = false;
       }
     });
@@ -319,19 +325,25 @@ export class UserManagementComponent implements OnInit {
 
   deleteUser(user: KeycloakUser): void {
     if (!user.id) return;
-    if (!confirm(`Supprimer l'utilisateur "${user.username}" ?\n\nCette action est irréversible !`)) return;
-    this.loading = true;
-    this.kcAdmin.deleteUser(user.id).subscribe({
-      next: () => {
-        alert('Utilisateur supprimé avec succès !');
-        this.loadUsers();
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Erreur suppression:', error);
-        alert('Erreur lors de la suppression');
-        this.loading = false;
-      }
+    this.confirmDialog.confirm(
+      'Supprimer l\'utilisateur',
+      `Supprimer l'utilisateur "${user.username}" ?`,
+      { detail: 'Cette action est irréversible !', confirmLabel: 'Supprimer', type: 'danger' }
+    ).then(confirmed => {
+      if (!confirmed) return;
+      this.loading = true;
+      this.kcAdmin.deleteUser(user.id!).subscribe({
+        next: () => {
+          this.toast.success('Utilisateur supprimé avec succès !');
+          this.loadUsers();
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Erreur suppression:', error);
+          this.toast.error('Erreur lors de la suppression');
+          this.loading = false;
+        }
+      });
     });
   }
 
@@ -341,18 +353,24 @@ export class UserManagementComponent implements OnInit {
     if (!user.id) return;
     const newStatus = !user.enabled;
     const action = newStatus ? 'activer' : 'désactiver';
-    if (!confirm(`Voulez-vous ${action} l'utilisateur "${user.username}" ?`)) return;
-    this.loading = true;
-    this.kcAdmin.toggleUserStatus(user.id, newStatus).subscribe({
-      next: () => {
-        alert(`Utilisateur ${action} avec succès !`);
-        this.loadUsers();
-        this.loading = false;
-      },
-      error: () => {
-        alert("Erreur lors de l'opération");
-        this.loading = false;
-      }
+    this.confirmDialog.confirm(
+      `${newStatus ? 'Activer' : 'Désactiver'} l'utilisateur`,
+      `Voulez-vous ${action} l'utilisateur "${user.username}" ?`,
+      { confirmLabel: newStatus ? 'Activer' : 'Désactiver', type: 'warning' }
+    ).then(confirmed => {
+      if (!confirmed) return;
+      this.loading = true;
+      this.kcAdmin.toggleUserStatus(user.id!, newStatus).subscribe({
+        next: () => {
+          this.toast.success(`Utilisateur ${action} avec succès !`);
+          this.loadUsers();
+          this.loading = false;
+        },
+        error: () => {
+          this.toast.error("Erreur lors de l'opération");
+          this.loading = false;
+        }
+      });
     });
   }
 
@@ -383,13 +401,13 @@ export class UserManagementComponent implements OnInit {
     this.loading = true;
     this.kcAdmin.assignRoles(this.selectedUser.id, [roleName]).subscribe({
       next: () => {
-        alert(`Rôle "${roleName}" assigné avec succès !`);
+        this.toast.success(`Rôle "${roleName}" assigné avec succès !`);
         this.openRoleModal(this.selectedUser!);
         this.loadUsers();
         this.loading = false;
       },
       error: () => {
-        alert("Erreur lors de l'assignation du rôle");
+        this.toast.error("Erreur lors de l'assignation du rôle");
         this.loading = false;
       }
     });
@@ -397,19 +415,25 @@ export class UserManagementComponent implements OnInit {
 
   removeRole(roleName: string): void {
     if (!this.selectedUser?.id) return;
-    if (!confirm(`Retirer le rôle "${roleName}" de "${this.selectedUser.username}" ?`)) return;
-    this.loading = true;
-    this.kcAdmin.removeRoles(this.selectedUser.id, [roleName]).subscribe({
-      next: () => {
-        alert(`Rôle "${roleName}" retiré avec succès !`);
-        this.openRoleModal(this.selectedUser!);
-        this.loadUsers();
-        this.loading = false;
-      },
-      error: () => {
-        alert('Erreur lors du retrait du rôle');
-        this.loading = false;
-      }
+    this.confirmDialog.confirm(
+      'Retirer le rôle',
+      `Retirer le rôle "${roleName}" de "${this.selectedUser.username}" ?`,
+      { confirmLabel: 'Retirer', type: 'warning' }
+    ).then(confirmed => {
+      if (!confirmed) return;
+      this.loading = true;
+      this.kcAdmin.removeRoles(this.selectedUser!.id!, [roleName]).subscribe({
+        next: () => {
+          this.toast.success(`Rôle "${roleName}" retiré avec succès !`);
+          this.openRoleModal(this.selectedUser!);
+          this.loadUsers();
+          this.loading = false;
+        },
+        error: () => {
+          this.toast.error('Erreur lors du retrait du rôle');
+          this.loading = false;
+        }
+      });
     });
   }
 
@@ -417,17 +441,23 @@ export class UserManagementComponent implements OnInit {
 
   resetPassword(user: KeycloakUser): void {
     if (!user.id) return;
-    if (!confirm(`Renvoyer l'email d'activation à ${user.email} ?`)) return;
-    this.loading = true;
-    this.kcAdmin.sendPasswordResetEmail(user.id).subscribe({
-      next: () => {
-        alert(`Email d'activation renvoyé à ${user.email} !`);
-        this.loading = false;
-      },
-      error: () => {
-        alert("Erreur lors de l'envoi de l'email");
-        this.loading = false;
-      }
+    this.confirmDialog.confirm(
+      'Renvoyer l\'email d\'activation',
+      `Renvoyer l'email d'activation à ${user.email} ?`,
+      { confirmLabel: 'Envoyer', type: 'info' }
+    ).then(confirmed => {
+      if (!confirmed) return;
+      this.loading = true;
+      this.kcAdmin.sendPasswordResetEmail(user.id!).subscribe({
+        next: () => {
+          this.toast.success(`Email d'activation renvoyé à ${user.email} !`);
+          this.loading = false;
+        },
+        error: () => {
+          this.toast.error("Erreur lors de l'envoi de l'email");
+          this.loading = false;
+        }
+      });
     });
   }
 
@@ -464,8 +494,13 @@ export class UserManagementComponent implements OnInit {
   // ========== LOGOUT ==========
 
   logout(): void {
-    if (!confirm('Voulez-vous vous déconnecter ?')) return;
-    this.kcAdmin.logout();
+    this.confirmDialog.confirm(
+      'Déconnexion',
+      'Voulez-vous vous déconnecter ?',
+      { confirmLabel: 'Déconnecter', type: 'warning' }
+    ).then(confirmed => {
+      if (confirmed) this.kcAdmin.logout();
+    });
   }
 }
 
