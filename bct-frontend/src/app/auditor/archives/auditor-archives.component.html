@@ -1,4 +1,4 @@
-<!-- src/app/auditor-archives/auditor-archives.component.html -->
+﻿<!-- src/app/auditor-archives/auditor-archives.component.html -->
 <!-- BF8 / US-15 — Archives -->
 <div class="dashboard-page">
 
@@ -50,7 +50,7 @@
       <select [(ngModel)]="filterStatut" (ngModelChange)="onFilterChange()">
         <option value="">Tous</option>
         <option value="VALIDEE">Validée</option>
-        <option value="ENVOYEE">Envoyée BCT</option>
+        <option value="ENVOYEE">Traitée</option>
       </select>
     </div>
     <button class="btn-reset" *ngIf="filterPeriode || filterType || filterStatut"

@@ -1,4 +1,4 @@
-
+﻿
 import { Component, OnInit } from '@angular/core';
 import { KeycloakAdminService, KeycloakUser, CreateUserRequest, RoleDTO } from '../../services/keycloak-admin.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
@@ -102,7 +102,7 @@ export class UserManagementComponent implements OnInit {
     const roles = [
       { name: 'ROLE_ADMIN',   label: 'Administrateur', colorClass: 'fill-red' },
       { name: 'ROLE_MANAGER', label: 'Manager',         colorClass: 'fill-amber' },
-      { name: 'ROLE_AGENT',   label: 'Agent déclarant', colorClass: 'fill-blue' },
+      { name: 'ROLE_AGENT',   label: 'Chargé de Déclaration', colorClass: 'fill-blue' },
       { name: 'ROLE_AUDITOR', label: 'Auditeur',        colorClass: 'fill-green' },
     ];
     const counts = roles.map(r => ({
@@ -467,7 +467,7 @@ export class UserManagementComponent implements OnInit {
     const name = roleName.replace('ROLE_', '').toLowerCase();
     if (name.includes('admin'))   return 'admin';
     if (name.includes('manager')) return 'manager';
-    if (name.includes('agent'))   return 'agent';
+    if (name.includes('agent'))   return 'Chargé de Déclaration';
     if (name.includes('auditor')) return 'auditor';
     return name;
   }

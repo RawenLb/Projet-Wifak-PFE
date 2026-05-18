@@ -1,4 +1,4 @@
-// src/app/auditor-logs/auditor-logs.component.ts
+﻿// src/app/auditor-logs/auditor-logs.component.ts
 // US-12 — Journaux de traçabilité / Logs d'actions (lecture seule)
 import { Component, OnInit } from '@angular/core';
 import { AuditorService, AuditLogDTO, AuditSearchParams } from '../../services/auditor.service';
@@ -152,7 +152,7 @@ export class AuditorLogsComponent implements OnInit {
   getActionLabel(action: string): string {
     const m: Record<string, string> = {
       'SUBMIT': 'Soumission', 'VALIDATE': 'Validation',
-      'REJECT': 'Rejet',      'SEND': 'Envoi BCT'
+      'REJECT': 'Rejet',      'SEND': 'Traitement'
     };
     return m[action] || action;
   }

@@ -1,4 +1,4 @@
-// src/app/auditor-search/auditor-search.component.ts
+﻿// src/app/auditor-search/auditor-search.component.ts
 // BF9 / US-14 — Recherche et filtrage avancé
 import { Component, OnInit } from '@angular/core';
 import { DeclarationService, Declaration } from '../../services/Declaration.service';
@@ -164,7 +164,7 @@ export class AuditorSearchComponent implements OnInit {
   getStatutLabel(statut: string): string {
     const m: Record<string, string> = {
       'GENEREE': 'Générée', 'EN_VALIDATION': 'En validation',
-      'VALIDEE': 'Validée', 'REJETEE': 'Rejetée', 'ENVOYEE': 'Envoyée BCT'
+      'VALIDEE': 'Validée', 'REJETEE': 'Rejetée', 'ENVOYEE': 'Traitée'
     };
     return m[statut] || statut;
   }

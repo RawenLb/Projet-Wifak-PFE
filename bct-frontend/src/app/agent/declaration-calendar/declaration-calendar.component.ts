@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { DeclarationService, Declaration } from '../../services/Declaration.service';
 import { ValidationService } from '../../services/Validation.service';
 
@@ -366,7 +366,7 @@ export class DeclarationCalendarComponent implements OnInit {
       GENEREE:       'Générée',
       EN_VALIDATION: 'En validation',
       VALIDEE:       'Validée',
-      ENVOYEE:       'Envoyée'
+      ENVOYEE: 'Traitée'
     };
 
     if (statut === 'REJETEE') {
@@ -507,7 +507,7 @@ export class DeclarationCalendarComponent implements OnInit {
       EN_VALIDATION: 'En validation',
       VALIDEE:       'Validée',
       REJETEE:       'Rejetée',
-      ENVOYEE:       'Envoyée'
+      ENVOYEE: 'Traitée'
     };
     return m[s] || s;
   }

@@ -1,4 +1,4 @@
-// src/app/auditor-archives/auditor-archives.component.ts
+﻿// src/app/auditor-archives/auditor-archives.component.ts
 // BF8 / US-15 — Consultation des archives (lecture seule)
 import { Component, OnInit } from '@angular/core';
 import { DeclarationService, Declaration } from '../../services/Declaration.service';
@@ -104,7 +104,7 @@ export class AuditorArchivesComponent implements OnInit {
   }
 
   getStatutLabel(statut: string): string {
-    return statut === 'ENVOYEE' ? 'Envoyée BCT' : 'Validée';
+    return statut === 'ENVOYEE' ? 'Traitée' : 'Validée';
   }
 
   onFilterChange(): void {}

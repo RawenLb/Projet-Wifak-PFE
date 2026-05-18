@@ -1,4 +1,4 @@
-<!-- src/app/manager-reports/manager-reports.component.html -->
+﻿<!-- src/app/manager-reports/manager-reports.component.html -->
 <!-- US-19 — Rapport d'audit & traçabilité -->
 
 <div class="audit-wrapper">
@@ -248,7 +248,7 @@
             </div>
             <div>
               <div class="alert-title">{{ stats?.total || 0 }} déclarations ce mois</div>
-              <div class="alert-sub">Dont {{ stats?.envoyees || 0 }} transmises à la BCT</div>
+              <div class="alert-sub">Dont {{ stats?.envoyees || 0 }} traitées</div>
             </div>
           </div>
           <div class="no-alerts" *ngIf="alertesCritiques === 0 && tauxRejet <= 20">
@@ -301,7 +301,7 @@
               <option value="EN_VALIDATION">En validation</option>
               <option value="VALIDEE">Validée</option>
               <option value="REJETEE">Rejetée</option>
-              <option value="ENVOYEE">Envoyée</option>
+              <option value="ENVOYEE">Traitée</option>
             </select>
           </div>
         </div>

@@ -1,4 +1,4 @@
-// src/app/services/jira.service.ts
+﻿// src/app/services/jira.service.ts
 // ✅ Service complet — gestion Jira avec cache et graceful degradation
 
 import { Injectable } from '@angular/core';
@@ -120,7 +120,7 @@ loadTicketsForDeclarations(declarationIds: number[]): void {
       'IN_PROGRESS': 'En cours',
       'VALIDÉE':     'Validé ✓',
       'REJETÉE':     'Rejeté ✗',
-      'ENVOYÉE':     'Envoyé 📨',
+      'ENVOYÉE': 'Traitée 📨',
     };
     return map[status] || status;
   }

@@ -1,4 +1,4 @@
-// src/app/auditor-export/auditor-export.component.ts
+﻿// src/app/auditor-export/auditor-export.component.ts
 // Rapport d'Audit BCT — 8 sections — formats CSV + PDF
 import { Component, OnInit } from '@angular/core';
 import { AuditorService, AuditLogDTO, AuditStatsDTO } from '../../services/auditor.service';
@@ -215,7 +215,7 @@ export class AuditorExportComponent implements OnInit {
 
     rows.push([this.c('Total déclarations'),   this.c(total),    this.c('Périmètre filtré')].join(SEP));
     rows.push([this.c('Déclarations validées'), this.c(validees), this.c('Statut VALIDEE ou ENVOYEE')].join(SEP));
-    rows.push([this.c('Déclarations envoyées'), this.c(envoyees), this.c('Statut ENVOYEE (transmises BCT)')].join(SEP));
+    rows.push([this.c('Déclarations envoyées'), this.c(envoyees), this.c('Statut ENVOYEE (traitées)')].join(SEP));
     rows.push([this.c('Déclarations rejetées'), this.c(rejetees), this.c('Statut REJETEE')].join(SEP));
     rows.push([this.c('En cours de traitement'), this.c(enCours), this.c('Statut GENEREE ou EN_VALIDATION')].join(SEP));
     rows.push([this.c('Taux de validation'),    this.c(tauxVal + ' %'), this.c('(Validées + Envoyées) / Total')].join(SEP));
@@ -399,7 +399,7 @@ export class AuditorExportComponent implements OnInit {
     rows.push([
       this.c('Sur ' + total + ' déclarations analysées, ' +
         validees + ' ont été validées (' + tauxVal + '%), ' +
-        envoyees + ' transmises à la BCT, et ' +
+        envoyees + ' traitées, et ' +
         rejetees + ' ont été rejetées (' + tauxRej + '%). ' +
         this.activityByUser.length + ' utilisateur(s) ont effectué des actions sur la plateforme.'),
       this.c(''), this.c(''),
@@ -705,7 +705,7 @@ export class AuditorExportComponent implements OnInit {
     // SECTION 8 — CONCLUSION DE L'AUDITEUR
     // ════════════════════════════════════════════════════════════
     const resume = `Sur ${total} déclarations analysées, ${validees} ont été validées (${tauxVal}%), ` +
-      `${envoyees} transmises à la BCT, et ${rejetees} ont été rejetées (${tauxRej}%). ` +
+      `${envoyees} traitées, et ${rejetees} ont été rejetées (${tauxRej}%). ` +
       `${this.activityByUser.length} utilisateur(s) ont effectué des actions sur la plateforme.`;
 
     const section8 = `
@@ -828,7 +828,7 @@ export class AuditorExportComponent implements OnInit {
       'EN_VALIDATION': 'En validation',
       'VALIDEE':       'Validée',
       'REJETEE':       'Rejetée',
-      'ENVOYEE':       'Envoyée BCT',
+      'ENVOYEE': 'Traitée',
     };
     return m[statut] || statut;
   }

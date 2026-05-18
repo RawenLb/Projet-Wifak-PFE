@@ -86,6 +86,9 @@ export class ManagerLayoutComponent implements OnInit, OnDestroy {
     } else if (url.includes('/manager/reports')) {
       this.pageTitle    = 'Rapports';
       this.pageSubtitle = 'Synthèse et analyse des déclarations';
+    } else if (url.includes('/manager/treated')) {
+      this.pageTitle    = 'Déclarations traitées';
+      this.pageSubtitle = 'Déclarations ayant complété leur cycle de traitement';
     } else {
       this.pageTitle    = 'Espace Responsable';
       this.pageSubtitle = 'Supervision des déclarations BCT';

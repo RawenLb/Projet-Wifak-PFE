@@ -1,4 +1,4 @@
-// src/app/auditor-dashboard/auditor-dashboard.component.ts
+﻿// src/app/auditor-dashboard/auditor-dashboard.component.ts
 import { Component, OnInit } from '@angular/core';
 import { AuditorService, AuditStatsDTO } from '../../services/auditor.service';
 import { Declaration } from '../../services/Declaration.service';
@@ -64,7 +64,7 @@ export class AuditorDashboardComponent implements OnInit {
   getStatutLabel(statut: string): string {
     const m: Record<string, string> = {
       'GENEREE': 'Générée', 'EN_VALIDATION': 'En validation',
-      'VALIDEE': 'Validée', 'REJETEE': 'Rejetée', 'ENVOYEE': 'Envoyée BCT'
+      'VALIDEE': 'Validée', 'REJETEE': 'Rejetée', 'ENVOYEE': 'Traitée'
     };
     return m[statut] || statut;
   }

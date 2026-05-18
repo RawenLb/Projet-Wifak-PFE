@@ -1,4 +1,4 @@
-// src/app/auditor-history/auditor-history.component.ts
+﻿// src/app/auditor-history/auditor-history.component.ts
 // BF6 / US-11 — Historique complet des déclarations (lecture seule)
 import { Component, OnInit } from '@angular/core';
 import { AuditorService, AuditLogDTO } from '../../services/auditor.service';
@@ -176,7 +176,7 @@ export class AuditorHistoryComponent implements OnInit {
   getStatutLabel(statut: string): string {
     const m: Record<string, string> = {
       'GENEREE': 'Générée', 'EN_VALIDATION': 'En validation',
-      'VALIDEE': 'Validée', 'REJETEE': 'Rejetée', 'ENVOYEE': 'Envoyée BCT'
+      'VALIDEE': 'Validée', 'REJETEE': 'Rejetée', 'ENVOYEE': 'Traitée'
     };
     return m[statut] || statut;
   }
@@ -198,7 +198,7 @@ export class AuditorHistoryComponent implements OnInit {
   getActionLabel(action: string): string {
     const m: Record<string, string> = {
       'SUBMIT': 'Soumission', 'VALIDATE': 'Validation',
-      'REJECT': 'Rejet',      'SEND': 'Envoi BCT'
+      'REJECT': 'Rejet',      'SEND': 'Traitement'
     };
     return m[action] || action;
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { DeclarationService, Declaration } from '../../services/Declaration.service';
 import { ValidationService, ValidationStats, ValidationLog } from '../../services/Validation.service';
 import { ToastService } from '../../services/toast.service';
@@ -161,7 +161,7 @@ export class ManagerReportsComponent implements OnInit {
       'VALIDATE': `${prefix} validée`,
       'REJECT':   `${prefix} rejetée`,
       'SUBMIT':   `${prefix} soumise`,
-      'SEND':     `${prefix} envoyée BCT`,
+      'SEND':     `${prefix} Traitée`,
     };
     return labels[log.action] || log.action;
   }
@@ -205,7 +205,7 @@ export class ManagerReportsComponent implements OnInit {
   getStatutLabel(statut: string): string {
     const map: Record<string, string> = {
       'GENEREE':'Générée', 'EN_VALIDATION':'En validation',
-      'VALIDEE':'Validée', 'REJETEE':'Rejetée', 'ENVOYEE':'Envoyée',
+      'VALIDEE':'Validée', 'REJETEE':'Rejetée', 'ENVOYEE': 'Traitée',
     };
     return map[statut] || statut;
   }
@@ -213,7 +213,7 @@ export class ManagerReportsComponent implements OnInit {
   getActionLabel(action: string): string {
     const map: Record<string, string> = {
       'SUBMIT':'Soumission', 'VALIDATE':'Validation',
-      'REJECT':'Rejet',      'SEND':'Envoi BCT',
+      'REJECT':'Rejet',      'SEND': 'Traitement',
     };
     return map[action] || action;
   }

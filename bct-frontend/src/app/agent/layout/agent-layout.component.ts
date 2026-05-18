@@ -1,9 +1,9 @@
-// src/app/agent-layout/agent-layout.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { KeycloakAdminService } from '../../services/keycloak-admin.service';
 import { NotificationService } from '../../services/notification.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 
 @Component({
   selector: 'app-agent-layout',
@@ -30,9 +30,10 @@ export class AgentLayoutComponent implements OnInit, OnDestroy {
   }
 
   constructor(
-    private router:   Router,
-    private kcAdmin:  KeycloakAdminService,
-    public notifSvc:  NotificationService
+    private router:        Router,
+    private kcAdmin:       KeycloakAdminService,
+    public  notifSvc:      NotificationService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -89,9 +90,12 @@ export class AgentLayoutComponent implements OnInit, OnDestroy {
     } else if (url.includes('/agent/notifications')) {
       this.pageTitle    = 'Notifications';
       this.pageSubtitle = 'Vos alertes et messages de validation';
+    } else if (url.includes('/agent/treated')) {
+      this.pageTitle    = 'Déclarations traitées';
+      this.pageSubtitle = 'Déclarations ayant complété leur cycle de traitement';
     } else {
       this.pageTitle    = 'Mes Déclarations';
-      this.pageSubtitle = 'Espace agent';
+      this.pageSubtitle = 'Espace Chargé de Déclaration';
     }
   }
 
@@ -99,8 +103,13 @@ export class AgentLayoutComponent implements OnInit, OnDestroy {
   isActive(route: string): boolean { return this.currentRoute.includes(route); }
 
   logout(): void {
-    if (!confirm('Voulez-vous vous déconnecter ?')) return;
-    this.kcAdmin.logout();
+    this.confirmDialog.confirm(
+      'Déconnexion',
+      'Voulez-vous vous déconnecter ?',
+      { confirmLabel: 'Déconnecter', type: 'warning' }
+    ).then(confirmed => {
+      if (confirmed) this.kcAdmin.logout();
+    });
   }
 
   getUserInitials(): string {

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import keycloak from './keycloak.service';
@@ -175,7 +175,7 @@ export class KeycloakAdminService {
     const roles = this.getCurrentUserRoles();
     if (roles.includes('ROLE_ADMIN')) return 'Administrateur';
     if (roles.includes('ROLE_MANAGER')) return 'Manager';
-    if (roles.includes('ROLE_AGENT')) return 'Agent';
+    if (roles.includes('ROLE_AGENT')) return 'Chargé de Déclaration';
     if (roles.includes('ROLE_AUDITOR')) return 'Auditeur';
     return 'Utilisateur';
   }

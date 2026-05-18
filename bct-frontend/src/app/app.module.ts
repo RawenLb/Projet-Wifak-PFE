@@ -1,4 +1,4 @@
-import { NgModule, APP_INITIALIZER } from '@angular/core';
+﻿import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -15,6 +15,7 @@ import { ChatComponent }             from './shared/chat/chat.component';
 import { CallComponent }             from './shared/chat/call.component';
 import { ConfirmDialogComponent }    from './shared/confirm-dialog/confirm-dialog.component';
 import { ToastComponent }            from './shared/toast/toast.component';
+import { TreatedDeclarationsComponent } from './shared/treated-declarations/treated-declarations.component';
 
 // â”€â”€ Admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 import { DashboardLayoutComponent }           from './admin/dashboard-layout/dashboard-layout.component';
@@ -29,6 +30,7 @@ import { ManagerHistoryComponent }     from './manager/history/manager-history.c
 import { ManagerCalendarComponent }    from './manager/calendar/manager-calendar.component';
 import { ManagerReportsComponent }     from './manager/reports/manager-reports.component';
 import { ManagerMlDashboardComponent } from './manager/ml-dashboard/manager-ml-dashboard.component';
+import { ManagerTreatedComponent }     from './manager/treated/manager-treated.component';
 
 // â”€â”€ Agent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 import { AgentLayoutComponent }              from './agent/layout/agent-layout.component';
@@ -38,6 +40,7 @@ import { DeclarationCalendarComponent }      from './agent/declaration-calendar/
 import { DeclarationCorrectionComponent }    from './agent/declaration-correction/declaration-correction.component';
 import { AgentDeclarationTypesComponent }    from './agent/declaration-types/agent-declaration-types.component';
 import { AgentNotificationsComponent }       from './agent/notifications/agent-notifications.component';
+import { AgentTreatedComponent }             from './agent/treated/agent-treated.component';
 
 // â”€â”€ Auditor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 import { AuditorLayoutComponent }   from './auditor/layout/auditor-layout.component';
@@ -87,6 +90,7 @@ export function kcFactory() {
     CallComponent,
     ConfirmDialogComponent,
     ToastComponent,
+    TreatedDeclarationsComponent,
 
     // â”€â”€ Admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     DashboardLayoutComponent,
@@ -101,6 +105,7 @@ export function kcFactory() {
     ManagerCalendarComponent,
     ManagerReportsComponent,
     ManagerMlDashboardComponent,
+    ManagerTreatedComponent,
 
     // â”€â”€ Agent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     AgentLayoutComponent,
@@ -110,6 +115,7 @@ export function kcFactory() {
     DeclarationCorrectionComponent,
     AgentDeclarationTypesComponent,
     AgentNotificationsComponent,
+    AgentTreatedComponent,
 
     // â”€â”€ Auditor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     AuditorLayoutComponent,

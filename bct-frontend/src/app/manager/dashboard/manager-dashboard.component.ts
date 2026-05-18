@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { DeclarationService, Declaration } from '../../services/Declaration.service';
 import { ValidationService, ValidationStats, ValidationLog } from '../../services/Validation.service';
@@ -383,7 +383,7 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
   getStatutLabel(statut: string): string {
     const map: Record<string,string> = {
       'GENEREE':'Générée', 'EN_VALIDATION':'En validation',
-      'VALIDEE':'Validée ✓', 'REJETEE':'Rejetée ✗', 'ENVOYEE':'Envoyée',
+      'VALIDEE':'Validée ✓', 'REJETEE':'Rejetée ✗', 'ENVOYEE': 'Traitée',
     };
     return map[statut] || statut;
   }
@@ -399,7 +399,7 @@ export class ManagerDashboardComponent implements OnInit, OnDestroy {
   getActionLabel(action: string): string {
     const map: Record<string,string> = {
       'SUBMIT':'📤 Soumission', 'VALIDATE':'✅ Validation',
-      'REJECT':'❌ Rejet',      'SEND':'📨 Envoi BCT',
+      'REJECT':'❌ Rejet',      'SEND': '📨 Traitement',
     };
     return map[action] || action;
   }

@@ -1,4 +1,4 @@
-
+﻿
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { KeycloakAdminService, KeycloakUser } from '../../services/keycloak-admin.service';
@@ -126,7 +126,7 @@ isAdmin(): boolean {
     const roles = user.roles || [];
     if (roles.includes('ROLE_ADMIN')) return 'Administrateur';
     if (roles.includes('ROLE_MANAGER')) return 'Responsable';
-    if (roles.includes('ROLE_AGENT')) return 'Agent Déclarant';
+    if (roles.includes('ROLE_AGENT')) return 'Chargé de Déclaration';
     if (roles.includes('ROLE_AUDITOR')) return 'Auditeur';
     return 'Utilisateur';
   }

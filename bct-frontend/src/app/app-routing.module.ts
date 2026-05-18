@@ -23,6 +23,7 @@ import { ManagerHistoryComponent }     from './manager/history/manager-history.c
 import { ManagerCalendarComponent }    from './manager/calendar/manager-calendar.component';
 import { ManagerReportsComponent }     from './manager/reports/manager-reports.component';
 import { ManagerMlDashboardComponent } from './manager/ml-dashboard/manager-ml-dashboard.component';
+import { ManagerTreatedComponent }     from './manager/treated/manager-treated.component';
 
 // ── Agent ─────────────────────────────────────────────────────────────
 import { AgentLayoutComponent }           from './agent/layout/agent-layout.component';
@@ -31,6 +32,7 @@ import { DeclarationManagementComponent } from './agent/declaration-management/d
 import { DeclarationCalendarComponent }   from './agent/declaration-calendar/declaration-calendar.component';
 import { AgentDeclarationTypesComponent } from './agent/declaration-types/agent-declaration-types.component';
 import { AgentNotificationsComponent }    from './agent/notifications/agent-notifications.component';
+import { AgentTreatedComponent }          from './agent/treated/agent-treated.component';
 
 // ── Auditor ───────────────────────────────────────────────────────────
 import { AuditorLayoutComponent }    from './auditor/layout/auditor-layout.component';
@@ -99,6 +101,7 @@ const routes: Routes = [
       { path: 'types',         component: AgentDeclarationTypesComponent },
       { path: 'notifications', component: AgentNotificationsComponent },
       { path: 'ml',            component: ManagerMlDashboardComponent },
+      { path: 'treated',       component: AgentTreatedComponent },
     ],
   },
 
@@ -119,6 +122,7 @@ const routes: Routes = [
       { path: 'calendar',  component: ManagerCalendarComponent },
       { path: 'reports',   component: ManagerReportsComponent },
       { path: 'ml',        component: ManagerMlDashboardComponent },
+      { path: 'treated',   component: ManagerTreatedComponent },
     ],
   },
 

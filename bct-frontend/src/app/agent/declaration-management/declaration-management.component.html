@@ -1,4 +1,4 @@
-<div class="dashboard-container">
+﻿<div class="dashboard-container">
   <div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
 
     <!-- ════════════════════════════ TOP HEADER ════════════════════════════ -->
@@ -44,7 +44,7 @@
             <option value="EN_VALIDATION">En validation</option>
             <option value="VALIDEE">Validée</option>
             <option value="REJETEE">Rejetée</option>
-            <option value="ENVOYEE">Envoyée</option>
+            <option value="ENVOYEE">Traitée</option>
           </select>
           <input type="month" [(ngModel)]="filterPeriode" (change)="applyFilters()" class="filter-input"/>
           <button (click)="clearFilters()" class="btn-clear-filters"
@@ -238,8 +238,8 @@
                       <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                     </svg>
                   </button>
-                  <!-- Envoyer BCT (VALIDEE seulement) -->
-                  <button *ngIf="canSendToBCT(decl)" (click)="sendToBCT(decl)" class="btn-action btn-send" title="Envoyer à la BCT" [disabled]="loadingAction">
+                  <!-- Terminer (VALIDEE seulement) -->
+                  <button *ngIf="canSendToBCT(decl)" (click)="sendToBCT(decl)" class="btn-action btn-send" title="Terminer le traitement" [disabled]="loadingAction">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="22" y1="2" x2="11" y2="13"/>
                       <polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -977,7 +977,7 @@
             <line x1="22" y1="2" x2="11" y2="13"/>
             <polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
-          Envoyer à la BCT
+          Terminer
         </button>
       </div>
     </div>

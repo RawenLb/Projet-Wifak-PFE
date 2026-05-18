@@ -1,4 +1,4 @@
-// src/app/declaration-management/declaration-management.component.ts
+﻿// src/app/declaration-management/declaration-management.component.ts
 // ✅ VERSION CORRIGÉE — Flux XSD upload → SQL → Mapping → Génération
 
 import { Component, OnInit } from '@angular/core';
@@ -1094,14 +1094,14 @@ export class DeclarationManagementComponent implements OnInit {
   async sendToBCT(declaration: Declaration): Promise<void> {
     if (!declaration.id) return;
     if (!await this.confirmDialog.confirm(
-      'Envoyer à la BCT',
-      'Envoyer cette déclaration à la BCT ?',
-      { detail: `Type : ${declaration.declarationType?.nom}\nPériode : ${declaration.periode}\n\n⚠️ Action irréversible.`, confirmLabel: 'Envoyer', type: 'danger' }
+      'Terminer la déclaration',
+      'Marquer cette déclaration comme traitée ?',
+      { detail: `Type : ${declaration.declarationType?.nom}\nPériode : ${declaration.periode}\n\n⚠️ Action irréversible.`, confirmLabel: 'Terminer', type: 'info' }
     )) return;
     this.loadingAction = true;
     this.validationService.markAsSent(declaration.id).subscribe({
       next: () => {
-        this.toast.success(`Déclaration ${declaration.declarationType?.code} envoyée à la BCT !`);
+        this.toast.success(`Déclaration ${declaration.declarationType?.code} traitée !`);
         this.jiraTickets.delete(declaration.id!);
         this.loadDeclarations();
         this.loadingAction = false;
@@ -1139,7 +1139,7 @@ export class DeclarationManagementComponent implements OnInit {
       EN_VALIDATION: 'En validation',
       VALIDEE:       'Validée',
       REJETEE:       'Rejetée',
-      ENVOYEE:       'Envoyée'
+      ENVOYEE: 'Traitée'
     };
     return m[s] || s;
   }

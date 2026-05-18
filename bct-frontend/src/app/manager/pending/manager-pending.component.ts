@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { DeclarationService, Declaration } from '../../services/Declaration.service';
 import {
@@ -415,7 +415,7 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
   getStatutLabel(s: string): string {
     return ({
       GENEREE: 'Générée', EN_VALIDATION: 'En validation',
-      VALIDEE: 'Validée', REJETEE: 'Rejetée', ENVOYEE: 'Envoyée'
+      VALIDEE: 'Validée', REJETEE: 'Rejetée', ENVOYEE: 'Traitée'
     } as Record<string, string>)[s] || s;
   }
 

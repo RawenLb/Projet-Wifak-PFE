@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DeclarationService, Declaration } from '../../services/Declaration.service';
 
@@ -133,7 +133,7 @@ export class AgentDashboardComponent implements OnInit {
       EN_VALIDATION: 'En validation',
       VALIDEE:       'Validée',
       REJETEE:       'Rejetée',
-      ENVOYEE:       'Envoyée'
+      ENVOYEE: 'Traitée'
     };
     return m[s] || s;
   }

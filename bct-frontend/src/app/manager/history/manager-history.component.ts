@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { DeclarationService, Declaration } from '../../services/Declaration.service';
 import { ValidationService, ValidationLog } from '../../services/Validation.service';
 
@@ -178,7 +178,7 @@ export class ManagerHistoryComponent implements OnInit {
   getStatutLabel(statut: string): string {
     const m: Record<string,string> = {
       'GENEREE':'Générée','EN_VALIDATION':'En validation',
-      'VALIDEE':'Validée','REJETEE':'Rejetée','ENVOYEE':'Envoyée BCT'
+      'VALIDEE':'Validée','REJETEE':'Rejetée','ENVOYEE': 'Traitée'
     };
     return m[statut] || statut;
   }
@@ -200,7 +200,7 @@ export class ManagerHistoryComponent implements OnInit {
   getActionLabel(action: string): string {
     const m: Record<string,string> = {
       'SUBMIT':'Soumission','VALIDATE':'Validation',
-      'REJECT':'Rejet','SEND':'Envoi BCT'
+      'REJECT':'Rejet','SEND': 'Traitement'
     };
     return m[action] || action;
   }

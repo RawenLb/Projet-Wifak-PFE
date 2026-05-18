@@ -1,4 +1,4 @@
-// src/app/manager-calendar/manager-calendar.component.ts
+﻿// src/app/manager-calendar/manager-calendar.component.ts
 
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
@@ -300,7 +300,7 @@ export class ManagerCalendarComponent implements OnInit {
   getStatutLabel(statut: string): string {
     const map: Record<string, string> = {
       'GENEREE': 'Générée', 'EN_VALIDATION': 'En validation',
-      'VALIDEE': 'Validée', 'REJETEE': 'Rejetée', 'ENVOYEE': 'Envoyée',
+      'VALIDEE': 'Validée', 'REJETEE': 'Rejetée', 'ENVOYEE': 'Traitée',
     };
     return map[statut] || statut;
   }
