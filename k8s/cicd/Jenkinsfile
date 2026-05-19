@@ -150,8 +150,8 @@ pipeline {
                     sh 'kubectl apply -f k8s/autoscaling/'
                     sh 'kubectl apply -f k8s/monitoring/'
                     sh 'kubectl apply -f k8s/security/'
-                    sh 'kubectl rollout status deployment/api-gateway -n wifak --timeout=120s'
-                    sh 'kubectl rollout status deployment/frontend -n wifak --timeout=120s'
+                    sh 'kubectl rollout status deployment/api-gateway -n wifak-prod --timeout=120s'
+                    sh 'kubectl rollout status deployment/bct-frontend -n wifak-prod --timeout=120s'
                 }
             }
         }
