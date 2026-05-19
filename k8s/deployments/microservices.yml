@@ -4,7 +4,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: authentification-service
-  namespace: wifak
+  namespace: wifak-prod
   labels:
     app: authentification-service
 spec:
@@ -24,8 +24,10 @@ spec:
           ports:
             - containerPort: 8082
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:mysql://mysql:3306/wifak_PFE?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+              value: "jdbc:mysql://mysql-service:3306/wifak_PFE?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
             - name: SPRING_DATASOURCE_USERNAME
               value: "root"
             - name: SPRING_DATASOURCE_PASSWORD
@@ -38,8 +40,13 @@ spec:
                 configMapKeyRef:
                   name: wifak-config
                   key: EUREKA_URL
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: wifak-config
+                  key: JWT_JWK_SET_URI
             - name: KEYCLOAK_AUTH_SERVER_URL
-              value: "http://keycloak:8080"
+              value: "http://keycloak-service:8080"
             - name: INTERNAL_SECRET
               valueFrom:
                 secretKeyRef:
@@ -49,8 +56,16 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8082
-            initialDelaySeconds: 40
+            initialDelaySeconds: 60
             periodSeconds: 10
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 5
           resources:
             requests:
               memory: "512Mi"
@@ -64,7 +79,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: chat-service
-  namespace: wifak
+  namespace: wifak-prod
   labels:
     app: chat-service
 spec:
@@ -84,8 +99,10 @@ spec:
           ports:
             - containerPort: 8083
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:mysql://mysql:3306/wifak_chat?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+              value: "jdbc:mysql://mysql-service:3306/wifak_chat?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
             - name: SPRING_DATASOURCE_USERNAME
               value: "root"
             - name: SPRING_DATASOURCE_PASSWORD
@@ -98,6 +115,11 @@ spec:
                 configMapKeyRef:
                   name: wifak-config
                   key: EUREKA_URL
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: wifak-config
+                  key: JWT_JWK_SET_URI
             - name: INTERNAL_SECRET
               valueFrom:
                 secretKeyRef:
@@ -110,8 +132,16 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8083
-            initialDelaySeconds: 40
+            initialDelaySeconds: 60
             periodSeconds: 10
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 5
           resources:
             requests:
               memory: "512Mi"
@@ -129,7 +159,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: workflow-declaration
-  namespace: wifak
+  namespace: wifak-prod
   labels:
     app: workflow-declaration
 spec:
@@ -149,8 +179,10 @@ spec:
           ports:
             - containerPort: 8084
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:mysql://mysql:3306/wifak_validation?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+              value: "jdbc:mysql://mysql-service:3306/wifak_validation?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
             - name: SPRING_DATASOURCE_USERNAME
               value: "root"
             - name: SPRING_DATASOURCE_PASSWORD
@@ -163,6 +195,11 @@ spec:
                 configMapKeyRef:
                   name: wifak-config
                   key: EUREKA_URL
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: wifak-config
+                  key: JWT_JWK_SET_URI
             - name: INTERNAL_SECRET
               valueFrom:
                 secretKeyRef:
@@ -175,8 +212,16 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8084
-            initialDelaySeconds: 40
+            initialDelaySeconds: 60
             periodSeconds: 10
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 5
           resources:
             requests:
               memory: "512Mi"
@@ -194,7 +239,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: notification-service
-  namespace: wifak
+  namespace: wifak-prod
   labels:
     app: notification-service
 spec:
@@ -214,8 +259,10 @@ spec:
           ports:
             - containerPort: 8086
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:mysql://mysql:3306/wifak_notification?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+              value: "jdbc:mysql://mysql-service:3306/wifak_notification?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
             - name: SPRING_DATASOURCE_USERNAME
               value: "root"
             - name: SPRING_DATASOURCE_PASSWORD
@@ -228,6 +275,13 @@ spec:
                 configMapKeyRef:
                   name: wifak-config
                   key: EUREKA_URL
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: wifak-config
+                  key: JWT_JWK_SET_URI
+            - name: SPRING_MAIL_USERNAME
+              value: "rawene.labaoui@gmail.com"
             - name: SPRING_MAIL_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -242,8 +296,16 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8086
-            initialDelaySeconds: 40
+            initialDelaySeconds: 60
             periodSeconds: 10
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8086
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 5
           resources:
             requests:
               memory: "256Mi"
@@ -257,7 +319,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: jira-integration-service
-  namespace: wifak
+  namespace: wifak-prod
   labels:
     app: jira-integration-service
 spec:
@@ -277,8 +339,10 @@ spec:
           ports:
             - containerPort: 8085
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:mysql://mysql:3306/wifak_jira?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+              value: "jdbc:mysql://mysql-service:3306/wifak_jira?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
             - name: SPRING_DATASOURCE_USERNAME
               value: "root"
             - name: SPRING_DATASOURCE_PASSWORD
@@ -291,6 +355,11 @@ spec:
                 configMapKeyRef:
                   name: wifak-config
                   key: EUREKA_URL
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: wifak-config
+                  key: JWT_JWK_SET_URI
             - name: JIRA_API_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -305,8 +374,16 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8085
-            initialDelaySeconds: 40
+            initialDelaySeconds: 60
             periodSeconds: 10
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 5
           resources:
             requests:
               memory: "256Mi"
@@ -320,7 +397,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ml-service
-  namespace: wifak
+  namespace: wifak-prod
   labels:
     app: ml-service
 spec:
@@ -341,7 +418,7 @@ spec:
             - containerPort: 8090
           env:
             - name: DB_HOST
-              value: "mysql"
+              value: "mysql-service"
             - name: DB_PORT
               value: "3306"
             - name: DB_NAME
@@ -353,6 +430,8 @@ spec:
                 secretKeyRef:
                   name: wifak-secrets
                   key: MYSQL_ROOT_PASSWORD
+            - name: VALIDATION_DB_NAME
+              value: "wifak_validation"
             - name: BCT_BACKEND_URL
               value: "http://authentification-service:8082"
             - name: VALIDATION_SERVICE_URL
@@ -364,8 +443,16 @@ spec:
             httpGet:
               path: /health
               port: 8090
-            initialDelaySeconds: 20
+            initialDelaySeconds: 30
             periodSeconds: 10
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 5
           resources:
             requests:
               memory: "512Mi"
@@ -382,22 +469,22 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
-  namespace: wifak
+  name: bct-frontend
+  namespace: wifak-prod
   labels:
-    app: frontend
+    app: bct-frontend
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: frontend
+      app: bct-frontend
   template:
     metadata:
       labels:
-        app: frontend
+        app: bct-frontend
     spec:
       containers:
-        - name: frontend
+        - name: bct-frontend
           image: wifak/frontend:latest
           imagePullPolicy: IfNotPresent
           ports:
@@ -408,6 +495,12 @@ spec:
               port: 80
             initialDelaySeconds: 10
             periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 15
           resources:
             requests:
               memory: "64Mi"

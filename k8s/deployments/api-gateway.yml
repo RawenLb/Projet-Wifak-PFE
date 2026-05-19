@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-gateway
-  namespace: wifak
+  namespace: wifak-prod
   labels:
     app: api-gateway
 spec:
@@ -22,27 +22,33 @@ spec:
           ports:
             - containerPort: 8088
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               valueFrom:
                 configMapKeyRef:
                   name: wifak-config
                   key: EUREKA_URL
-            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
-              value: "http://keycloak:8080/realms/bct-realm"
+            # JWK_SET_URI seulement — pas d'ISSUER_URI pour éviter mismatch browser/cluster
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
-              value: "http://keycloak:8080/realms/bct-realm/protocol/openid-connect/certs"
+              valueFrom:
+                configMapKeyRef:
+                  name: wifak-config
+                  key: JWT_JWK_SET_URI
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8088
-            initialDelaySeconds: 30
+            initialDelaySeconds: 40
             periodSeconds: 10
+            failureThreshold: 10
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 8088
-            initialDelaySeconds: 60
-            periodSeconds: 20
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            failureThreshold: 5
           resources:
             requests:
               memory: "256Mi"

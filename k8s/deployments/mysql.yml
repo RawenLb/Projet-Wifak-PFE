@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
-  namespace: wifak
+  namespace: wifak-prod
   labels:
     app: mysql
 spec:
@@ -33,14 +33,22 @@ spec:
               mountPath: /docker-entrypoint-initdb.d
           readinessProbe:
             exec:
-              command: ["mysqladmin", "ping", "-h", "localhost"]
+              command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pwifak2024"]
             initialDelaySeconds: 20
             periodSeconds: 10
+            failureThreshold: 10
           livenessProbe:
             exec:
-              command: ["mysqladmin", "ping", "-h", "localhost"]
-            initialDelaySeconds: 30
+              command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pwifak2024"]
+            initialDelaySeconds: 40
             periodSeconds: 20
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
       volumes:
         - name: mysql-storage
           persistentVolumeClaim:

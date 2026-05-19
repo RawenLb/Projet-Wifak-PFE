@@ -239,11 +239,11 @@ jobs:
           kubectl apply -f k8s/secrets/
           kubectl apply -f k8s/volumes/
           kubectl apply -f k8s/deployments/mysql.yml
-          kubectl rollout status deployment/mysql -n wifak --timeout=120s
+          kubectl rollout status deployment/mysql -n wifak-prod --timeout=120s
           kubectl apply -f k8s/deployments/keycloak.yml
-          kubectl rollout status deployment/keycloak -n wifak --timeout=180s
+          kubectl rollout status deployment/keycloak -n wifak-prod --timeout=180s
           kubectl apply -f k8s/deployments/eureka-server.yml
-          kubectl rollout status deployment/eureka-server -n wifak --timeout=120s
+          kubectl rollout status deployment/eureka-server -n wifak-prod --timeout=120s
           kubectl apply -f k8s/deployments/api-gateway.yml
           kubectl apply -f k8s/deployments/microservices.yml
           kubectl apply -f k8s/services/
@@ -255,14 +255,14 @@ jobs:
 
       - name: Wait for rollout
         run: |
-          kubectl rollout status deployment/eureka-server -n wifak --timeout=120s
-          kubectl rollout status deployment/api-gateway -n wifak --timeout=120s
-          kubectl rollout status deployment/authentification-service -n wifak --timeout=120s
-          kubectl rollout status deployment/chat-service -n wifak --timeout=120s
-          kubectl rollout status deployment/workflow-declaration -n wifak --timeout=120s
-          kubectl rollout status deployment/frontend -n wifak --timeout=120s
+          kubectl rollout status deployment/eureka-server -n wifak-prod --timeout=120s
+          kubectl rollout status deployment/api-gateway -n wifak-prod --timeout=120s
+          kubectl rollout status deployment/authentification-service -n wifak-prod --timeout=120s
+          kubectl rollout status deployment/chat-service -n wifak-prod --timeout=120s
+          kubectl rollout status deployment/workflow-declaration -n wifak-prod --timeout=120s
+          kubectl rollout status deployment/bct-frontend -n wifak-prod --timeout=120s
 
       - name: Deployment summary
         run: |
           echo "✅ Deployment complete"
-          kubectl get pods -n wifak
+          kubectl get pods -n wifak-prod

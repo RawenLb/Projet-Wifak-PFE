@@ -2,8 +2,8 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql
-  namespace: wifak
+  name: mysql-service
+  namespace: wifak-prod
 spec:
   selector:
     app: mysql
@@ -12,50 +12,61 @@ spec:
       targetPort: 3306
   type: ClusterIP
 ---
+# Keycloak — NodePort pour accès browser via bct.wifak.tn/auth
 apiVersion: v1
 kind: Service
 metadata:
-  name: keycloak
-  namespace: wifak
+  name: keycloak-service
+  namespace: wifak-prod
 spec:
   selector:
     app: keycloak
   ports:
-    - port: 8080
+    - name: http
+      port: 8080
       targetPort: 8080
-  type: ClusterIP
+      nodePort: 30081
+  type: NodePort
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: eureka-server
-  namespace: wifak
+  name: eureka-service
+  namespace: wifak-prod
 spec:
   selector:
     app: eureka-server
   ports:
     - port: 8761
       targetPort: 8761
-  type: ClusterIP
+      nodePort: 30761
+  type: NodePort
 ---
+# API Gateway — LoadBalancer principal (localhost:80)
 apiVersion: v1
 kind: Service
 metadata:
-  name: api-gateway
-  namespace: wifak
+  name: api-gateway-service
+  namespace: wifak-prod
 spec:
   selector:
     app: api-gateway
   ports:
-    - port: 8088
+    - name: http
+      port: 80
       targetPort: 8088
-  type: ClusterIP
+      nodePort: 31845
+    - name: https
+      port: 443
+      targetPort: 8088
+      nodePort: 30843
+  type: LoadBalancer
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: authentification-service
-  namespace: wifak
+  namespace: wifak-prod
 spec:
   selector:
     app: authentification-service
@@ -68,7 +79,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: chat-service
-  namespace: wifak
+  namespace: wifak-prod
 spec:
   selector:
     app: chat-service
@@ -81,7 +92,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: workflow-declaration
-  namespace: wifak
+  namespace: wifak-prod
 spec:
   selector:
     app: workflow-declaration
@@ -94,7 +105,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: notification-service
-  namespace: wifak
+  namespace: wifak-prod
 spec:
   selector:
     app: notification-service
@@ -107,12 +118,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: jira-integration-service
-  namespace: wifak
+  namespace: wifak-prod
 spec:
   selector:
     app: jira-integration-service
   ports:
-    - port: 8085
+    - port: 8089
       targetPort: 8085
   type: ClusterIP
 ---
@@ -120,7 +131,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ml-service
-  namespace: wifak
+  namespace: wifak-prod
 spec:
   selector:
     app: ml-service
@@ -129,41 +140,45 @@ spec:
       targetPort: 8090
   type: ClusterIP
 ---
+# Frontend — NodePort (plus de conflit avec api-gateway LoadBalancer)
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend
-  namespace: wifak
+  name: frontend-service
+  namespace: wifak-prod
 spec:
   selector:
-    app: frontend
+    app: bct-frontend
   ports:
     - port: 80
       targetPort: 80
-  type: ClusterIP
+      nodePort: 32744
+  type: NodePort
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: prometheus
-  namespace: wifak
+  name: prometheus-service
+  namespace: wifak-prod
 spec:
   selector:
     app: prometheus
   ports:
     - port: 9090
       targetPort: 9090
-  type: ClusterIP
+      nodePort: 30090
+  type: NodePort
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: grafana
-  namespace: wifak
+  name: grafana-service
+  namespace: wifak-prod
 spec:
   selector:
     app: grafana
   ports:
     - port: 3000
       targetPort: 3000
-  type: ClusterIP
+      nodePort: 30030
+  type: NodePort

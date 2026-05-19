@@ -1,0 +1,28 @@
+# Service K8s qui pointe vers le Keycloak Docker Compose sur l'hôte Windows
+# host.docker.internal = IP de la machine Windows depuis les pods K8s
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-service
+  namespace: wifak-prod
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8081
+      nodePort: 30081
+  type: NodePort
+---
+# Endpoints manuel pointant vers host.docker.internal:8081
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: keycloak-service
+  namespace: wifak-prod
+subsets:
+  - addresses:
+      - ip: 192.168.65.254  # host.docker.internal sur Docker Desktop Windows
+    ports:
+      - name: http
+        port: 8081

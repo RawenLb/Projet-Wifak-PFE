@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: eureka-server
-  namespace: wifak
+  namespace: wifak-prod
   labels:
     app: eureka-server
 spec:
@@ -21,18 +21,23 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8761
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
           readinessProbe:
             httpGet:
               path: /actuator/health
-              port: 8761
-            initialDelaySeconds: 30
-            periodSeconds: 10
+              port: 8099
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 10
           livenessProbe:
             httpGet:
               path: /actuator/health
-              port: 8761
-            initialDelaySeconds: 60
-            periodSeconds: 20
+              port: 8099
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 5
           resources:
             requests:
               memory: "256Mi"

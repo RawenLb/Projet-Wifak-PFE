@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: keycloak
-  namespace: wifak
+  namespace: wifak-prod
   labels:
     app: keycloak
 spec:
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: keycloak
-          image: quay.io/keycloak/keycloak:23.0.6
+          image: quay.io/keycloak/keycloak:24.0.3
           args: ["start-dev", "--import-realm"]
           ports:
             - containerPort: 8080
@@ -35,7 +35,7 @@ spec:
             - name: KC_DB
               value: "mysql"
             - name: KC_DB_URL
-              value: "jdbc:mysql://mysql:3306/keycloak?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+              value: "jdbc:mysql://mysql-service:3306/keycloak?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
             - name: KC_DB_USERNAME
               value: "root"
             - name: KC_DB_PASSWORD
@@ -45,12 +45,14 @@ spec:
                   key: MYSQL_ROOT_PASSWORD
             - name: KC_HOSTNAME_STRICT
               value: "false"
-            - name: KC_HOSTNAME_STRICT_HTTPS
-              value: "false"
             - name: KC_HTTP_ENABLED
               value: "true"
             - name: KC_PROXY
               value: "edge"
+            - name: KC_HOSTNAME_URL
+              value: "http://bct.wifak.tn/auth"
+            - name: KC_HOSTNAME_ADMIN_URL
+              value: "http://bct.wifak.tn/auth"
           volumeMounts:
             - name: keycloak-realm
               mountPath: /opt/keycloak/data/import
@@ -58,15 +60,16 @@ spec:
             httpGet:
               path: /realms/master
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 90
             periodSeconds: 15
             failureThreshold: 10
           livenessProbe:
             httpGet:
               path: /realms/master
               port: 8080
-            initialDelaySeconds: 90
+            initialDelaySeconds: 120
             periodSeconds: 30
+            failureThreshold: 5
           resources:
             requests:
               memory: "512Mi"
