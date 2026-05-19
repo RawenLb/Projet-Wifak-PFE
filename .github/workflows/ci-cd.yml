@@ -266,4 +266,5 @@ jobs:
       - name: Deployment summary
         run: |
           echo "✅ Deployment complete"
-          kubectl get pods -n wifak-prod
+          kubectl get pods -n wifak-prod || echo "ℹ️ Cluster not reachable from CI (local cluster)"
+        continue-on-error: true
