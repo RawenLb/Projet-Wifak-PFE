@@ -10,6 +10,11 @@ env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ${{ github.repository_owner }}/wifak
 
+# Permissions globales nécessaires pour ghcr.io
+permissions:
+  contents: read
+  packages: write
+
 jobs:
 
   # ════════════════════════════════════════════════════════════
