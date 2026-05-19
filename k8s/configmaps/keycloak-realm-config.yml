@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-realm-config
+  namespace: wifak
+  annotations:
+    description: "Export du realm bct-realm — généré automatiquement depuis Keycloak"
+binaryData: {}
+# Le fichier bct-realm-export.json est monté via un volume séparé.
+# Pour l'appliquer : kubectl create configmap keycloak-realm-config \
+#   --from-file=bct-realm.json=k8s/configmaps/bct-realm-export.json \
+#   -n wifak --dry-run=client -o yaml | kubectl apply -f -

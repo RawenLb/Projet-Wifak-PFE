@@ -132,9 +132,52 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka/
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: api-gateway
+
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
     reactor.netty: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+---
+# ── Profil Docker / K8s ────────────────────────────────────────
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    inetutils:
+      preferred-networks:
+        - 172.
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8080/realms/bct-realm
+          jwk-set-uri: http://keycloak:8080/realms/bct-realm/protocol/openid-connect/certs
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: api-gateway:8088
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/

@@ -38,7 +38,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/ws/chat").permitAll()
                         .requestMatchers("/api/chat/files/**").permitAll()
                         .anyRequest().authenticated()

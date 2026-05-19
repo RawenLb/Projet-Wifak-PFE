@@ -3,6 +3,7 @@ package com.wifak.validationservice.entities;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Entity
 @Table(name = "declarations")
@@ -39,8 +40,11 @@ public class Declaration {
     @Column(columnDefinition = "MEDIUMTEXT")
     private String mappingJson;
 
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dateGeneration;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dateValidation;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dateEnvoi;
 
     private String generePar;

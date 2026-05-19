@@ -238,11 +238,19 @@ jobs:
           kubectl apply -f k8s/configmaps/
           kubectl apply -f k8s/secrets/
           kubectl apply -f k8s/volumes/
-          kubectl apply -f k8s/deployments/
+          kubectl apply -f k8s/deployments/mysql.yml
+          kubectl rollout status deployment/mysql -n wifak --timeout=120s
+          kubectl apply -f k8s/deployments/keycloak.yml
+          kubectl rollout status deployment/keycloak -n wifak --timeout=180s
+          kubectl apply -f k8s/deployments/eureka-server.yml
+          kubectl rollout status deployment/eureka-server -n wifak --timeout=120s
+          kubectl apply -f k8s/deployments/api-gateway.yml
+          kubectl apply -f k8s/deployments/microservices.yml
           kubectl apply -f k8s/services/
           kubectl apply -f k8s/ingress/
           kubectl apply -f k8s/autoscaling/
           kubectl apply -f k8s/monitoring/
+          kubectl apply -f k8s/logging/
           kubectl apply -f k8s/security/
 
       - name: Wait for rollout

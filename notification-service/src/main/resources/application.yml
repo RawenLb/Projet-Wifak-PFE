@@ -82,6 +82,23 @@ app:
   cors:
     allowed-origins: http://localhost:4200
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: notification-service
+
 logging:
   level:
     com.wifak.notificationservice: INFO
@@ -111,4 +128,4 @@ eureka:
       defaultZone: http://eureka-server:8761/eureka/
 
 keycloak:
-  auth-server-url: http://charming_sinoussi:8080
+  auth-server-url: http://keycloak:8080

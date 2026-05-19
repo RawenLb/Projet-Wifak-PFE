@@ -104,6 +104,10 @@ app.add_middleware(
     allow_headers  = ["*"],
 )
 
+# ── Prometheus metrics ─────────────────────────────────────────────────
+from prometheus_fastapi_instrumentator import Instrumentator
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+
 
 # ══════════════════════════════════════════════════════════════════════
 # HEALTH & DIAGNOSTICS
