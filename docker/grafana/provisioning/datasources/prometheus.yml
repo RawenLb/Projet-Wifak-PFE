@@ -9,3 +9,19 @@ datasources:
     editable: false
     jsonData:
       timeInterval: "15s"
+
+  - name: MySQL
+    type: mysql
+    uid: mysql-wifak
+    access: proxy
+    url: mysql:3306
+    database: wifak_PFE
+    user: root
+    editable: false
+    secureJsonData:
+      password: "wifak2024"
+    jsonData:
+      maxOpenConns: 10
+      maxIdleConns: 10
+      connMaxLifetime: 14400
+      connectionTimeout: 30

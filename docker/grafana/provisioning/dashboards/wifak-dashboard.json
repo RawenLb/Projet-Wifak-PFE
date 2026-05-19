@@ -53,7 +53,7 @@
       "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
       "title": "Services DOWN",
       "type": "stat",
-      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "count(up == 0)", "legendFormat": "DOWN", "refId": "A" }]
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "count(up == 0) or vector(0)", "legendFormat": "DOWN", "refId": "A" }]
     },
     {
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -65,7 +65,7 @@
       "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
       "title": "Requêtes / sec (total)",
       "type": "stat",
-      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(http_server_requests_seconds_count[1m]))", "legendFormat": "req/s", "refId": "A" }]
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(http_server_requests_seconds_count[1m])) or vector(0)", "legendFormat": "req/s", "refId": "A" }]
     },
     {
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -83,7 +83,7 @@
       "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
       "title": "Taux d'erreur HTTP 5xx",
       "type": "stat",
-      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m]))", "legendFormat": "Erreurs", "refId": "A" }]
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) or vector(0)", "legendFormat": "Erreurs", "refId": "A" }]
     },
     {
       "collapsed": false,
@@ -117,7 +117,7 @@
       "title": "Latence P99 par service",
       "type": "timeseries",
       "targets": [
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.99, sum by (application, le) (rate(http_server_requests_seconds_bucket[5m])))", "legendFormat": "{{application}} p99", "refId": "A" }
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "http_server_requests_seconds{quantile=\"0.99\"}", "legendFormat": "{{application}} — {{uri}}", "refId": "A" }
       ]
     },
     {
@@ -159,7 +159,7 @@
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
       "id": 103,
-      "title": "MySQL",
+      "title": "MySQL — Métriques Prometheus (mysqld_exporter)",
       "type": "row"
     },
     {
@@ -206,10 +206,261 @@
       ]
     },
     {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short", "custom": { "lineWidth": 2 } }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "id": 33,
+      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "MySQL — Slow Queries / sec",
+      "type": "timeseries",
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "rate(mysql_global_status_slow_queries[1m])", "legendFormat": "Slow Queries/s", "refId": "A" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short", "custom": { "lineWidth": 2 } }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "id": 34,
+      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "MySQL — Uptime (secondes)",
+      "type": "timeseries",
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "mysql_global_status_uptime", "legendFormat": "Uptime", "refId": "A" }
+      ]
+    },
+    {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 40 },
+      "id": 105,
+      "title": "MySQL — Données SQL directes",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        }
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 41 },
+      "id": 50,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "title": "Total Utilisateurs",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+          "rawSql": "SELECT COUNT(*) AS total FROM wifak_PFE.users",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        }
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 41 },
+      "id": 51,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "title": "Total Déclarations",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+          "rawSql": "SELECT COUNT(*) AS total FROM wifak_validation.declarations",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        }
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 41 },
+      "id": 52,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "title": "Total Messages Chat",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+          "rawSql": "SELECT COUNT(*) AS total FROM wifak_chat.chat_messages",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        }
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 41 },
+      "id": 53,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "title": "Total Notifications",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+          "rawSql": "SELECT COUNT(*) AS total FROM wifak_notification.notification_logs",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "align": "auto", "displayMode": "auto" }
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 45 },
+      "id": 54,
+      "options": { "footer": { "show": false }, "showHeader": true },
+      "title": "Déclarations par statut",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+          "rawSql": "SELECT statut AS Statut, COUNT(*) AS Nombre FROM wifak_validation.declarations GROUP BY statut ORDER BY Nombre DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "align": "auto", "displayMode": "auto" }
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 45 },
+      "id": 55,
+      "options": { "footer": { "show": false }, "showHeader": true },
+      "title": "Déclarations récentes (10 dernières)",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+          "rawSql": "SELECT d.id, dt.nom AS type_declaration, d.statut, d.periode, d.genere_par FROM wifak_validation.declarations d LEFT JOIN wifak_validation.declaration_types dt ON d.declaration_type_id = dt.id ORDER BY d.id DESC LIMIT 10",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "align": "auto", "displayMode": "auto" }
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 53 },
+      "id": 56,
+      "options": { "footer": { "show": false }, "showHeader": true },
+      "title": "Logs de validation récents",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+          "rawSql": "SELECT declaration_id AS Declaration, action AS Action, statut_avant AS Avant, statut_apres AS Apres, effectue_par AS EffectuePar, date_action AS Date FROM wifak_validation.validation_logs ORDER BY date_action DESC LIMIT 15",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "align": "auto", "displayMode": "auto" }
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 53 },
+      "id": 57,
+      "options": { "footer": { "show": false }, "showHeader": true },
+      "title": "Notifications récentes",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+          "rawSql": "SELECT declaration_id AS Declaration, notification_type AS Type, recipient AS Destinataire, statut AS Statut, date_sent AS Date FROM wifak_notification.notification_logs ORDER BY date_sent DESC LIMIT 15",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "align": "auto", "displayMode": "auto" }
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 61 },
+      "id": 58,
+      "options": { "footer": { "show": false }, "showHeader": true },
+      "title": "Utilisateurs actifs",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+          "rawSql": "SELECT username, email, first_name, last_name, enabled, created_at FROM wifak_PFE.users ORDER BY created_at DESC LIMIT 20",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "align": "auto", "displayMode": "auto" }
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 61 },
+      "id": 59,
+      "options": { "footer": { "show": false }, "showHeader": true },
+      "title": "Messages Chat récents",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "mysql-wifak" },
+          "rawSql": "SELECT sender_name, recipient_name, type, is_read, sent_at FROM wifak_chat.chat_messages WHERE is_deleted = 0 ORDER BY sent_at DESC LIMIT 15",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 69 },
       "id": 104,
-      "title": "Déclarations BCT",
+      "title": "Déclarations BCT — Métriques Prometheus",
       "type": "row"
     },
     {
@@ -217,7 +468,7 @@
       "fieldConfig": {
         "defaults": { "color": { "mode": "palette-classic" }, "unit": "short", "custom": { "lineWidth": 2 } }
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 33 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 70 },
       "id": 40,
       "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
       "title": "Appels API Déclarations",
@@ -229,15 +480,15 @@
     {
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
-        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short", "custom": { "lineWidth": 2 } }
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "s", "custom": { "lineWidth": 2 } }
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 33 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 70 },
       "id": 41,
       "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
-      "title": "Erreurs HTTP 5xx — workflow-declaration",
+      "title": "Latence Max — workflow-declaration (par URI)",
       "type": "timeseries",
       "targets": [
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "rate(http_server_requests_seconds_count{application=\"workflow-declaration\", status=~\"5..\"}[5m])", "legendFormat": "{{uri}}", "refId": "A" }
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "http_server_requests_seconds_max{application=\"workflow-declaration\"}", "legendFormat": "{{uri}} {{status}}", "refId": "A" }
       ]
     }
   ],
@@ -249,5 +500,5 @@
   "timezone": "browser",
   "title": "Wifak BCT — Monitoring",
   "uid": "wifak-bct-monitoring",
-  "version": 1
+  "version": 2
 }

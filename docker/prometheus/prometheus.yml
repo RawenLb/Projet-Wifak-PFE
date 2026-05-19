@@ -3,42 +3,70 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
+
   - job_name: 'eureka-server'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['eureka-server:8761']
+        labels:
+          application: 'eureka-server'
 
   - job_name: 'api-gateway'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['api-gateway:8088']
+        labels:
+          application: 'api-gateway'
 
   - job_name: 'authentification-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['authentification-service:8082']
+        labels:
+          application: 'authentification-service'
 
   - job_name: 'chat-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['chat-service:8083']
+        labels:
+          application: 'chat-service'
 
   - job_name: 'workflow-declaration'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['workflow-declaration:8084']
+        labels:
+          application: 'workflow-declaration'
 
   - job_name: 'jira-integration-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['jira-integration-service:8085']
+        labels:
+          application: 'jira-integration-service'
 
   - job_name: 'notification-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['notification-service:8086']
+        labels:
+          application: 'notification-service'
 
   - job_name: 'ml-service'
     metrics_path: '/metrics'
     static_configs:
       - targets: ['ml-service:8090']
+        labels:
+          application: 'ml-service'
+
+  # ── MySQL Exporter ─────────────────────────────────────────
+  - job_name: 'mysql-exporter'
+    static_configs:
+      - targets: ['mysql-exporter:9104']
+        labels:
+          application: 'mysql'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'wifak-mysql'

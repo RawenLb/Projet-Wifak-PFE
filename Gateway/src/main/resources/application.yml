@@ -146,6 +146,13 @@ management:
     export:
       prometheus:
         enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+      slo:
+        http.server.requests: 50ms, 100ms, 200ms, 500ms, 1s, 2s
     tags:
       application: api-gateway
 
@@ -170,7 +177,6 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://keycloak:8080/realms/bct-realm
           jwk-set-uri: http://keycloak:8080/realms/bct-realm/protocol/openid-connect/certs
 
 eureka:

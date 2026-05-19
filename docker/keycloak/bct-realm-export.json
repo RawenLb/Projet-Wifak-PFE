@@ -1,695 +1,632 @@
-﻿{
-    "duplicateEmailsAllowed":  false,
-    "sslRequired":  "none",
-    "enabled":  true,
-    "resetPasswordAllowed":  true,
-    "registrationAllowed":  false,
-    "users":  {
-                  "value":  [
-                                {
-                                    "id":  "f81fa3b7-73ed-48b0-bddb-3970c880ea4e",
-                                    "username":  "joujou",
-                                    "firstName":  "jihed",
-                                    "lastName":  "el mokhtar",
-                                    "email":  "rawenlaabaoui@gmail.com",
-                                    "emailVerified":  true,
-                                    "createdTimestamp":  1774181772751,
-                                    "enabled":  true,
-                                    "totp":  false,
-                                    "disableableCredentialTypes":  [
-
-                                                                   ],
-                                    "requiredActions":  [
-
-                                                        ],
-                                    "notBefore":  0,
-                                    "access":  {
-                                                   "manageGroupMembership":  true,
-                                                   "view":  true,
-                                                   "mapRoles":  true,
-                                                   "impersonate":  true,
-                                                   "manage":  true
-                                               }
-                                },
-                                {
-                                    "id":  "cf99eee7-d2dd-4f43-9945-fa8ec0be3c2e",
-                                    "username":  "rawena",
-                                    "firstName":  "rawenaa",
-                                    "lastName":  "el mokhtar",
-                                    "email":  "labaoui.rawen@esprit.tn",
-                                    "emailVerified":  true,
-                                    "createdTimestamp":  1771333365085,
-                                    "enabled":  true,
-                                    "totp":  false,
-                                    "disableableCredentialTypes":  [
-
-                                                                   ],
-                                    "requiredActions":  [
-
-                                                        ],
-                                    "notBefore":  0,
-                                    "access":  {
-                                                   "manageGroupMembership":  true,
-                                                   "view":  true,
-                                                   "mapRoles":  true,
-                                                   "impersonate":  true,
-                                                   "manage":  true
-                                               }
-                                },
-                                {
-                                    "id":  "872b936d-38d5-424a-a7d7-3d8adca8e066",
-                                    "username":  "rawene.labaoui@gmail.com",
-                                    "firstName":  "Rawen",
-                                    "lastName":  "labaoui",
-                                    "email":  "rawene.labaoui@gmail.com",
-                                    "emailVerified":  true,
-                                    "createdTimestamp":  1768341732100,
-                                    "enabled":  true,
-                                    "totp":  false,
-                                    "disableableCredentialTypes":  [
-
-                                                                   ],
-                                    "requiredActions":  [
-
-                                                        ],
-                                    "notBefore":  0,
-                                    "access":  {
-                                                   "manageGroupMembership":  true,
-                                                   "view":  true,
-                                                   "mapRoles":  true,
-                                                   "impersonate":  true,
-                                                   "manage":  true
-                                               }
-                                },
-                                {
-                                    "id":  "c45d2df3-0c85-47ab-b440-d76a966865dd",
-                                    "username":  "ridha_labaoui",
-                                    "firstName":  "ridha",
-                                    "lastName":  "labaoui",
-                                    "email":  "labaouiridha5@gmail.com",
-                                    "emailVerified":  true,
-                                    "createdTimestamp":  1771331307212,
-                                    "enabled":  true,
-                                    "totp":  false,
-                                    "disableableCredentialTypes":  [
-
-                                                                   ],
-                                    "requiredActions":  [
-
-                                                        ],
-                                    "notBefore":  0,
-                                    "access":  {
-                                                   "manageGroupMembership":  true,
-                                                   "view":  true,
-                                                   "mapRoles":  true,
-                                                   "impersonate":  true,
-                                                   "manage":  true
-                                               }
-                                }
-                            ],
-                  "Count":  4
-              },
-    "roles":  {
-                  "realm":  {
-                                "value":  [
-                                              {
-                                                  "id":  "2c1849c4-ace8-4efb-9f5c-2e4946d6c7f2",
-                                                  "name":  "uma_authorization",
-                                                  "description":  "${role_uma_authorization}",
-                                                  "composite":  false,
-                                                  "clientRole":  false,
-                                                  "containerId":  "b273d7c2-8947-400f-a9a4-673bb75be626"
-                                              },
-                                              {
-                                                  "id":  "9e8c490d-2b2a-4526-b8fa-96415c77be31",
-                                                  "name":  "ROLE_ADMIN",
-                                                  "description":  "administrateur",
-                                                  "composite":  false,
-                                                  "clientRole":  false,
-                                                  "containerId":  "b273d7c2-8947-400f-a9a4-673bb75be626"
-                                              },
-                                              {
-                                                  "id":  "f3690dfd-e3e0-4fac-b607-84f0094d64ff",
-                                                  "name":  "ROLE_AGENT",
-                                                  "description":  "agent déclarant",
-                                                  "composite":  false,
-                                                  "clientRole":  false,
-                                                  "containerId":  "b273d7c2-8947-400f-a9a4-673bb75be626"
-                                              },
-                                              {
-                                                  "id":  "cdc77289-d37d-403f-8e04-68633cfc6d2d",
-                                                  "name":  "offline_access",
-                                                  "description":  "${role_offline-access}",
-                                                  "composite":  false,
-                                                  "clientRole":  false,
-                                                  "containerId":  "b273d7c2-8947-400f-a9a4-673bb75be626"
-                                              },
-                                              {
-                                                  "id":  "86ac1447-d414-4b80-9ed1-2cee6c3c2ffd",
-                                                  "name":  "default-roles-bct-realm",
-                                                  "description":  "${role_default-roles}",
-                                                  "composite":  true,
-                                                  "clientRole":  false,
-                                                  "containerId":  "b273d7c2-8947-400f-a9a4-673bb75be626"
-                                              },
-                                              {
-                                                  "id":  "2c03f9c3-f715-4457-9e95-8a99e9f13846",
-                                                  "name":  "ROLE_MANAGER",
-                                                  "description":  "manager/responsable",
-                                                  "composite":  false,
-                                                  "clientRole":  false,
-                                                  "containerId":  "b273d7c2-8947-400f-a9a4-673bb75be626"
-                                              },
-                                              {
-                                                  "id":  "cd999505-f5d4-4db9-8523-74d3eebc7544",
-                                                  "name":  "ROLE_AUDITOR",
-                                                  "description":  "auditeur",
-                                                  "composite":  false,
-                                                  "clientRole":  false,
-                                                  "containerId":  "b273d7c2-8947-400f-a9a4-673bb75be626"
-                                              }
-                                          ],
-                                "Count":  7
-                            }
-              },
-    "clients":  {
-                    "value":  [
-                                  {
-                                      "id":  "d5103ad0-2644-447e-80de-6e3b36b6ade6",
-                                      "clientId":  "account",
-                                      "name":  "${client_account}",
-                                      "rootUrl":  "${authBaseUrl}",
-                                      "baseUrl":  "/realms/bct-realm/account/",
-                                      "surrogateAuthRequired":  false,
-                                      "enabled":  true,
-                                      "alwaysDisplayInConsole":  false,
-                                      "clientAuthenticatorType":  "client-secret",
-                                      "redirectUris":  [
-                                                           "/realms/bct-realm/account/*"
-                                                       ],
-                                      "webOrigins":  [
-
-                                                     ],
-                                      "notBefore":  0,
-                                      "bearerOnly":  false,
-                                      "consentRequired":  false,
-                                      "standardFlowEnabled":  true,
-                                      "implicitFlowEnabled":  false,
-                                      "directAccessGrantsEnabled":  false,
-                                      "serviceAccountsEnabled":  false,
-                                      "publicClient":  true,
-                                      "frontchannelLogout":  false,
-                                      "protocol":  "openid-connect",
-                                      "attributes":  {
-                                                         "post.logout.redirect.uris":  "+"
-                                                     },
-                                      "authenticationFlowBindingOverrides":  {
-
-                                                                             },
-                                      "fullScopeAllowed":  false,
-                                      "nodeReRegistrationTimeout":  0,
-                                      "defaultClientScopes":  [
-                                                                  "web-origins",
-                                                                  "acr",
-                                                                  "roles",
-                                                                  "profile",
-                                                                  "email"
-                                                              ],
-                                      "optionalClientScopes":  [
-                                                                   "address",
-                                                                   "phone",
-                                                                   "offline_access",
-                                                                   "microprofile-jwt"
-                                                               ],
-                                      "access":  {
-                                                     "view":  true,
-                                                     "configure":  true,
-                                                     "manage":  true
-                                                 }
-                                  },
-                                  {
-                                      "id":  "2961aa95-39a7-44a0-9c06-a3f1e3974977",
-                                      "clientId":  "account-console",
-                                      "name":  "${client_account-console}",
-                                      "rootUrl":  "${authBaseUrl}",
-                                      "baseUrl":  "/realms/bct-realm/account/",
-                                      "surrogateAuthRequired":  false,
-                                      "enabled":  true,
-                                      "alwaysDisplayInConsole":  false,
-                                      "clientAuthenticatorType":  "client-secret",
-                                      "redirectUris":  [
-                                                           "/realms/bct-realm/account/*"
-                                                       ],
-                                      "webOrigins":  [
-
-                                                     ],
-                                      "notBefore":  0,
-                                      "bearerOnly":  false,
-                                      "consentRequired":  false,
-                                      "standardFlowEnabled":  true,
-                                      "implicitFlowEnabled":  false,
-                                      "directAccessGrantsEnabled":  false,
-                                      "serviceAccountsEnabled":  false,
-                                      "publicClient":  true,
-                                      "frontchannelLogout":  false,
-                                      "protocol":  "openid-connect",
-                                      "attributes":  {
-                                                         "post.logout.redirect.uris":  "+",
-                                                         "pkce.code.challenge.method":  "S256"
-                                                     },
-                                      "authenticationFlowBindingOverrides":  {
-
-                                                                             },
-                                      "fullScopeAllowed":  false,
-                                      "nodeReRegistrationTimeout":  0,
-                                      "protocolMappers":  [
-                                                              {
-                                                                  "id":  "22483410-358c-4b27-b756-830db1534f40",
-                                                                  "name":  "audience resolve",
-                                                                  "protocol":  "openid-connect",
-                                                                  "protocolMapper":  "oidc-audience-resolve-mapper",
-                                                                  "consentRequired":  false,
-                                                                  "config":  {
-
-                                                                             }
-                                                              }
-                                                          ],
-                                      "defaultClientScopes":  [
-                                                                  "web-origins",
-                                                                  "acr",
-                                                                  "roles",
-                                                                  "profile",
-                                                                  "email"
-                                                              ],
-                                      "optionalClientScopes":  [
-                                                                   "address",
-                                                                   "phone",
-                                                                   "offline_access",
-                                                                   "microprofile-jwt"
-                                                               ],
-                                      "access":  {
-                                                     "view":  true,
-                                                     "configure":  true,
-                                                     "manage":  true
-                                                 }
-                                  },
-                                  {
-                                      "id":  "347b47b7-0ca6-4253-8918-21877f9e4e02",
-                                      "clientId":  "admin-cli",
-                                      "name":  "${client_admin-cli}",
-                                      "surrogateAuthRequired":  false,
-                                      "enabled":  true,
-                                      "alwaysDisplayInConsole":  false,
-                                      "clientAuthenticatorType":  "client-secret",
-                                      "redirectUris":  [
-
-                                                       ],
-                                      "webOrigins":  [
-
-                                                     ],
-                                      "notBefore":  0,
-                                      "bearerOnly":  false,
-                                      "consentRequired":  false,
-                                      "standardFlowEnabled":  false,
-                                      "implicitFlowEnabled":  false,
-                                      "directAccessGrantsEnabled":  true,
-                                      "serviceAccountsEnabled":  false,
-                                      "publicClient":  true,
-                                      "frontchannelLogout":  false,
-                                      "protocol":  "openid-connect",
-                                      "attributes":  {
-
-                                                     },
-                                      "authenticationFlowBindingOverrides":  {
-
-                                                                             },
-                                      "fullScopeAllowed":  false,
-                                      "nodeReRegistrationTimeout":  0,
-                                      "defaultClientScopes":  [
-                                                                  "web-origins",
-                                                                  "acr",
-                                                                  "roles",
-                                                                  "profile",
-                                                                  "email"
-                                                              ],
-                                      "optionalClientScopes":  [
-                                                                   "address",
-                                                                   "phone",
-                                                                   "offline_access",
-                                                                   "microprofile-jwt"
-                                                               ],
-                                      "access":  {
-                                                     "view":  true,
-                                                     "configure":  true,
-                                                     "manage":  true
-                                                 }
-                                  },
-                                  {
-                                      "id":  "79a6cf29-5ec7-47dd-b7b9-2bd0fa484c9b",
-                                      "clientId":  "bct-backend",
-                                      "name":  "",
-                                      "description":  "",
-                                      "rootUrl":  "http://localhost:8080",
-                                      "adminUrl":  "http://localhost:8080",
-                                      "baseUrl":  "http://localhost:8080",
-                                      "surrogateAuthRequired":  false,
-                                      "enabled":  true,
-                                      "alwaysDisplayInConsole":  false,
-                                      "clientAuthenticatorType":  "client-secret",
-                                      "secret":  "UQIUjf1lHznBjmmdUlNleh8N9yMwzBaG",
-                                      "redirectUris":  [
-                                                           "http://localhost:8080/*"
-                                                       ],
-                                      "webOrigins":  [
-                                                         "http://localhost:8080"
-                                                     ],
-                                      "notBefore":  0,
-                                      "bearerOnly":  false,
-                                      "consentRequired":  false,
-                                      "standardFlowEnabled":  false,
-                                      "implicitFlowEnabled":  false,
-                                      "directAccessGrantsEnabled":  true,
-                                      "serviceAccountsEnabled":  true,
-                                      "publicClient":  false,
-                                      "frontchannelLogout":  true,
-                                      "protocol":  "openid-connect",
-                                      "attributes":  {
-                                                         "oidc.ciba.grant.enabled":  "false",
-                                                         "client.secret.creation.time":  "1768329590",
-                                                         "backchannel.logout.session.required":  "true",
-                                                         "oauth2.device.authorization.grant.enabled":  "false",
-                                                         "display.on.consent.screen":  "false",
-                                                         "backchannel.logout.revoke.offline.tokens":  "false"
-                                                     },
-                                      "authenticationFlowBindingOverrides":  {
-
-                                                                             },
-                                      "fullScopeAllowed":  true,
-                                      "nodeReRegistrationTimeout":  -1,
-                                      "protocolMappers":  [
-                                                              {
-                                                                  "id":  "69f11e45-85ee-44dc-8a9a-5c128dd89768",
-                                                                  "name":  "Client Host",
-                                                                  "protocol":  "openid-connect",
-                                                                  "protocolMapper":  "oidc-usersessionmodel-note-mapper",
-                                                                  "consentRequired":  false,
-                                                                  "config":  {
-                                                                                 "user.session.note":  "clientHost",
-                                                                                 "introspection.token.claim":  "true",
-                                                                                 "id.token.claim":  "true",
-                                                                                 "access.token.claim":  "true",
-                                                                                 "claim.name":  "clientHost",
-                                                                                 "jsonType.label":  "String"
-                                                                             }
-                                                              },
-                                                              {
-                                                                  "id":  "80ae3b32-8073-4702-b1ba-7016ad8a0faa",
-                                                                  "name":  "Client ID",
-                                                                  "protocol":  "openid-connect",
-                                                                  "protocolMapper":  "oidc-usersessionmodel-note-mapper",
-                                                                  "consentRequired":  false,
-                                                                  "config":  {
-                                                                                 "user.session.note":  "client_id",
-                                                                                 "introspection.token.claim":  "true",
-                                                                                 "id.token.claim":  "true",
-                                                                                 "access.token.claim":  "true",
-                                                                                 "claim.name":  "client_id",
-                                                                                 "jsonType.label":  "String"
-                                                                             }
-                                                              },
-                                                              {
-                                                                  "id":  "81f88c1a-155c-4e48-b808-e06ec308dd6f",
-                                                                  "name":  "Client IP Address",
-                                                                  "protocol":  "openid-connect",
-                                                                  "protocolMapper":  "oidc-usersessionmodel-note-mapper",
-                                                                  "consentRequired":  false,
-                                                                  "config":  {
-                                                                                 "user.session.note":  "clientAddress",
-                                                                                 "introspection.token.claim":  "true",
-                                                                                 "id.token.claim":  "true",
-                                                                                 "access.token.claim":  "true",
-                                                                                 "claim.name":  "clientAddress",
-                                                                                 "jsonType.label":  "String"
-                                                                             }
-                                                              }
-                                                          ],
-                                      "defaultClientScopes":  [
-                                                                  "web-origins",
-                                                                  "acr",
-                                                                  "roles",
-                                                                  "profile",
-                                                                  "email"
-                                                              ],
-                                      "optionalClientScopes":  [
-                                                                   "address",
-                                                                   "phone",
-                                                                   "offline_access",
-                                                                   "microprofile-jwt"
-                                                               ],
-                                      "access":  {
-                                                     "view":  true,
-                                                     "configure":  true,
-                                                     "manage":  true
-                                                 }
-                                  },
-                                  {
-                                      "id":  "530bd73b-0606-4e36-99a7-8e8742b59c97",
-                                      "clientId":  "bct-frontend",
-                                      "name":  "",
-                                      "description":  "",
-                                      "rootUrl":  "http://localhost:4200",
-                                      "adminUrl":  "http://localhost:4200",
-                                      "baseUrl":  "http://localhost:4200",
-                                      "surrogateAuthRequired":  false,
-                                      "enabled":  true,
-                                      "alwaysDisplayInConsole":  false,
-                                      "clientAuthenticatorType":  "client-secret",
-                                      "redirectUris":  [
-                                                           "http://localhost:4200/*"
-                                                       ],
-                                      "webOrigins":  [
-                                                         "http://localhost:4200"
-                                                     ],
-                                      "notBefore":  0,
-                                      "bearerOnly":  false,
-                                      "consentRequired":  false,
-                                      "standardFlowEnabled":  true,
-                                      "implicitFlowEnabled":  false,
-                                      "directAccessGrantsEnabled":  true,
-                                      "serviceAccountsEnabled":  false,
-                                      "publicClient":  true,
-                                      "frontchannelLogout":  true,
-                                      "protocol":  "openid-connect",
-                                      "attributes":  {
-                                                         "oidc.ciba.grant.enabled":  "false",
-                                                         "backchannel.logout.session.required":  "true",
-                                                         "post.logout.redirect.uris":  "http://localhost:4200/*",
-                                                         "oauth2.device.authorization.grant.enabled":  "false",
-                                                         "display.on.consent.screen":  "false",
-                                                         "backchannel.logout.revoke.offline.tokens":  "false"
-                                                     },
-                                      "authenticationFlowBindingOverrides":  {
-
-                                                                             },
-                                      "fullScopeAllowed":  true,
-                                      "nodeReRegistrationTimeout":  -1,
-                                      "defaultClientScopes":  [
-                                                                  "web-origins",
-                                                                  "acr",
-                                                                  "roles",
-                                                                  "profile",
-                                                                  "email"
-                                                              ],
-                                      "optionalClientScopes":  [
-                                                                   "address",
-                                                                   "phone",
-                                                                   "offline_access",
-                                                                   "microprofile-jwt"
-                                                               ],
-                                      "access":  {
-                                                     "view":  true,
-                                                     "configure":  true,
-                                                     "manage":  true
-                                                 }
-                                  },
-                                  {
-                                      "id":  "2ff3b4a0-1062-45db-a04a-cb35ab9cf9a2",
-                                      "clientId":  "broker",
-                                      "name":  "${client_broker}",
-                                      "surrogateAuthRequired":  false,
-                                      "enabled":  true,
-                                      "alwaysDisplayInConsole":  false,
-                                      "clientAuthenticatorType":  "client-secret",
-                                      "redirectUris":  [
-
-                                                       ],
-                                      "webOrigins":  [
-
-                                                     ],
-                                      "notBefore":  0,
-                                      "bearerOnly":  true,
-                                      "consentRequired":  false,
-                                      "standardFlowEnabled":  true,
-                                      "implicitFlowEnabled":  false,
-                                      "directAccessGrantsEnabled":  false,
-                                      "serviceAccountsEnabled":  false,
-                                      "publicClient":  false,
-                                      "frontchannelLogout":  false,
-                                      "protocol":  "openid-connect",
-                                      "attributes":  {
-
-                                                     },
-                                      "authenticationFlowBindingOverrides":  {
-
-                                                                             },
-                                      "fullScopeAllowed":  false,
-                                      "nodeReRegistrationTimeout":  0,
-                                      "defaultClientScopes":  [
-                                                                  "web-origins",
-                                                                  "acr",
-                                                                  "roles",
-                                                                  "profile",
-                                                                  "email"
-                                                              ],
-                                      "optionalClientScopes":  [
-                                                                   "address",
-                                                                   "phone",
-                                                                   "offline_access",
-                                                                   "microprofile-jwt"
-                                                               ],
-                                      "access":  {
-                                                     "view":  true,
-                                                     "configure":  true,
-                                                     "manage":  true
-                                                 }
-                                  },
-                                  {
-                                      "id":  "3c299dd9-95ae-41d5-a532-b6e1e87aa6b8",
-                                      "clientId":  "realm-management",
-                                      "name":  "${client_realm-management}",
-                                      "surrogateAuthRequired":  false,
-                                      "enabled":  true,
-                                      "alwaysDisplayInConsole":  false,
-                                      "clientAuthenticatorType":  "client-secret",
-                                      "redirectUris":  [
-
-                                                       ],
-                                      "webOrigins":  [
-
-                                                     ],
-                                      "notBefore":  0,
-                                      "bearerOnly":  true,
-                                      "consentRequired":  false,
-                                      "standardFlowEnabled":  true,
-                                      "implicitFlowEnabled":  false,
-                                      "directAccessGrantsEnabled":  false,
-                                      "serviceAccountsEnabled":  false,
-                                      "publicClient":  false,
-                                      "frontchannelLogout":  false,
-                                      "protocol":  "openid-connect",
-                                      "attributes":  {
-
-                                                     },
-                                      "authenticationFlowBindingOverrides":  {
-
-                                                                             },
-                                      "fullScopeAllowed":  false,
-                                      "nodeReRegistrationTimeout":  0,
-                                      "defaultClientScopes":  [
-                                                                  "web-origins",
-                                                                  "acr",
-                                                                  "roles",
-                                                                  "profile",
-                                                                  "email"
-                                                              ],
-                                      "optionalClientScopes":  [
-                                                                   "address",
-                                                                   "phone",
-                                                                   "offline_access",
-                                                                   "microprofile-jwt"
-                                                               ],
-                                      "access":  {
-                                                     "view":  true,
-                                                     "configure":  true,
-                                                     "manage":  true
-                                                 }
-                                  },
-                                  {
-                                      "id":  "22d1b57a-5ee3-436a-aa7f-d7033e2635ff",
-                                      "clientId":  "security-admin-console",
-                                      "name":  "${client_security-admin-console}",
-                                      "rootUrl":  "${authAdminUrl}",
-                                      "baseUrl":  "/admin/bct-realm/console/",
-                                      "surrogateAuthRequired":  false,
-                                      "enabled":  true,
-                                      "alwaysDisplayInConsole":  false,
-                                      "clientAuthenticatorType":  "client-secret",
-                                      "redirectUris":  [
-                                                           "/admin/bct-realm/console/*"
-                                                       ],
-                                      "webOrigins":  [
-                                                         "+"
-                                                     ],
-                                      "notBefore":  0,
-                                      "bearerOnly":  false,
-                                      "consentRequired":  false,
-                                      "standardFlowEnabled":  true,
-                                      "implicitFlowEnabled":  false,
-                                      "directAccessGrantsEnabled":  false,
-                                      "serviceAccountsEnabled":  false,
-                                      "publicClient":  true,
-                                      "frontchannelLogout":  false,
-                                      "protocol":  "openid-connect",
-                                      "attributes":  {
-                                                         "post.logout.redirect.uris":  "+",
-                                                         "pkce.code.challenge.method":  "S256"
-                                                     },
-                                      "authenticationFlowBindingOverrides":  {
-
-                                                                             },
-                                      "fullScopeAllowed":  false,
-                                      "nodeReRegistrationTimeout":  0,
-                                      "protocolMappers":  [
-                                                              {
-                                                                  "id":  "6b3f11ed-ec7b-4806-90c2-551761c5e9ec",
-                                                                  "name":  "locale",
-                                                                  "protocol":  "openid-connect",
-                                                                  "protocolMapper":  "oidc-usermodel-attribute-mapper",
-                                                                  "consentRequired":  false,
-                                                                  "config":  {
-                                                                                 "introspection.token.claim":  "true",
-                                                                                 "userinfo.token.claim":  "true",
-                                                                                 "user.attribute":  "locale",
-                                                                                 "id.token.claim":  "true",
-                                                                                 "access.token.claim":  "true",
-                                                                                 "claim.name":  "locale",
-                                                                                 "jsonType.label":  "String"
-                                                                             }
-                                                              }
-                                                          ],
-                                      "defaultClientScopes":  [
-                                                                  "web-origins",
-                                                                  "acr",
-                                                                  "roles",
-                                                                  "profile",
-                                                                  "email"
-                                                              ],
-                                      "optionalClientScopes":  [
-                                                                   "address",
-                                                                   "phone",
-                                                                   "offline_access",
-                                                                   "microprofile-jwt"
-                                                               ],
-                                      "access":  {
-                                                     "view":  true,
-                                                     "configure":  true,
-                                                     "manage":  true
-                                                 }
-                                  }
-                              ],
-                    "Count":  8
-                },
-    "loginWithEmailAllowed":  true,
-    "editUsernameAllowed":  false,
-    "realm":  "bct-realm"
+{
+  "duplicateEmailsAllowed": false,
+  "sslRequired": "none",
+  "enabled": true,
+  "resetPasswordAllowed": true,
+  "registrationAllowed": false,
+  "users": [
+    {
+      "id": "f81fa3b7-73ed-48b0-bddb-3970c880ea4e",
+      "username": "joujou",
+      "firstName": "jihed",
+      "lastName": "el mokhtar",
+      "email": "rawenlaabaoui@gmail.com",
+      "emailVerified": true,
+      "createdTimestamp": 1774181772751,
+      "enabled": true,
+      "totp": false,
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "notBefore": 0,
+      "access": {
+        "manageGroupMembership": true,
+        "view": true,
+        "mapRoles": true,
+        "impersonate": true,
+        "manage": true
+      }
+    },
+    {
+      "id": "cf99eee7-d2dd-4f43-9945-fa8ec0be3c2e",
+      "username": "rawena",
+      "firstName": "rawenaa",
+      "lastName": "el mokhtar",
+      "email": "labaoui.rawen@esprit.tn",
+      "emailVerified": true,
+      "createdTimestamp": 1771333365085,
+      "enabled": true,
+      "totp": false,
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "notBefore": 0,
+      "access": {
+        "manageGroupMembership": true,
+        "view": true,
+        "mapRoles": true,
+        "impersonate": true,
+        "manage": true
+      }
+    },
+    {
+      "id": "872b936d-38d5-424a-a7d7-3d8adca8e066",
+      "username": "rawene.labaoui@gmail.com",
+      "firstName": "Rawen",
+      "lastName": "labaoui",
+      "email": "rawene.labaoui@gmail.com",
+      "emailVerified": true,
+      "createdTimestamp": 1768341732100,
+      "enabled": true,
+      "totp": false,
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "notBefore": 0,
+      "access": {
+        "manageGroupMembership": true,
+        "view": true,
+        "mapRoles": true,
+        "impersonate": true,
+        "manage": true
+      }
+    },
+    {
+      "id": "c45d2df3-0c85-47ab-b440-d76a966865dd",
+      "username": "ridha_labaoui",
+      "firstName": "ridha",
+      "lastName": "labaoui",
+      "email": "labaouiridha5@gmail.com",
+      "emailVerified": true,
+      "createdTimestamp": 1771331307212,
+      "enabled": true,
+      "totp": false,
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "notBefore": 0,
+      "access": {
+        "manageGroupMembership": true,
+        "view": true,
+        "mapRoles": true,
+        "impersonate": true,
+        "manage": true
+      }
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "id": "2c1849c4-ace8-4efb-9f5c-2e4946d6c7f2",
+        "name": "uma_authorization",
+        "description": "${role_uma_authorization}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "b273d7c2-8947-400f-a9a4-673bb75be626"
+      },
+      {
+        "id": "9e8c490d-2b2a-4526-b8fa-96415c77be31",
+        "name": "ROLE_ADMIN",
+        "description": "administrateur",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "b273d7c2-8947-400f-a9a4-673bb75be626"
+      },
+      {
+        "id": "f3690dfd-e3e0-4fac-b607-84f0094d64ff",
+        "name": "ROLE_AGENT",
+        "description": "agent déclarant",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "b273d7c2-8947-400f-a9a4-673bb75be626"
+      },
+      {
+        "id": "cdc77289-d37d-403f-8e04-68633cfc6d2d",
+        "name": "offline_access",
+        "description": "${role_offline-access}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "b273d7c2-8947-400f-a9a4-673bb75be626"
+      },
+      {
+        "id": "86ac1447-d414-4b80-9ed1-2cee6c3c2ffd",
+        "name": "default-roles-bct-realm",
+        "description": "${role_default-roles}",
+        "composite": true,
+        "clientRole": false,
+        "containerId": "b273d7c2-8947-400f-a9a4-673bb75be626"
+      },
+      {
+        "id": "2c03f9c3-f715-4457-9e95-8a99e9f13846",
+        "name": "ROLE_MANAGER",
+        "description": "manager/responsable",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "b273d7c2-8947-400f-a9a4-673bb75be626"
+      },
+      {
+        "id": "cd999505-f5d4-4db9-8523-74d3eebc7544",
+        "name": "ROLE_AUDITOR",
+        "description": "auditeur",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "b273d7c2-8947-400f-a9a4-673bb75be626"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "id": "d5103ad0-2644-447e-80de-6e3b36b6ade6",
+      "clientId": "account",
+      "name": "${client_account}",
+      "rootUrl": "${authBaseUrl}",
+      "baseUrl": "/realms/bct-realm/account/",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [
+        "/realms/bct-realm/account/*"
+      ],
+      "webOrigins": [],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "+"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": false,
+      "nodeReRegistrationTimeout": 0,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ],
+      "access": {
+        "view": true,
+        "configure": true,
+        "manage": true
+      }
+    },
+    {
+      "id": "2961aa95-39a7-44a0-9c06-a3f1e3974977",
+      "clientId": "account-console",
+      "name": "${client_account-console}",
+      "rootUrl": "${authBaseUrl}",
+      "baseUrl": "/realms/bct-realm/account/",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [
+        "/realms/bct-realm/account/*"
+      ],
+      "webOrigins": [],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "+",
+        "pkce.code.challenge.method": "S256"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": false,
+      "nodeReRegistrationTimeout": 0,
+      "protocolMappers": [
+        {
+          "id": "22483410-358c-4b27-b756-830db1534f40",
+          "name": "audience resolve",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-resolve-mapper",
+          "consentRequired": false,
+          "config": {}
+        }
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ],
+      "access": {
+        "view": true,
+        "configure": true,
+        "manage": true
+      }
+    },
+    {
+      "id": "347b47b7-0ca6-4253-8918-21877f9e4e02",
+      "clientId": "admin-cli",
+      "name": "${client_admin-cli}",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [],
+      "webOrigins": [],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {},
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": false,
+      "nodeReRegistrationTimeout": 0,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ],
+      "access": {
+        "view": true,
+        "configure": true,
+        "manage": true
+      }
+    },
+    {
+      "id": "79a6cf29-5ec7-47dd-b7b9-2bd0fa484c9b",
+      "clientId": "bct-backend",
+      "name": "",
+      "description": "",
+      "rootUrl": "http://localhost:8080",
+      "adminUrl": "http://localhost:8080",
+      "baseUrl": "http://localhost:8080",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "UQIUjf1lHznBjmmdUlNleh8N9yMwzBaG",
+      "redirectUris": [
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8080"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "oidc.ciba.grant.enabled": "false",
+        "client.secret.creation.time": "1768329590",
+        "backchannel.logout.session.required": "true",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "display.on.consent.screen": "false",
+        "backchannel.logout.revoke.offline.tokens": "false"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "protocolMappers": [
+        {
+          "id": "69f11e45-85ee-44dc-8a9a-5c128dd89768",
+          "name": "Client Host",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "clientHost",
+            "introspection.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clientHost",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "id": "80ae3b32-8073-4702-b1ba-7016ad8a0faa",
+          "name": "Client ID",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "client_id",
+            "introspection.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "client_id",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "id": "81f88c1a-155c-4e48-b808-e06ec308dd6f",
+          "name": "Client IP Address",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "clientAddress",
+            "introspection.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clientAddress",
+            "jsonType.label": "String"
+          }
+        }
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ],
+      "access": {
+        "view": true,
+        "configure": true,
+        "manage": true
+      }
+    },
+    {
+      "id": "530bd73b-0606-4e36-99a7-8e8742b59c97",
+      "clientId": "bct-frontend",
+      "name": "",
+      "description": "",
+      "rootUrl": "http://localhost:4200",
+      "adminUrl": "http://localhost:4200",
+      "baseUrl": "http://localhost:4200",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "oidc.ciba.grant.enabled": "false",
+        "backchannel.logout.session.required": "true",
+        "post.logout.redirect.uris": "http://localhost:4200/*",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "display.on.consent.screen": "false",
+        "backchannel.logout.revoke.offline.tokens": "false"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ],
+      "access": {
+        "view": true,
+        "configure": true,
+        "manage": true
+      }
+    },
+    {
+      "id": "2ff3b4a0-1062-45db-a04a-cb35ab9cf9a2",
+      "clientId": "broker",
+      "name": "${client_broker}",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [],
+      "webOrigins": [],
+      "notBefore": 0,
+      "bearerOnly": true,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {},
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": false,
+      "nodeReRegistrationTimeout": 0,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ],
+      "access": {
+        "view": true,
+        "configure": true,
+        "manage": true
+      }
+    },
+    {
+      "id": "3c299dd9-95ae-41d5-a532-b6e1e87aa6b8",
+      "clientId": "realm-management",
+      "name": "${client_realm-management}",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [],
+      "webOrigins": [],
+      "notBefore": 0,
+      "bearerOnly": true,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {},
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": false,
+      "nodeReRegistrationTimeout": 0,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ],
+      "access": {
+        "view": true,
+        "configure": true,
+        "manage": true
+      }
+    },
+    {
+      "id": "22d1b57a-5ee3-436a-aa7f-d7033e2635ff",
+      "clientId": "security-admin-console",
+      "name": "${client_security-admin-console}",
+      "rootUrl": "${authAdminUrl}",
+      "baseUrl": "/admin/bct-realm/console/",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [
+        "/admin/bct-realm/console/*"
+      ],
+      "webOrigins": [
+        "+"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "+",
+        "pkce.code.challenge.method": "S256"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": false,
+      "nodeReRegistrationTimeout": 0,
+      "protocolMappers": [
+        {
+          "id": "6b3f11ed-ec7b-4806-90c2-551761c5e9ec",
+          "name": "locale",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "locale",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "locale",
+            "jsonType.label": "String"
+          }
+        }
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ],
+      "access": {
+        "view": true,
+        "configure": true,
+        "manage": true
+      }
+    }
+  ],
+  "loginWithEmailAllowed": true,
+  "editUsernameAllowed": false,
+  "realm": "bct-realm",
+  "loginTheme": "bct-theme",
+  "displayName": "Banque Wifak BCT"
 }
