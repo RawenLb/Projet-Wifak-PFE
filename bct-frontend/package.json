@@ -18,6 +18,7 @@
     "@angular/platform-browser": "^16.2.0",
     "@angular/platform-browser-dynamic": "^16.2.0",
     "@angular/router": "^16.2.0",
+    "@angular/service-worker": "^16.2.12",
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@types/keycloak-js": "^3.4.1",
     "bootstrap": "^5.3.8",
