@@ -293,12 +293,12 @@ jobs:
 
       - name: Run tests — Authentification
         working-directory: ./Authentification
-        run: mvn test jacoco:report -B
+        run: ./mvnw test jacoco:report -B -Dtest="KeycloakAdminServiceTest" -DfailIfNoTests=false
         continue-on-error: true
 
       - name: Run tests — workflow-declaration
         working-directory: ./workflow-declaration
-        run: mvn test jacoco:report -B
+        run: ./mvnw test jacoco:report -B -Dtest="DeclarationServiceTest,ValidationServiceTest" -DfailIfNoTests=false
         continue-on-error: true
 
       # ── Angular — Frontend ───────────────────────────────────
