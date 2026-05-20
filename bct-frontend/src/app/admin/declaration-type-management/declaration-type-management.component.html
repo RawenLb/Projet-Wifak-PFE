@@ -1,0 +1,685 @@
+<div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
+
+  <!-- ══ PAGE HEADER ══ -->
+  <header class="page-header">
+    <div class="ph-left">
+      <div class="ph-breadcrumb">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Administration</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="sep"><polyline points="9 18 15 12 9 6"/></svg>
+        <span class="current">Types BCT</span>
+      </div>
+      <h1 class="ph-title">Types de Déclarations BCT</h1>
+      <p class="ph-sub">Configurez les types, formats et fréquences des déclarations réglementaires</p>
+    </div>
+    <div class="ph-right">
+      <div class="ph-stats">
+        <div class="phs-item">
+          <span class="phs-val">{{ declarationTypes.length }}</span>
+          <span class="phs-lbl">Total</span>
+        </div>
+        <div class="phs-sep"></div>
+        <div class="phs-item phs-green">
+          <span class="phs-val">{{ getActiveCount() }}</span>
+          <span class="phs-lbl">Actifs</span>
+        </div>
+        <div class="phs-sep" *ngIf="getInactiveCount() > 0"></div>
+        <div class="phs-item phs-amber" *ngIf="getInactiveCount() > 0">
+          <span class="phs-val">{{ getInactiveCount() }}</span>
+          <span class="phs-lbl">Inactifs</span>
+        </div>
+      </div>
+      <button (click)="openCreateModal()" class="btn-create">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nouveau type
+      </button>
+    </div>
+  </header>
+
+  <!-- ══ TOOLBAR ══ -->
+  <div class="toolbar">
+    <div class="search-bar">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="Rechercher par code, nom, format ou fréquence..." [(ngModel)]="searchQuery" (keyup.enter)="searchDeclarationTypes()"/>
+      <button class="btn-clear-x" *ngIf="searchQuery" (click)="clearSearch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <button class="btn-ghost" (click)="loadDeclarationTypes()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Rafraîchir
+    </button>
+  </div>
+
+  <!-- ══ TAB BAR ══ -->
+  <div class="tab-bar">
+    <button class="tab" [class.active]="activeTab==='overview'" (click)="activeTab='overview'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      Aperçu
+    </button>
+    <button class="tab" [class.active]="activeTab==='types'" (click)="activeTab='types'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Types BCT
+      <span class="tab-badge" *ngIf="declarationTypes.length > 0">{{ declarationTypes.length }}</span>
+    </button>
+    <button class="tab" [class.active]="activeTab==='byFrequence'" (click)="activeTab='byFrequence'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Par fréquence
+    </button>
+    <button class="tab" [class.active]="activeTab==='inactifs'" (click)="activeTab='inactifs'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      Inactifs
+      <span class="tab-badge tab-badge-red" *ngIf="getInactiveCount() > 0">{{ getInactiveCount() }}</span>
+    </button>
+  </div>
+
+  <!-- ══ CONTENT ══ -->
+  <div class="content-area">
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Chargement des données...</p>
+    </div>
+
+    <!-- ── TAB: APERÇU ── -->
+    <div *ngIf="activeTab==='overview' && !loading" class="tab-content">
+
+      <!-- KPI row -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-navy">
+          <div class="kpi-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-val">{{ declarationTypes.length }}</span>
+            <span class="kpi-lbl">Types configurés</span>
+          </div>
+          <span class="kpi-chip kpi-chip-blue">BCT</span>
+        </div>
+        <div class="kpi-card kpi-green">
+          <div class="kpi-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-val">{{ getActiveCount() }}</span>
+            <span class="kpi-lbl">Types actifs</span>
+          </div>
+          <span class="kpi-chip kpi-chip-green">{{ declarationTypes.length ? (getActiveCount() / declarationTypes.length * 100 | number:'1.0-0') : 0 }}%</span>
+        </div>
+        <div class="kpi-card" [class.kpi-amber]="getInactiveCount() > 0" [class.kpi-neutral]="getInactiveCount() === 0">
+          <div class="kpi-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-val">{{ getInactiveCount() }}</span>
+            <span class="kpi-lbl">Types inactifs</span>
+          </div>
+          <span class="kpi-chip kpi-chip-amber" *ngIf="getInactiveCount() > 0">À vérifier</span>
+          <span class="kpi-chip kpi-chip-green" *ngIf="getInactiveCount() === 0">Aucun</span>
+        </div>
+        <div class="kpi-card kpi-purple">
+          <div class="kpi-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-val">{{ getMonthlyCount() }}</span>
+            <span class="kpi-lbl">Déclarations mensuelles</span>
+          </div>
+          <span class="kpi-chip kpi-chip-gray">/ mois</span>
+        </div>
+      </div>
+
+      <!-- Two-col: freq distribution + deadlines -->
+      <div class="ov-grid">
+        <div class="ov-card">
+          <div class="ov-head">
+            <div class="ov-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              Répartition par fréquence
+            </div>
+            <button class="ov-link" (click)="activeTab='byFrequence'">Détails →</button>
+          </div>
+          <div class="freq-dist">
+            <div class="fd-row" *ngFor="let f of freqDistribution">
+              <div class="fd-meta">
+                <span class="fd-label">{{ f.label }}</span>
+                <span class="fd-count">{{ f.count }}</span>
+              </div>
+              <div class="fd-bar">
+                <div class="fd-fill" [style.width.%]="f.pct" [ngClass]="f.colorClass"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ov-card">
+          <div class="ov-head">
+            <div class="ov-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Prochaines échéances
+            </div>
+          </div>
+          <div class="deadlines-list">
+            <div class="dl-item" *ngFor="let t of upcomingDeadlines">
+              <div class="dl-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div class="dl-body">
+                <span class="dl-code">{{ t.code }}</span>
+                <span class="dl-name">{{ t.nom }}</span>
+                <span class="dl-date">{{ t.dateLimite }}</span>
+              </div>
+              <span class="freq-badge" [ngClass]="getFrequenceBadgeClass(t.frequence)">{{ t.frequence }}</span>
+            </div>
+            <div class="empty-row" *ngIf="upcomingDeadlines.length === 0">Aucune échéance configurée</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active types preview cards -->
+      <div class="ov-card">
+        <div class="ov-head">
+          <div class="ov-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Types BCT actifs
+          </div>
+          <button class="ov-link" (click)="activeTab='types'">Gérer →</button>
+        </div>
+        <div class="type-cards-grid">
+          <div class="type-preview-card" *ngFor="let t of activeDeclarationTypes" (click)="openDetailsModal(t)">
+            <div class="tpc-header">
+              <span class="tpc-code">{{ t.code }}</span>
+              <span class="format-badge" [ngClass]="getFormatBadgeClass(t.format)">{{ t.format }}</span>
+            </div>
+            <div class="tpc-name">{{ t.nom }}</div>
+            <div class="tpc-footer">
+              <span class="freq-badge" [ngClass]="getFrequenceBadgeClass(t.frequence)">{{ t.frequence }}</span>
+              <span class="tpc-date">{{ t.dateLimite }}</span>
+            </div>
+          </div>
+          <div class="empty-row" *ngIf="activeDeclarationTypes.length === 0">Aucun type actif</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── TAB: TYPES BCT ── -->
+    <div *ngIf="activeTab==='types' && !loading" class="tab-content">
+
+      <!-- Mini stats -->
+      <div class="mini-stats">
+        <div class="ms-item">
+          <div class="ms-icon ms-navy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="ms-body"><span class="ms-val">{{ declarationTypes.length }}</span><span class="ms-lbl">Total</span></div>
+        </div>
+        <div class="ms-item">
+          <div class="ms-icon ms-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="ms-body"><span class="ms-val">{{ getActiveCount() }}</span><span class="ms-lbl">Actifs</span></div>
+        </div>
+        <div class="ms-item">
+          <div class="ms-icon ms-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+          <div class="ms-body"><span class="ms-val">{{ getInactiveCount() }}</span><span class="ms-lbl">Inactifs</span></div>
+        </div>
+        <div class="ms-item">
+          <div class="ms-icon ms-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <div class="ms-body"><span class="ms-val">{{ getMonthlyCount() }}</span><span class="ms-lbl">Mensuels</span></div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table class="dt-table">
+          <thead>
+            <tr>
+              <th>CODE</th>
+              <th>NOM</th>
+              <th>FORMAT</th>
+              <th>FRÉQUENCE</th>
+              <th>DATE LIMITE</th>
+              <th>STATUT</th>
+              <th class="th-actions">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let type of paginatedDeclarationTypes" [class.row-inactive]="!type.actif">
+              <td><span class="code-badge">{{ type.code }}</span></td>
+              <td><span class="nom-cell">{{ type.nom }}</span></td>
+              <td><span class="format-badge" [ngClass]="getFormatBadgeClass(type.format)">{{ type.format }}</span></td>
+              <td><span class="freq-badge" [ngClass]="getFrequenceBadgeClass(type.frequence)">{{ type.frequence }}</span></td>
+              <td><span class="date-text">{{ type.dateLimite }}</span></td>
+              <td>
+                <span class="status-pill" [class.sp-active]="type.actif" [class.sp-inactive]="!type.actif">
+                  <span class="sp-dot"></span>{{ type.actif ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+              <td>
+                <div class="act-group">
+                  <button (click)="openDetailsModal(type)" class="act-btn act-view" title="Détails">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                  <button (click)="toggleStatus(type)" class="act-btn act-toggle" [title]="type.actif ? 'Désactiver' : 'Activer'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="15" y1="9" x2="9" y2="15" *ngIf="type.actif"/><line x1="9" y1="9" x2="15" y2="15" *ngIf="type.actif"/>
+                      <polyline points="20 6 9 17 4 12" *ngIf="!type.actif"/>
+                    </svg>
+                  </button>
+                  <button (click)="openEditModal(type)" class="act-btn act-edit" title="Modifier">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <button (click)="deleteDeclarationType(type)" class="act-btn act-delete" title="Supprimer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="declarationTypes.length === 0">
+              <td colspan="7">
+                <div class="empty-state">
+                  <div class="es-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                  <p class="es-title">Aucun type de déclaration</p>
+                  <p class="es-sub">Créez le premier type pour commencer</p>
+                  <button class="btn-create" (click)="openCreateModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Nouveau type
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="declarationTypes.length > 0">
+        <span class="pg-info">{{ (currentPage-1)*itemsPerPage+1 }}–{{ currentPage*itemsPerPage > declarationTypes.length ? declarationTypes.length : currentPage*itemsPerPage }} sur {{ declarationTypes.length }}</span>
+        <div class="pg-controls">
+          <button class="pg-btn" [disabled]="currentPage === 1" (click)="previousPage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span class="pg-pages">{{ currentPage }} / {{ totalPages }}</span>
+          <button class="pg-btn" [disabled]="currentPage === totalPages" (click)="nextPage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: PAR FRÉQUENCE ── -->
+    <div *ngIf="activeTab==='byFrequence' && !loading" class="tab-content">
+
+      <div class="kpi-grid">
+        <div class="kpi-card" *ngFor="let f of freqDistribution" [ngClass]="getFreqKpiClass(f.colorClass)">
+          <div class="kpi-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-val">{{ f.count }}</span>
+            <span class="kpi-lbl">{{ f.label }}</span>
+          </div>
+          <span class="kpi-chip kpi-chip-gray">type(s)</span>
+        </div>
+      </div>
+
+      <div *ngFor="let f of freqDistribution">
+        <div class="ov-card" *ngIf="f.count > 0" style="margin-bottom:14px">
+          <div class="ov-head">
+            <div class="ov-title">
+              <span class="freq-badge" [ngClass]="getFrequenceBadgeClass(f.key)">{{ f.label }}</span>
+            </div>
+            <span class="ov-count">{{ f.count }} type(s)</span>
+          </div>
+          <div class="type-list-compact">
+            <div class="tlc-row" *ngFor="let t of getTypesByFreq(f.key)">
+              <span class="code-badge">{{ t.code }}</span>
+              <div class="tlc-info">
+                <span class="tlc-name">{{ t.nom }}</span>
+                <div class="tlc-meta">
+                  <span class="format-badge" [ngClass]="getFormatBadgeClass(t.format)">{{ t.format }}</span>
+                  <span class="date-text">{{ t.dateLimite }}</span>
+                </div>
+              </div>
+              <div class="act-group">
+                <button (click)="openEditModal(t)" class="act-btn act-edit" title="Modifier">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+              </div>
+              <span class="status-pill" [class.sp-active]="t.actif" [class.sp-inactive]="!t.actif">
+                <span class="sp-dot"></span>{{ t.actif ? 'Actif' : 'Inactif' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="empty-row" *ngIf="declarationTypes.length === 0">Aucun type configuré</div>
+    </div>
+
+    <!-- ── TAB: INACTIFS ── -->
+    <div *ngIf="activeTab==='inactifs' && !loading" class="tab-content">
+
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-amber">
+          <div class="kpi-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+          <div class="kpi-body"><span class="kpi-val">{{ getInactiveCount() }}</span><span class="kpi-lbl">Types inactifs</span></div>
+          <span class="kpi-chip kpi-chip-amber" *ngIf="getInactiveCount() > 0">À vérifier</span>
+          <span class="kpi-chip kpi-chip-green" *ngIf="getInactiveCount() === 0">Aucun</span>
+        </div>
+        <div class="kpi-card kpi-green">
+          <div class="kpi-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="kpi-body"><span class="kpi-val">{{ getActiveCount() }}</span><span class="kpi-lbl">Types actifs</span></div>
+          <span class="kpi-chip kpi-chip-green">En service</span>
+        </div>
+        <div class="kpi-card kpi-navy">
+          <div class="kpi-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="kpi-body"><span class="kpi-val">{{ declarationTypes.length }}</span><span class="kpi-lbl">Total</span></div>
+          <span class="kpi-chip kpi-chip-blue">Configurés</span>
+        </div>
+        <div class="kpi-card kpi-green">
+          <div class="kpi-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <div class="kpi-body">
+            <span class="kpi-val">{{ declarationTypes.length ? (getActiveCount() / declarationTypes.length * 100 | number:'1.0-0') : 0 }}%</span>
+            <span class="kpi-lbl">Taux d'activité</span>
+          </div>
+          <span class="kpi-chip kpi-chip-green">Actifs</span>
+        </div>
+      </div>
+
+      <div class="ov-card" style="padding:0">
+        <div class="ov-head" style="padding:16px 20px">
+          <div class="ov-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            Types inactifs
+          </div>
+        </div>
+        <table class="dt-table">
+          <thead>
+            <tr>
+              <th>CODE</th><th>NOM</th><th>FORMAT</th><th>FRÉQUENCE</th><th>DATE LIMITE</th><th class="th-actions">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of inactifTypes" class="row-inactive">
+              <td><span class="code-badge">{{ t.code }}</span></td>
+              <td><span class="nom-cell">{{ t.nom }}</span></td>
+              <td><span class="format-badge" [ngClass]="getFormatBadgeClass(t.format)">{{ t.format }}</span></td>
+              <td><span class="freq-badge" [ngClass]="getFrequenceBadgeClass(t.frequence)">{{ t.frequence }}</span></td>
+              <td><span class="date-text">{{ t.dateLimite }}</span></td>
+              <td>
+                <div class="act-group">
+                  <button (click)="toggleStatus(t)" class="act-btn act-toggle" title="Réactiver">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </button>
+                  <button (click)="openEditModal(t)" class="act-btn act-edit" title="Modifier">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <button (click)="deleteDeclarationType(t)" class="act-btn act-delete" title="Supprimer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="inactifTypes.length === 0">
+              <td colspan="6">
+                <div class="empty-state">
+                  <div class="es-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+                  <p class="es-title">Aucun type inactif</p>
+                  <p class="es-sub">Tous les types sont en service !</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ CREATE MODAL ══ -->
+<div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <div class="modal-title-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        </div>
+        <div>
+          <h2>Nouveau type BCT</h2>
+          <p class="modal-subtitle">Configurez un nouveau type de déclaration réglementaire</p>
+        </div>
+      </div>
+      <button class="btn-close" (click)="closeCreateModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Code *</label>
+          <input type="text" [(ngModel)]="newDeclarationType.code" placeholder="Ex: BCT_001" [class.input-error]="!newDeclarationType.code && formSubmitted"/>
+          <span class="error-message" *ngIf="!newDeclarationType.code && formSubmitted">Obligatoire</span>
+        </div>
+        <div class="form-group">
+          <label>Statut</label>
+          <div class="toggle-field">
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="newDeclarationType.actif"/>
+              <span class="toggle-track"></span>
+            </label>
+            <span class="toggle-label">{{ newDeclarationType.actif ? 'Actif' : 'Inactif' }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nom *</label>
+        <input type="text" [(ngModel)]="newDeclarationType.nom" placeholder="Ex: Déclaration mensuelle des positions de change" [class.input-error]="!newDeclarationType.nom && formSubmitted"/>
+        <span class="error-message" *ngIf="!newDeclarationType.nom && formSubmitted">Obligatoire</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Format *</label>
+          <select [(ngModel)]="newDeclarationType.format">
+            <option *ngFor="let f of formatOptions" [value]="f">{{ f }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fréquence *</label>
+          <select [(ngModel)]="newDeclarationType.frequence">
+            <option *ngFor="let f of frequenceOptions" [value]="f">{{ f }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Date limite *</label>
+        <input type="text" [(ngModel)]="newDeclarationType.dateLimite" placeholder="Ex: Dernier jour ouvrable du mois" [class.input-error]="!newDeclarationType.dateLimite && formSubmitted"/>
+        <span class="error-message" *ngIf="!newDeclarationType.dateLimite && formSubmitted">Obligatoire</span>
+      </div>
+      <!-- Preview badges -->
+      <div class="form-preview" *ngIf="newDeclarationType.code || newDeclarationType.format || newDeclarationType.frequence">
+        <span class="fp-label">Aperçu :</span>
+        <span class="code-badge" *ngIf="newDeclarationType.code">{{ newDeclarationType.code }}</span>
+        <span class="format-badge" [ngClass]="getFormatBadgeClass(newDeclarationType.format)" *ngIf="newDeclarationType.format">{{ newDeclarationType.format }}</span>
+        <span class="freq-badge" [ngClass]="getFrequenceBadgeClass(newDeclarationType.frequence)" *ngIf="newDeclarationType.frequence">{{ newDeclarationType.frequence }}</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button (click)="closeCreateModal()" class="btn-secondary">Annuler</button>
+      <button (click)="createDeclarationType()" class="btn-primary" [disabled]="loading">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" *ngIf="!loading"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        {{ loading ? 'Création...' : 'Créer le type' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EDIT MODAL ══ -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <div class="modal-title-icon modal-title-icon--edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        <div>
+          <h2>Modifier le type</h2>
+          <p class="modal-subtitle"><span class="code-badge">{{ editDeclarationType.code }}</span></p>
+        </div>
+      </div>
+      <button class="btn-close" (click)="closeEditModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Code</label>
+          <input type="text" [(ngModel)]="editDeclarationType.code" disabled/>
+          <small class="form-hint">Le code ne peut pas être modifié</small>
+        </div>
+        <div class="form-group">
+          <label>Statut</label>
+          <div class="toggle-field">
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="editDeclarationType.actif"/>
+              <span class="toggle-track"></span>
+            </label>
+            <span class="toggle-label">{{ editDeclarationType.actif ? 'Actif' : 'Inactif' }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nom *</label>
+        <input type="text" [(ngModel)]="editDeclarationType.nom"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Format *</label>
+          <select [(ngModel)]="editDeclarationType.format">
+            <option *ngFor="let f of formatOptions" [value]="f">{{ f }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fréquence *</label>
+          <select [(ngModel)]="editDeclarationType.frequence">
+            <option *ngFor="let f of frequenceOptions" [value]="f">{{ f }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Date limite *</label>
+        <input type="text" [(ngModel)]="editDeclarationType.dateLimite"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button (click)="closeEditModal()" class="btn-secondary">Annuler</button>
+      <button (click)="saveDeclarationType()" class="btn-primary" [disabled]="loading">
+        {{ loading ? 'Enregistrement...' : 'Enregistrer' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DETAILS MODAL ══ -->
+<div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
+  <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <div class="modal-title-icon modal-title-icon--view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div>
+          <h2>Détails du type</h2>
+          <p class="modal-subtitle" *ngIf="selectedDeclarationType">
+            <span class="code-badge">{{ selectedDeclarationType.code }}</span>
+          </p>
+        </div>
+      </div>
+      <button class="btn-close" (click)="closeDetailsModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" *ngIf="selectedDeclarationType">
+
+      <!-- Hero section -->
+      <div class="detail-hero">
+        <div class="dh-left">
+          <div class="dh-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <div>
+            <div class="dh-name">{{ selectedDeclarationType.nom }}</div>
+            <div class="dh-badges">
+              <span class="code-badge">{{ selectedDeclarationType.code }}</span>
+              <span class="format-badge" [ngClass]="getFormatBadgeClass(selectedDeclarationType.format)">{{ selectedDeclarationType.format }}</span>
+              <span class="freq-badge" [ngClass]="getFrequenceBadgeClass(selectedDeclarationType.frequence)">{{ selectedDeclarationType.frequence }}</span>
+              <span class="status-pill" [class.sp-active]="selectedDeclarationType.actif" [class.sp-inactive]="!selectedDeclarationType.actif">
+                <span class="sp-dot"></span>{{ selectedDeclarationType.actif ? 'Actif' : 'Inactif' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info grid -->
+      <div class="details-section">
+        <h3>Informations générales</h3>
+        <div class="details-grid">
+          <div class="detail-item">
+            <span class="detail-label">Code</span>
+            <span class="detail-value"><span class="code-badge">{{ selectedDeclarationType.code }}</span></span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Statut</span>
+            <span class="detail-value">
+              <span class="status-pill" [class.sp-active]="selectedDeclarationType.actif" [class.sp-inactive]="!selectedDeclarationType.actif">
+                <span class="sp-dot"></span>{{ selectedDeclarationType.actif ? 'Actif' : 'Inactif' }}
+              </span>
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Format</span>
+            <span class="detail-value"><span class="format-badge" [ngClass]="getFormatBadgeClass(selectedDeclarationType.format)">{{ selectedDeclarationType.format }}</span></span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Fréquence</span>
+            <span class="detail-value"><span class="freq-badge" [ngClass]="getFrequenceBadgeClass(selectedDeclarationType.frequence)">{{ selectedDeclarationType.frequence }}</span></span>
+          </div>
+          <div class="detail-item" style="grid-column: 1 / -1">
+            <span class="detail-label">Date limite</span>
+            <span class="detail-value">{{ selectedDeclarationType.dateLimite }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="details-section" *ngIf="selectedDeclarationType.dateCreation || selectedDeclarationType.creePar || selectedDeclarationType.derniereModification">
+        <h3>Métadonnées</h3>
+        <div class="details-grid">
+          <div class="detail-item" *ngIf="selectedDeclarationType.dateCreation">
+            <span class="detail-label">Créé le</span>
+            <span class="detail-value">{{ selectedDeclarationType.dateCreation | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedDeclarationType.creePar">
+            <span class="detail-label">Créé par</span>
+            <span class="detail-value">{{ selectedDeclarationType.creePar }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedDeclarationType.derniereModification">
+            <span class="detail-label">Modifié le</span>
+            <span class="detail-value">{{ selectedDeclarationType.derniereModification | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedDeclarationType.modifiePar">
+            <span class="detail-label">Modifié par</span>
+            <span class="detail-value">{{ selectedDeclarationType.modifiePar }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button (click)="closeDetailsModal()" class="btn-secondary">Fermer</button>
+      <button (click)="closeDetailsModal(); openEditModal(selectedDeclarationType!)" class="btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Modifier
+      </button>
+    </div>
+  </div>
+</div>

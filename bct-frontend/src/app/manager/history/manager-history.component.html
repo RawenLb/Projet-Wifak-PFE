@@ -1,0 +1,257 @@
+<div class="hist-shell">
+
+  <!-- LEFT PANE -->
+  <div class="lp">
+    <div class="lp-top">
+      <div class="lp-head">
+        <div class="lp-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="12 8 12 12 14 14"/>
+            <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
+          </svg>
+        </div>
+        <span class="lp-title">Journal d'audit</span>
+        <button class="lp-export" (click)="exportCSV()" title="Exporter CSV">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </button>
+        <button class="lp-refresh" (click)="charger()" [disabled]="loading">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="lp-search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" placeholder="ID, type, code, agent..."
+               [(ngModel)]="filters.search" (ngModelChange)="onFilterChange()">
+        <button class="s-clear" *ngIf="filters.search" (click)="filters.search=''; onFilterChange()">✕</button>
+      </div>
+
+      <div class="lp-chips">
+        <button class="chip" [class.active]="filters.statut === ''" (click)="setStatut('')">Tous</button>
+        <button class="chip" [class.active]="filters.statut === 'VALIDEE'" (click)="setStatut('VALIDEE')">Validées</button>
+        <button class="chip" [class.active]="filters.statut === 'REJETEE'" (click)="setStatut('REJETEE')">Rejetées</button>
+        <button class="chip" [class.active]="filters.statut === 'ENVOYEE'" (click)="setStatut('ENVOYEE')">Envoyées</button>
+        <button class="chip" [class.active]="filters.statut === 'EN_VALIDATION'" (click)="setStatut('EN_VALIDATION')">En attente</button>
+      </div>
+
+      <div class="lp-sub-filters">
+        <select [(ngModel)]="filters.type" (ngModelChange)="onFilterChange()">
+          <option value="">Tous types</option>
+          <option *ngFor="let t of uniqueTypes" [value]="t">{{ t }}</option>
+        </select>
+        <select [(ngModel)]="filters.periode" (ngModelChange)="onFilterChange()">
+          <option value="">Toutes périodes</option>
+          <option *ngFor="let p of uniquePeriodes" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- LIST -->
+    <div class="lp-loader" *ngIf="loading">
+      <div class="spin-sm"></div><span>Chargement...</span>
+    </div>
+
+    <div class="lp-empty" *ngIf="!loading && filteredDeclarations.length === 0">
+      Aucun résultat
+    </div>
+
+    <div class="lp-list" *ngIf="!loading">
+      <div class="lp-item"
+           *ngFor="let d of filteredDeclarations; trackBy: trackById"
+           [class.selected]="selectedId === d.id"
+           (click)="selectDeclaration(d)">
+        <div class="li-dot" [ngClass]="getDotClass(d.statut)"></div>
+        <div class="li-body">
+          <div class="li-row1">
+            <span class="li-id">#{{ d.id }}</span>
+            <span class="li-date">{{ d.dateGeneration | date:'dd/MM/yy' }}</span>
+          </div>
+          <div class="li-type">{{ d.declarationType?.nom || d.declarationType?.code }}</div>
+          <div class="li-row3">
+            <span class="li-per">{{ d.periode }}</span>
+            <span class="li-badge" [ngClass]="getBadgeClass(d.statut)">{{ getStatutLabel(d.statut) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS BAR -->
+    <div class="lp-stats" *ngIf="!loading">
+      <div class="ls-item">
+        <span class="ls-n ls-blue">{{ stats.total }}</span>
+        <span class="ls-l">Total</span>
+      </div>
+      <div class="ls-sep"></div>
+      <div class="ls-item">
+        <span class="ls-n ls-green">{{ stats.validees }}</span>
+        <span class="ls-l">Valid.</span>
+      </div>
+      <div class="ls-sep"></div>
+      <div class="ls-item">
+        <span class="ls-n ls-red">{{ stats.rejetees }}</span>
+        <span class="ls-l">Rejet.</span>
+      </div>
+      <div class="ls-sep"></div>
+      <div class="ls-item">
+        <span class="ls-n ls-purple">{{ stats.envoyees }}</span>
+        <span class="ls-l">BCT</span>
+      </div>
+      <div class="ls-sep"></div>
+      <div class="ls-item">
+        <span class="ls-n ls-amber">{{ stats.enCours }}</span>
+        <span class="ls-l">Cours</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANE -->
+  <div class="rp">
+
+    <!-- Empty state -->
+    <div class="rp-empty" *ngIf="!selectedDeclaration">
+      <div class="rp-empty-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <polyline points="12 8 12 12 14 14"/>
+          <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
+        </svg>
+      </div>
+      <p>Sélectionnez une déclaration<br>pour consulter son historique</p>
+    </div>
+
+    <ng-container *ngIf="selectedDeclaration as d">
+
+      <!-- RP Header -->
+      <div class="rp-head">
+        <div class="rph-left">
+          <div class="rph-code">{{ d.declarationType?.code }}</div>
+          <div class="rph-name">{{ d.declarationType?.nom }}</div>
+          <div class="rph-meta">
+            <span class="li-per">{{ d.periode }}</span>
+            <span class="li-badge" [ngClass]="getBadgeClass(d.statut)">{{ getStatutLabel(d.statut) }}</span>
+            <span class="rph-sep">·</span>
+            <span class="rph-id">#{{ d.id }}</span>
+          </div>
+        </div>
+        <button class="rph-export" (click)="exportSingle(d)" title="Exporter cette déclaration">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Exporter
+        </button>
+      </div>
+
+      <!-- RP Body -->
+      <div class="rp-body">
+
+        <!-- Info grid -->
+        <div class="rp-section">
+          <div class="sec-label">Informations</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="ik">Généré par</div>
+              <div class="iv">
+                <div class="u-cell" *ngIf="d.generePar">
+                  <div class="u-av">{{ d.generePar.charAt(0).toUpperCase() }}</div>
+                  {{ d.generePar }}
+                </div>
+                <span *ngIf="!d.generePar" class="iv-empty">—</span>
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="ik">Date génération</div>
+              <div class="iv mono">{{ d.dateGeneration | date:'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="ik">Validé par</div>
+              <div class="iv">
+                <div class="u-cell u-cell--green" *ngIf="d.validePar">
+                  <div class="u-av u-av--green">{{ d.validePar.charAt(0).toUpperCase() }}</div>
+                  {{ d.validePar }}
+                </div>
+                <span *ngIf="!d.validePar" class="iv-empty">—</span>
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="ik">Date validation</div>
+              <div class="iv mono">{{ d.dateValidation ? (d.dateValidation | date:'dd/MM/yyyy HH:mm') : '—' }}</div>
+            </div>
+            <div class="info-item info-item--full" *ngIf="d.nomFichier">
+              <div class="ik">Fichier</div>
+              <div class="iv mono file-val">{{ d.nomFichier }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rejet banner -->
+        <div class="rejet-banner" *ngIf="d.commentaireRejet">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="min-width:13px;margin-top:1px">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <div>
+            <strong>Motif du rejet :</strong>
+            {{ d.commentaireRejet }}
+          </div>
+        </div>
+
+        <!-- Timeline section -->
+        <div class="rp-section">
+          <div class="sec-label">Historique des actions</div>
+
+          <div class="tl-loader" *ngIf="logsLoading">
+            <div class="spin-sm"></div><span>Chargement des événements...</span>
+          </div>
+
+          <div class="tl-empty" *ngIf="!logsLoading && currentLogs.length === 0">
+            Aucun événement enregistré.
+          </div>
+
+          <div class="tl-wrap" *ngIf="!logsLoading && currentLogs.length > 0">
+            <div class="tl-item" *ngFor="let log of currentLogs; let last = last">
+              <div class="tl-spine" [class.tl-last]="last"></div>
+              <div class="tl-dot" [ngClass]="getActionDotClass(log.action)">
+                <span>{{ getActionIcon(log.action) }}</span>
+              </div>
+              <div class="tl-body">
+                <div class="tl-row1">
+                  <span class="tl-action" [ngClass]="getActionTextClass(log.action)">{{ getActionLabel(log.action) }}</span>
+                  <span class="tl-date">{{ log.dateAction | date:'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+                <div class="tl-states">
+                  <span class="st-chip">{{ log.statutAvant }}</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                  </svg>
+                  <span class="st-chip st-to">{{ log.statutApres }}</span>
+                </div>
+                <div class="tl-who" *ngIf="log.effectuePar">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  {{ log.effectuePar }}
+                </div>
+                <div class="tl-comment" *ngIf="log.commentaire">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  {{ log.commentaire }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </ng-container>
+  </div>
+
+</div>

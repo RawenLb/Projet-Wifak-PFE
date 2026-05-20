@@ -1,0 +1,986 @@
+﻿<div class="dashboard-container">
+  <div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
+
+    <!-- ════════════════════════════ TOP HEADER ════════════════════════════ -->
+    <header class="top-header">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="breadcrumb">
+            <span class="breadcrumb-item">Accueil</span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-item active">Mes Déclarations BCT</span>
+          </div>
+          <h1 class="page-title">Gestion des Déclarations</h1>
+          <p class="page-subtitle">Générez et suivez vos déclarations réglementaires BCT</p>
+        </div>
+        <div class="header-right">
+          <button (click)="openGenerateModal()" class="btn-create">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Nouvelle déclaration</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="search-section">
+        <div class="search-bar">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" placeholder="Rechercher par code, période, statut..."
+                 [(ngModel)]="searchQuery" (input)="applyFilters()"/>
+          <button class="btn-clear" *ngIf="searchQuery" (click)="clearSearch()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="filters-section">
+          <select [(ngModel)]="filterStatut" (change)="applyFilters()" class="filter-select">
+            <option value="ALL">Tous les statuts</option>
+            <option value="BROUILLON">Brouillon</option>
+            <option value="GENEREE">Générée</option>
+            <option value="EN_VALIDATION">En validation</option>
+            <option value="VALIDEE">Validée</option>
+            <option value="REJETEE">Rejetée</option>
+            <option value="ENVOYEE">Traitée</option>
+          </select>
+          <input type="month" [(ngModel)]="filterPeriode" (change)="applyFilters()" class="filter-input"/>
+          <button (click)="clearFilters()" class="btn-clear-filters"
+                  *ngIf="filterStatut !== 'ALL' || filterPeriode || searchQuery">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            Réinitialiser
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ════════════════════════════ CONTENT ════════════════════════════ -->
+    <div class="content-area">
+
+      <div *ngIf="loadingAction" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Opération en cours...</p>
+      </div>
+
+      <!-- Bannière rejetées -->
+      <div class="alert-rejected-banner"
+           *ngIf="getStatsByStatus('REJETEE') > 0"
+           (click)="filterStatut = 'REJETEE'; applyFilters()">
+        <div class="alert-rejected-left">
+          <div class="alert-rejected-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <div>
+            <strong>{{ getStatsByStatus('REJETEE') }} déclaration(s) rejetée(s)</strong>
+            <span>nécessitent votre correction — cliquez pour filtrer</span>
+          </div>
+        </div>
+        <div class="alert-rejected-right">
+          <span>Voir les rejetées</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Stats cards -->
+      <div class="stats-grid">
+        <div class="stat-card stat-primary">
+          <div class="stat-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-label">Total</div>
+            <div class="stat-value">{{ declarations.length }}</div>
+          </div>
+        </div>
+        <div class="stat-card stat-warning">
+          <div class="stat-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-label">En validation</div>
+            <div class="stat-value">{{ getStatsByStatus('EN_VALIDATION') }}</div>
+          </div>
+        </div>
+        <div class="stat-card stat-success">
+          <div class="stat-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-label">Validées</div>
+            <div class="stat-value">{{ getStatsByStatus('VALIDEE') }}</div>
+          </div>
+        </div>
+        <div class="stat-card stat-danger">
+          <div class="stat-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-label">Rejetées</div>
+            <div class="stat-value">{{ getStatsByStatus('REJETEE') }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-card">
+        <div class="table-header-section">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <h3>Mes déclarations</h3>
+            <button (click)="loadDeclarations()" class="btn-refresh-small" title="Rafraîchir">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="loadingDeclarations" style="padding:20px;text-align:center;">Chargement...</div>
+
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>CODE</th>
+              <th>TYPE</th>
+              <th>PÉRIODE</th>
+              <th>DATE GÉNÉRATION</th>
+              <th>STATUT &amp; JIRA</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let decl of paginatedDeclarations" [class.row-rejected]="decl.statut === 'REJETEE'">
+              <td><span class="code-badge">{{ decl.declarationType?.code }}</span></td>
+              <td><div class="type-cell">{{ decl.declarationType?.nom }}</div></td>
+              <td><span class="periode-text">{{ decl.periode }}</span></td>
+              <td><span class="date-text">{{ formatDate(decl.dateGeneration) }}</span></td>
+              <td>
+                <div class="statut-jira-cell">
+                  <span class="status-badge" [ngClass]="getStatusBadgeClass(decl.statut)">
+                    <span class="status-dot"></span>{{ getStatusLabel(decl.statut) }}
+                  </span>
+                  <a *ngIf="getJiraTicket(decl.id)"
+                     [href]="getJiraTicket(decl.id)!.jiraTicketUrl"
+                     target="_blank" class="jira-badge"
+                     [title]="'Voir ' + getJiraTicket(decl.id)!.jiraTicketKey"
+                     (click)="$event.stopPropagation()">
+                    <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+                      <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
+                      <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
+                    </svg>
+                    {{ getJiraTicket(decl.id)!.jiraTicketKey }}
+                  </a>
+                  <span class="jira-loading-dot"
+                        *ngIf="!getJiraTicket(decl.id) && isJiraEligible(decl) && jiraLoadingMap[decl.id!]">
+                    <span class="spinner-xs"></span>
+                  </span>
+                </div>
+                <div class="reject-reason-preview"
+                     *ngIf="decl.statut === 'REJETEE' && decl.commentaireRejet">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <span>{{ decl.commentaireRejet | slice:0:60 }}{{ decl.commentaireRejet!.length > 60 ? '…' : '' }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <!-- Détails -->
+                  <button (click)="openDetailsModal(decl)" class="btn-action btn-details" title="Détails">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                  <!-- Télécharger -->
+                  <button (click)="downloadDeclaration(decl)" class="btn-action btn-download" title="Télécharger">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                  </button>
+                  <!-- Modifier (GENEREE seulement) -->
+                  <button *ngIf="canEdit(decl)" (click)="openEditModal(decl)" class="btn-action btn-edit" title="Modifier">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </button>
+                  <!-- Corriger (REJETEE seulement) -->
+                  <button *ngIf="canCorrect(decl)" (click)="openCorrectModal(decl)" class="btn-action btn-correct" title="Corriger et resoumettre">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                  </button>
+                  <!-- Soumettre (GENEREE seulement) -->
+                  <button *ngIf="canSubmit(decl)" (click)="submitForValidation(decl)" class="btn-action btn-submit" title="Soumettre pour validation">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 11 12 14 22 4"/>
+                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                    </svg>
+                  </button>
+                  <!-- Terminer (VALIDEE seulement) -->
+                  <button *ngIf="canSendToBCT(decl)" (click)="sendToBCT(decl)" class="btn-action btn-send" title="Terminer le traitement" [disabled]="loadingAction">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="22" y1="2" x2="11" y2="13"/>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                  </button>
+                  <!-- Supprimer (BROUILLON / GENEREE / REJETEE seulement) -->
+                  <button *ngIf="canDelete(decl)" (click)="openDeleteModal(decl); $event.stopPropagation()" class="btn-action btn-delete" title="Supprimer">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                      <path d="M10 11v6"/><path d="M14 11v6"/>
+                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <tr *ngIf="!loadingDeclarations && filteredDeclarations.length === 0">
+              <td colspan="6" class="empty-state">
+                <div class="empty-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M16 16s-1.5-2-4-2-4 2-4 2"/>
+                    <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+                  </svg>
+                </div>
+                <p class="empty-message">Aucune déclaration trouvée</p>
+                <button (click)="loadDeclarations()" class="btn-refresh">Rafraîchir</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ── PAGINATION ── -->
+        <div class="pagination-bar" *ngIf="filteredDeclarations.length > 0">
+          <div class="pg-info">
+            <span>{{ paginationStart }}–{{ paginationEnd }} sur <strong>{{ filteredDeclarations.length }}</strong></span>
+            <select class="pg-per-page" [(ngModel)]="itemsPerPage" (change)="changeItemsPerPage(itemsPerPage)">
+              <option [value]="5">5 / page</option>
+              <option [value]="10">10 / page</option>
+              <option [value]="20">20 / page</option>
+              <option [value]="50">50 / page</option>
+            </select>
+          </div>
+
+          <div class="pg-controls">
+            <button class="pg-btn" [disabled]="currentPage === 1" (click)="prevPage()" title="Page précédente">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+
+            <ng-container *ngFor="let p of pageNumbers">
+              <button *ngIf="p !== -1"
+                      class="pg-btn pg-num"
+                      [class.pg-active]="p === currentPage"
+                      (click)="goToPage(p)">{{ p }}</button>
+              <span *ngIf="p === -1" class="pg-ellipsis">…</span>
+            </ng-container>
+
+            <button class="pg-btn" [disabled]="currentPage === totalPages" (click)="nextPage()" title="Page suivante">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       GENERATE MODAL — STEPPER (VERSION UNIQUE, CORRIGÉE)
+       ════════════════════════════════════════════════════════════ -->
+  <div class="modal-overlay" *ngIf="showGenerateModal" (click)="closeGenerateModal()">
+    <div class="modal-content modal-large gen-modal" (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="modal-header gen-header">
+        <div class="gen-header-left">
+          <div class="gen-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <div>
+            <h2>Générer une déclaration</h2>
+            <p class="gen-subtitle">
+              {{ selectedDeclarationType?.format === 'XML'
+                 ? '4 étapes : Informations → XSD → Requête SQL → Mapping XSD ↔ SQL'
+                 : '3 étapes : Informations → Format → Requête SQL' }}
+            </p>
+          </div>
+        </div>
+        <button class="btn-close" (click)="closeGenerateModal()">✕</button>
+      </div>
+
+      <!-- Stepper -->
+      <div class="gen-stepper">
+        <div class="gen-step" [class.active]="currentStep >= 1" [class.done]="currentStep > 1">
+          <div class="gen-step-circle">
+            <svg *ngIf="currentStep > 1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            <span *ngIf="currentStep <= 1">1</span>
+          </div>
+          <span class="gen-step-label">Informations</span>
+        </div>
+        <div class="gen-step-line" [class.done]="currentStep > 1"></div>
+
+        <div class="gen-step" [class.active]="currentStep >= 2" [class.done]="currentStep > 2">
+          <div class="gen-step-circle">
+            <svg *ngIf="currentStep > 2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            <span *ngIf="currentStep <= 2">2</span>
+          </div>
+          <span class="gen-step-label">{{ selectedDeclarationType?.format === 'XML' ? 'Schéma XSD' : 'Format' }}</span>
+        </div>
+        <div class="gen-step-line" [class.done]="currentStep > 2"></div>
+
+        <div class="gen-step" [class.active]="currentStep >= 3" [class.done]="currentStep > 3">
+          <div class="gen-step-circle">
+            <svg *ngIf="currentStep > 3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            <span *ngIf="currentStep <= 3">3</span>
+          </div>
+          <span class="gen-step-label">Requête SQL</span>
+        </div>
+
+        <ng-container *ngIf="selectedDeclarationType?.format === 'XML'">
+          <div class="gen-step-line" [class.done]="currentStep > 3"></div>
+          <div class="gen-step" [class.active]="currentStep >= 4">
+            <div class="gen-step-circle"><span>4</span></div>
+            <span class="gen-step-label">Mapping</span>
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+
+        <!-- ══ ÉTAPE 1 ══ -->
+        <div *ngIf="currentStep === 1">
+          <div class="form-group">
+            <label>Type de déclaration <span style="color:#ef4444">*</span></label>
+            <select [(ngModel)]="generateRequest.declarationTypeId" (change)="onDeclarationTypeChange()"
+                    [class.input-error]="!generateRequest.declarationTypeId && formSubmitted">
+              <option [ngValue]="0" disabled>Sélectionnez un type</option>
+              <option *ngFor="let type of declarationTypes" [ngValue]="type.id">{{ type.code }} - {{ type.nom }}</option>
+            </select>
+            <span class="error-message" *ngIf="!generateRequest.declarationTypeId && formSubmitted">Champ obligatoire</span>
+          </div>
+          <div class="type-info-card" *ngIf="selectedDeclarationType">
+            <span class="type-format-badge fmt-{{ selectedDeclarationType.format?.toLowerCase() }}">{{ selectedDeclarationType.format }}</span>
+            <div class="type-info-details">
+              <span><strong>Fréquence :</strong> {{ selectedDeclarationType.frequence }}</span>
+              <span><strong>Date limite :</strong> {{ selectedDeclarationType.dateLimite }}</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Période <span style="color:#ef4444">*</span></label>
+            <input type="month" [(ngModel)]="generateRequest.periode" (change)="onPeriodeChange()"
+                   [class.input-error]="!generateRequest.periode && formSubmitted"/>
+            <small class="form-hint">Les dates début/fin seront calculées automatiquement</small>
+            <span class="error-message" *ngIf="!generateRequest.periode && formSubmitted">Champ obligatoire</span>
+          </div>
+          <div class="dates-banner" *ngIf="generateRequest.dateDebut && generateRequest.dateFin">
+            <div class="date-chip"><span>Début :</span> <strong>{{ generateRequest.dateDebut }}</strong></div>
+            <div class="date-chip"><span>Fin :</span> <strong>{{ generateRequest.dateFin }}</strong></div>
+          </div>
+        </div>
+
+        <!-- ══ ÉTAPE 2 ══ -->
+        <div *ngIf="currentStep === 2">
+          <ng-container *ngIf="selectedDeclarationType?.format === 'XML'">
+            <div class="format-header fmt-xml-header">
+              <div class="fmt-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              </div>
+              <div>
+                <h3>Schéma XSD de la BCT</h3>
+                <p>Ce schéma définit la structure attendue du fichier XML.</p>
+              </div>
+            </div>
+            <div class="upload-zone" [class.uploaded]="xsdFile" [class.drag-over]="isDraggingXsd"
+                 (click)="xsdInput.click()" (dragover)="onDragOver($event)"
+                 (dragleave)="isDraggingXsd=false" (drop)="onDrop($event)">
+              <input #xsdInput type="file" accept=".xsd" (change)="onXsdFileChange($event)" hidden/>
+              <div *ngIf="!xsdFile" style="display:flex;flex-direction:column;align-items:center;gap:.5rem">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40" style="color:#8A9BB0">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+                <span class="upload-main-text">Glissez votre <strong>.xsd</strong> ici ou cliquez</span>
+                <span class="upload-sub-text">Schéma XSD fourni par la BCT</span>
+              </div>
+              <div *ngIf="xsdFile" style="display:flex;flex-direction:column;align-items:center;gap:.5rem">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="36" height="36" style="color:#0A7A5A">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span class="upload-main-text success-text">{{ xsdFile.name }}</span>
+                <span class="upload-sub-text">{{ formatFileSize(xsdFile.size) }} — cliquez pour changer</span>
+              </div>
+            </div>
+            <span class="error-message" *ngIf="!xsdFile && formSubmitted">Le fichier XSD est obligatoire</span>
+            <div class="code-preview-box" *ngIf="xsdPreviewContent" style="margin-top:.875rem">
+              <div class="code-preview-header"><span>{{ xsdFile?.name }}</span></div>
+              <pre class="code-preview-body">{{ xsdPreviewContent }}</pre>
+            </div>
+            <div class="alert-info" style="margin-top:.875rem" *ngIf="xsdUploaded">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <p>Schéma XSD uploadé avec succès. Passez à l'étape suivante.</p>
+            </div>
+          </ng-container>
+          <ng-container *ngIf="selectedDeclarationType?.format !== 'XML'">
+            <div class="alert-info">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <p>Format <strong>{{ selectedDeclarationType?.format }}</strong> — aucun schéma requis.</p>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- ══ ÉTAPE 3 ══ -->
+        <div *ngIf="currentStep === 3">
+          <div class="sql-step-header">
+            <div class="sql-step-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+              </svg>
+            </div>
+            <div>
+              <h3>Requête SQL de récupération</h3>
+              <p>Utilisez <code>:dateDebut</code> et <code>:dateFin</code> comme paramètres de dates.</p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Requête SQL <span style="color:#ef4444">*</span></label>
+            <div class="sql-editor-wrap" [class.has-error]="!sqlQuery && formSubmitted">
+              <div class="sql-toolbar">
+                <span class="sql-lang-badge">SQL</span>
+                <button class="sql-toolbar-btn" (click)="formatSql()" title="Formater">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
+                </button>
+                <button class="sql-toolbar-btn" (click)="clearSql()" title="Effacer">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+              <textarea [(ngModel)]="sqlQuery" rows="8" class="sql-textarea" spellcheck="false"
+                        placeholder="SELECT col1, col2 FROM table WHERE date_col BETWEEN :dateDebut AND :dateFin"></textarea>
+            </div>
+            <span class="error-message" *ngIf="!sqlQuery && formSubmitted">La requête SQL est obligatoire</span>
+          </div>
+          <div class="sql-test-section">
+            <h4>Tester la requête</h4>
+            <div class="form-row">
+              <div class="form-group"><label>Date début</label><input type="date" [(ngModel)]="testDateDebut"/></div>
+              <div class="form-group"><label>Date fin</label><input type="date" [(ngModel)]="testDateFin"/></div>
+            </div>
+            <button (click)="testSql()" class="btn-test-sql" [disabled]="testingSQL || !sqlQuery">
+              <div *ngIf="testingSQL" class="spin-sm"></div>
+              <span>{{ testingSQL ? 'Test en cours...' : 'Tester la requête' }}</span>
+            </button>
+            <div class="test-result-success" *ngIf="sqlTestResult?.success">
+              <p>
+                <span class="result-ok-label">✅ OK</span>
+                <strong>{{ sqlTestResult.nombreLignes }}</strong> ligne(s)
+                <span class="result-sep">|</span>
+                Colonnes : <strong>{{ getSqlColumns() }}</strong>
+              </p>
+              <p *ngIf="selectedDeclarationType?.format === 'XML'" style="margin-top:6px;font-size:.8125rem;color:#0A7A5A">
+                <strong>→</strong> Ces colonnes seront disponibles pour le mapping XSD à l'étape suivante.
+              </p>
+            </div>
+            <div class="test-result-error" *ngIf="sqlTestResult && !sqlTestResult.success">
+              <p>Erreur : {{ sqlTestResult.error }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ ÉTAPE 4 — Mapping XSD ↔ SQL ══ -->
+        <div *ngIf="currentStep === 4 && selectedDeclarationType?.format === 'XML'" class="mapping-v2-container">
+          <div class="mapping-v2-header">
+            <div class="mapping-v2-header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+              </svg>
+            </div>
+            <div class="mapping-v2-header-text">
+              <h3>Mapping XSD ↔ SQL</h3>
+              <p>Associez chaque champ XSD à une colonne SQL (dynamique) ou à une valeur fixe (statique).</p>
+            </div>
+            <div class="mapping-v2-chips" *ngIf="mappingAnalysis">
+              <span class="mv2-chip mv2-chip-xsd">{{ mappingAnalysis.xsdFields?.length || 0 }} champs XSD</span>
+              <span class="mv2-chip mv2-chip-sql">{{ mappingAnalysis.sqlColumns?.length || 0 }} colonnes SQL</span>
+              <span class="mv2-chip mv2-chip-mapped">{{ countMappedFields() }} mappés</span>
+              <span class="mv2-score-badge"
+                    [class.score-high]="mappingAnalysis.compatibilityScore >= 70"
+                    [class.score-med]="mappingAnalysis.compatibilityScore >= 30 && mappingAnalysis.compatibilityScore < 70"
+                    [class.score-low]="mappingAnalysis.compatibilityScore < 30">
+                Score : {{ mappingAnalysis.compatibilityScore }}%
+              </span>
+            </div>
+          </div>
+
+          <div class="mapping-v2-loading" *ngIf="analyzingMapping">
+            <div class="mv2-spinner"></div>
+            <span>Analyse de compatibilité XSD ↔ SQL en cours...</span>
+          </div>
+
+          <div class="mv2-error-banner" *ngIf="mappingAnalysisError && !analyzingMapping">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {{ mappingAnalysisError }}
+          </div>
+
+          <div class="mapping-v2-workspace" *ngIf="!analyzingMapping && fieldMappings.length > 0">
+            <!-- Panneau XSD -->
+            <div class="mv2-panel mv2-panel-xsd">
+              <div class="mv2-panel-header">
+                <div class="mv2-panel-badge xsd-badge">XSD</div>
+                <span class="mv2-panel-title">Champs XSD</span>
+                <span class="mv2-panel-hint">Cliquez pour configurer</span>
+              </div>
+              <div class="mv2-panel-list">
+                <div *ngFor="let fm of fieldMappings; let i = index"
+                     class="mv2-xsd-row"
+                     [class.mv2-xsd-row-selected]="selectedMappingIndex === i"
+                     [class.mv2-xsd-row-mapped-sql]="fm.source === 'SQL' && fm.sqlColumn && selectedMappingIndex !== i"
+                     [class.mv2-xsd-row-mapped-static]="fm.source === 'STATIC' && fm.staticValue && selectedMappingIndex !== i"
+                     [class.mv2-xsd-row-warn]="fm.required && fm.source === 'NONE'"
+                     (click)="selectMappingField(i)">
+                  <span class="mv2-xsd-status-dot"
+                        [class.dot-sql]="fm.source === 'SQL' && fm.sqlColumn"
+                        [class.dot-static]="fm.source === 'STATIC' && fm.staticValue"
+                        [class.dot-warn]="fm.required && fm.source === 'NONE'"
+                        [class.dot-none]="!fm.required && fm.source === 'NONE'"></span>
+                  <div class="mv2-xsd-info">
+                    <span class="mv2-xsd-name">{{ fm.xsdFieldName }}</span>
+                    <div class="mv2-xsd-meta">
+                      <span class="mv2-xsd-type-tag">{{ fm.xsdType }}</span>
+                      <span class="mv2-xsd-mapped-col" *ngIf="fm.source === 'SQL' && fm.sqlColumn">→ {{ fm.sqlColumn }}</span>
+                      <span class="mv2-xsd-mapped-static" *ngIf="fm.source === 'STATIC' && fm.staticValue">"{{ fm.staticValue }}"</span>
+                    </div>
+                  </div>
+                  <span class="mv2-xsd-req-dot" *ngIf="fm.required">●</span>
+                  <svg class="mv2-xsd-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panneau SQL -->
+            <div class="mv2-panel mv2-panel-sql">
+              <div class="mv2-panel-header">
+                <div class="mv2-panel-badge sql-badge">SQL</div>
+                <span class="mv2-panel-title">Colonnes SQL</span>
+                <span class="mv2-panel-hint">Cliquez pour lier</span>
+              </div>
+              <div class="mv2-panel-list">
+                <div *ngFor="let col of mappingAnalysis?.sqlColumns"
+                     class="mv2-sql-row"
+                     [class.mv2-sql-row-used]="isSqlColumnUsed(col)"
+                     [class.mv2-sql-row-active]="selectedMappingIndex !== null && fieldMappings[selectedMappingIndex]?.sqlColumn === col && fieldMappings[selectedMappingIndex]?.source === 'SQL'"
+                     [class.mv2-sql-row-clickable]="selectedMappingIndex !== null && fieldMappings[selectedMappingIndex]?.source !== 'STATIC'"
+                     (click)="assignSqlColumn(col)">
+                  <span class="mv2-sql-col-name">{{ col }}</span>
+                  <span class="mv2-sql-used-badge" *ngIf="isSqlColumnUsed(col)">utilisée</span>
+                </div>
+                <div *ngIf="!mappingAnalysis?.sqlColumns?.length" style="padding:1rem;text-align:center;color:#8A9BB0;font-size:.8125rem;">
+                  Aucune colonne SQL disponible.
+                </div>
+              </div>
+            </div>
+
+            <!-- Panneau config -->
+            <div class="mv2-config-panel">
+              <div class="mv2-config-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Configuration du champ sélectionné
+              </div>
+              <div class="mv2-config-body">
+                <div class="mv2-config-placeholder" *ngIf="selectedMappingIndex === null">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
+                  <span>← Sélectionnez un champ XSD pour le configurer</span>
+                </div>
+                <ng-container *ngIf="selectedMappingIndex !== null">
+                  <div class="mv2-selected-field-info">
+                    <span class="mv2-sel-name">{{ fieldMappings[selectedMappingIndex].xsdFieldName }}</span>
+                    <span class="mv2-sel-type">{{ fieldMappings[selectedMappingIndex].xsdType }}</span>
+                    <span class="mv2-sel-req" *ngIf="fieldMappings[selectedMappingIndex].required">● Obligatoire</span>
+                  </div>
+                  <div class="mv2-source-tabs">
+                    <button class="mv2-source-tab" [class.active-sql]="fieldMappings[selectedMappingIndex].source === 'SQL'"
+                            (click)="setMappingSource(selectedMappingIndex, 'SQL')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                      Dynamique (SQL)
+                    </button>
+                    <button class="mv2-source-tab" [class.active-static]="fieldMappings[selectedMappingIndex].source === 'STATIC'"
+                            (click)="setMappingSource(selectedMappingIndex, 'STATIC')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      Statique (valeur fixe)
+                    </button>
+                    <button class="mv2-source-tab" [class.active-none]="fieldMappings[selectedMappingIndex].source === 'NONE'"
+                            (click)="setMappingSource(selectedMappingIndex, 'NONE')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      Ignorer
+                    </button>
+                  </div>
+                  <div *ngIf="fieldMappings[selectedMappingIndex].source === 'SQL'">
+                    <label class="mv2-config-label">Colonne SQL liée</label>
+                    <select [(ngModel)]="fieldMappings[selectedMappingIndex].sqlColumn" class="mv2-select">
+                      <option value="">— Choisir une colonne —</option>
+                      <option *ngFor="let col of mappingAnalysis?.sqlColumns" [value]="col">{{ col }}</option>
+                    </select>
+                  </div>
+                  <div *ngIf="fieldMappings[selectedMappingIndex].source === 'STATIC'">
+                    <label class="mv2-config-label">Valeur statique (fixe)</label>
+                    <input type="text" [(ngModel)]="fieldMappings[selectedMappingIndex].staticValue"
+                           class="mv2-input" [placeholder]="'Valeur fixe pour ' + fieldMappings[selectedMappingIndex].xsdFieldName"/>
+                  </div>
+                  <div *ngIf="fieldMappings[selectedMappingIndex].source === 'NONE'" class="mv2-config-none">
+                    <div class="mv2-none-info" [class.mv2-none-warn]="fieldMappings[selectedMappingIndex].required">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                      <span *ngIf="!fieldMappings[selectedMappingIndex].required">Ce champ optionnel sera ignoré.</span>
+                      <span *ngIf="fieldMappings[selectedMappingIndex].required">⚠️ Ce champ est <strong>obligatoire</strong>. Assignez une valeur.</span>
+                    </div>
+                  </div>
+                  <button class="mv2-next-field-btn" *ngIf="selectedMappingIndex < fieldMappings.length - 1"
+                          (click)="selectMappingField(selectedMappingIndex + 1)">
+                    Champ suivant <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+
+          <div class="mv2-status-banner mv2-status-ok" *ngIf="getMissingRequiredCount() === 0 && fieldMappings.length > 0 && !analyzingMapping">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16"><polyline points="20 6 9 17 4 12"/></svg>
+            Tous les champs obligatoires sont mappés. Vous pouvez générer.
+          </div>
+          <div class="mv2-status-banner mv2-status-warn" *ngIf="getMissingRequiredCount() > 0 && !analyzingMapping">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <strong>{{ getMissingRequiredCount() }}</strong> champ(s) obligatoire(s) sans valeur.
+          </div>
+        </div>
+
+      </div><!-- /modal-body -->
+
+      <!-- Footer -->
+      <div class="modal-footer gen-footer">
+        <button class="btn-secondary" (click)="stepBack()" [disabled]="loadingAction">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><polyline points="15 18 9 12 15 6"/></svg>
+          {{ currentStep > 1 ? 'Précédent' : 'Annuler' }}
+        </button>
+
+        <div class="step-dots">
+          <span class="dot" [class.active]="currentStep === 1"></span>
+          <span class="dot" [class.active]="currentStep === 2"></span>
+          <span class="dot" [class.active]="currentStep === 3"></span>
+          <span class="dot" *ngIf="selectedDeclarationType?.format === 'XML'" [class.active]="currentStep === 4"></span>
+        </div>
+
+        <!-- Étapes 1 et 2 -->
+        <button *ngIf="currentStep < 3" class="btn-primary" (click)="stepNext()" [disabled]="loadingAction">
+          <div *ngIf="loadingAction" class="spin-sm"></div>
+          <span *ngIf="!loadingAction">Suivant</span>
+          <svg *ngIf="!loadingAction" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+
+        <!-- Étape 3 -->
+        <ng-container *ngIf="currentStep === 3">
+          <button *ngIf="selectedDeclarationType?.format === 'XML'"
+                  class="btn-primary" (click)="goToMappingStep()" [disabled]="analyzingMapping || loadingAction">
+            <div *ngIf="analyzingMapping" class="spin-sm"></div>
+            <span>{{ analyzingMapping ? 'Analyse...' : 'Continuer → Mapping' }}</span>
+            <svg *ngIf="!analyzingMapping" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <button *ngIf="selectedDeclarationType?.format !== 'XML'"
+                  class="btn-primary btn-generate-final" (click)="generateDeclaration()" [disabled]="loadingAction">
+            <div *ngIf="loadingAction" class="spin-sm"></div>
+            {{ loadingAction ? 'Génération...' : 'Générer la déclaration' }}
+          </button>
+        </ng-container>
+
+        <!-- Étape 4 -->
+        <button *ngIf="currentStep === 4" class="btn-primary btn-generate-final"
+                (click)="generateDeclarationWithMapping()" [disabled]="loadingAction">
+          <div *ngIf="loadingAction" class="spin-sm"></div>
+          {{ loadingAction ? 'Génération en cours...' : 'Générer avec le mapping' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ EDIT MODAL ════════════════════════════ -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+    <div class="modal-content modal-medium" (click)="$event.stopPropagation()">
+      <div class="modal-header edit-header">
+        <div class="modal-header-icon edit-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Modifier la déclaration</h2>
+          <p class="modal-subtitle">Le fichier sera régénéré avec la requête SQL existante</p>
+        </div>
+        <button class="btn-close" (click)="closeEditModal()">✕</button>
+      </div>
+      <div class="modal-body" *ngIf="selectedDeclaration">
+        <div class="edit-current-info">
+          <span class="info-label">Déclaration actuelle :</span>
+          <span class="code-badge">{{ selectedDeclaration.declarationType?.code }}</span>
+          <span class="periode-text">{{ selectedDeclaration.periode }}</span>
+        </div>
+        <div class="form-group" style="margin-top:1.2rem">
+          <label>Type de déclaration <span style="color:#ef4444">*</span></label>
+          <select [(ngModel)]="editForm.declarationTypeId" (change)="onEditTypeChange()"
+                  [class.input-error]="!editForm.declarationTypeId && formSubmitted">
+            <option [ngValue]="0" disabled>Sélectionnez un type</option>
+            <option *ngFor="let type of declarationTypes" [ngValue]="type.id">{{ type.code }} - {{ type.nom }}</option>
+          </select>
+        </div>
+        <div class="type-info-card" *ngIf="editSelectedType">
+          <span class="type-format-badge fmt-{{ editSelectedType.format?.toLowerCase() }}">{{ editSelectedType.format }}</span>
+          <div class="type-info-details">
+            <span><strong>Fréquence :</strong> {{ editSelectedType.frequence }}</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Période <span style="color:#ef4444">*</span></label>
+          <input type="month" [(ngModel)]="editForm.periode" (change)="onEditPeriodeChange()"
+                 [class.input-error]="!editForm.periode && formSubmitted"/>
+        </div>
+        <div class="dates-banner" *ngIf="editForm.dateDebut && editForm.dateFin">
+          <div class="date-chip"><span>Début :</span> <strong>{{ editForm.dateDebut }}</strong></div>
+          <div class="date-chip"><span>Fin :</span> <strong>{{ editForm.dateFin }}</strong></div>
+        </div>
+        <div class="edit-warning">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <span>La modification régénérera le fichier avec la requête SQL déjà configurée.</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeEditModal()">Annuler</button>
+        <button class="btn-primary btn-edit-save" (click)="saveEdit()" [disabled]="loadingAction">
+          <div *ngIf="loadingAction" class="spin-sm"></div>
+          {{ loadingAction ? 'Sauvegarde...' : 'Sauvegarder' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ DELETE MODAL ════════════════════════════ -->
+  <div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+    <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header delete-header">
+        <div class="modal-header-icon delete-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Supprimer la déclaration</h2>
+          <p class="modal-subtitle">Cette action est irréversible</p>
+        </div>
+        <button class="btn-close" (click)="closeDeleteModal()">✕</button>
+      </div>
+      <div class="modal-body" *ngIf="declarationToDelete">
+        <div class="delete-summary">
+          <div class="delete-summary-row">
+            <span class="delete-summary-label">Code :</span>
+            <span class="code-badge">{{ declarationToDelete.declarationType?.code }}</span>
+          </div>
+          <div class="delete-summary-row">
+            <span class="delete-summary-label">Type :</span>
+            <span>{{ declarationToDelete.declarationType?.nom }}</span>
+          </div>
+          <div class="delete-summary-row">
+            <span class="delete-summary-label">Période :</span>
+            <span class="periode-text">{{ declarationToDelete.periode }}</span>
+          </div>
+          <div class="delete-summary-row">
+            <span class="delete-summary-label">Statut :</span>
+            <span class="status-badge" [ngClass]="getStatusBadgeClass(declarationToDelete.statut)">
+              <span class="status-dot"></span>{{ getStatusLabel(declarationToDelete.statut) }}
+            </span>
+          </div>
+        </div>
+        <div class="delete-alert">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <p>Cette déclaration et son fichier seront supprimés définitivement.</p>
+        </div>
+        <div class="delete-confirm-section">
+          <label class="delete-confirm-label">Pour confirmer, tapez <strong>supprimer</strong> :</label>
+          <input type="text" [(ngModel)]="deleteConfirmText" placeholder="supprimer"
+                 class="delete-confirm-input" [class.input-valid]="deleteConfirmValid"
+                 autocomplete="off" spellcheck="false"/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeDeleteModal()">Annuler</button>
+        <button class="btn-danger" (click)="confirmDelete()" [disabled]="!deleteConfirmValid || loadingAction">
+          <div *ngIf="loadingAction" class="spin-sm"></div>
+          {{ loadingAction ? 'Suppression...' : 'Supprimer définitivement' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ CORRECT MODAL ════════════════════════════ -->
+  <div class="modal-overlay" *ngIf="showCorrectModal" (click)="onCorrectOverlayClick($event)">
+    <div class="modal-content modal-correction" (click)="$event.stopPropagation()">
+      <div class="modal-header correct-header">
+        <div class="modal-header-icon correct-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Corriger la déclaration rejetée</h2>
+          <p class="modal-subtitle">Éditez le XML, ajustez le mapping XSD ↔ SQL ou corrigez la requête SQL</p>
+        </div>
+        <button class="btn-close" (click)="closeCorrectModal()">✕</button>
+      </div>
+      <div class="modal-body correction-modal-body" *ngIf="selectedDeclaration">
+        <app-declaration-correction
+          [declaration]="selectedDeclaration"
+          (correctionSaved)="onCorrectionSaved($event)"
+          (correctionCancelled)="closeCorrectModal()">
+        </app-declaration-correction>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ DETAILS MODAL ════════════════════════════ -->
+  <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Détails de la déclaration</h2>
+        <button class="btn-close" (click)="closeDetailsModal()">✕</button>
+      </div>
+      <div class="modal-body" *ngIf="selectedDeclaration">
+        <div class="details-section">
+          <h3>Informations générales</h3>
+          <div class="details-grid">
+            <div class="detail-item"><span class="detail-label">Code</span><span class="detail-value">{{ selectedDeclaration.declarationType?.code }}</span></div>
+            <div class="detail-item"><span class="detail-label">Type</span><span class="detail-value">{{ selectedDeclaration.declarationType?.nom }}</span></div>
+            <div class="detail-item"><span class="detail-label">Période</span><span class="detail-value">{{ selectedDeclaration.periode }}</span></div>
+            <div class="detail-item"><span class="detail-label">Format</span><span class="detail-value"><span class="format-badge">{{ selectedDeclaration.declarationType?.format }}</span></span></div>
+            <div class="detail-item">
+              <span class="detail-label">Statut</span>
+              <span class="detail-value">
+                <span class="status-badge" [ngClass]="getStatusBadgeClass(selectedDeclaration.statut)">
+                  <span class="status-dot"></span>{{ getStatusLabel(selectedDeclaration.statut) }}
+                </span>
+              </span>
+            </div>
+            <div class="detail-item"><span class="detail-label">Fichier</span><span class="detail-value">{{ selectedDeclaration.nomFichier || '-' }}</span></div>
+          </div>
+        </div>
+
+        <div class="details-section" *ngIf="getJiraTicket(selectedDeclaration.id)">
+          <h3>Ticket Jira</h3>
+          <div class="jira-detail-card">
+            <div class="jira-detail-left">
+              <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+                <circle cx="16" cy="16" r="16" fill="#0052CC"/>
+                <path d="M16.9 7.1L9.1 15l3.3 3.3 4.5-4.5 4.5 4.5 3.3-3.3L16.9 7.1z" fill="white"/>
+              </svg>
+              <div>
+                <div class="jira-ticket-key">{{ getJiraTicket(selectedDeclaration.id)!.jiraTicketKey }}</div>
+                <div class="jira-ticket-status">Statut : <strong>{{ getJiraTicket(selectedDeclaration.id)!.jiraStatus }}</strong></div>
+              </div>
+            </div>
+            <a [href]="getJiraTicket(selectedDeclaration.id)!.jiraTicketUrl" target="_blank" class="btn-open-jira">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              Ouvrir dans Jira
+            </a>
+          </div>
+        </div>
+
+        <div class="details-section">
+          <h3>Traçabilité</h3>
+          <div class="details-grid">
+            <div class="detail-item"><span class="detail-label">Date génération</span><span class="detail-value">{{ formatDate(selectedDeclaration.dateGeneration) }}</span></div>
+            <div class="detail-item"><span class="detail-label">Généré par</span><span class="detail-value">{{ selectedDeclaration.generePar || '-' }}</span></div>
+            <div class="detail-item" *ngIf="selectedDeclaration.dateValidation"><span class="detail-label">Date validation</span><span class="detail-value">{{ formatDate(selectedDeclaration.dateValidation) }}</span></div>
+            <div class="detail-item" *ngIf="selectedDeclaration.validePar"><span class="detail-label">Validé/Rejeté par</span><span class="detail-value">{{ selectedDeclaration.validePar }}</span></div>
+          </div>
+        </div>
+
+        <div class="details-section" *ngIf="selectedDeclaration.commentaireRejet">
+          <h3>Motif de rejet</h3>
+          <div class="reject-reason-card">
+            <div class="reject-reason-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>Commentaire du manager</span>
+            </div>
+            <div class="reject-reason-body">{{ selectedDeclaration.commentaireRejet }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button (click)="closeDetailsModal()" class="btn-secondary">Fermer</button>
+        <button *ngIf="selectedDeclaration && canDownload(selectedDeclaration)"
+                (click)="downloadDeclaration(selectedDeclaration!); closeDetailsModal()" class="btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Télécharger
+        </button>
+        <button *ngIf="selectedDeclaration && canCorrect(selectedDeclaration)"
+                (click)="closeDetailsModal(); openCorrectModal(selectedDeclaration!)"
+                class="btn-primary btn-correct-detail">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+          Corriger et resoumettre
+        </button>
+        <button *ngIf="selectedDeclaration && canSendToBCT(selectedDeclaration)"
+                (click)="sendToBCT(selectedDeclaration!); closeDetailsModal()"
+                class="btn-primary btn-send-bct" [disabled]="loadingAction">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          Terminer
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

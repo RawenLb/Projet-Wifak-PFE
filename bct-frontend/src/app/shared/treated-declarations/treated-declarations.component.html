@@ -1,0 +1,322 @@
+<div class="treated-page">
+
+  <!-- ── Header ─────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="header-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="page-title">Déclarations traitées</h1>
+        <p class="page-subtitle">Toutes les déclarations ayant complété leur cycle de traitement</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-export" (click)="exportCSV()" [disabled]="exporting || filtered.length === 0">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        {{ exporting ? 'Export...' : 'Exporter CSV' }}
+      </button>
+      <button class="btn-refresh" (click)="load()" [disabled]="loading">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- ── KPI strip ──────────────────────────────────────────────── -->
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-icon--purple">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <div>
+        <div class="kpi-val">{{ declarations.length }}</div>
+        <div class="kpi-lbl">Total traitées</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-icon--blue">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </div>
+      <div>
+        <div class="kpi-val">{{ uniquePeriodes.length }}</div>
+        <div class="kpi-lbl">Périodes couvertes</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-icon--green">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </div>
+      <div>
+        <div class="kpi-val">{{ uniqueTypes.length }}</div>
+        <div class="kpi-lbl">Types déclarés</div>
+      </div>
+    </div>
+    <div class="kpi-card" *ngIf="mode === 'manager'">
+      <div class="kpi-icon kpi-icon--amber">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="kpi-val">{{ uniqueAgents.length }}</div>
+        <div class="kpi-lbl">Agents déclarants</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Filters ────────────────────────────────────────────────── -->
+  <div class="filters-bar">
+    <div class="filter-search">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" placeholder="ID, type, code, agent, période..."
+             [(ngModel)]="search" (ngModelChange)="onFilterChange()"/>
+      <button class="f-clear" *ngIf="search" (click)="search=''; onFilterChange()">✕</button>
+    </div>
+
+    <select [(ngModel)]="filterType" (ngModelChange)="onFilterChange()">
+      <option value="">Tous les types</option>
+      <option *ngFor="let t of uniqueTypes" [value]="t">{{ t }}</option>
+    </select>
+
+    <select [(ngModel)]="filterPeriode" (ngModelChange)="onFilterChange()">
+      <option value="">Toutes les périodes</option>
+      <option *ngFor="let p of uniquePeriodes" [value]="p">{{ p }}</option>
+    </select>
+
+    <select *ngIf="mode === 'manager'" [(ngModel)]="filterAgent" (ngModelChange)="onFilterChange()">
+      <option value="">Tous les agents</option>
+      <option *ngFor="let a of uniqueAgents" [value]="a">{{ a }}</option>
+    </select>
+
+    <button class="btn-reset" *ngIf="hasFilters" (click)="resetFilters()">
+      Réinitialiser
+    </button>
+
+    <span class="filter-count">
+      <span class="fc-n">{{ filtered.length }}</span>
+      <span class="fc-l">résultat{{ filtered.length !== 1 ? 's' : '' }}</span>
+    </span>
+  </div>
+
+  <!-- ── Loading ────────────────────────────────────────────────── -->
+  <div class="loader-block" *ngIf="loading">
+    <div class="spin-md"></div>
+    <span>Chargement des déclarations traitées...</span>
+  </div>
+
+  <!-- ── Empty ──────────────────────────────────────────────────── -->
+  <div class="empty-state" *ngIf="!loading && filtered.length === 0">
+    <div class="empty-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    </div>
+    <p>{{ declarations.length === 0 ? 'Aucune déclaration traitée pour le moment.' : 'Aucun résultat pour ces filtres.' }}</p>
+    <button class="btn-reset" *ngIf="hasFilters" (click)="resetFilters()">Effacer les filtres</button>
+  </div>
+
+  <!-- ── Content ────────────────────────────────────────────────── -->
+  <div class="content-area" *ngIf="!loading && filtered.length > 0">
+
+    <!-- Grid of cards -->
+    <div class="cards-grid">
+      <div class="decl-card"
+           *ngFor="let d of paged; trackBy: trackById"
+           [class.selected]="selected?.id === d.id"
+           (click)="select(d)">
+
+        <div class="card-header">
+          <span class="card-code">{{ d.declarationType?.code }}</span>
+          <span class="card-badge">Traitée</span>
+        </div>
+
+        <div class="card-name">{{ d.declarationType?.nom }}</div>
+
+        <div class="card-meta">
+          <div class="meta-row">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span>{{ d.periode || '—' }}</span>
+          </div>
+          <div class="meta-row" *ngIf="mode === 'manager'">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>{{ d.generePar || '—' }}</span>
+          </div>
+          <div class="meta-row">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span>{{ formatDate(d.dateValidation) }}</span>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <button class="btn-icon" title="Télécharger" (click)="download(d); $event.stopPropagation()" *ngIf="d.nomFichier">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
+          <button class="btn-icon btn-icon--detail" title="Voir détails" (click)="select(d); $event.stopPropagation()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="pg-btn" [disabled]="currentPage === 1" (click)="currentPage = currentPage - 1">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <ng-container *ngFor="let p of pages">
+        <span class="pg-sep" *ngIf="p === -1">…</span>
+        <button class="pg-btn" [class.active]="p === currentPage" *ngIf="p !== -1" (click)="currentPage = p">{{ p }}</button>
+      </ng-container>
+      <button class="pg-btn" [disabled]="currentPage === totalPages" (click)="currentPage = currentPage + 1">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+      <span class="pg-info">{{ (currentPage-1)*itemsPerPage+1 }}–{{ Math.min(currentPage*itemsPerPage, filtered.length) }} / {{ filtered.length }}</span>
+    </div>
+  </div>
+
+  <!-- ── Detail side panel ──────────────────────────────────────── -->
+  <div class="detail-overlay" *ngIf="selected" (click)="closeDetail()">
+    <div class="detail-panel" (click)="$event.stopPropagation()">
+
+      <div class="dp-header">
+        <div>
+          <span class="dp-code">{{ selected.declarationType?.code }}</span>
+          <h3 class="dp-name">{{ selected.declarationType?.nom }}</h3>
+        </div>
+        <button class="dp-close" (click)="closeDetail()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="dp-body">
+
+        <!-- Info grid -->
+        <div class="dp-section-label">Informations</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="ik">Période</span>
+            <span class="iv">{{ selected.periode || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="ik">Statut</span>
+            <span class="iv"><span class="badge-treated">Traitée</span></span>
+          </div>
+          <div class="info-item">
+            <span class="ik">Agent déclarant</span>
+            <span class="iv">{{ selected.generePar || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="ik">Validé par</span>
+            <span class="iv">{{ selected.validePar || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="ik">Date génération</span>
+            <span class="iv mono">{{ formatDate(selected.dateGeneration) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="ik">Date validation</span>
+            <span class="iv mono">{{ formatDate(selected.dateValidation) }}</span>
+          </div>
+          <div class="info-item info-item--full" *ngIf="selected.nomFichier">
+            <span class="ik">Fichier</span>
+            <span class="iv mono file-name">{{ selected.nomFichier }}</span>
+          </div>
+        </div>
+
+        <!-- Download button -->
+        <button class="btn-download" *ngIf="selected.nomFichier" (click)="download(selected)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Télécharger le fichier
+        </button>
+
+        <!-- Timeline -->
+        <div class="dp-section-label" style="margin-top:20px;">Historique des actions</div>
+
+        <div class="tl-loader" *ngIf="logsLoading">
+          <div class="spin-sm"></div><span>Chargement...</span>
+        </div>
+
+        <div class="tl-empty" *ngIf="!logsLoading && logs.length === 0">
+          Aucune action enregistrée.
+        </div>
+
+        <div class="timeline" *ngIf="!logsLoading && logs.length > 0">
+          <div class="tl-item" *ngFor="let log of logs; let last = last">
+            <div class="tl-spine" *ngIf="!last"></div>
+            <div class="tl-dot" [ngClass]="getActionClass(log.action)"></div>
+            <div class="tl-body">
+              <div class="tl-row1">
+                <span class="tl-action" [ngClass]="getActionClass(log.action)">{{ getActionLabel(log.action) }}</span>
+                <span class="tl-date">{{ log.dateAction | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="tl-who" *ngIf="log.effectuePar">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                {{ log.effectuePar }}
+              </div>
+              <div class="tl-comment" *ngIf="log.commentaire">{{ log.commentaire }}</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>

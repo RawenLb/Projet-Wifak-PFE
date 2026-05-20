@@ -1,0 +1,316 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+// ── Wifak Brand tokens ────────────────────────────────────────
+$navy:    #0D2B5E;
+$royal:   #1B4FBC;
+$crimson: #C8192E;
+$success: #0A7A5A;
+$warning: #B8651A;
+$purple:  #5B35C2;
+$silver:  #8A9BB0;
+
+$bg:        #F0F4FA;
+$surface:   #FFFFFF;
+$border:    #D8E0EC;
+$border-lt: #EBF0F8;
+$text-1:    #0D1E35;
+$text-2:    #3D5068;
+$text-3:    #8A9BB0;
+
+$r-sm: 6px;
+$r-md: 10px;
+$r-lg: 14px;
+
+$sh-xs: 0 1px 3px rgba(13,43,94,.05), 0 1px 2px rgba(13,43,94,.03);
+$sh-sm: 0 4px 12px rgba(13,43,94,.08), 0 2px 4px rgba(13,43,94,.04);
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+@keyframes spin   { to { transform: rotate(360deg); } }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+// ── Page wrapper ──────────────────────────────────────────────
+.dashboard-page {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: $text-1;
+  background: $bg;
+  padding: 1.75rem 2rem 3rem;
+  animation: fadeIn .4s ease both;
+  min-height: 100%;
+  width: 100%;
+}
+
+// ── Header ────────────────────────────────────────────────────
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dash-header-left { flex: 1; }
+.dash-header-right { display: flex; gap: .625rem; align-items: center; flex-wrap: wrap; }
+
+.page-title {
+  font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em;
+  color: $navy; margin: 0 0 .25rem; line-height: 1.2;
+}
+
+.page-subtitle { font-size: .875rem; color: $text-2; margin: 0; }
+
+.readonly-badge {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .3125rem .75rem;
+  background: #EEF1F6; border: 1.5px solid $border; border-radius: 20px;
+  font-size: .6875rem; font-weight: 700; color: $text-2;
+  svg { width: 11px; height: 11px; }
+}
+
+.btn-export {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .5rem 1rem;
+  background: rgba($royal,.07); border: 1.5px solid rgba($royal,.22); border-radius: $r-md;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .8125rem; font-weight: 600; color: $royal;
+  cursor: pointer; transition: all .2s;
+  svg { width: 14px; height: 14px; }
+  &:hover:not(:disabled) { background: rgba($royal,.12); border-color: $royal; }
+  &:disabled { opacity: .5; cursor: not-allowed; }
+}
+
+.btn-refresh {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .5rem 1rem;
+  background: $surface; border: 1.5px solid $border; border-radius: $r-md;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .8125rem; font-weight: 600; color: $text-2;
+  cursor: pointer; transition: all .2s;
+  svg { width: 14px; height: 14px; }
+  &:hover:not(:disabled) { background: $navy; border-color: $navy; color: #fff; }
+  &:disabled { opacity: .5; cursor: not-allowed; }
+}
+
+// ── Filter bar ────────────────────────────────────────────────
+.filters-bar {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  background: $surface;
+  border: 1px solid $border-lt;
+  border-radius: $r-lg;
+  box-shadow: $sh-xs;
+  margin-bottom: 1.25rem;
+}
+
+.filter-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: .5rem .75rem;
+  flex: 1; min-width: 200px;
+  background: #F4F7FF;
+  border: 1.5px solid $border;
+  border-radius: $r-md;
+  color: $text-3;
+  transition: border-color .15s;
+
+  input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: .8125rem;
+    color: $text-1;
+    &::placeholder { color: $text-3; }
+  }
+
+  &:focus-within { border-color: $royal; }
+}
+
+.f-clear {
+  background: none; border: none;
+  color: $text-3; cursor: pointer;
+  font-size: 11px; padding: 1px 3px; border-radius: 3px;
+  &:hover { color: $text-1; }
+}
+
+.filters-bar select,
+.filter-date-group input[type="date"] {
+  appearance: none;
+  padding: .5rem .75rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .8125rem;
+  color: $text-1;
+  background: #F4F7FF;
+  border: 1.5px solid $border;
+  border-radius: $r-md;
+  outline: none;
+  cursor: pointer;
+  transition: border-color .15s;
+  &:focus { border-color: $royal; }
+}
+
+.filter-date-group {
+  display: flex; align-items: center; gap: 6px;
+}
+
+.date-sep { font-size: 11px; color: $text-3; }
+
+.filter-count {
+  display: flex; align-items: baseline; gap: 4px;
+  padding: .375rem .75rem;
+  background: rgba($royal,.06);
+  border: 1px solid rgba($royal,.14);
+  border-radius: $r-md;
+  white-space: nowrap;
+}
+
+.fc-n { font-family: 'JetBrains Mono', monospace; font-size: .875rem; font-weight: 700; color: $royal; }
+.fc-l { font-size: .6875rem; color: $text-3; font-weight: 600; }
+
+// ── Loader ────────────────────────────────────────────────────
+.logs-loader {
+  display: flex; align-items: center; gap: 14px;
+  padding: 3rem; justify-content: center;
+  color: $text-3; font-size: .8125rem;
+}
+
+// ── Card / Table ──────────────────────────────────────────────
+.card {
+  background: $surface;
+  border: 1px solid $border-lt;
+  border-radius: $r-lg;
+  box-shadow: $sh-xs;
+  overflow: hidden;
+}
+
+.logs-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding: 3rem; color: $text-3; font-size: .8125rem;
+}
+
+.logs-table {
+  width: 100%; border-collapse: collapse;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .8125rem;
+
+  thead tr {
+    border-bottom: 2px solid $border-lt;
+    background: #FAFBFD;
+  }
+
+  th {
+    padding: .5625rem .875rem; text-align: left;
+    font-size: .625rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .10em;
+    color: $silver; white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid $border-lt;
+    transition: background .15s;
+    &:last-child { border-bottom: none; }
+    &:hover { background: #EBF0FD; }
+  }
+
+  td { padding: .8125rem .875rem; vertical-align: middle; }
+}
+
+/* Cells */
+.td-date { white-space: nowrap; }
+.date-main { display: block; font-family: 'JetBrains Mono', monospace; font-size: .6875rem; color: $text-1; font-weight: 600; }
+.date-time { display: block; font-family: 'JetBrains Mono', monospace; font-size: .625rem; color: $text-3; }
+
+.td-decl { white-space: nowrap; }
+.decl-id   { display: block; font-family: 'JetBrains Mono', monospace; font-size: .625rem; color: $text-3; }
+.decl-code { display: block; font-family: 'JetBrains Mono', monospace; font-size: .6875rem; font-weight: 700; color: $royal; }
+.decl-per  { display: block; font-size: .625rem; color: $text-3; }
+
+.action-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: .1875rem .625rem; border-radius: 20px;
+  font-size: .6875rem; font-weight: 700; white-space: nowrap;
+  border: 1px solid;
+}
+
+.act-sub { color: $royal;   background: rgba($royal,.08);   border-color: rgba($royal,.22); }
+.act-val { color: darken($success,5%); background: #E6F5F0; border-color: rgba($success,.22); }
+.act-rej { color: darken($crimson,5%); background: #FDECED; border-color: rgba($crimson,.22); }
+.act-snd { color: darken($purple,5%);  background: #EDE9FB; border-color: rgba($purple,.22); }
+
+.action-icon { font-size: 11px; }
+
+.statut-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .625rem; font-weight: 600;
+  padding: 2px 8px; border-radius: 4px;
+  background: #EBF0F8;
+  border: 1px solid $border;
+  color: $text-2;
+  white-space: nowrap;
+  &.statut-chip--to { color: $text-1; background: #E0E8F5; }
+}
+
+.user-cell { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+
+.user-av {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: linear-gradient(135deg, $royal, $navy);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+
+.comment-text {
+  font-size: .6875rem; color: $text-2; font-style: italic;
+  max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  display: block;
+}
+
+.comment-empty { color: $text-3; font-size: .6875rem; }
+
+// ── Pagination ────────────────────────────────────────────────
+.pagination {
+  display: flex; align-items: center; gap: 4px;
+  padding: .75rem 1rem; border-top: 1px solid $border-lt;
+  flex-wrap: wrap;
+}
+
+.pg-btn {
+  min-width: 30px; height: 30px; padding: 0 8px;
+  border: 1.5px solid $border; border-radius: $r-sm;
+  background: transparent; color: $text-2;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: .75rem;
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center;
+  &:hover:not(:disabled):not(.active) { color: $royal; border-color: $royal; background: rgba($royal,.06); }
+  &.active { color: $royal; background: rgba($royal,.08); border-color: rgba($royal,.30); font-weight: 700; }
+  &:disabled { opacity: .4; cursor: not-allowed; }
+}
+
+.pg-sep { color: $text-3; padding: 0 4px; font-size: .75rem; }
+
+.pg-info {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .625rem; color: $text-3;
+}
+
+// ── Spinner ───────────────────────────────────────────────────
+.spin-md {
+  width: 24px; height: 24px;
+  border: 2px solid $border; border-top-color: $royal;
+  border-radius: 50%; animation: spin .8s linear infinite; flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .dashboard-page { padding: 1.25rem; }
+  .logs-table th:nth-child(4),
+  .logs-table th:nth-child(5),
+  .logs-table td:nth-child(4),
+  .logs-table td:nth-child(5) { display: none; }
+}

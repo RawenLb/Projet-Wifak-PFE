@@ -1,0 +1,223 @@
+/* Admin Layout — Wifak Bank */
+
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: var(--font);
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: width 0.27s cubic-bezier(0.4,0,0.2,1), min-width 0.27s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+  z-index: 20;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent 0%, rgba(200,32,47,0.35) 35%, rgba(200,32,47,0.35) 65%, transparent 100%);
+  }
+
+  &.collapsed {
+    width: var(--sidebar-col);
+    min-width: var(--sidebar-col);
+
+    .logo-text, .nav-text, .nav-badge, .nav-label,
+    .user-info, .bank-subtitle {
+      opacity: 0; width: 0; overflow: hidden; pointer-events: none;
+    }
+    .logo          { justify-content: center; }
+    .toggle-btn    { display: none; }
+    .nav-item      { justify-content: center; padding: 11px 0; }
+    .nav-icon      { margin: 0; }
+    .user-profile  { justify-content: center; padding: 8px; }
+    .user-avatar   { margin: 0; }
+    .sidebar-footer { padding: 10px 8px; }
+    .btn-logout    { justify-content: center; padding: 9px; }
+  }
+}
+
+/* Logo */
+.logo-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  min-height: 70px;
+  flex-shrink: 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.logo-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.14);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo-text { overflow: hidden; transition: opacity 0.2s, width 0.27s; white-space: nowrap; }
+
+.bank-name {
+  font-family: var(--font-h);
+  font-size: 12.5px; font-weight: 700;
+  color: #fff; letter-spacing: 0.08em; line-height: 1.2;
+}
+
+.bank-subtitle {
+  font-size: 10px; color: rgba(255,255,255,0.42);
+  font-weight: 500; margin-top: 2px;
+  letter-spacing: 0.04em;
+  transition: opacity 0.2s, width 0.27s;
+}
+
+.toggle-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.12);
+  width: 28px; height: 28px;
+  border-radius: 7px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; color: rgba(255,255,255,0.48);
+  transition: var(--tr);
+
+  &:hover { background: rgba(255,255,255,0.10); color: #fff; border-color: rgba(255,255,255,0.25); }
+}
+
+/* Nav */
+.nav-menu {
+  flex: 1; padding: 10px 9px;
+  overflow-y: auto; overflow-x: hidden;
+  &::-webkit-scrollbar { width: 3px; }
+  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 2px; }
+}
+
+.nav-label {
+  display: block;
+  font-size: 9.5px; font-weight: 700;
+  color: rgba(255,255,255,0.26);
+  text-transform: uppercase; letter-spacing: 0.10em;
+  padding: 12px 10px 5px;
+  white-space: nowrap; overflow: hidden;
+  transition: opacity 0.2s, width 0.27s;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; margin-bottom: 2px;
+  border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,0.58);
+  text-decoration: none; transition: var(--tr);
+  white-space: nowrap; position: relative; overflow: hidden;
+
+  &:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.92); }
+
+  &.active {
+    background: rgba(200,32,47,0.18); color: #fff; font-weight: 600;
+
+    &::before {
+      content: '';
+      position: absolute; left: 0; top: 6px; bottom: 6px;
+      width: 3px; background: var(--red);
+      border-radius: 0 3px 3px 0;
+      box-shadow: 0 0 10px rgba(200,32,47,0.5);
+    }
+  }
+}
+
+.nav-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; flex-shrink: 0;
+  svg { width: 18px; height: 18px; stroke: currentColor; }
+}
+
+.nav-text { flex: 1; overflow: hidden; transition: opacity 0.2s, width 0.27s; }
+
+.nav-badge {
+  padding: 2px 7px; border-radius: 12px;
+  font-size: 10px; font-weight: 700;
+  flex-shrink: 0; transition: opacity 0.2s, width 0.27s;
+
+  &.nav-badge-blue  { background: rgba(168,180,192,0.20); color: #C8D8E8; }
+  &.nav-badge-amber { background: rgba(251,191,36,0.18);  color: #FCD34D; }
+  &.nav-badge-red   { background: rgba(200,32,47,0.22);   color: #FCA5A5; animation: pulse 2s infinite; }
+}
+
+/* Footer */
+.sidebar-footer {
+  padding: 12px 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0; display: flex; flex-direction: column; gap: 8px;
+}
+
+.user-profile {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 11px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 9px; cursor: pointer;
+  overflow: hidden; transition: var(--tr);
+  &:hover { background: rgba(255,255,255,0.10); }
+}
+
+.user-avatar {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--red), var(--red-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.02em;
+}
+
+.user-info { overflow: hidden; transition: opacity 0.2s, width 0.27s; white-space: nowrap; min-width: 0; }
+.user-name { font-size: 12px; font-weight: 600; color: #fff; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; }
+.user-role { font-size: 10px; color: rgba(255,255,255,0.38); margin-top: 1px; }
+
+.btn-logout {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 9px 11px;
+  background: transparent;
+  border: 1px solid rgba(200,32,47,0.28); border-radius: 8px;
+  color: rgba(252,165,165,0.78);
+  font-family: var(--font); font-size: 12px; font-weight: 500;
+  cursor: pointer; overflow: hidden; white-space: nowrap; transition: var(--tr);
+  svg { flex-shrink: 0; }
+  &:hover { background: rgba(200,32,47,0.14); border-color: rgba(200,32,47,0.50); color: #FCA5A5; }
+}
+
+/* Main */
+.main-content {
+  flex: 1; min-width: 0; height: 100vh;
+  display: flex; flex-direction: column;
+  overflow: hidden; background: var(--bg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar { width: var(--sidebar-col); min-width: var(--sidebar-col); }
+  .logo-text, .nav-text, .nav-badge, .nav-label, .user-info, .bank-subtitle { opacity: 0; width: 0; overflow: hidden; }
+  .logo { justify-content: center; }
+  .nav-item { justify-content: center; padding: 11px 0; }
+  .user-profile { justify-content: center; padding: 8px; }
+  .btn-logout { justify-content: center; padding: 9px; }
+}

@@ -1,0 +1,150 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: workflow-declaration
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/wifak_validation?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/bct-realm
+          jwk-set-uri: http://localhost:8081/realms/bct-realm/protocol/openid-connect/certs
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  cloud:
+    inetutils:
+      preferred-networks:
+        - 127.0.0
+
+    openfeign:
+      httpclient:
+        hc5:
+          enabled: true
+
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+    instance-id: workflow-declaration:8084
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+feign:
+  client:
+    config:
+      authentification-service:
+        connectTimeout: 5000
+        readTimeout: 10000
+        loggerLevel: basic
+      notification-service:
+        connectTimeout: 3000
+        readTimeout: 5000
+        loggerLevel: basic
+      jira-integration-service:
+        connectTimeout: 3000
+        readTimeout: 8000
+        loggerLevel: basic
+      ml-service:
+        connectTimeout: 5000
+        readTimeout: 30000
+        loggerLevel: basic
+
+logging:
+  level:
+    com.wifak.validationservice: INFO
+    org.springframework.security: DEBUG
+    feign: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+app:
+  cors:
+    allowed-origins: http://localhost:4200
+  internal-secret: ${INTERNAL_SECRET:wifak-internal-secret-2024}
+
+ml:
+  service:
+    url: http://localhost:8090
+
+file:
+  upload-dir: uploads/templates
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+      slo:
+        http.server.requests: 50ms, 100ms, 200ms, 500ms, 1s, 2s
+    tags:
+      application: workflow-declaration
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    inetutils:
+      preferred-networks:
+        - 172.
+  datasource:
+    url: jdbc:mysql://mysql:3306/wifak_validation?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: wifak2024
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/realms/bct-realm/protocol/openid-connect/certs
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: workflow-declaration:8084
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/

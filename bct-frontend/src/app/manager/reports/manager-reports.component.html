@@ -1,0 +1,340 @@
+﻿<!-- src/app/manager-reports/manager-reports.component.html -->
+<!-- US-19 — Rapport d'audit & traçabilité -->
+
+<div class="audit-wrapper">
+
+  <!-- HEADER -->
+  <div class="audit-header">
+    <div class="header-left">
+      <div class="header-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="page-title">Rapport d'audit</h1>
+        <p class="page-subtitle">Traçabilité des décisions et alertes opérationnelles</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <select class="period-select" [(ngModel)]="periodeFiltre">
+        <option value="">Toutes périodes</option>
+        <option *ngFor="let p of uniquePeriodes" [value]="p">{{ p }}</option>
+      </select>
+      <button class="btn-export" (click)="exporterPDF()" [disabled]="exporting">
+        <svg *ngIf="!exporting" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <svg *ngIf="exporting" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        {{ exporting ? 'Export...' : 'Exporter CSV' }}
+      </button>
+      <button class="btn-refresh" (click)="charger()" [disabled]="loading">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI AUDIT -->
+  <div class="kpi-strip" *ngIf="stats">
+    <div class="kpi-item">
+      <div class="kpi-icon kpi-icon--blue">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <div>
+        <div class="kpi-val kpi-val--blue">{{ tempsTraitementMoyen }}</div>
+        <div class="kpi-lbl">Délai moyen traitement</div>
+      </div>
+      <span class="kpi-badge badge-ok">Objectif atteint</span>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-icon kpi-icon--green">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <div>
+        <div class="kpi-val kpi-val--green">{{ tauxConformite }} %</div>
+        <div class="kpi-lbl">Taux de conformité</div>
+      </div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-icon kpi-icon--red">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="currentColor"/>
+        </svg>
+      </div>
+      <div>
+        <div class="kpi-val kpi-val--red">{{ stats.enValidation }}</div>
+        <div class="kpi-lbl">Déclarations urgentes</div>
+      </div>
+      <span class="kpi-badge badge-danger" *ngIf="stats.enValidation > 0">Action requise</span>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-icon kpi-icon--amber">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+        </svg>
+      </div>
+      <div>
+        <div class="kpi-val kpi-val--amber">{{ tauxRejet }} %</div>
+        <div class="kpi-lbl">Taux de rejet global</div>
+      </div>
+      <span class="kpi-badge badge-warn" *ngIf="tauxRejet > 20">À surveiller</span>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-icon kpi-icon--purple">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="kpi-val kpi-val--purple">{{ stats.envoyees }}</div>
+        <div class="kpi-lbl">Envoyées BCT</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="loader-block" *ngIf="loading">
+    <div class="spinner-ring"></div>
+    <span>Chargement du rapport...</span>
+  </div>
+
+  <div class="content-grid" *ngIf="!loading">
+
+    <!-- COLONNE GAUCHE -->
+    <div class="col-left">
+
+      <!-- Journal d'audit -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            Journal d'audit
+          </h2>
+          <div class="panel-head-right">
+            <select class="mini-select" [(ngModel)]="filtreAction">
+              <option value="">Toutes actions</option>
+              <option value="VALIDATE">Validations</option>
+              <option value="REJECT">Rejets</option>
+              <option value="SUBMIT">Soumissions</option>
+              <option value="SEND">Envois BCT</option>
+            </select>
+          </div>
+        </div>
+        <div class="journal-body">
+          <div class="journal-loader" *ngIf="logsLoading">
+            <div class="spinner-ring"></div><span>Chargement des événements...</span>
+          </div>
+          <div class="journal-empty" *ngIf="!logsLoading && filteredLogs.length === 0">
+            Aucun événement pour ces filtres.
+          </div>
+          <div class="journal-item" *ngFor="let log of filteredLogs.slice(0, 12)">
+            <div class="ji-dot" [ngClass]="getLogDotClass(log.action)"></div>
+            <div class="ji-body">
+              <div class="ji-row">
+                <span class="ji-title">{{ getLogTitle(log) }}</span>
+                <span class="ji-date">{{ log.dateAction | date:'dd/MM HH:mm' }}</span>
+              </div>
+              <div class="ji-sub">
+                {{ log.effectuePar || '—' }}
+                <ng-container *ngIf="log.commentaire"> · {{ log.commentaire | slice:0:60 }}{{ log.commentaire.length > 60 ? '…' : '' }}</ng-container>
+              </div>
+            </div>
+            <span class="ji-badge" [ngClass]="getLogBadgeClass(log.action)">{{ getActionLabel(log.action) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Déclarations rejetées à corriger -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            Déclarations rejetées — en attente de correction
+          </h2>
+          <span class="count-pill count-pill--danger">{{ rejeteesEnAttente.length }}</span>
+        </div>
+        <div class="rejet-table" *ngIf="rejeteesEnAttente.length > 0">
+          <div class="rt-head">
+            <span>ID</span>
+            <span>Type</span>
+            <span>Motif du rejet</span>
+            <span>Agent</span>
+            <span>Rejeté le</span>
+          </div>
+          <div class="rt-row" *ngFor="let d of rejeteesEnAttente.slice(0, 8)">
+            <span class="rt-id">#{{ d.id }}</span>
+            <span class="rt-type">
+              <span class="type-code">{{ d.declarationType?.code }}</span>
+            </span>
+            <span class="rt-motif">{{ d.commentaireRejet || 'Non précisé' }}</span>
+            <span class="rt-agent">{{ d.generePar || '—' }}</span>
+            <span class="rt-date">{{ d.dateValidation | date:'dd/MM/yy' }}</span>
+          </div>
+        </div>
+        <div class="panel-empty" *ngIf="rejeteesEnAttente.length === 0">
+          Aucune déclaration rejetée en attente de correction.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLONNE DROITE -->
+    <div class="col-right">
+
+      <!-- Alertes opérationnelles -->
+      <div class="panel panel--alerts">
+        <div class="panel-head">
+          <h2 class="panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            Alertes opérationnelles
+          </h2>
+          <span class="count-pill count-pill--danger" *ngIf="alertesCritiques > 0">{{ alertesCritiques }} critiques</span>
+        </div>
+        <div class="alerts-list">
+          <div class="alert-item alert-item--danger" *ngIf="stats && stats.enValidation > 5">
+            <div class="alert-icon alert-icon--danger">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="currentColor"/>
+              </svg>
+            </div>
+            <div>
+              <div class="alert-title">SLA dépassé — {{ stats.enValidation }} déclarations</div>
+              <div class="alert-sub">Validation en attente depuis plus de 48h</div>
+            </div>
+          </div>
+          <div class="alert-item alert-item--warn" *ngIf="tauxRejet > 20">
+            <div class="alert-icon alert-icon--warn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+              </svg>
+            </div>
+            <div>
+              <div class="alert-title">Taux de rejet élevé — {{ tauxRejet }}%</div>
+              <div class="alert-sub">Au-dessus du seuil acceptable de 20%</div>
+            </div>
+          </div>
+          <div class="alert-item alert-item--info">
+            <div class="alert-icon alert-icon--info">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <circle cx="12" cy="8" r="1" fill="currentColor"/>
+              </svg>
+            </div>
+            <div>
+              <div class="alert-title">{{ stats?.total || 0 }} déclarations ce mois</div>
+              <div class="alert-sub">Dont {{ stats?.envoyees || 0 }} traitées</div>
+            </div>
+          </div>
+          <div class="no-alerts" *ngIf="alertesCritiques === 0 && tauxRejet <= 20">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>Aucune alerte critique</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conformité par type -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            Conformité par type
+          </h2>
+        </div>
+        <div class="conformite-list">
+          <div class="conf-row" *ngFor="let t of typeConformite">
+            <div class="conf-header">
+              <span class="conf-code">{{ t.code }}</span>
+              <span class="conf-pct" [ngClass]="getConformiteClass(t.taux)">{{ t.taux }}%</span>
+            </div>
+            <div class="conf-track">
+              <div class="conf-fill"
+                   [style.width.%]="t.taux"
+                   [ngClass]="getConformiteFillClass(t.taux)">
+              </div>
+            </div>
+            <div class="conf-detail">{{ t.validees }} / {{ t.total }} validées</div>
+          </div>
+          <div class="panel-empty" *ngIf="typeConformite.length === 0">Aucune donnée disponible.</div>
+        </div>
+      </div>
+
+      <!-- Détail filtrable -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Détail des déclarations</h2>
+          <div class="panel-filters">
+            <select class="mini-select" [(ngModel)]="filtreStatut">
+              <option value="">Tous statuts</option>
+              <option value="GENEREE">Générée</option>
+              <option value="EN_VALIDATION">En validation</option>
+              <option value="VALIDEE">Validée</option>
+              <option value="REJETEE">Rejetée</option>
+              <option value="ENVOYEE">Traitée</option>
+            </select>
+          </div>
+        </div>
+        <div class="detail-table">
+          <div class="dt-row dt-head">
+            <span>ID</span><span>Type</span><span>Période</span><span>Statut</span><span>Agent</span>
+          </div>
+          <div class="dt-row" *ngFor="let d of filteredDeclarations.slice(0, 10)">
+            <span class="dt-id">#{{ d.id }}</span>
+            <span class="dt-type">{{ d.declarationType?.code }}</span>
+            <span class="dt-periode">{{ d.periode }}</span>
+            <span>
+              <span class="statut-badge" [ngClass]="getStatutClass(d.statut)">{{ getStatutLabel(d.statut) }}</span>
+            </span>
+            <span class="dt-agent">{{ d.generePar || '—' }}</span>
+          </div>
+          <div class="dt-more" *ngIf="filteredDeclarations.length > 10">
+            + {{ filteredDeclarations.length - 10 }} autres déclarations
+          </div>
+          <div class="panel-empty" *ngIf="filteredDeclarations.length === 0">
+            Aucune déclaration pour ces filtres.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast-bar" *ngIf="message" [ngClass]="'toast-' + messageType">
+  <svg *ngIf="messageType === 'success'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  <svg *ngIf="messageType === 'error'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+  <span>{{ message }}</span>
+</div>

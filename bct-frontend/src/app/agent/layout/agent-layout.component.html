@@ -1,0 +1,173 @@
+<!-- src/app/agent-layout/agent-layout.component.html -->
+<div class="dashboard-container">
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
+    <div class="logo-section">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 40 40" fill="none">
+            <path d="M20 4C20 4 29 13 29 21c0 7-4.5 11-9 13-4.5-2-9-6-9-13C11 13 20 4 20 4z" fill="#C8192E" opacity=".9"/>
+            <path d="M20 10c0 0 6 7 6 12s-3 8-6 9.5c-3-1.5-6-4.5-6-9.5s6-12 6-12z" fill="#A8B4C0" opacity=".75"/>
+            <path d="M20 17c0 0 3 4 3 6.5S21.5 27 20 28c-1.5-1-3-2.5-3-4.5s3-6.5 3-6.5z" fill="white" opacity=".85"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <div class="bank-name">WIFAK BANK</div>
+          <div class="bank-subtitle">Chargé de Déclaration</div>
+        </div>
+      </div>
+      <button class="toggle-btn" (click)="toggleSidebar()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="nav-menu">
+
+      <!-- ① Tableau de bord -->
+      <a class="nav-item"
+         [routerLink]="['/agent/dashboard']"
+         [class.active]="isActive('/agent/dashboard')">
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+          </svg>
+        </span>
+        <span class="nav-text">Tableau de bord</span>
+      </a>
+
+      <!-- ② Mes Déclarations -->
+      <a class="nav-item"
+         [routerLink]="['/agent/declarations']"
+         [class.active]="isActive('/agent/declarations')">
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </span>
+        <span class="nav-text">Mes Déclarations</span>
+        <span class="nav-badge" *ngIf="rejectedCount > 0">
+          {{ rejectedCount > 9 ? '9+' : rejectedCount }}
+        </span>
+      </a>
+
+      <!-- ③ Calendrier des échéances -->
+      <a class="nav-item"
+         [routerLink]="['/agent/calendar']"
+         [class.active]="isActive('/agent/calendar')">
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </span>
+        <span class="nav-text">Calendrier</span>
+      </a>
+
+        <a class="nav-item"
+         [routerLink]="['/agent/ml']"
+         [class.active]="isActive('/agent/ml')">
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+          </svg>
+        </span>
+        <span class="nav-text">Aide intelligente</span>
+      </a>
+
+      <!-- ④ Types de déclarations (lecture seule) -->
+      <a class="nav-item"
+         [routerLink]="['/agent/types']"
+         [class.active]="isActive('/agent/types')">
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+            <line x1="8" y1="16" x2="14" y2="16"/>
+          </svg>
+        </span>
+        <span class="nav-text">Types BCT</span>
+      </a>
+
+      <!-- ⑤ Notifications -->
+      <a class="nav-item"
+         [routerLink]="['/agent/notifications']"
+         [class.active]="isActive('/agent/notifications')">
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </span>
+        <span class="nav-text">Notifications</span>
+        <span class="nav-badge nav-badge-blue"
+              *ngIf="notifSvc.unreadCount > 0">
+          {{ notifSvc.unreadCount > 9 ? '9+' : notifSvc.unreadCount }}
+        </span>
+      </a>
+
+      <!-- ⑥ Déclarations traitées -->
+      <a class="nav-item"
+         [routerLink]="['/agent/treated']"
+         [class.active]="isActive('/agent/treated')">
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </span>
+        <span class="nav-text">Traitées</span>
+      </a>
+
+    </nav>
+
+    <!-- User Profile & Logout -->
+    <div class="sidebar-footer">
+      <div class="user-profile">
+        <div class="user-avatar">{{ getUserInitials() }}</div>
+        <div class="user-info">
+          <div class="user-name">{{ username }}</div>
+          <div class="user-role">Chargé de Déclaration</div>
+        </div>
+      </div>
+      <button class="btn-logout" (click)="logout()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span class="nav-text">Déconnexion</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
+    <div class="agent-topbar">
+      <div class="topbar-left">
+        <h2 class="topbar-title">{{ pageTitle }}</h2>
+        <p class="topbar-subtitle">{{ pageSubtitle }}</p>
+      </div>
+      <div class="topbar-right">
+        <app-notification-bell></app-notification-bell>
+      </div>
+    </div>
+    <div class="page-scroll-area">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>
+
+<!-- Chat widget — visible for agents -->
+<app-chat></app-chat>

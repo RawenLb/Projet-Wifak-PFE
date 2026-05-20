@@ -1,0 +1,684 @@
+<!-- manager-pending.component.html — Version sans IA, avec panneau lecteur élégant -->
+
+<div class="pnd-wrapper">
+
+  <!-- ── HEADER ── -->
+  <div class="pnd-header">
+    <div class="header-left">
+      <div class="header-icon" [class.pulse]="pending.length > 0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polyline points="9 11 12 14 22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="page-title">
+          File de validation
+          <span class="count-badge" *ngIf="pending.length > 0">{{ pending.length }}</span>
+        </h1>
+        <p class="page-subtitle">Déclarations en attente de votre décision</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="refresh-info" *ngIf="lastRefreshed">
+        Mis à jour à {{ formatTime(lastRefreshed) }}
+        <span class="auto-badge">AUTO</span>
+      </span>
+      <button class="btn-refresh" (click)="charger()" [disabled]="loading">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- ── KPI STRIP ── -->
+  <div class="kpi-strip" *ngIf="stats">
+    <div class="kpi-item kpi-urgent">
+      <div class="kpi-icon-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <div><div class="kpi-val">{{ stats.enValidation }}</div><div class="kpi-lbl">En attente</div></div>
+      <div class="kpi-urgency" *ngIf="stats.enValidation > 0">⚡ Urgent</div>
+    </div>
+    <div class="kpi-item kpi-total">
+      <div class="kpi-icon-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </div>
+      <div><div class="kpi-val">{{ stats.total }}</div><div class="kpi-lbl">Total décl.</div></div>
+    </div>
+    <div class="kpi-item kpi-validees">
+      <div class="kpi-icon-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div><div class="kpi-val">{{ stats.validees }}</div><div class="kpi-lbl">Validées</div></div>
+    </div>
+    <div class="kpi-item kpi-rejetees">
+      <div class="kpi-icon-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <div><div class="kpi-val">{{ stats.rejetees }}</div><div class="kpi-lbl">Rejetées</div></div>
+    </div>
+    <div class="kpi-item kpi-envoyees">
+      <div class="kpi-icon-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </div>
+      <div><div class="kpi-val">{{ stats.envoyees }}</div><div class="kpi-lbl">Envoyées BCT</div></div>
+    </div>
+  </div>
+
+  <!-- ── TOOLBAR ── -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="search-wrap">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input class="search-input" type="text" placeholder="Rechercher déclaration..."
+               [(ngModel)]="searchQuery">
+        <button class="search-clear" *ngIf="searchQuery" (click)="searchQuery = ''">✕</button>
+      </div>
+
+      <select class="filter-select" [(ngModel)]="filtreType">
+        <option value="">Tous types</option>
+        <option *ngFor="let t of uniqueTypes" [value]="t">{{ t }}</option>
+      </select>
+
+      <!-- Filtres statut rejet -->
+      <div class="priority-pills">
+        <button class="priority-pill" [class.active]="priorityFilter === 'ALL'" (click)="setPriorityFilter('ALL')">Tous</button>
+        <button class="priority-pill pill-rejet" [class.active]="priorityFilter === 'REJETE'" (click)="setPriorityFilter('REJETE')">
+          <span class="pill-dot dot-rouge"></span>Rejetées
+        </button>
+        <button class="priority-pill pill-new" [class.active]="priorityFilter === 'NOUVEAU'" (click)="setPriorityFilter('NOUVEAU')">
+          <span class="pill-dot dot-bleu"></span>Nouvelles
+        </button>
+      </div>
+
+      <!-- Tri -->
+      <div class="sort-pills">
+        <button class="sort-pill" [class.active]="sortField === 'id'"      (click)="toggleSort('id')">ID {{ getSortIcon('id') }}</button>
+        <button class="sort-pill" [class.active]="sortField === 'date'"    (click)="toggleSort('date')">Date {{ getSortIcon('date') }}</button>
+        <button class="sort-pill" [class.active]="sortField === 'periode'" (click)="toggleSort('periode')">Période {{ getSortIcon('periode') }}</button>
+      </div>
+    </div>
+
+    <!-- Bulk -->
+    <div class="bulk-actions" *ngIf="selectedIds.size > 0">
+      <span class="bulk-count">{{ selectedIds.size }} sélectionnée(s)</span>
+      <button class="btn-bulk-validate" [disabled]="bulkLoading" (click)="validerSelection()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        {{ bulkLoading ? 'En cours...' : 'Valider la sélection' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ── LOADER ── -->
+  <div class="loader-block" *ngIf="loading">
+    <div class="spinner-ring"></div>
+    <span>Chargement de la file d'attente...</span>
+  </div>
+
+  <!-- ── EMPTY ── -->
+  <div class="empty-state" *ngIf="!loading && filteredPending.length === 0">
+    <div class="empty-checkmark">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h3>File vide</h3>
+    <p *ngIf="searchQuery || filtreType || priorityFilter !== 'ALL'">Aucune déclaration ne correspond à vos critères.</p>
+    <p *ngIf="!searchQuery && !filtreType && priorityFilter === 'ALL'">Toutes les déclarations ont été traitées. Excellent travail !</p>
+    <button class="btn-reset-filters" *ngIf="searchQuery || filtreType || priorityFilter !== 'ALL'"
+            (click)="searchQuery=''; filtreType=''; priorityFilter='ALL'">
+      Effacer les filtres
+    </button>
+  </div>
+
+  <!-- ── LAYOUT PRINCIPAL : GRILLE + PANNEAU LECTEUR ── -->
+  <div class="main-layout" [class.panel-open]="showReaderPanel" *ngIf="!loading && filteredPending.length > 0">
+
+    <!-- ── GRILLE DE CARTES ── -->
+    <div class="cards-grid">
+      <div class="decl-card"
+           *ngFor="let d of filteredPending; trackBy: trackById"
+           [class.selected]="selectedIds.has(d.id!)"
+           [class.card-active]="readerDeclaration?.id === d.id"
+           [class.card-rejete]="d.commentaireRejet">
+
+        <!-- Barre couleur statut -->
+        <div class="card-accent"
+             [class.accent-rejet]="d.commentaireRejet"
+             [class.accent-new]="!d.commentaireRejet"></div>
+
+        <!-- Checkbox sélection -->
+        <div class="card-head">
+          <div class="card-head-left">
+            <label class="checkbox-wrap" (click)="$event.stopPropagation()">
+              <input type="checkbox" [checked]="selectedIds.has(d.id!)" (change)="toggleSelect(d.id!)">
+              <span class="checkmark"></span>
+            </label>
+            <span class="card-id">#{{ d.id }}</span>
+            <span class="card-date" *ngIf="d.dateGeneration">{{ d.dateGeneration | date:'dd/MM/yy' }}</span>
+          </div>
+          <div class="card-head-right">
+            <span class="rejet-badge" *ngIf="d.commentaireRejet">Rejeté</span>
+            <span class="new-badge" *ngIf="!d.commentaireRejet">Nouveau</span>
+          </div>
+        </div>
+
+        <!-- Type déclaration -->
+        <div class="card-type">
+          <span class="type-code">{{ d.declarationType?.code }}</span>
+          <span class="type-nom">{{ d.declarationType?.nom }}</span>
+        </div>
+
+        <!-- Méta -->
+        <div class="card-meta">
+          <div class="meta-item">
+            <span class="meta-key">Période</span>
+            <span class="meta-val"><span class="periode-chip">{{ d.periode }}</span></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-key">Agent</span>
+            <span class="meta-val">
+              <div class="agent-cell" *ngIf="d.generePar">
+                <div class="agent-avatar">{{ d.generePar.charAt(0).toUpperCase() }}</div>
+                <span>{{ d.generePar }}</span>
+              </div>
+            </span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-key">Fichier</span>
+            <span class="meta-val">
+              <span class="file-name" *ngIf="d.nomFichier" [title]="d.nomFichier">{{ d.nomFichier }}</span>
+              <span *ngIf="!d.nomFichier" class="na">—</span>
+            </span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-key">Ticket Jira</span>
+            <span class="meta-val">
+              <ng-container *ngIf="getJiraTicket(d.id!) as ticket">
+                <a class="jira-badge" [ngClass]="jiraService.getJiraStatusClass(ticket.jiraStatus)"
+                   [href]="ticket.jiraTicketUrl" target="_blank" rel="noopener noreferrer">
+                  {{ ticket.jiraTicketKey }}
+                </a>
+              </ng-container>
+              <span class="spinner-xs" *ngIf="jiraLoading[d.id!]"></span>
+              <span class="na" *ngIf="!getJiraTicket(d.id!) && !jiraLoading[d.id!]">—</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Motif rejet précédent -->
+        <div class="card-rejet" *ngIf="d.commentaireRejet">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px">
+            <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <span>{{ d.commentaireRejet }}</span>
+        </div>
+
+        <!-- Pied de carte : actions -->
+        <div class="card-foot">
+          <!-- Bouton principal : Lire la déclaration -->
+          <button class="btn-read" (click)="ouvrirLecteur(d)" [class.btn-read-active]="readerDeclaration?.id === d.id">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            {{ readerDeclaration?.id === d.id ? 'En lecture' : 'Lire' }}
+          </button>
+
+          <button class="btn-validate" [disabled]="actionEnCours[d.id!]" (click)="valider(d)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ actionEnCours[d.id!] ? '...' : 'Valider' }}
+          </button>
+
+          <button class="btn-reject" [disabled]="actionEnCours[d.id!]" (click)="ouvrirRejet(d)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            {{ actionEnCours[d.id!] ? '...' : 'Rejeter' }}
+          </button>
+
+          <div class="foot-extras">
+            <button class="btn-icon" title="Historique" (click)="voirHistorique(d)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="12 8 12 12 14 14"/>
+                <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
+              </svg>
+            </button>
+            <button class="btn-icon-xs" title="Télécharger" (click)="download(d)">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
+            <button class="btn-icon btn-jira" *ngIf="getJiraTicket(d.id!)" title="Voir dans Jira" (click)="ouvrirJira(d)">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
+                <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════
+         PANNEAU LECTEUR DE DÉCLARATION (sticky right panel)
+    ════════════════════════════════════════════════════ -->
+    <div class="reader-panel" *ngIf="showReaderPanel && readerDeclaration">
+
+      <!-- En-tête panneau -->
+      <div class="reader-header">
+        <div class="reader-header-top">
+          <div class="reader-id-badge">#{{ readerDeclaration.id }}</div>
+          <div class="reader-nav">
+            <button class="btn-nav" title="Précédent" (click)="naviguerDeclaration(-1)" [disabled]="readerIndex <= 0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span class="reader-nav-pos">{{ readerIndex + 1 }} / {{ filteredPending.length }}</span>
+            <button class="btn-nav" title="Suivant" (click)="naviguerDeclaration(1)" [disabled]="readerIndex >= filteredPending.length - 1">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <button class="reader-close" (click)="fermerLecteur()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="reader-title">
+          <span class="reader-type-code">{{ readerDeclaration.declarationType?.code }}</span>
+          <span class="reader-type-nom">{{ readerDeclaration.declarationType?.nom }}</span>
+        </div>
+        <div class="reader-meta-row">
+          <span class="reader-meta-chip">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            {{ readerDeclaration.periode }}
+          </span>
+          <span class="reader-meta-chip" *ngIf="readerDeclaration.generePar">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            {{ readerDeclaration.generePar }}
+          </span>
+          <span class="reader-meta-chip" *ngIf="readerDeclaration.dateGeneration">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {{ readerDeclaration.dateGeneration | date:'dd/MM/yyyy HH:mm' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Tabs du lecteur -->
+      <div class="reader-tabs">
+        <button class="reader-tab" [class.active]="readerTab === 'details'" (click)="readerTab = 'details'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Détails
+        </button>
+        <button class="reader-tab" [class.active]="readerTab === 'historique'" (click)="chargerHistoriqueReader()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg>
+          Historique
+          <span class="tab-count" *ngIf="readerLogs.length > 0">{{ readerLogs.length }}</span>
+        </button>
+        <button class="reader-tab" [class.active]="readerTab === 'fichier'" (click)="readerTab = 'fichier'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Fichier
+        </button>
+      </div>
+
+      <!-- ── ONGLET DÉTAILS ── -->
+      <div class="reader-body" *ngIf="readerTab === 'details'">
+
+        <!-- Alerte rejet précédent -->
+        <div class="reader-rejet-alert" *ngIf="readerDeclaration.commentaireRejet">
+          <div class="alert-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Déclaration précédemment rejetée
+          </div>
+          <p class="alert-text">{{ readerDeclaration.commentaireRejet }}</p>
+        </div>
+
+        <!-- Section : Informations générales -->
+        <div class="reader-section">
+          <div class="section-label">Informations générales</div>
+          <div class="detail-grid">
+            <div class="detail-row">
+              <span class="detail-key">Identifiant</span>
+              <span class="detail-val mono">#{{ readerDeclaration.id }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-key">Type déclaration</span>
+              <span class="detail-val">
+                <span class="type-pill">{{ readerDeclaration.declarationType?.code }}</span>
+                {{ readerDeclaration.declarationType?.nom }}
+              </span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-key">Période couverte</span>
+              <span class="detail-val"><span class="periode-chip">{{ readerDeclaration.periode }}</span></span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-key">Généré par</span>
+              <span class="detail-val">
+                <div class="agent-cell" *ngIf="readerDeclaration.generePar">
+                  <div class="agent-avatar agent-lg">{{ readerDeclaration.generePar.charAt(0).toUpperCase() }}</div>
+                  {{ readerDeclaration.generePar }}
+                </div>
+              </span>
+            </div>
+            <div class="detail-row" *ngIf="readerDeclaration.dateGeneration">
+              <span class="detail-key">Date de génération</span>
+              <span class="detail-val mono">{{ readerDeclaration.dateGeneration | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-key">Statut actuel</span>
+              <span class="detail-val">
+                <span class="statut-chip" [ngClass]="getStatutClass(readerDeclaration.statut || '')">
+                  {{ getStatutLabel(readerDeclaration.statut || '') }}
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section : Fichier associé -->
+        <div class="reader-section" *ngIf="readerDeclaration.nomFichier">
+          <div class="section-label">Fichier associé</div>
+          <div class="file-preview-block">
+            <div class="file-icon-wrap">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <div class="file-info">
+              <div class="file-name-full">{{ readerDeclaration.nomFichier }}</div>
+              <div class="file-ext">{{ getFileExtension(readerDeclaration.nomFichier) | uppercase }} · Déclaration BCT</div>
+            </div>
+            <button class="btn-dl-file" (click)="download(readerDeclaration)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Télécharger
+            </button>
+          </div>
+        </div>
+
+        <!-- Section : Ticket Jira -->
+        <div class="reader-section" *ngIf="getJiraTicket(readerDeclaration.id!)">
+          <div class="section-label">Ticket Jira associé</div>
+          <div class="jira-block" *ngIf="getJiraTicket(readerDeclaration.id!) as ticket">
+            <div class="jira-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005z"/>
+                <path d="M5.932 5.541H17.503a5.218 5.218 0 0 0-5.232-5.215h-2.13V.27A5.215 5.215 0 0 0 4.928 5.485v.056a1.005 1.005 0 0 0 1.004 1z" opacity=".4"/>
+              </svg>
+            </div>
+            <div class="jira-info">
+              <a class="jira-key" [href]="ticket.jiraTicketUrl" target="_blank">{{ ticket.jiraTicketKey }}</a>
+              <span class="jira-status-chip" [ngClass]="jiraService.getJiraStatusClass(ticket.jiraStatus)">{{ ticket.jiraStatus }}</span>
+            </div>
+            <a class="btn-jira-open" [href]="ticket.jiraTicketUrl" target="_blank">
+              Ouvrir dans Jira ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- Section : Checklist de validation manuelle -->
+        <div class="reader-section">
+          <div class="section-label">
+            Checklist de validation
+            <span class="checklist-progress">{{ getCheckCount() }}/{{ checklistItems.length }}</span>
+          </div>
+          <div class="checklist-bar-wrap">
+            <div class="checklist-bar" [style.width.%]="getCheckPercent()"></div>
+          </div>
+          <div class="checklist-items">
+            <label class="checklist-item" *ngFor="let item of checklistItems; let i = index">
+              <input type="checkbox" [(ngModel)]="item.checked">
+              <span class="check-custom" [class.checked]="item.checked">
+                <svg *ngIf="item.checked" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+              <span class="check-label" [class.checked]="item.checked">{{ item.label }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Section : Notes du manager -->
+        <div class="reader-section">
+          <div class="section-label">Notes internes</div>
+          <textarea class="notes-area" [(ngModel)]="readerNotes" placeholder="Ajoutez vos observations sur cette déclaration..."></textarea>
+          <div class="notes-hint" *ngIf="readerNotes">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Note enregistrée localement
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ONGLET HISTORIQUE ── -->
+      <div class="reader-body" *ngIf="readerTab === 'historique'">
+        <div class="reader-loader" *ngIf="readerLogsLoading">
+          <div class="spinner-ring"></div><span>Chargement de l'historique...</span>
+        </div>
+        <div class="empty-logs" *ngIf="!readerLogsLoading && readerLogs.length === 0">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Aucun événement dans l'historique.
+        </div>
+        <div class="mini-timeline" *ngIf="!readerLogsLoading && readerLogs.length > 0">
+          <div class="mtl-item" *ngFor="let h of readerLogs; let last = last">
+            <div class="mtl-spine" [class.last]="last"></div>
+            <div class="mtl-dot" [ngClass]="getActionClass(h.action)"></div>
+            <div class="mtl-body">
+              <div class="mtl-row">
+                <span class="mtl-action" [ngClass]="getActionClass(h.action)">{{ getActionLabel(h.action) }}</span>
+                <span class="mtl-date">{{ h.dateAction | date:'dd/MM/yy HH:mm' }}</span>
+              </div>
+              <div class="mtl-from-to">
+                <span class="mtl-state">{{ h.statutAvant }}</span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                <span class="mtl-state">{{ h.statutApres }}</span>
+              </div>
+              <div class="mtl-user" *ngIf="h.effectuePar">{{ h.effectuePar }}</div>
+              <div class="mtl-comment" *ngIf="h.commentaire">{{ h.commentaire }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ONGLET FICHIER ── -->
+      <div class="reader-body" *ngIf="readerTab === 'fichier'">
+        <div class="fichier-tab-content" *ngIf="readerDeclaration.nomFichier; else noFile">
+          <div class="file-big-preview">
+            <div class="file-big-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div class="file-big-name">{{ readerDeclaration.nomFichier }}</div>
+            <div class="file-big-type">{{ getFileExtension(readerDeclaration.nomFichier) | uppercase }} · Déclaration BCT</div>
+            <button class="btn-dl-big" (click)="download(readerDeclaration)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Télécharger le fichier
+            </button>
+          </div>
+          <div class="file-instructions">
+            <div class="instruction-step">
+              <span class="step-num">1</span>
+              <span>Téléchargez le fichier XML/CSV de déclaration</span>
+            </div>
+            <div class="instruction-step">
+              <span class="step-num">2</span>
+              <span>Vérifiez la cohérence des données avec la période</span>
+            </div>
+            <div class="instruction-step">
+              <span class="step-num">3</span>
+              <span>Cochez les points de la checklist dans l'onglet Détails</span>
+            </div>
+            <div class="instruction-step">
+              <span class="step-num">4</span>
+              <span>Validez ou rejetez la déclaration avec un motif clair</span>
+            </div>
+          </div>
+        </div>
+        <ng-template #noFile>
+          <div class="no-file-state">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <p>Aucun fichier associé à cette déclaration.</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- ── PIED DU PANNEAU : DÉCISION FINALE ── -->
+      <div class="reader-footer">
+        <div class="decision-label">Décision finale</div>
+        <div class="decision-btns">
+          <button class="btn-decision-validate"
+                  [disabled]="actionEnCours[readerDeclaration.id!]"
+                  (click)="valider(readerDeclaration)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ actionEnCours[readerDeclaration.id!] ? 'Traitement...' : 'Valider la déclaration' }}
+          </button>
+          <button class="btn-decision-reject"
+                  [disabled]="actionEnCours[readerDeclaration.id!]"
+                  (click)="ouvrirRejet(readerDeclaration)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            {{ actionEnCours[readerDeclaration.id!] ? 'Traitement...' : 'Rejeter' }}
+          </button>
+        </div>
+        <div class="checklist-warning" *ngIf="getCheckPercent() < 100">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ getCheckCount() }}/{{ checklistItems.length }} points de la checklist cochés
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     MODAL REJET + TEMPLATES PRÉDÉFINIS
+════════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="showRejetModal" (click)="fermerRejet()">
+  <div class="modal-card modal-rejet-wide" (click)="$event.stopPropagation()">
+    <div class="modal-head modal-head--danger">
+      <div class="modal-icon modal-icon--danger">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <h3>Rejeter la déclaration #{{ declarationSelectionnee?.id }}</h3>
+      <button class="modal-x" (click)="fermerRejet()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body rejet-body">
+      <div class="info-grid-3">
+        <div class="info-item"><span class="info-key">Type</span><span class="info-val">{{ declarationSelectionnee?.declarationType?.nom }}</span></div>
+        <div class="info-item"><span class="info-key">Période</span><span class="info-val">{{ declarationSelectionnee?.periode }}</span></div>
+        <div class="info-item"><span class="info-key">Agent</span><span class="info-val">{{ declarationSelectionnee?.generePar }}</span></div>
+      </div>
+
+      <div class="templates-section">
+        <div class="section-title-modal">Motifs de rejet fréquents</div>
+        <div class="templates-grid">
+          <button class="template-chip"
+                  *ngFor="let t of rejectTemplates"
+                  [class.selected]="selectedTemplate === t.id"
+                  (click)="appliquerTemplate(t)"
+                  [title]="t.text">
+            {{ t.label }}
+          </button>
+        </div>
+      </div>
+
+      <label class="field-label">Motif du rejet <span class="required">*</span></label>
+      <textarea [(ngModel)]="commentaireRejet"
+                placeholder="Précisez la raison du rejet, ou sélectionnez un motif ci-dessus..."
+                rows="5" class="field-textarea"
+                [class.field-error]="commentaireRejetTouched && !commentaireRejet.trim()">
+      </textarea>
+      <span class="field-hint" *ngIf="commentaireRejetTouched && !commentaireRejet.trim()">Ce champ est obligatoire</span>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn-cancel" (click)="fermerRejet()">Annuler</button>
+      <button class="btn-danger" [disabled]="!commentaireRejet.trim() || rejetEnCours" (click)="confirmerRejet()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+        {{ rejetEnCours ? 'Traitement...' : 'Confirmer le rejet' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     MODAL HISTORIQUE (standalone)
+════════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="showHistoriqueModal" (click)="fermerHistorique()">
+  <div class="modal-card modal-wide" (click)="$event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="12 8 12 12 14 14"/>
+          <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
+        </svg>
+      </div>
+      <h3>Historique — Déclaration #{{ declarationSelectionnee?.id }}</h3>
+      <button class="modal-x" (click)="fermerHistorique()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="timeline-loader" *ngIf="historiqueLoading"><div class="spinner-ring"></div><span>Chargement...</span></div>
+      <div class="empty-logs" *ngIf="!historiqueLoading && historique.length === 0">Aucun événement.</div>
+      <div class="mini-timeline" *ngIf="!historiqueLoading && historique.length > 0">
+        <div class="mtl-item" *ngFor="let h of historique; let last = last">
+          <div class="mtl-spine" [class.last]="last"></div>
+          <div class="mtl-dot" [ngClass]="getActionClass(h.action)"></div>
+          <div class="mtl-body">
+            <div class="mtl-row">
+              <span class="mtl-action" [ngClass]="getActionClass(h.action)">{{ getActionLabel(h.action) }}</span>
+              <span class="mtl-date">{{ h.dateAction | date:'dd/MM/yy HH:mm' }}</span>
+            </div>
+            <div class="mtl-from-to">
+              <span class="mtl-state">{{ h.statutAvant }}</span> → <span class="mtl-state">{{ h.statutApres }}</span>
+            </div>
+            <div class="mtl-user" *ngIf="h.effectuePar">{{ h.effectuePar }}</div>
+            <div class="mtl-comment" *ngIf="h.commentaire">{{ h.commentaire }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast-bar" *ngIf="message" [ngClass]="'toast-' + messageType">
+  <svg *ngIf="messageType === 'success'" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  <svg *ngIf="messageType === 'error'"   width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+  <span>{{ message }}</span>
+</div>

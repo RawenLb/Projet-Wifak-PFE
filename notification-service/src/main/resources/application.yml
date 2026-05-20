@@ -1,0 +1,143 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: notification-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/wifak_notification?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: rawene.labaoui@gmail.com
+    password: vjjt srre beng aium
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        debug: true
+
+  thymeleaf:
+    prefix: classpath:/templates/email/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false
+
+  cloud:
+    inetutils:
+      preferred-networks:
+        - 127.0.0
+    openfeign:
+      httpclient:
+        hc5:
+          enabled: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/bct-realm
+          jwk-set-uri: http://localhost:8081/realms/bct-realm/protocol/openid-connect/certs
+
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+    instance-id: notification-service:8086
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+keycloak:
+  auth-server-url: http://localhost:8081
+  realm: bct-realm
+  admin-username: admin
+  admin-password: rawene
+  admin-client-id: admin-cli
+  admin-client-secret:
+
+app:
+  internal-secret: ${INTERNAL_SECRET:wifak-internal-secret-2024}
+  cors:
+    allowed-origins: http://localhost:4200
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+      slo:
+        http.server.requests: 50ms, 100ms, 200ms, 500ms, 1s, 2s
+    tags:
+      application: notification-service
+
+logging:
+  level:
+    com.wifak.notificationservice: INFO
+    org.springframework.mail: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    inetutils:
+      preferred-networks:
+        - 172.
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/realms/bct-realm/protocol/openid-connect/certs
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: notification-service:8086
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+
+keycloak:
+  auth-server-url: http://keycloak:8080

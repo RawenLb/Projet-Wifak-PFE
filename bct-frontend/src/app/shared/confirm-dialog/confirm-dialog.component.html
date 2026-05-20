@@ -1,0 +1,14 @@
+<div class="dialog-overlay" *ngIf="data" (click)="cancel()">
+  <div class="dialog-box" [ngClass]="'dialog-' + data.type" (click)="$event.stopPropagation()">
+    <div class="dialog-icon">{{ icon() }}</div>
+    <div class="dialog-content">
+      <h3 class="dialog-title">{{ data.title }}</h3>
+      <p class="dialog-message">{{ data.message }}</p>
+      <p class="dialog-detail" *ngIf="data.detail">{{ data.detail }}</p>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn-cancel" (click)="cancel()">{{ data.cancelLabel }}</button>
+      <button class="btn-confirm" [ngClass]="'btn-' + data.type" (click)="confirm()">{{ data.confirmLabel }}</button>
+    </div>
+  </div>
+</div>

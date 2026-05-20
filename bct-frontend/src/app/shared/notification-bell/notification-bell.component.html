@@ -1,0 +1,144 @@
+<!-- src/app/components/notification-bell/notification-bell.component.html -->
+<!-- ✅ NOUVEAU FICHIER -->
+
+<div class="bell-wrap">
+
+  <!-- ── Bouton cloche ─────────────────────────────────── -->
+  <button class="bell-btn" (click)="toggle($event)" [class.active]="open"
+          [title]="unreadCount > 0 ? unreadCount + ' notification(s) non lue(s)' : 'Notifications'">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+    <span class="bell-badge" *ngIf="unreadCount > 0">
+      {{ unreadCount > 9 ? '9+' : unreadCount }}
+    </span>
+  </button>
+
+  <!-- ── Panel ─────────────────────────────────────────── -->
+  <div class="notif-panel" *ngIf="open" (click)="stopPropagation($event)">
+
+    <!-- Header -->
+    <div class="panel-header">
+      <div class="panel-title-group">
+        <span class="panel-title">Notifications</span>
+        <span class="panel-total" *ngIf="allNotifs.length > 0">{{ allNotifs.length }}</span>
+      </div>
+      <button class="btn-mark-all" (click)="markAll()" *ngIf="unreadCount > 0">
+        Tout marquer lu
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="notif-tabs">
+      <button class="ntab" [class.active]="tab === 'all'" (click)="tab = 'all'">
+        Tout
+        <span class="ntab-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+      </button>
+      <button class="ntab" [class.active]="tab === 'reject'" (click)="tab = 'reject'">
+        Rejets
+        <span class="ntab-badge danger" *ngIf="rejectUnread > 0">{{ rejectUnread }}</span>
+      </button>
+      <button class="ntab" [class.active]="tab === 'deadline'" (click)="tab = 'deadline'">
+        Échéances
+        <span class="ntab-badge warning" *ngIf="deadlineUnread > 0">{{ deadlineUnread }}</span>
+      </button>
+      <button class="ntab" [class.active]="tab === 'pending'" (click)="tab = 'pending'">
+        Validation
+      </button>
+    </div>
+
+    <!-- Liste -->
+    <div class="notif-list">
+
+      <div class="empty-notif" *ngIf="filtered.length === 0">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <p>Aucune notification</p>
+      </div>
+
+      <div class="notif-item"
+           *ngFor="let n of filtered"
+           [class.unread]="n.unread"
+           [ngClass]="'sev-' + n.severity"
+           (click)="navigate(n)">
+
+        <!-- Icône -->
+        <div class="n-icon" [ngClass]="'ic-' + n.severity">
+          <!-- DANGER / REJET -->
+          <svg *ngIf="n.severity === 'danger'" width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <!-- WARNING / DEADLINE -->
+          <svg *ngIf="n.severity === 'warning'" width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <!-- INFO / PENDING -->
+          <svg *ngIf="n.severity === 'info'" width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+        </div>
+
+        <!-- Contenu -->
+        <div class="n-body">
+          <div class="n-header-row">
+            <span class="n-dot" *ngIf="n.unread"></span>
+            <span class="n-title">{{ n.title }}</span>
+            <span class="n-time">{{ n.time }}</span>
+          </div>
+          <p class="n-msg">{{ n.msg }}</p>
+
+          <!-- Pills -->
+          <div class="n-pills">
+            <span class="npill" [ngClass]="'np-' + n.severity">{{ n.decl }}</span>
+            <span class="npill np-info">{{ n.periode }}</span>
+            <span class="npill np-danger" *ngIf="n.daysLeft === 0">Aujourd'hui</span>
+            <span class="npill np-warning" *ngIf="n.daysLeft && n.daysLeft > 0">
+              {{ n.daysLeft }}j restant(s)
+            </span>
+          </div>
+
+          <!-- Motif rejet -->
+          <div class="n-motif" *ngIf="n.motif">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            {{ n.motif }}
+          </div>
+
+          <!-- Actions -->
+          <div class="n-actions" (click)="stopPropagation($event)">
+            <button class="btn-act primary" (click)="navigate(n)">
+              {{ n.type === 'reject' ? 'Corriger →' : n.type === 'deadline' ? 'Soumettre →' : 'Voir →' }}
+            </button>
+            <button class="btn-act" *ngIf="n.unread" (click)="dismiss(n.id, $event)">
+              Marquer lu
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="panel-footer" *ngIf="allNotifs.length > 0">
+      <button class="btn-see-all" (click)="tab = 'all'">
+        {{ allNotifs.length }} notification(s) au total
+      </button>
+    </div>
+
+  </div>
+</div>

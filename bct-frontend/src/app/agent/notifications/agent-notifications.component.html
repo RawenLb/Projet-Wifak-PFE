@@ -1,0 +1,206 @@
+<!-- src/app/agent-notifications/agent-notifications.component.html -->
+
+<div class="notif-page">
+
+  <!-- ════════════════════════════════════════════════════
+       EN-TÊTE DE PAGE
+       ════════════════════════════════════════════════════ -->
+  <div class="notif-header">
+    <div class="notif-header-left">
+      <div class="notif-header-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="notif-page-title">Notifications</h1>
+        <p class="notif-page-sub">
+          <ng-container *ngIf="totalUnread > 0">
+            {{ totalUnread }} non lue(s) — alertes, rejets et échéances
+          </ng-container>
+          <ng-container *ngIf="totalUnread === 0">
+            Tout est à jour
+          </ng-container>
+        </p>
+      </div>
+    </div>
+    <div class="notif-header-right">
+      <button class="btn-mark-all" (click)="markAll()" *ngIf="totalUnread > 0">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" width="15" height="15">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Tout marquer lu
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       STATS RAPIDES
+       ════════════════════════════════════════════════════ -->
+  <div class="stats-strip">
+    <div class="stat-chip stat-danger">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           width="14" height="14">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+      {{ rejectCount }} rejet(s)
+      <span class="chip-badge" *ngIf="rejectUnread > 0">{{ rejectUnread }}</span>
+    </div>
+    <div class="stat-chip stat-warning">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           width="14" height="14">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      {{ deadlineCount }} échéance(s)
+      <span class="chip-badge chip-badge-warning" *ngIf="deadlineUnread > 0">{{ deadlineUnread }}</span>
+    </div>
+    <div class="stat-chip stat-info">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           width="14" height="14">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="16" x2="12" y2="12"/>
+        <line x1="12" y1="8" x2="12.01" y2="8"/>
+      </svg>
+      {{ pendingCount }} validation(s)
+      <span class="chip-badge chip-badge-info" *ngIf="pendingUnread > 0">{{ pendingUnread }}</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       ONGLETS
+       ════════════════════════════════════════════════════ -->
+  <div class="notif-tabs">
+    <button class="ntab" [class.active]="activeTab === 'all'" (click)="setTab('all')">
+      Tout
+      <span class="ntab-badge" *ngIf="totalUnread > 0">{{ totalUnread }}</span>
+    </button>
+    <button class="ntab" [class.active]="activeTab === 'reject'" (click)="setTab('reject')">
+      Rejets
+      <span class="ntab-badge ntab-danger" *ngIf="rejectUnread > 0">{{ rejectUnread }}</span>
+    </button>
+    <button class="ntab" [class.active]="activeTab === 'deadline'" (click)="setTab('deadline')">
+      Échéances
+      <span class="ntab-badge ntab-warning" *ngIf="deadlineUnread > 0">{{ deadlineUnread }}</span>
+    </button>
+    <button class="ntab" [class.active]="activeTab === 'pending'" (click)="setTab('pending')">
+      En validation
+      <span class="ntab-badge ntab-info" *ngIf="pendingUnread > 0">{{ pendingUnread }}</span>
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       LISTE DES NOTIFICATIONS
+       ════════════════════════════════════════════════════ -->
+  <div class="notif-list">
+
+    <!-- État vide -->
+    <div class="empty-notif" *ngIf="filtered.length === 0">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+             width="48" height="48">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          <line x1="2" y1="2" x2="22" y2="22" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <p class="empty-title">Aucune notification</p>
+      <p class="empty-sub">Vous êtes à jour pour cet onglet.</p>
+    </div>
+
+    <!-- Carte notification -->
+    <div class="notif-card"
+         *ngFor="let n of filtered"
+         [class.unread]="n.unread"
+         [class.sev-danger]="getSeverityIcon(n.type) === 'danger'"
+         [class.sev-warning]="getSeverityIcon(n.type) === 'warning'"
+         [class.sev-info]="getSeverityIcon(n.type) === 'info'"
+         (click)="navigate(n)">
+
+      <!-- Icône -->
+      <div class="n-icon-wrap" [ngClass]="'ic-' + getSeverityIcon(n.type)">
+        <!-- Rejet -->
+        <svg *ngIf="getSeverityIcon(n.type) === 'danger'" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        <!-- Échéance -->
+        <svg *ngIf="getSeverityIcon(n.type) === 'warning'" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <!-- Info / validation -->
+        <svg *ngIf="getSeverityIcon(n.type) === 'info'" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      </div>
+
+      <!-- Contenu -->
+      <div class="n-body">
+
+        <!-- Ligne titre / heure -->
+        <div class="n-header-row">
+          <span class="n-dot" *ngIf="n.unread"></span>
+          <span class="n-title">{{ n.title }}</span>
+          <span class="n-time">{{ formatRelativeTime(n.time) }}</span>
+        </div>
+
+        <!-- Message -->
+        <p class="n-msg">{{ n.msg }}</p>
+
+        <!-- Pills -->
+        <div class="n-pills">
+          <span class="npill" [ngClass]="'np-' + getSeverityIcon(n.type)">
+            {{ n.decl }}
+          </span>
+          <span class="npill np-neutral">{{ n.periode }}</span>
+          <span class="npill np-danger" *ngIf="n.daysLeft === 0">Aujourd'hui !</span>
+          <span class="npill np-warning" *ngIf="n.daysLeft && n.daysLeft > 0 && n.daysLeft <= 3">
+            {{ n.daysLeft }}j restant(s)
+          </span>
+        </div>
+
+        <!-- Motif de rejet -->
+        <div class="n-motif" *ngIf="n.motif">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               width="12" height="12">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span>{{ n.motif }}</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="n-actions" (click)="$event.stopPropagation()">
+          <button class="btn-act btn-act-primary" (click)="navigate(n)">
+            {{ getActionLabel(n) }}
+          </button>
+          <button class="btn-act" *ngIf="n.unread" (click)="dismiss(n.id, $event)">
+            Marquer lu
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /notif-list -->
+
+  <!-- Footer compteur total -->
+  <div class="notif-footer" *ngIf="allNotifs.length > 0">
+    {{ allNotifs.length }} notification(s) au total
+    <span *ngIf="totalUnread > 0"> · {{ totalUnread }} non lue(s)</span>
+  </div>
+
+</div><!-- /notif-page -->

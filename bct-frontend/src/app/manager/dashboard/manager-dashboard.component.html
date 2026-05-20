@@ -1,0 +1,505 @@
+<!-- src/app/manager-dashboard/manager-dashboard.component.html -->
+<div class="dash-page">
+
+  <!-- ── Header ─────────────────────────────────────────── -->
+  <div class="dash-header">
+    <div class="dash-header-left">
+      <div class="dash-greeting">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        Espace Responsable
+      </div>
+      <h1 class="page-title">Tableau de bord</h1>
+      <p class="page-subtitle">Supervision du workflow BCT — performance en temps réel</p>
+    </div>
+    <div class="dash-header-right">
+      <button class="btn-refresh" (click)="chargerDonnees()" [disabled]="loading">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Loading ────────────────────────────────────────── -->
+  <div class="loading-overlay" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des données...</p>
+  </div>
+
+  <ng-container *ngIf="!loading && stats">
+
+    <!-- ── KPI Strip ───────────────────────────────────── -->
+    <div class="kpi-strip">
+
+      <div class="kpi-card kpi-total">
+        <div class="kpi-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ stats.total }}</span>
+          <span class="kpi-label">Total déclarations</span>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-validees">
+        <div class="kpi-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ stats.validees }}</span>
+          <span class="kpi-label">Validées</span>
+        </div>
+        <div class="kpi-trend kpi-trend--green">{{ getPct(stats.validees, stats.total) }}%</div>
+      </div>
+
+      <div class="kpi-card kpi-rejetees">
+        <div class="kpi-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ stats.rejetees }}</span>
+          <span class="kpi-label">Rejetées</span>
+        </div>
+        <div class="kpi-trend kpi-trend--red" *ngIf="stats.rejetees > 0">Surveiller</div>
+      </div>
+
+      <div class="kpi-card kpi-attente">
+        <div class="kpi-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ stats.enValidation }}</span>
+          <span class="kpi-label">En attente</span>
+        </div>
+        <div class="kpi-trend kpi-trend--amber" *ngIf="stats.enValidation > 0">Urgent</div>
+      </div>
+
+      <div class="kpi-card kpi-envoyees">
+        <div class="kpi-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ stats.envoyees }}</span>
+          <span class="kpi-label">Envoyées BCT</span>
+        </div>
+        <div class="kpi-trend kpi-trend--purple">{{ getPct(stats.envoyees, stats.total) }}%</div>
+      </div>
+
+    </div>
+
+    <!-- ── Main Grid ───────────────────────────────────── -->
+    <div class="dash-grid">
+
+      <!-- Colonne principale -->
+      <div class="dash-col-main">
+
+        <!-- Taux de validation + barres -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-header-left">
+              <div class="panel-icon panel-icon--royal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="panel-title">Performance globale</h3>
+                <p class="panel-sub">Répartition des statuts sur {{ stats.total }} déclarations</p>
+              </div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="ring-section">
+              <!-- Anneau SVG -->
+              <div class="ring-wrap">
+                <svg viewBox="0 0 120 120" width="120" height="120">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#EBF0F8" stroke-width="10"/>
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#1B4FBC" stroke-width="10"
+                    stroke-linecap="round"
+                    [attr.stroke-dasharray]="(tauxValidationGlobal * 3.14) + ' 314'"
+                    stroke-dashoffset="78.5"
+                    transform="rotate(-90 60 60)"/>
+                </svg>
+                <div class="ring-center">
+                  <span class="ring-pct">{{ tauxValidationGlobal }}%</span>
+                  <span class="ring-label">Validées</span>
+                </div>
+              </div>
+
+              <!-- Barres de progression -->
+              <div class="progress-list">
+                <div class="progress-item">
+                  <span class="progress-label">Validées</span>
+                  <div class="progress-bar-wrap">
+                    <div class="progress-bar progress-bar--success" [style.width.%]="getPct(stats.validees, stats.total)"></div>
+                  </div>
+                  <span class="progress-pct progress-pct--success">{{ getPct(stats.validees, stats.total) }}%</span>
+                </div>
+                <div class="progress-item">
+                  <span class="progress-label">Envoyées BCT</span>
+                  <div class="progress-bar-wrap">
+                    <div class="progress-bar progress-bar--purple" [style.width.%]="getPct(stats.envoyees, stats.total)"></div>
+                  </div>
+                  <span class="progress-pct progress-pct--purple">{{ getPct(stats.envoyees, stats.total) }}%</span>
+                </div>
+                <div class="progress-item">
+                  <span class="progress-label">Rejetées</span>
+                  <div class="progress-bar-wrap">
+                    <div class="progress-bar progress-bar--crimson" [style.width.%]="getPct(stats.rejetees, stats.total)"></div>
+                  </div>
+                  <span class="progress-pct progress-pct--crimson">{{ getPct(stats.rejetees, stats.total) }}%</span>
+                </div>
+                <div class="progress-item">
+                  <span class="progress-label">En attente</span>
+                  <div class="progress-bar-wrap">
+                    <div class="progress-bar progress-bar--warning" [style.width.%]="getPct(stats.enValidation, stats.total)"></div>
+                  </div>
+                  <span class="progress-pct progress-pct--warning">{{ getPct(stats.enValidation, stats.total) }}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Classement agents -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-header-left">
+              <div class="panel-icon panel-icon--navy">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="panel-title">Classement des agents</h3>
+                <p class="panel-sub">Taux de validation par agent</p>
+              </div>
+            </div>
+          </div>
+          <div class="agents-table-wrap">
+            <table class="agents-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Agent</th>
+                  <th>Déclarations</th>
+                  <th>Taux validation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let a of agentStats; let i = index">
+                  <td>
+                    <div class="agent-rank" [ngClass]="getRankClass(i)">{{ i + 1 }}</div>
+                  </td>
+                  <td>
+                    <div class="agent-cell">
+                      <div class="agent-av" [style.background]="getAvColor(i)">{{ a.initiales }}</div>
+                      <span class="agent-name">{{ a.nom }}</span>
+                    </div>
+                  </td>
+                  <td class="agent-total">{{ a.total }}</td>
+                  <td>
+                    <div class="agent-bar-row">
+                      <div class="agent-bar-wrap">
+                        <div class="agent-bar" [style.width.%]="a.tauxValidation" [ngClass]="getAgentBarClass(a.tauxValidation)"></div>
+                      </div>
+                      <span class="agent-pct" [ngClass]="getAgentPctClass(a.tauxValidation)">{{ a.tauxValidation }}%</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="panel-empty" *ngIf="agentStats.length === 0">
+              Aucune donnée d'agent disponible.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Colonne latérale -->
+      <div class="dash-col-side">
+
+        <!-- Indicateurs clés -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-header-left">
+              <div class="panel-icon panel-icon--success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="panel-title">Indicateurs clés</h3>
+                <p class="panel-sub">Performance opérationnelle</p>
+              </div>
+            </div>
+          </div>
+          <div class="metric-list">
+            <div class="metric-item">
+              <div class="metric-icon metric-icon--royal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <div class="metric-body">
+                <span class="metric-value">1.4 j</span>
+                <span class="metric-label">Délai médian validation</span>
+                <span class="metric-sub">Objectif : &lt; 2 jours</span>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon metric-icon--success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <div class="metric-body">
+                <span class="metric-value">61 %</span>
+                <span class="metric-label">Traités le jour même</span>
+                <span class="metric-sub">+4% vs mois précédent</span>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon metric-icon--warning">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="1 4 1 10 7 10"/>
+                  <path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+                </svg>
+              </div>
+              <div class="metric-body">
+                <span class="metric-value">{{ rejetsAvecResoumission }}</span>
+                <span class="metric-label">Re-soumissions après rejet</span>
+                <span class="metric-sub">sur {{ stats.rejetees }} rejetées</span>
+              </div>
+            </div>
+            <div class="metric-item metric-item--last">
+              <div class="metric-icon metric-icon--navy">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="20" x2="18" y2="10"/>
+                  <line x1="12" y1="20" x2="12" y2="4"/>
+                  <line x1="6" y1="20" x2="6" y2="14"/>
+                  <line x1="2" y1="20" x2="22" y2="20"/>
+                </svg>
+              </div>
+              <div class="metric-body">
+                <span class="metric-value">{{ tauxValidationGlobal }} %</span>
+                <span class="metric-label">Taux de validation global</span>
+                <span class="metric-sub">{{ stats.total }} déclarations analysées</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activité récente -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-header-left">
+              <div class="panel-icon panel-icon--crimson">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="12 8 12 12 14 14"/>
+                  <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="panel-title">Activité récente</h3>
+                <p class="panel-sub">5 dernières déclarations</p>
+              </div>
+            </div>
+          </div>
+          <div class="recent-list">
+            <div class="recent-item" *ngFor="let d of toutesDeclarations.slice(0, 5)">
+              <span class="recent-id">#{{ d.id }}</span>
+              <span class="code-badge">{{ d.declarationType?.code }}</span>
+              <span class="recent-per">{{ d.periode }}</span>
+              <span class="statut-badge" [ngClass]="getStatutClass(d.statut)">
+                {{ getStatutLabel(d.statut) }}
+              </span>
+            </div>
+            <div class="panel-empty" *ngIf="toutesDeclarations.length === 0">
+              Aucune déclaration récente.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>
+
+<!-- ── MODAL CONSULTATION ──────────────────────────────── -->
+<div class="modal-backdrop" *ngIf="showConsultModal" (click)="fermerConsultation()">
+  <div class="modal-card modal-wide" (click)="$event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </div>
+      <h3>Consultation — #{{ declarationSelectionnee?.id }}</h3>
+      <button class="modal-x" (click)="fermerConsultation()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="info-pairs">
+        <div class="ip"><span class="ip-k">Type</span><span class="ip-v">{{ declarationSelectionnee?.declarationType?.nom }}</span></div>
+        <div class="ip"><span class="ip-k">Période</span><span class="ip-v">{{ declarationSelectionnee?.periode }}</span></div>
+        <div class="ip"><span class="ip-k">Statut</span>
+          <span class="statut-badge" [ngClass]="getStatutClass(declarationSelectionnee?.statut || '')">
+            {{ getStatutLabel(declarationSelectionnee?.statut || '') }}
+          </span>
+        </div>
+        <div class="ip"><span class="ip-k">Généré par</span><span class="ip-v">{{ declarationSelectionnee?.generePar }}</span></div>
+      </div>
+      <div class="timeline-title">Historique des actions</div>
+      <div class="timeline-loader" *ngIf="consultHistoriqueLoading">
+        <div class="spinner-ring"></div><span>Chargement...</span>
+      </div>
+      <div class="timeline" *ngIf="!consultHistoriqueLoading">
+        <div class="tl-item" *ngFor="let h of consultHistorique; let last = last">
+          <div class="tl-spine" [class.last]="last"></div>
+          <div class="tl-dot" [ngClass]="getActionClass(h.action)"></div>
+          <div class="tl-body">
+            <div class="tl-row">
+              <span class="tl-action" [ngClass]="getActionClass(h.action)">{{ getActionLabel(h.action) }}</span>
+              <span class="tl-date">{{ h.dateAction | date:'dd/MM/yy HH:mm' }}</span>
+            </div>
+            <div class="tl-states">
+              <span class="tl-state">{{ h.statutAvant }}</span> → <span class="tl-state">{{ h.statutApres }}</span>
+            </div>
+            <div class="tl-user" *ngIf="h.effectuePar">{{ h.effectuePar }}</div>
+            <div class="tl-comment" *ngIf="h.commentaire">{{ h.commentaire }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" (click)="fermerConsultation()">Fermer</button>
+      <div class="foot-actions">
+        <button class="btn-reject-sm" (click)="fermerEtRejeter()">Rejeter</button>
+        <button class="btn-validate-sm" (click)="fermerEtValider()">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL REJET ─────────────────────────────────────── -->
+<div class="modal-backdrop" *ngIf="showRejetModal" (click)="fermerRejet()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-head modal-head--danger">
+      <div class="modal-icon modal-icon--danger">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <h3>Rejeter #{{ declarationSelectionnee?.id }}</h3>
+      <button class="modal-x" (click)="fermerRejet()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="info-pairs">
+        <div class="ip"><span class="ip-k">Type</span><span class="ip-v">{{ declarationSelectionnee?.declarationType?.nom }}</span></div>
+        <div class="ip"><span class="ip-k">Période</span><span class="ip-v">{{ declarationSelectionnee?.periode }}</span></div>
+        <div class="ip"><span class="ip-k">Agent</span><span class="ip-v">{{ declarationSelectionnee?.generePar }}</span></div>
+      </div>
+      <label class="field-label">Motif du rejet <span class="required">*</span></label>
+      <textarea [(ngModel)]="commentaireRejet" rows="4" class="field-textarea"
+                placeholder="Précisez la raison du rejet..."
+                [class.field-error]="commentaireRejetTouched && !commentaireRejet.trim()">
+      </textarea>
+      <span class="field-hint" *ngIf="commentaireRejetTouched && !commentaireRejet.trim()">Ce champ est obligatoire</span>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" (click)="fermerRejet()">Annuler</button>
+      <button class="btn-danger" [disabled]="!commentaireRejet.trim() || rejetEnCours" (click)="confirmerRejet()">
+        {{ rejetEnCours ? 'Traitement...' : 'Confirmer le rejet' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL HISTORIQUE ────────────────────────────────── -->
+<div class="modal-backdrop" *ngIf="showHistoriqueModal" (click)="fermerHistorique()">
+  <div class="modal-card modal-wide" (click)="$event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="12 8 12 12 14 14"/>
+          <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
+        </svg>
+      </div>
+      <h3>Historique — #{{ declarationSelectionnee?.id }}</h3>
+      <button class="modal-x" (click)="fermerHistorique()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="timeline-loader" *ngIf="historiqueLoading">
+        <div class="spinner-ring"></div><span>Chargement...</span>
+      </div>
+      <div class="timeline" *ngIf="!historiqueLoading">
+        <div class="tl-item" *ngFor="let h of historique; let last = last">
+          <div class="tl-spine" [class.last]="last"></div>
+          <div class="tl-dot" [ngClass]="getActionClass(h.action)"></div>
+          <div class="tl-body">
+            <div class="tl-row">
+              <span class="tl-action" [ngClass]="getActionClass(h.action)">{{ getActionLabel(h.action) }}</span>
+              <span class="tl-date">{{ h.dateAction | date:'dd/MM/yy HH:mm' }}</span>
+            </div>
+            <div class="tl-states">
+              <span class="tl-state">{{ h.statutAvant }}</span> → <span class="tl-state">{{ h.statutApres }}</span>
+            </div>
+            <div class="tl-user" *ngIf="h.effectuePar">{{ h.effectuePar }}</div>
+            <div class="tl-comment" *ngIf="h.commentaire">{{ h.commentaire }}</div>
+          </div>
+        </div>
+        <div class="panel-empty" *ngIf="historique.length === 0">Aucun événement.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ───────────────────────────────────────────── -->
+<div class="toast-bar" *ngIf="message" [ngClass]="'toast-' + messageType">
+  <svg *ngIf="messageType === 'success'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  <svg *ngIf="messageType === 'error'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+  <span>{{ message }}</span>
+</div>

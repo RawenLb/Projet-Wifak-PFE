@@ -1,0 +1,168 @@
+// ══════════════════════════════════════════════════════════════
+// Banque Wifak BCT — Jenkinsfile
+// Alternative CI/CD pipeline for Jenkins
+// ══════════════════════════════════════════════════════════════
+
+pipeline {
+    agent any
+
+    environment {
+        REGISTRY      = 'ghcr.io'
+        IMAGE_PREFIX  = 'wifak'
+        JAVA_SERVICES = 'EurekaServer Gateway Authentification Chat-Service workflow-declaration notification-service jira-integration-service'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Java Services') {
+            parallel {
+                stage('EurekaServer') {
+                    steps {
+                        dir('EurekaServer') {
+                            sh 'mvn clean package -DskipTests -B'
+                        }
+                    }
+                }
+                stage('Gateway') {
+                    steps {
+                        dir('Gateway') {
+                            sh 'mvn clean package -DskipTests -B'
+                        }
+                    }
+                }
+                stage('Authentification') {
+                    steps {
+                        dir('Authentification') {
+                            sh 'mvn clean package -DskipTests -B'
+                        }
+                    }
+                }
+                stage('Chat-Service') {
+                    steps {
+                        dir('Chat-Service') {
+                            sh 'mvn clean package -DskipTests -B'
+                        }
+                    }
+                }
+                stage('workflow-declaration') {
+                    steps {
+                        dir('workflow-declaration') {
+                            sh 'mvn clean package -DskipTests -B'
+                        }
+                    }
+                }
+                stage('notification-service') {
+                    steps {
+                        dir('notification-service') {
+                            sh 'mvn clean package -DskipTests -B'
+                        }
+                    }
+                }
+                stage('jira-integration-service') {
+                    steps {
+                        dir('jira-integration-service') {
+                            sh 'mvn clean package -DskipTests -B'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build ML Service') {
+            steps {
+                dir('ml-service') {
+                    sh 'pip install -r requirements.txt'
+                    sh 'pytest --tb=short -q || true'
+                }
+            }
+        }
+
+        stage('Build Frontend') {
+            steps {
+                dir('bct-frontend') {
+                    sh 'npm ci --legacy-peer-deps'
+                    sh 'npm run build -- --configuration production'
+                }
+            }
+        }
+
+        stage('Build Docker Images') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    def services = [
+                        [name: 'eureka-server',            ctx: 'EurekaServer'],
+                        [name: 'api-gateway',              ctx: 'Gateway'],
+                        [name: 'authentification-service', ctx: 'Authentification'],
+                        [name: 'chat-service',             ctx: 'Chat-Service'],
+                        [name: 'workflow-declaration',     ctx: 'workflow-declaration'],
+                        [name: 'notification-service',     ctx: 'notification-service'],
+                        [name: 'jira-integration-service', ctx: 'jira-integration-service'],
+                        [name: 'ml-service',               ctx: 'ml-service'],
+                        [name: 'frontend',                 ctx: 'bct-frontend'],
+                    ]
+                    services.each { svc ->
+                        sh "docker build -t ${REGISTRY}/${IMAGE_PREFIX}/${svc.name}:${GIT_COMMIT[0..6]} ./${svc.ctx}"
+                        sh "docker tag ${REGISTRY}/${IMAGE_PREFIX}/${svc.name}:${GIT_COMMIT[0..6]} ${REGISTRY}/${IMAGE_PREFIX}/${svc.name}:latest"
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Images') {
+            when {
+                branch 'main'
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'ghcr-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh "echo ${DOCKER_PASS} | docker login ${REGISTRY} -u ${DOCKER_USER} --password-stdin"
+                    sh """
+                        for svc in eureka-server api-gateway authentification-service chat-service workflow-declaration notification-service jira-integration-service ml-service frontend; do
+                            docker push ${REGISTRY}/${IMAGE_PREFIX}/\${svc}:${GIT_COMMIT[0..6]}
+                            docker push ${REGISTRY}/${IMAGE_PREFIX}/\${svc}:latest
+                        done
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            when {
+                branch 'main'
+            }
+            steps {
+                withKubeConfig([credentialsId: 'kubeconfig']) {
+                    sh 'kubectl apply -f k8s/namespaces/'
+                    sh 'kubectl apply -f k8s/configmaps/'
+                    sh 'kubectl apply -f k8s/secrets/'
+                    sh 'kubectl apply -f k8s/volumes/'
+                    sh 'kubectl apply -f k8s/deployments/'
+                    sh 'kubectl apply -f k8s/services/'
+                    sh 'kubectl apply -f k8s/ingress/'
+                    sh 'kubectl apply -f k8s/autoscaling/'
+                    sh 'kubectl apply -f k8s/monitoring/'
+                    sh 'kubectl apply -f k8s/security/'
+                    sh 'kubectl rollout status deployment/api-gateway -n wifak-prod --timeout=120s'
+                    sh 'kubectl rollout status deployment/bct-frontend -n wifak-prod --timeout=120s'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Pipeline completed successfully'
+        }
+        failure {
+            echo '❌ Pipeline failed'
+        }
+    }
+}

@@ -1,0 +1,303 @@
+// src/app/auditor-export/auditor-export.component.scss
+// Wifak Bank — même style que agent-dashboard
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+$navy:       #0D2B5E;
+$navy-dk:    #091D42;
+$navy-lt:    #1B3E78;
+$royal:      #1B4FBC;
+$royal-lt:   #EBF0FD;
+$crimson:    #C8192E;
+$crimson-lt: #FDECED;
+$silver:     #8A9BB0;
+$silver-lt:  #EEF1F6;
+$success:    #0A7A5A;
+$success-lt: #E6F5F0;
+$warning:    #B8651A;
+$warning-lt: #FEF3E8;
+$purple:     #5B35C2;
+$purple-lt:  #EDE9FB;
+
+$surface:   #FFFFFF;
+$bg:        #F0F4FA;
+$border:    #D8E0EC;
+$border-lt: #EBF0F8;
+$text-1:    #0D1E35;
+$text-2:    #3D5068;
+$text-3:    #8A9BB0;
+
+$r-sm: 6px;
+$r-md: 10px;
+$r-lg: 14px;
+$r-xl: 18px;
+
+$sh-xs: 0 1px 3px rgba(13,43,94,.05), 0 1px 2px rgba(13,43,94,.03);
+$sh-sm: 0 4px 12px rgba(13,43,94,.08), 0 2px 4px rgba(13,43,94,.04);
+$sh-md: 0 10px 24px rgba(13,43,94,.10), 0 4px 8px rgba(13,43,94,.05);
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+@keyframes spin   { to { transform: rotate(360deg); } }
+
+// ── Page ──────────────────────────────────────────────────────
+.dashboard-page {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: $text-1;
+  background: $bg;
+  padding: 1.75rem 2rem 3rem;
+  animation: fadeIn .4s ease both;
+  min-height: 100%;
+  width: 100%;
+}
+
+// ── Header ────────────────────────────────────────────────────
+.dash-header {
+  margin-bottom: 1.5rem;
+}
+
+.dash-greeting {
+  display: inline-flex; align-items: center; gap: .375rem;
+  font-size: .75rem; font-weight: 700; color: $royal;
+  text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: .5rem;
+  svg { width: 13px; height: 13px; }
+}
+
+.page-title {
+  font-size: 1.625rem; font-weight: 800; letter-spacing: -.02em;
+  color: $navy; margin: 0 0 .25rem; line-height: 1.2;
+}
+
+.page-subtitle { font-size: .875rem; color: $text-2; margin: 0; }
+
+// ── Layout ────────────────────────────────────────────────────
+.export-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+// ── Config col ────────────────────────────────────────────────
+.config-col { display: flex; flex-direction: column; gap: 1rem; }
+.preview-col { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 1rem; }
+
+// ── Config card ───────────────────────────────────────────────
+.config-card {
+  background: $surface; border-radius: $r-xl;
+  border: 1px solid $border-lt; box-shadow: $sh-xs;
+  overflow: hidden;
+}
+
+.cc-header {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .875rem 1.25rem; border-bottom: 1px solid $border-lt;
+  background: linear-gradient(to bottom, #FAFBFD, $surface);
+}
+
+.cc-icon {
+  width: 34px; height: 34px; border-radius: $r-md; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  svg { width: 15px; height: 15px; }
+  &.cc-icon--navy    { background: rgba($navy,.08);    color: $navy; }
+  &.cc-icon--royal   { background: $royal-lt;          color: $royal; }
+  &.cc-icon--success { background: $success-lt;        color: $success; }
+  &.cc-icon--crimson { background: $crimson-lt;        color: $crimson; }
+}
+
+.cc-title { font-size: .875rem; font-weight: 700; color: $navy; }
+.cc-sub   { font-size: .75rem; color: $text-3; margin-top: 1px; }
+
+.cc-body {
+  padding: 1rem 1.25rem;
+  display: flex; flex-direction: column; gap: .75rem;
+}
+
+.cc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
+}
+
+// ── Form fields ───────────────────────────────────────────────
+.cf-field {
+  display: flex; flex-direction: column; gap: .3rem;
+  &.cf-field--full { grid-column: 1 / -1; }
+
+  label {
+    font-size: .6875rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .07em; color: $text-3;
+  }
+
+  input[type="text"],
+  input[type="date"],
+  select {
+    appearance: none;
+    padding: .5rem .75rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: .8125rem; color: $text-1;
+    background: $bg; border: 1.5px solid $border;
+    border-radius: $r-md; outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    &:focus {
+      border-color: $royal;
+      box-shadow: 0 0 0 3px rgba($royal,.10);
+    }
+    &::placeholder { color: $text-3; }
+  }
+}
+
+// ── Format buttons ────────────────────────────────────────────
+.format-options { display: flex; gap: .75rem; }
+
+.format-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: .375rem;
+  padding: .875rem .75rem;
+  background: $bg; border: 1.5px solid $border; border-radius: $r-lg;
+  cursor: pointer; transition: all .2s; font-family: 'Plus Jakarta Sans', sans-serif;
+  svg { width: 20px; height: 20px; color: $text-3; }
+
+  &:hover {
+    border-color: $royal; background: $royal-lt;
+    svg { color: $royal; }
+  }
+
+  &.active {
+    border-color: $royal; background: $royal-lt;
+    box-shadow: 0 0 0 3px rgba($royal,.12);
+    svg { color: $royal; }
+    .fb-label { color: $royal; }
+  }
+}
+
+.fb-label { font-size: .875rem; font-weight: 700; color: $text-1; }
+.fb-desc  { font-size: .6875rem; color: $text-3; }
+
+// ── Report tree ───────────────────────────────────────────────
+.report-tree {
+  display: flex; flex-direction: column; gap: .25rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.rt-root {
+  font-size: .8125rem; font-weight: 700; color: $navy;
+  padding: .375rem 0 .5rem;
+  border-bottom: 1px solid $border-lt;
+  margin-bottom: .25rem;
+}
+
+.rt-item {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .3125rem .25rem;
+  border-radius: $r-sm;
+  transition: background .12s;
+  &:hover { background: $royal-lt; }
+
+  &.rt-item--count .rt-label { flex: 1; }
+}
+
+.rt-branch {
+  font-size: .75rem; color: $text-3; flex-shrink: 0;
+  min-width: 20px;
+}
+
+.rt-icon {
+  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .625rem; font-weight: 800; color: #fff;
+  &.rt-icon--navy    { background: $navy; }
+  &.rt-icon--royal   { background: $royal; }
+  &.rt-icon--warning { background: $warning; }
+  &.rt-icon--crimson { background: $crimson; }
+  &.rt-icon--success { background: $success; }
+  &.rt-icon--purple  { background: $purple; }
+}
+
+.rt-label {
+  font-size: .75rem; font-weight: 600; color: $text-1;
+  white-space: nowrap;
+}
+
+.rt-desc {
+  font-size: .6875rem; color: $text-3;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  margin-left: auto;
+}
+
+.rt-badge {
+  font-size: .625rem; font-weight: 700;
+  padding: .125rem .5rem; border-radius: 20px;
+  background: rgba($navy,.08); color: $navy;
+  white-space: nowrap; margin-left: auto;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+
+  &.rt-badge--red   { background: $crimson-lt; color: darken($crimson, 8%); }
+  &.rt-badge--green { background: $success-lt; color: darken($success, 8%); }
+}
+
+// ── Loader ────────────────────────────────────────────────────
+.preview-loader {
+  display: flex; align-items: center; gap: .75rem;
+  padding: 1.5rem; justify-content: center;
+  color: $text-3; font-size: .875rem;
+  background: $surface; border-radius: $r-xl;
+  border: 1px solid $border-lt; box-shadow: $sh-xs;
+}
+
+// ── Export button ─────────────────────────────────────────────
+.btn-export-main {
+  display: flex; align-items: center; justify-content: center; gap: .625rem;
+  width: 100%; padding: .9375rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .9375rem; font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, $royal, $navy);
+  border: none; border-radius: $r-lg;
+  cursor: pointer; transition: all .22s ease;
+  box-shadow: 0 4px 16px rgba($royal,.38);
+  svg { width: 18px; height: 18px; }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba($royal,.48);
+  }
+
+  &:disabled {
+    opacity: .6; cursor: not-allowed;
+    transform: none; box-shadow: none;
+  }
+}
+
+// ── Info ──────────────────────────────────────────────────────
+.export-info {
+  display: flex; align-items: flex-start; gap: .625rem;
+  padding: .875rem 1rem;
+  background: $silver-lt; border: 1px solid $border;
+  border-radius: $r-lg;
+  font-size: .75rem; color: $text-2; line-height: 1.5;
+  svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; color: $text-3; }
+  strong { color: $text-1; }
+}
+
+// ── Spinner ───────────────────────────────────────────────────
+.spin-sm {
+  width: 16px; height: 16px; flex-shrink: 0;
+  border: 2px solid $border; border-top-color: $royal;
+  border-radius: 50%; animation: spin .8s linear infinite;
+  &.spin-sm--white {
+    border-color: rgba(255,255,255,.3);
+    border-top-color: #fff;
+  }
+}
+
+// ── Responsive ────────────────────────────────────────────────
+@media (max-width: 1100px) {
+  .export-layout { grid-template-columns: 1fr; }
+  .preview-col { position: static; }
+  .cc-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 700px) {
+  .dashboard-page { padding: 1.25rem; }
+  .format-options { flex-direction: column; }
+}

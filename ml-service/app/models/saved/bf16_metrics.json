@@ -1,0 +1,1 @@
+{"accuracy": 0.6666666666666666, "precision": 0.5, "recall": 0.6666666666666666, "f1": 0.5714285714285714, "roc_auc": 0.5555555555555556, "oob_score": 0.45714285714285713, "train_samples": 35, "test_samples": 9, "pos_ratio": 0.36363636363636365, "n_features": 9}

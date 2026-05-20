@@ -1,0 +1,186 @@
+﻿<!-- src/app/auditor-export/auditor-export.component.html -->
+<div class="dashboard-page">
+
+  <!-- ── Header ─────────────────────────────────────────── -->
+  <div class="dash-header">
+    <div class="dash-header-left">
+      <div class="dash-greeting">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        Rapport d'Audit BCT
+      </div>
+      <h1 class="page-title">Export rapports d'audit</h1>
+      <p class="page-subtitle">Générez un rapport d'audit complet structuré en 8 sections</p>
+    </div>
+  </div>
+
+  <!-- ── Layout 2 colonnes ──────────────────────────────── -->
+  <div class="export-layout">
+
+    <!-- ── Colonne gauche : configuration ─────────────────── -->
+    <div class="config-col">
+
+      <!-- Identification auditeur -->
+      <div class="config-card">
+        <div class="cc-header">
+          <div class="cc-icon cc-icon--navy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div>
+            <div class="cc-title">Identification</div>
+            <div class="cc-sub">Informations de l'auditeur</div>
+          </div>
+        </div>
+        <div class="cc-body">
+          <div class="cf-field cf-field--full">
+            <label>Nom de l'auditeur</label>
+            <input type="text" [(ngModel)]="config.auditeurNom"
+                   placeholder="Ex : Mohamed Ben Ali">
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtres de données -->
+      <div class="config-card">
+        <div class="cc-header">
+          <div class="cc-icon cc-icon--royal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+            </svg>
+          </div>
+          <div>
+            <div class="cc-title">Filtres de données</div>
+            <div class="cc-sub">Périmètre du rapport</div>
+          </div>
+        </div>
+        <div class="cc-body cc-grid">
+          <div class="cf-field">
+            <label>Statut</label>
+            <select [(ngModel)]="config.filterStatut">
+              <option value="">Tous les statuts</option>
+              <option value="GENEREE">Générée</option>
+              <option value="EN_VALIDATION">En validation</option>
+              <option value="VALIDEE">Validée</option>
+              <option value="REJETEE">Rejetée</option>
+              <option value="ENVOYEE">Traitée</option>
+            </select>
+          </div>
+          <div class="cf-field">
+            <label>Type BCT</label>
+            <select [(ngModel)]="config.filterType">
+              <option value="">Tous les types</option>
+              <option *ngFor="let t of uniqueTypes" [value]="t">{{ t }}</option>
+            </select>
+          </div>
+          <div class="cf-field">
+            <label>Période</label>
+            <select [(ngModel)]="config.filterPeriode">
+              <option value="">Toutes</option>
+              <option *ngFor="let p of uniquePeriodes" [value]="p">{{ p }}</option>
+            </select>
+          </div>
+          <div class="cf-field">
+            <label>Date génération — de</label>
+            <input type="date" [(ngModel)]="config.dateFrom">
+          </div>
+          <div class="cf-field">
+            <label>Date génération — à</label>
+            <input type="date" [(ngModel)]="config.dateTo">
+          </div>
+        </div>
+      </div>
+
+      <!-- Format -->
+      <div class="config-card">
+        <div class="cc-header">
+          <div class="cc-icon cc-icon--success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div>
+            <div class="cc-title">Format d'export</div>
+            <div class="cc-sub">Choisissez le format de sortie</div>
+          </div>
+        </div>
+        <div class="cc-body">
+          <div class="format-options">
+            <button class="format-btn" [class.active]="config.format === 'csv'"
+                    (click)="config.format = 'csv'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="8" y1="13" x2="16" y2="13"/>
+                <line x1="8" y1="17" x2="16" y2="17"/>
+              </svg>
+              <span class="fb-label">CSV</span>
+              <span class="fb-desc">Excel / tableur</span>
+            </button>
+            <button class="format-btn" [class.active]="config.format === 'pdf'"
+                    (click)="config.format = 'pdf'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <path d="M9 13h1a2 2 0 0 1 0 4H9v-4z"/>
+                <line x1="14" y1="13" x2="14" y2="17"/>
+                <line x1="14" y1="15" x2="16" y2="15"/>
+              </svg>
+              <span class="fb-label">PDF</span>
+              <span class="fb-desc">Impression / archivage</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Colonne droite : aperçu + export ───────────────── -->
+    <div class="preview-col">
+
+      <!-- Structure du rapport -->
+      <div class="config-card">
+        <div class="cc-header">
+          <div class="cc-icon cc-icon--royal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </div>
+          <div>
+            <div class="cc-title">Structure du rapport</div>
+            <div class="cc-sub">Rapport d'Audit BCT — 8 sections</div>
+          </div>
+       
+      </div>
+
+      <!-- Loader -->
+      <div class="preview-loader" *ngIf="loading">
+        <div class="spin-sm"></div>
+        <span>Chargement des données...</span>
+      </div>
+
+      <!-- Bouton export -->
+      <button class="btn-export-main" *ngIf="!loading"
+              (click)="exportReport()"
+              [disabled]="exporting">
+        <div class="spin-sm spin-sm--white" *ngIf="exporting"></div>
+        <svg *ngIf="!exporting" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        {{ exporting ? 'Génération en cours...' : 'Générer le rapport d\'audit' }}
+      </button>
+    </div>
+  </div>
+</div>

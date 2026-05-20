@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-config
+  namespace: wifak
+data:
+  01-create-databases.sql: |
+    -- Création des bases de données Wifak BCT
+    CREATE DATABASE IF NOT EXISTS wifak_PFE
+      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+    CREATE DATABASE IF NOT EXISTS wifak_validation
+      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+    CREATE DATABASE IF NOT EXISTS wifak_chat
+      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+    CREATE DATABASE IF NOT EXISTS wifak_notification
+      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+    CREATE DATABASE IF NOT EXISTS wifak_jira
+      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+    CREATE DATABASE IF NOT EXISTS keycloak
+      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+    -- Droits complets pour root depuis n'importe quel hôte
+    GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+    FLUSH PRIVILEGES;
+
+  02-seed-wifak-pfe.sql: |
+    USE wifak_PFE;
+
+    -- Banques
+    INSERT IGNORE INTO banque (id, code_banque, nom_banque, code_agrement, devise) VALUES
+    (1, 'WIF', 'Banque Wifak International', 'AGR-2010-001', 'TND'),
+    (2, 'STB', 'Société Tunisienne de Banque', 'AGR-1958-002', 'TND');
+
+    -- Données IT infrastructure (juin 2026)
+    INSERT IGNORE INTO it_infrastructure
+      (id, banque_id, periode, date_debut, date_fin,
+       nb_serveurs_total, nb_serveurs_actifs, nb_applications_critiques, nb_bases_de_data,
+       taux_disponibilite_systemes, taux_disponibilite_cible, hebergement_cloud, fournisseur_cloud, derniere_maj)
+    VALUES
+    (1, 1, '2026-06', '2026-06-01', '2026-06-30', 45, 44, 12, 8, 99.820, 99.900, 1, 'AWS', '2026-06-10'),
+    (2, 2, '2026-06', '2026-06-01', '2026-06-30', 30, 30, 8,  5, 99.700, 99.800, 0, NULL,  '2026-06-18');
+
+    -- Exposition taux (juin 2026)
+    INSERT IGNORE INTO exposition_taux
+      (type_taux, devise, maturite, montant_encours, taux_contractuel, taux_reference,
+       ecart_taux, date_echeance, date_operation, id_client, nom_client, periode)
+    VALUES
+    ('FIXE',     'TND', 'COURT_TERME', 1500000.00, 7.25, 6.50, 0.75, '2026-12-31', '2026-06-01', 'CLI001', 'Société Alpha SARL',    '2026-06'),
+    ('VARIABLE', 'EUR', 'MOYEN_TERME', 3200000.00, 5.13, 4.80, 0.33, '2028-06-30', '2026-06-03', 'CLI002', 'Beta Industries SA',     '2026-06'),
+    ('MIXTE',    'USD', 'LONG_TERME',  8500000.00, 6.75, 6.20, 0.55, '2031-06-30', '2026-06-05', 'CLI003', 'Gamma Holding',          '2026-06'),
+    ('FIXE',     'TND', 'MOYEN_TERME', 2100000.00, 8.00, 7.25, 0.75, '2029-06-30', '2026-06-08', 'CLI004', 'Delta Commerce SUARL',   '2026-06'),
+    ('VARIABLE', 'TND', 'COURT_TERME',  750000.00, 6.50, 6.00, 0.50, '2026-12-31', '2026-06-10', 'CLI005', 'Epsilon Tech',           '2026-06');

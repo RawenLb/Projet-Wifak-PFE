@@ -1,0 +1,161 @@
+<!-- src/app/auditor-logs/auditor-logs.component.html -->
+<!-- US-12 — Journaux de traçabilité / Logs d'actions -->
+<div class="dashboard-page">
+
+  <!-- ── Header ─────────────────────────────────────────── -->
+  <div class="dash-header">
+    <div class="dash-header-left">
+      <h1 class="page-title">Journaux de traçabilité</h1>
+      <p class="page-subtitle">Toutes les actions effectuées sur la plateforme — accès lecture seule</p>
+    </div>
+    <div class="dash-header-right">
+      <div class="readonly-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        Lecture seule
+      </div>
+      <button class="btn-export" (click)="exportCSV()" [disabled]="loading">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Exporter CSV
+      </button>
+      <button class="btn-refresh" (click)="charger()" [disabled]="loading">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Filtres ─────────────────────────────────────────── -->
+  <div class="filters-bar">
+    <div class="filter-search">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" placeholder="Rechercher par ID, utilisateur, type..."
+             [(ngModel)]="searchQuery" (ngModelChange)="onFilterChange()">
+      <button class="f-clear" *ngIf="searchQuery" (click)="searchQuery=''; onFilterChange()">✕</button>
+    </div>
+
+    <select [(ngModel)]="filterAction" (ngModelChange)="onFilterChange()">
+      <option value="">Toutes actions</option>
+      <option value="SUBMIT">Soumission</option>
+      <option value="VALIDATE">Validation</option>
+      <option value="REJECT">Rejet</option>
+      <option value="SEND">Envoi BCT</option>
+    </select>
+
+    <select [(ngModel)]="filterUser" (ngModelChange)="onFilterChange()">
+      <option value="">Tous utilisateurs</option>
+      <option *ngFor="let u of uniqueUsers" [value]="u">{{ u }}</option>
+    </select>
+
+    <div class="filter-date-group">
+      <input type="date" [(ngModel)]="filterFrom" (ngModelChange)="onFilterChange()" title="Date de">
+      <span class="date-sep">→</span>
+      <input type="date" [(ngModel)]="filterTo" (ngModelChange)="onFilterChange()" title="Date à">
+    </div>
+
+    <div class="filter-count">
+      <span class="fc-n">{{ filteredLogs.length }}</span>
+      <span class="fc-l">entrées</span>
+    </div>
+  </div>
+
+  <!-- ── Loader ──────────────────────────────────────────── -->
+  <div class="logs-loader" *ngIf="loading">
+    <div class="spin-md"></div>
+    <span>Chargement des journaux...</span>
+  </div>
+
+  <!-- ── Table ───────────────────────────────────────────── -->
+  <div class="card" *ngIf="!loading">
+
+    <div class="logs-empty" *ngIf="filteredLogs.length === 0">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      <p>Aucun journal trouvé</p>
+    </div>
+
+    <table class="logs-table" *ngIf="filteredLogs.length > 0">
+      <thead>
+        <tr>
+          <th>Horodatage</th>
+          <th>Déclaration</th>
+          <th>Action</th>
+          <th>Statut avant</th>
+          <th>Statut après</th>
+          <th>Utilisateur</th>
+          <th>Commentaire</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let log of pagedLogs">
+          <td class="td-date">
+            <span class="date-main">{{ log.dateAction | date:'dd/MM/yyyy' }}</span>
+            <span class="date-time">{{ log.dateAction | date:'HH:mm:ss' }}</span>
+          </td>
+          <td class="td-decl">
+            <span class="decl-id">#{{ log.declarationId }}</span>
+            <span class="decl-code" *ngIf="log.declarationCode">{{ log.declarationCode }}</span>
+            <span class="decl-per"  *ngIf="log.declarationPeriode">{{ log.declarationPeriode }}</span>
+          </td>
+          <td class="td-action">
+            <span class="action-chip" [ngClass]="getActionClass(log.action)">
+              <span class="action-icon">{{ getActionIcon(log.action) }}</span>
+              {{ getActionLabel(log.action) }}
+            </span>
+          </td>
+          <td class="td-statut">
+            <span class="statut-chip">{{ log.statutAvant || '—' }}</span>
+          </td>
+          <td class="td-statut">
+            <span class="statut-chip statut-chip--to">{{ log.statutApres || '—' }}</span>
+          </td>
+          <td class="td-user">
+            <div class="user-cell">
+              <div class="user-av">{{ log.effectuePar ? log.effectuePar.charAt(0).toUpperCase() : '' }}</div>
+              <span>{{ log.effectuePar }}</span>
+            </div>
+          </td>
+          <td class="td-comment">
+            <span class="comment-text" *ngIf="log.commentaire" [title]="log.commentaire">
+              {{ log.commentaire }}
+            </span>
+            <span class="comment-empty" *ngIf="!log.commentaire">—</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="pg-btn" [disabled]="currentPage === 1" (click)="currentPage = currentPage - 1">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <ng-container *ngFor="let p of pages">
+        <span class="pg-sep" *ngIf="p === -1">…</span>
+        <button class="pg-btn" [class.active]="p === currentPage" *ngIf="p !== -1" (click)="currentPage = p">{{ p }}</button>
+      </ng-container>
+      <button class="pg-btn" [disabled]="currentPage === totalPages" (click)="currentPage = currentPage + 1">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+      <span class="pg-info">{{ (currentPage - 1) * pageSize + 1 }}–{{ currentPage * pageSize > filteredLogs.length ? filteredLogs.length : currentPage * pageSize }} / {{ filteredLogs.length }}</span>
+    </div>
+
+  </div>
+
+</div>

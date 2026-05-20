@@ -1,0 +1,1080 @@
+// src/app/declaration-correction/declaration-correction.component.scss
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+// ── Brand tokens ──────────────────────────────────────────────────
+$navy:       #0D2B5E;
+$navy-dk:    #091D42;
+$navy-lt:    #1B3E78;
+$royal:      #1B4FBC;
+$royal-lt:   #E8EFFD;
+$crimson:    #C8192E;
+$crimson-lt: #FDECED;
+$silver:     #8A9BB0;
+$silver-lt:  #EEF1F6;
+
+$success:    #0A7A5A;
+$warning:    #B8651A;
+$xml-c:      #5B35C2;
+
+$surface:    #FFFFFF;
+$bg:         #F2F5FA;
+$bg-deep:    #E8EDF5;
+$border:     #D4DCE8;
+$border-lt:  #E8EDF5;
+$text-1:     #0D1E35;
+$text-2:     #3D5068;
+$text-3:     #8A9BB0;
+
+$r-sm:  6px;
+$r-md:  10px;
+$r-lg:  14px;
+$r-xl:  18px;
+$r-2xl: 24px;
+
+$sh-xs:  0 1px 4px rgba(13,43,94,.06), 0 1px 2px rgba(13,43,94,.04);
+$sh-sm:  0 4px 12px rgba(13,43,94,.10), 0 2px 4px rgba(13,43,94,.05);
+$sh-glow: 0 0 0 3px rgba(27,79,188,.18);
+
+@keyframes spin    { to { transform: rotate(360deg); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pulse   { 0%, 100% { opacity: 1 } 50% { opacity: .4 } }
+
+// ════════════════════════════════════════════════════════════════════
+// ROOT — flex column, prend toute la hauteur disponible du modal
+// ════════════════════════════════════════════════════════════════════
+.corr-root {
+  display:        flex;
+  flex-direction: column;
+  // ✅ FIX SCROLL : hauteur 100% de son conteneur (.correction-modal-body)
+  height:         100%;
+  min-height:     0;           // ← indispensable pour que flex+overflow fonctionne
+  font-family:    'Plus Jakarta Sans', sans-serif;
+  color:          $text-1;
+  background:     $surface;
+  border-radius:  $r-2xl;
+  overflow:       hidden;
+  animation:      fadeIn .3s ease both;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// HEADER — fixe, ne scroll pas
+// ════════════════════════════════════════════════════════════════════
+.corr-header {
+  flex-shrink:   0;            // ← ne rétrécit jamais
+  border-bottom: 2px solid $border-lt;
+  background:    linear-gradient(to bottom, #FAFBFD, $surface);
+}
+
+// ── Bannière rejet ────────────────────────────────────────────────
+.reject-banner {
+  display:         flex;
+  align-items:     flex-start;
+  justify-content: space-between;
+  gap:             .875rem;
+  padding:         .875rem 1.5rem;
+  background:      linear-gradient(135deg, $crimson-lt, rgba(200,25,46,.06));
+  border-bottom:   1.5px solid rgba($crimson,.20);
+  border-left:     4px solid $crimson;
+  animation:       slideUp .3s ease both;
+}
+
+.reject-banner-left {
+  display:     flex;
+  align-items: flex-start;
+  gap:         .75rem;
+}
+
+.reject-banner-icon {
+  width:           38px;
+  height:          38px;
+  flex-shrink:     0;
+  background:      rgba($crimson,.12);
+  border-radius:   $r-md;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  svg { width: 18px; height: 18px; color: $crimson; }
+}
+
+.reject-banner-content { display: flex; flex-direction: column; gap: 3px; }
+.reject-banner-title   { font-size: .6875rem; font-weight: 700; color: $crimson; text-transform: uppercase; letter-spacing: .06em; }
+.reject-banner-text    { font-size: .875rem; color: darken($crimson, 10%); font-weight: 500; line-height: 1.5; max-width: 700px; }
+.reject-banner-meta    { font-size: .75rem; color: $crimson; opacity: .75; }
+
+.reject-banner-close {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border: none; background: rgba($crimson,.10);
+  border-radius: $r-sm; cursor: pointer; color: $crimson;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+  &:hover { background: $crimson; color: #fff; }
+}
+
+// ── Meta row ──────────────────────────────────────────────────────
+.corr-meta-row {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         .875rem 1.5rem;
+  gap:             1rem;
+  flex-wrap:       wrap;
+}
+
+.corr-meta-info {
+  display:     flex;
+  align-items: center;
+  gap:         .625rem;
+  flex-wrap:   wrap;
+}
+
+.corr-code-badge {
+  padding:       .3125rem .75rem;
+  background:    rgba($navy,.08);
+  color:         $navy;
+  border:        1px solid rgba($navy,.15);
+  border-radius: $r-sm;
+  font-weight:   800;
+  font-size:     .75rem;
+  font-family:   'JetBrains Mono', monospace;
+}
+
+.corr-period {
+  font-size:   .8125rem;
+  font-weight: 600;
+  color:       $text-2;
+}
+
+.corr-format-badge {
+  padding:        .25rem .625rem;
+  border-radius:  $r-sm;
+  font-size:      .6875rem;
+  font-weight:    800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+
+  &.fmt-xml  { background: rgba($xml-c,.10); color: $xml-c; }
+  &.fmt-csv  { background: rgba($success,.10); color: darken($success,5%); }
+  &.fmt-txt  { background: rgba($warning,.10); color: darken($warning,8%); }
+}
+
+.corr-modified-badge {
+  display:       flex;
+  align-items:   center;
+  gap:           5px;
+  padding:       .25rem .625rem;
+  background:    rgba($royal,.10);
+  color:         $royal;
+  border:        1px solid rgba($royal,.22);
+  border-radius: 20px;
+  font-size:     .6875rem;
+  font-weight:   700;
+  animation:     slideUp .2s ease;
+}
+
+.corr-mod-dot {
+  width:      6px;
+  height:     6px;
+  border-radius: 50%;
+  background: $royal;
+  animation:  pulse 1.5s infinite;
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────
+.corr-tabs { display: flex; gap: 3px; }
+
+.corr-tab {
+  display:      flex;
+  align-items:  center;
+  gap:          5px;
+  padding:      .4375rem .875rem;
+  border:       1.5px solid $border;
+  border-radius: $r-md;
+  background:   $surface;
+  color:        $text-2;
+  font-family:  'Plus Jakarta Sans', sans-serif;
+  font-size:    .8125rem;
+  font-weight:  600;
+  cursor:       pointer;
+  transition:   all .18s;
+  white-space:  nowrap;
+
+  svg { transition: transform .2s; }
+
+  &:hover {
+    border-color: $royal;
+    color:        $royal;
+    background:   $royal-lt;
+    svg { transform: scale(1.1); }
+  }
+
+  &.active {
+    border-color: $royal;
+    background:   linear-gradient(135deg, $royal, $navy);
+    color:        #fff;
+    box-shadow:   0 3px 10px rgba($royal,.35);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// BODY — ✅ FIX SCROLL : flex: 1 + overflow-y: auto + min-height: 0
+// ════════════════════════════════════════════════════════════════════
+.corr-body {
+  flex:       1;              // ← prend tout l'espace restant entre header et footer
+  min-height: 0;              // ← OBLIGATOIRE pour que overflow-y fonctionne dans flex
+  overflow-y: auto;           // ← le scroll se fait ici
+  overflow-x: hidden;
+  padding:    1.25rem 1.5rem;
+
+  // Scrollbar fine et discrète
+  scrollbar-width: thin;
+  scrollbar-color: $border transparent;
+
+  &::-webkit-scrollbar       { width: 5px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: $border; border-radius: 3px;
+    &:hover { background: $silver; }
+  }
+}
+
+// ── Notifications ─────────────────────────────────────────────────
+.corr-notif {
+  display:       flex;
+  align-items:   center;
+  gap:           .625rem;
+  padding:       .75rem 1rem;
+  border-radius: $r-md;
+  font-size:     .875rem;
+  font-weight:   500;
+  margin-bottom: 1rem;
+  animation:     slideUp .25s ease;
+}
+
+.corr-notif-err { background: $crimson-lt; border: 1.5px solid rgba($crimson,.25); color: darken($crimson,8%); }
+.corr-notif-ok  { background: rgba($success,.08); border: 1.5px solid rgba($success,.25); color: darken($success,5%); }
+
+// ════════════════════════════════════════════════════════════════════
+// MODE 1 — XML INLINE EDITOR
+// ════════════════════════════════════════════════════════════════════
+.xml-editor-section { display: flex; flex-direction: column; gap: 1rem; }
+
+// ── Toolbar ───────────────────────────────────────────────────────
+.xml-toolbar {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  gap:             .75rem;
+  flex-wrap:       wrap;
+}
+
+.xml-toolbar-left, .xml-toolbar-right {
+  display:     flex;
+  align-items: center;
+  gap:         .75rem;
+  flex-wrap:   wrap;
+}
+
+.xml-search-bar {
+  display:       flex;
+  align-items:   center;
+  gap:           .5rem;
+  padding:       .4375rem .875rem;
+  border:        1.5px solid $border;
+  border-radius: $r-md;
+  background:    $bg;
+  transition:    all .2s;
+
+  svg { color: $silver; flex-shrink: 0; }
+  &:focus-within { border-color: $royal; background: $surface; box-shadow: $sh-glow; }
+}
+
+.xml-search-input {
+  border:      none;
+  outline:     none;
+  background:  transparent;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size:   .8125rem;
+  color:       $text-1;
+  width:       180px;
+  &::placeholder { color: $silver; }
+}
+
+.xml-diff-toggle {
+  display:     flex;
+  align-items: center;
+  gap:         .5rem;
+  cursor:      pointer;
+  font-size:   .8125rem;
+  font-weight: 500;
+  color:       $text-2;
+  user-select: none;
+}
+
+.xml-diff-cb { display: none; }
+
+.xml-diff-slider {
+  width:  34px; height: 19px; background: $border;
+  border-radius: 10px; position: relative; transition: background .2s;
+  flex-shrink: 0;
+  &::after {
+    content: ''; position: absolute;
+    width: 15px; height: 15px;
+    border-radius: 50%; background: #fff; top: 2px; left: 2px;
+    transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+}
+.xml-diff-cb:checked + .xml-diff-slider {
+  background: $royal;
+  &::after { transform: translateX(15px); }
+}
+
+.xml-lines-info { font-size: .75rem; color: $text-3; font-family: 'JetBrains Mono', monospace; }
+
+.xml-btn {
+  display:       flex;
+  align-items:   center;
+  gap:           5px;
+  padding:       .375rem .75rem;
+  border:        1.5px solid $border;
+  border-radius: $r-md;
+  background:    $surface;
+  font-size:     .75rem;
+  font-weight:   600;
+  font-family:   'Plus Jakarta Sans', sans-serif;
+  cursor:        pointer;
+  transition:    all .15s;
+  color:         $text-2;
+  svg { width: 13px; height: 13px; }
+
+  &:hover:not(:disabled) { border-color: $crimson; color: $crimson; background: $crimson-lt; }
+  &:disabled { opacity: .4; cursor: not-allowed; }
+}
+
+.xml-mod-count {
+  padding:       3px 10px;
+  background:    rgba($royal,.10);
+  color:         $royal;
+  border-radius: 20px;
+  font-size:     .6875rem;
+  font-weight:   700;
+  animation:     slideUp .2s ease;
+}
+
+.xml-parse-error {
+  display:       flex;
+  align-items:   flex-start;
+  gap:           .5rem;
+  padding:       .75rem 1rem;
+  background:    $crimson-lt;
+  border:        1.5px solid rgba($crimson,.25);
+  border-radius: $r-md;
+  font-size:     .8125rem;
+  color:         darken($crimson, 8%);
+  svg { flex-shrink: 0; margin-top: 1px; color: $crimson; }
+}
+
+// ── Grille XML ────────────────────────────────────────────────────
+.xml-grid {
+  border:        1.5px solid $border;
+  border-radius: $r-lg;
+  overflow:      hidden;
+}
+
+.xml-grid-header {
+  display:               grid;
+  grid-template-columns: 48px 1.5fr 2fr 1.5fr;
+  gap:                   .5rem;
+  padding:               .5625rem 1rem;
+  background:            linear-gradient(to bottom, $bg-deep, $bg);
+  border-bottom:         2px solid $border;
+  font-size:             .625rem;
+  font-weight:           700;
+  color:                 $silver;
+  text-transform:        uppercase;
+  letter-spacing:        .08em;
+}
+
+.xg-section-row {
+  display:        flex;
+  align-items:    center;
+  gap:            .5rem;
+  padding:        .375rem 1rem;
+  background:     rgba($navy,.02);
+  border-bottom:  1px solid $border-lt;
+}
+
+.xg-section-tag {
+  display:     flex;
+  align-items: center;
+  gap:         4px;
+  font-size:   .8125rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color:       $text-3;
+  svg { color: $text-3; }
+  &.xg-close { color: lighten($text-3, 10%); }
+}
+
+.xg-leaf-row {
+  display:               grid;
+  grid-template-columns: 48px 1.5fr 2fr 1.5fr;
+  gap:                   .5rem;
+  padding:               .3125rem 1rem;
+  border-bottom:         1px solid $border-lt;
+  align-items:           center;
+  cursor:                pointer;
+  transition:            background .12s;
+
+  &:last-child { border-bottom: none; }
+  &:hover      { background: $royal-lt; }
+
+  &.xg-leaf-selected {
+    background:   rgba($royal,.08) !important;
+    border-left:  3px solid $royal;
+    padding-left: calc(1rem - 3px);
+  }
+
+  &.xg-leaf-modified {
+    background:   rgba($royal,.04);
+    border-left:  3px solid rgba($royal,.35);
+    padding-left: calc(1rem - 3px);
+  }
+}
+
+.xg-line-num {
+  font-size:   .6875rem;
+  color:       $text-3;
+  font-family: 'JetBrains Mono', monospace;
+  text-align:  right;
+  user-select: none;
+}
+
+.xg-tag-cell  { display: flex; align-items: center; gap: 5px; overflow: hidden; }
+
+.xg-tag-name {
+  font-size:     .875rem;
+  font-weight:   700;
+  color:         $navy;
+  font-family:   'JetBrains Mono', monospace;
+  white-space:   nowrap;
+  overflow:      hidden;
+  text-overflow: ellipsis;
+}
+
+.xg-mod-dot {
+  width:      7px; height: 7px; border-radius: 50%;
+  background: $royal; flex-shrink: 0;
+  animation:  pulse 1.5s infinite;
+}
+
+.xg-value-cell { display: flex; align-items: center; }
+
+.xg-value-input {
+  width:         100%;
+  padding:       .3125rem .625rem;
+  border:        1.5px solid $border;
+  border-radius: $r-sm;
+  background:    $surface;
+  font-family:   'JetBrains Mono', monospace;
+  font-size:     .8125rem;
+  color:         $text-1;
+  transition:    all .15s;
+  box-sizing:    border-box;
+
+  &:focus { outline: none; border-color: $royal; box-shadow: $sh-glow; }
+  &.xg-input-modified {
+    border-color: $royal;
+    background:   rgba($royal,.04);
+    color:        darken($royal, 10%);
+    font-weight:  600;
+  }
+}
+
+.xg-orig-cell { display: flex; align-items: center; gap: 5px; overflow: hidden; }
+
+.xg-orig-value {
+  font-size:     .75rem;
+  color:         $text-3;
+  font-family:   'JetBrains Mono', monospace;
+  white-space:   nowrap;
+  overflow:      hidden;
+  text-overflow: ellipsis;
+
+  &.xg-orig-changed {
+    color:           darken($warning, 5%);
+    text-decoration: line-through;
+    opacity:         .8;
+  }
+}
+
+.xg-undo-btn {
+  width:  22px; height: 22px; flex-shrink: 0;
+  border: 1px solid rgba($crimson,.25);
+  border-radius: 4px;
+  background:    rgba($crimson,.07);
+  color:         $crimson;
+  cursor:        pointer;
+  display:       flex; align-items: center; justify-content: center;
+  transition:    all .15s;
+  svg { width: 10px; height: 10px; }
+  &:hover { background: $crimson; color: #fff; border-color: $crimson; }
+}
+
+.xg-meta-row {
+  display:       flex;
+  align-items:   center;
+  gap:           .625rem;
+  padding:       .3125rem 1rem;
+  background:    rgba($navy,.015);
+  border-bottom: 1px solid $border-lt;
+}
+
+.xg-meta-text {
+  font-size:     .6875rem;
+  color:         $text-3;
+  font-family:   'JetBrains Mono', monospace;
+  font-style:    italic;
+  overflow:      hidden;
+  text-overflow: ellipsis;
+  white-space:   nowrap;
+}
+
+.xml-empty { padding: 2rem; text-align: center; color: $text-3; font-size: .875rem; }
+
+// ── Éditeur brut XML ─────────────────────────────────────────────
+.xml-raw-section {
+  border:        1.5px solid $border;
+  border-radius: $r-lg;
+  overflow:      hidden;
+}
+
+.xml-raw-header {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         .5rem 1rem;
+  background:      $bg;
+  border-bottom:   1px solid $border;
+  font-size:       .75rem;
+  font-weight:     600;
+  color:           $text-2;
+}
+
+.xml-raw-hint { font-size: .6875rem; color: $text-3; font-weight: 400; font-style: italic; }
+
+.xml-raw-toolbar {
+  display:       flex;
+  align-items:   center;
+  gap:           .5rem;
+  padding:       .4375rem .875rem;
+  background:    $navy-dk;
+  border-bottom: 1px solid $navy-lt;
+}
+
+.xml-lang-badge {
+  background:     rgba($royal,.40);
+  color:          rgba(255,255,255,.80);
+  font-size:      .6875rem;
+  font-weight:    800;
+  padding:        2px 8px;
+  border-radius:  4px;
+  letter-spacing: .06em;
+  font-family:    'JetBrains Mono', monospace;
+}
+
+.xml-raw-textarea {
+  display:     block;
+  width:       100%;
+  padding:     .875rem 1rem;
+  border:      none;
+  background:  $navy-dk;
+  color:       #E2EAF8;
+  font-family: 'JetBrains Mono', monospace;
+  font-size:   .8125rem;
+  line-height: 1.7;
+  resize:      vertical;
+  min-height:  200px;
+  box-sizing:  border-box;
+  &:focus { outline: none; }
+}
+
+$navy-lt: #1B3E78;
+$navy-dk: #091D42;
+
+// ════════════════════════════════════════════════════════════════════
+// MODE 2 — MAPPING
+// ════════════════════════════════════════════════════════════════════
+.mapping-section { display: flex; flex-direction: column; gap: 1rem; }
+
+.mapping-loading {
+  display:     flex;
+  align-items: center;
+  gap:         .75rem;
+  padding:     1.25rem;
+  color:       $text-2;
+  font-size:   .875rem;
+}
+
+.mload-spinner {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2.5px solid $border; border-top-color: $royal;
+  animation: spin .7s linear infinite; flex-shrink: 0;
+}
+
+.mapping-error-banner {
+  display:       flex;
+  align-items:   center;
+  gap:           .75rem;
+  padding:       .875rem 1rem;
+  background:    $crimson-lt;
+  border:        1.5px solid rgba($crimson,.25);
+  border-radius: $r-md;
+  font-size:     .875rem;
+  color:         darken($crimson,8%);
+  svg { flex-shrink: 0; color: $crimson; }
+}
+
+.compat-header {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  gap:             1rem;
+  padding:         .875rem 1.125rem;
+  background:      $bg;
+  border:          1.5px solid $border-lt;
+  border-radius:   $r-lg;
+  flex-wrap:       wrap;
+}
+
+.compat-score-wrap { display: flex; align-items: center; gap: .875rem; }
+
+.compat-score-ring {
+  width:   54px; height: 54px; border-radius: 50%;
+  border:  4px solid $border;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  &.score-high { border-color: $success; background: rgba($success,.07); }
+  &.score-med  { border-color: $warning; background: rgba($warning,.07); }
+  &.score-low  { border-color: $crimson; background: rgba($crimson,.07); }
+}
+
+.compat-score-num { font-family: 'Playfair Display', serif; font-size: .9375rem; font-weight: 800; color: $navy; }
+.compat-label     { font-size: .6875rem; font-weight: 700; color: $text-3; text-transform: uppercase; letter-spacing: .06em; }
+.compat-summary   { font-size: .8125rem; color: $text-2; }
+.compat-chips     { display: flex; gap: .375rem; flex-wrap: wrap; }
+
+.compat-chip {
+  padding: 3px 9px; border-radius: 20px; font-size: .6875rem; font-weight: 700;
+  &.chip-xsd { background: rgba($xml-c,.10); color: $xml-c; }
+  &.chip-sql { background: rgba($royal,.10); color: $royal; }
+}
+
+.mapping-table { border: 1.5px solid $border; border-radius: $r-lg; overflow: hidden; }
+
+.mt-header {
+  display:               grid;
+  grid-template-columns: 1.8fr .7fr 1.1fr 2fr .8fr;
+  gap:                   .5rem;
+  padding:               .5625rem 1rem;
+  background:            $bg;
+  border-bottom:         2px solid $border;
+  font-size:             .625rem;
+  font-weight:           700;
+  color:                 $silver;
+  text-transform:        uppercase;
+  letter-spacing:        .08em;
+}
+
+.mt-row {
+  display:               grid;
+  grid-template-columns: 1.8fr .7fr 1.1fr 2fr .8fr;
+  gap:                   .5rem;
+  padding:               .625rem 1rem;
+  border-bottom:         1px solid $border-lt;
+  align-items:           center;
+  transition:            background .12s;
+
+  &:last-child    { border-bottom: none; }
+  &:hover         { background: $bg; }
+  &.mt-row-warn   { background: rgba($crimson,.03); border-left: 3px solid rgba($crimson,.30); }
+  &.mt-row-ok     { background: rgba($success,.02); }
+}
+
+.mt-cell        { display: flex; align-items: center; overflow: hidden; }
+.mt-cell-xsd    { flex-direction: column; align-items: flex-start; gap: 2px; }
+.mt-xsd-name    { font-family: 'JetBrains Mono', monospace; font-size: .8125rem; font-weight: 700; color: $navy; }
+.mt-xsd-path    { font-size: .625rem; color: $text-3; font-style: italic; }
+
+.mt-type-tag {
+  font-size:   .625rem; padding: 1px 6px; border-radius: 4px;
+  background:  rgba($xml-c,.09); color: $xml-c;
+  font-family: 'JetBrains Mono', monospace; font-weight: 600;
+}
+
+.mt-source-toggle { display: flex; gap: 3px; }
+
+.mt-src-btn {
+  padding:     3px 8px; border-radius: $r-sm;
+  border:      1.5px solid $border; background: $bg;
+  font-size:   .625rem; font-weight: 700; cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif; color: $text-3;
+  transition:  all .12s;
+
+  &:hover         { border-color: $royal; color: $royal; background: $royal-lt; }
+  &.active-sql    { border-color: $royal;   background: rgba($royal,.12);   color: $royal; }
+  &.active-static { border-color: $warning; background: rgba($warning,.10); color: darken($warning,5%); }
+  &.active-none   { border-color: $crimson; background: rgba($crimson,.10); color: $crimson; }
+}
+
+.mt-cell-value { width: 100%; }
+
+.mt-select, .mt-input {
+  width:       100%; padding: .4375rem .75rem;
+  border:      1.5px solid $border; border-radius: $r-sm;
+  font-family: 'JetBrains Mono', monospace; font-size: .75rem;
+  color:       $text-1; background: $surface; transition: border-color .15s;
+  box-sizing:  border-box;
+  &:focus        { outline: none; border-color: $royal; box-shadow: $sh-glow; }
+  &.mt-select-ok { border-color: $success; }
+}
+
+.mt-ignored { font-size: .75rem; color: $text-3; font-style: italic; }
+
+.mt-req-badge {
+  padding: 2px 8px; border-radius: 20px; font-size: .625rem; font-weight: 700;
+  &.req-yes { background: rgba($royal,.10); color: $royal; }
+  &.req-opt { background: $silver-lt; color: $text-3; }
+}
+
+.mapping-warn {
+  display:       flex; align-items: center; gap: .625rem;
+  padding:       .75rem 1rem;
+  background:    rgba($warning,.07); border: 1.5px solid rgba($warning,.25);
+  border-radius: $r-md; font-size: .8125rem; color: darken($warning,10%);
+  svg { flex-shrink: 0; color: $warning; }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// MODE 3 — XSD + SQL CÔTE À CÔTE
+// ════════════════════════════════════════════════════════════════════
+.xsd-sql-section { animation: fadeIn .25s ease; }
+
+.xsd-sql-grid {
+  display:               grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap:                   1rem;
+
+  @media (max-width: 760px) { grid-template-columns: 1fr; }
+}
+
+.xsd-panel, .sql-panel {
+  border:         1.5px solid $border;
+  border-radius:  $r-lg;
+  overflow:       hidden;
+  display:        flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  display:       flex;
+  align-items:   center;
+  gap:           .5rem;
+  padding:       .625rem 1rem;
+  border-bottom: 1.5px solid $border;
+}
+
+.xsd-panel-header { background: rgba($xml-c,.05); }
+.sql-panel-header  { background: rgba($royal,.04); }
+
+.panel-badge {
+  padding:        2px 7px; border-radius: 4px;
+  font-size:      .625rem; font-weight: 800;
+  font-family:    'JetBrains Mono', monospace; letter-spacing: .06em;
+  &.xsd-badge { background: rgba($xml-c,.12); color: $xml-c; }
+  &.sql-badge { background: rgba($royal,.12); color: $royal; }
+}
+
+.panel-title { font-size: .8125rem; font-weight: 700; color: $navy; flex: 1; }
+.panel-hint  { font-size: .6875rem; color: $text-3; font-style: italic; }
+
+// ── Champs XSD ───────────────────────────────────────────────────
+.xsd-fields-list { overflow-y: auto; max-height: 320px; }
+
+.xsd-field-row {
+  display:       flex;
+  align-items:   center;
+  gap:           .5rem;
+  padding:       .5rem 1rem;
+  border-bottom: 1px solid $border-lt;
+  &:last-child        { border-bottom: none; }
+  &.xsd-field-req     { background: rgba($royal,.02); }
+}
+
+.xsdf-info { flex: 1; display: flex; align-items: center; gap: .5rem; }
+.xsdf-name { font-family: 'JetBrains Mono', monospace; font-size: .8125rem; font-weight: 700; color: $navy; }
+.xsdf-type { font-size: .5625rem; padding: 1px 5px; border-radius: 3px; background: rgba($xml-c,.09); color: $xml-c; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.xsdf-req  { font-size: .5rem; color: $crimson; line-height: 1; }
+.xsdf-opt  { font-size: .5rem; color: $text-3;  line-height: 1; }
+
+.xsd-raw-section { border-top: 1px solid $border-lt; }
+
+.xsd-raw-summary {
+  padding:    .625rem 1rem;
+  font-size:  .75rem;
+  font-weight: 600;
+  color:      $text-2;
+  cursor:     pointer;
+  background: $bg;
+  &:hover { color: $royal; }
+}
+
+.xsd-raw-pre {
+  padding:     .875rem 1rem;
+  background:  $navy-dk;
+  color:       #7BBAFF;
+  font-family: 'JetBrains Mono', monospace;
+  font-size:   .6875rem;
+  line-height: 1.7;
+  margin:      0;
+  overflow-x:  auto;
+  white-space: pre-wrap;
+  max-height:  200px;
+  overflow-y:  auto;
+}
+
+// ── SQL editor ───────────────────────────────────────────────────
+.sql-editor-wrap {
+  border:        1.5px solid $border;
+  border-radius: $r-md;
+  overflow:      hidden;
+  margin:        .75rem 1rem 0;
+  &:focus-within { border-color: $royal; box-shadow: $sh-glow; }
+}
+
+.sql-toolbar {
+  display:       flex;
+  align-items:   center;
+  gap:           .5rem;
+  padding:       .4375rem .875rem;
+  background:    $navy-dk;
+  border-bottom: 1px solid $navy-lt;
+}
+
+.sql-lang-badge {
+  background:     rgba($royal,.40); color: rgba(255,255,255,.80);
+  font-size:      .6875rem; font-weight: 800; padding: 2px 8px;
+  border-radius:  4px; letter-spacing: .06em; font-family: 'JetBrains Mono', monospace;
+}
+
+.sql-textarea {
+  display:     block; width: 100%; padding: .875rem 1rem;
+  border:      none; background: $navy-dk; color: #E2EAF8;
+  font-family: 'JetBrains Mono', monospace; font-size: .8125rem;
+  line-height: 1.7; resize: vertical; min-height: 160px; box-sizing: border-box;
+  &:focus { outline: none; }
+}
+
+// ── Test SQL ─────────────────────────────────────────────────────
+.sql-test-block { padding: .875rem 1rem; border-top: 1px solid $border-lt; }
+
+.sql-test-dates {
+  display:     flex;
+  align-items: flex-end;
+  gap:         .625rem;
+  flex-wrap:   wrap;
+}
+
+.std-group {
+  display:        flex;
+  flex-direction: column;
+  gap:            4px;
+  label { font-size: .6875rem; font-weight: 600; color: $text-3; }
+}
+
+.std-input {
+  padding:       .375rem .625rem;
+  border:        1.5px solid $border;
+  border-radius: $r-sm;
+  font-family:   'Plus Jakarta Sans', sans-serif;
+  font-size:     .8125rem;
+  color:         $text-1;
+  &:focus { outline: none; border-color: $royal; }
+}
+
+.btn-test-sql {
+  display:     flex; align-items: center; gap: 5px;
+  padding:     .4375rem .875rem;
+  background:  linear-gradient(135deg, $royal, $navy);
+  color:       #fff; border: none; border-radius: $r-md;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size:   .75rem; font-weight: 700; cursor: pointer;
+  box-shadow:  0 3px 10px rgba($royal,.35); transition: all .2s;
+  &:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 16px rgba($royal,.45); }
+  &:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+}
+
+.sql-test-result {
+  display:     flex; align-items: flex-start; gap: .5rem;
+  padding:     .625rem .875rem; border-radius: $r-md; margin-top: .625rem;
+  font-size:   .8125rem; animation: slideUp .2s ease;
+  svg { flex-shrink: 0; margin-top: 1px; }
+  &.sql-ok  { background: rgba($success,.08); border: 1px solid rgba($success,.25); color: darken($success,5%); svg { color: $success; } }
+  &.sql-err { background: $crimson-lt; border: 1px solid rgba($crimson,.25); color: darken($crimson,8%); svg { color: $crimson; } }
+}
+
+// ── Comparaison XSD ↔ SQL ─────────────────────────────────────────
+.sql-xsd-compare {
+  margin:        .75rem 1rem .875rem;
+  border:        1.5px solid $border-lt;
+  border-radius: $r-md;
+  overflow:      hidden;
+}
+
+.sxc-header {
+  padding:       .5rem 1rem;
+  background:    $bg;
+  border-bottom: 1px solid $border-lt;
+  font-size:     .6875rem; font-weight: 700;
+  color:         $text-3; text-transform: uppercase; letter-spacing: .06em;
+}
+
+.sxc-grid { max-height: 240px; overflow-y: auto; }
+
+.sxc-row {
+  display:       grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap:           .5rem;
+  align-items:   center;
+  padding:       .4375rem .875rem;
+  border-bottom: 1px solid $border-lt;
+  &:last-child { border-bottom: none; }
+  &:hover      { background: $bg; }
+}
+
+.sxc-xsd-field  { display: flex; align-items: center; gap: .375rem; }
+.sxc-field-name { font-family: 'JetBrains Mono', monospace; font-size: .8125rem; font-weight: 600; color: $navy; }
+
+.sxc-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: $text-3; flex-shrink: 0;
+  &.match { background: $success; }
+}
+
+.sxc-arrow { color: $text-3; display: flex; align-items: center; svg { width: 13px; height: 13px; } }
+
+.sxc-sql-col { font-family: 'JetBrains Mono', monospace; font-size: .75rem; text-align: right; }
+
+.sxc-col-matched { color: $success; font-weight: 600; }
+.sxc-col-fuzzy   { color: $warning; font-weight: 600; }
+.sxc-col-missing {
+  color:           $crimson;
+  font-style:      italic;
+  display:         flex;
+  align-items:     center;
+  gap:             4px;
+  justify-content: flex-end;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// FOOTER — fixe, ne scroll pas
+// ════════════════════════════════════════════════════════════════════
+.corr-footer {
+  flex-shrink:     0;          // ← ne rétrécit jamais
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  gap:             .75rem;
+  padding:         1rem 1.5rem;
+  border-top:      2px solid $border-lt;
+  background:      #FAFBFD;
+}
+
+.corr-footer-center { flex: 1; display: flex; justify-content: center; }
+
+.corr-save-hint {
+  display:     flex;
+  align-items: center;
+  gap:         .375rem;
+  font-size:   .75rem;
+  color:       $text-3;
+  text-align:  center;
+  svg { flex-shrink: 0; color: $text-3; }
+}
+
+.corr-btn {
+  display:     flex; align-items: center; gap: .5rem;
+  padding:     .625rem 1.375rem; border: none; border-radius: $r-md;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700; font-size: .875rem; cursor: pointer;
+  transition:  all .2s; white-space: nowrap;
+  &:disabled { opacity: .5; cursor: not-allowed; }
+}
+
+.corr-btn-cancel {
+  background: $surface; color: $text-2; border: 1.5px solid $border;
+  &:hover { background: $bg; border-color: $silver; color: $text-1; }
+}
+
+.corr-btn-save {
+  background: linear-gradient(135deg, $royal, $navy);
+  color:      #fff; box-shadow: 0 3px 10px rgba($royal,.35);
+  &:hover:not(:disabled)  { transform: translateY(-1px); box-shadow: 0 6px 18px rgba($royal,.45); }
+  &:active:not(:disabled) { transform: none; }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// SPINNERS
+// ════════════════════════════════════════════════════════════════════
+.spin-xs {
+  width:  13px; height: 13px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
+  animation: spin .7s linear infinite; flex-shrink: 0;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// RESPONSIVE
+// ════════════════════════════════════════════════════════════════════
+@media (max-width: 640px) {
+  .corr-meta-row  { flex-direction: column; align-items: flex-start; }
+  .corr-tabs      { flex-wrap: wrap; }
+  .xml-grid-header,
+  .xg-leaf-row    { grid-template-columns: 32px 1fr 1.5fr; }
+  .xg-orig-cell   { display: none; }
+  .mt-header,
+  .mt-row         { grid-template-columns: 1fr 1fr; }
+  .mt-row > div:nth-child(n+3) { display: none; }
+  .corr-footer    { flex-wrap: wrap; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CORRECTION MODAL — scroll fix
+   Remplace les règles existantes à la fin du fichier
+   ════════════════════════════════════════════════════════════════ */
+
+.modal-correction {
+  max-width:      1100px !important;
+  width:          95vw;
+  /* ✅ FIX : hauteur fixe pour que le scroll interne fonctionne */
+  height:         88vh;
+  max-height:     88vh;
+  overflow:       hidden;      /* ← le scroll est géré par .corr-body, PAS ici */
+  display:        flex;
+  flex-direction: column;
+}
+
+.correction-modal-body {
+  flex:           1;           /* ← prend tout l'espace entre header et footer du modal */
+  min-height:     0;           /* ← OBLIGATOIRE pour flex + overflow */
+  overflow:       hidden;      /* ← laisse .corr-body gérer le scroll */
+  padding:        0 !important;
+  display:        flex;
+  flex-direction: column;
+}
+
+/* Le composant enfant doit aussi être flex pour transmettre la hauteur */
+.correction-modal-body app-declaration-correction {
+  flex:           1;
+  min-height:     0;
+  overflow:       hidden;
+  display:        flex;
+  flex-direction: column;
+}
+

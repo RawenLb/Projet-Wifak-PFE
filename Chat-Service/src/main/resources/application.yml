@@ -1,0 +1,132 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: chat-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/wifak_chat?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/bct-realm
+          jwk-set-uri: http://localhost:8081/realms/bct-realm/protocol/openid-connect/certs
+
+  cloud:
+    inetutils:
+      preferred-networks:
+        - 127.0.0
+
+    openfeign:
+      httpclient:
+        hc5:
+          enabled: true
+
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+    instance-id: chat-service:8083
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+feign:
+  client:
+    config:
+      authentification-service:
+        connectTimeout: 3000
+        readTimeout: 5000
+        loggerLevel: basic
+
+app:
+  cors:
+    allowed-origins: http://localhost:4200
+  internal-secret: ${INTERNAL_SECRET:wifak-internal-secret-2024}
+  chat:
+    ws-path: /ws/chat
+    max-history: 200
+
+file:
+  chat-upload-dir: uploads/chat
+
+logging:
+  level:
+    com.wifak.chatservice: INFO
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+      slo:
+        http.server.requests: 50ms, 100ms, 200ms, 500ms, 1s, 2s
+    tags:
+      application: chat-service
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    inetutils:
+      preferred-networks:
+        - 172.
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/realms/bct-realm/protocol/openid-connect/certs
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: chat-service:8083
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/

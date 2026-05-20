@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wifak-config
+  namespace: wifak-prod
+data:
+  EUREKA_URL: "http://eureka-service:8761/eureka/"
+  KEYCLOAK_URL: "http://keycloak-service:8080"
+  KEYCLOAK_REALM: "bct-realm"
+  MYSQL_HOST: "mysql-service"
+  MYSQL_PORT: "3306"
+  ALLOWED_ORIGINS: "http://bct.wifak.tn,http://localhost:4200"
+  # JWK via service K8s qui pointe vers Keycloak Docker Compose (192.168.65.254:8081)
+  JWT_JWK_SET_URI: "http://keycloak-service:8080/realms/bct-realm/protocol/openid-connect/certs"
