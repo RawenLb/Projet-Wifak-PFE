@@ -1,9 +1,10 @@
-﻿import { NgModule, APP_INITIALIZER } from '@angular/core';
+﻿import { NgModule, APP_INITIALIZER, isDevMode } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { ServiceWorkerModule } from '@angular/service-worker';
 
 import { KeycloakInterceptor } from './shared/interceptors/keycloak.interceptor';
 import keycloak from './services/keycloak.service';
@@ -131,6 +132,10 @@ export function kcFactory() {
     AppRoutingModule,
     HttpClientModule,
     FormsModule,
+    ServiceWorkerModule.register('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
+    }),
   ],
   providers: [
     {
