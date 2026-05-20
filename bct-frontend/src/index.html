@@ -31,6 +31,20 @@
   <meta property="og:description" content="Plateforme de gestion des déclarations BCT">
   <meta property="og:type" content="website">
   <meta property="og:image" content="assets/img/wifak-logo.png">
+
+  <!-- Capture beforeinstallprompt AVANT tout redirect (Keycloak, etc.) -->
+  <script>
+    window.__pwaInstallEvent = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window.__pwaInstallEvent = e;
+      window.dispatchEvent(new CustomEvent('pwa-install-ready'));
+    });
+    window.addEventListener('appinstalled', function() {
+      window.__pwaInstallEvent = null;
+      sessionStorage.setItem('pwa-dismissed', '1');
+    });
+  </script>
 </head>
 <body>
   <app-root></app-root>

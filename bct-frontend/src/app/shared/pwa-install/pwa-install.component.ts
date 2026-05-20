@@ -1,16 +1,16 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-pwa-install',
   template: `
-    <div class="pwa-banner" *ngIf="!dismissed">
+    <div class="pwa-banner" *ngIf="!dismissed && canInstall">
       <img src="assets/icons/icon-72x72.png" alt="Wifak BCT" class="pwa-icon">
       <div class="pwa-text">
         <strong>Installer l'application</strong>
         <span>Accès rapide depuis votre écran d'accueil</span>
       </div>
-      <button class="pwa-btn" [disabled]="!canInstall" (click)="install()">Installer</button>
+      <button class="pwa-btn" (click)="install()">Installer</button>
       <button class="pwa-close" (click)="dismiss()">✕</button>
     </div>
   `,
@@ -55,11 +55,7 @@ import { CommonModule } from '@angular/common';
       white-space: nowrap; flex-shrink: 0;
       transition: background 0.15s;
     }
-    .pwa-btn:hover:not(:disabled) { background: #2563a8; }
-    .pwa-btn:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
+    .pwa-btn:hover { background: #2563a8; }
     .pwa-close {
       background: transparent; border: none;
       color: rgba(255,255,255,0.4); cursor: pointer;
@@ -69,23 +65,59 @@ import { CommonModule } from '@angular/common';
     .pwa-close:hover { color: white; }
   `]
 })
-export class PwaInstallComponent implements OnInit {
+export class PwaInstallComponent implements OnInit, OnDestroy {
   dismissed = false;
   canInstall = false;
   private deferredPrompt: any = null;
+  private readyListener: any;
 
   ngOnInit(): void {
     if (sessionStorage.getItem('pwa-dismissed')) {
       this.dismissed = true;
+      return;
+    }
+
+    // Récupérer l'event capturé dans index.html avant le redirect Keycloak
+    const win = window as any;
+    if (win.__pwaInstallEvent) {
+      this.deferredPrompt = win.__pwaInstallEvent;
+      this.canInstall = true;
+    }
+
+    // Écouter si l'event arrive après le chargement du composant
+    this.readyListener = () => {
+      if ((window as any).__pwaInstallEvent) {
+        this.deferredPrompt = (window as any).__pwaInstallEvent;
+        this.canInstall = true;
+        this.dismissed = false;
+      }
+    };
+    window.addEventListener('pwa-install-ready', this.readyListener);
+  }
+
+  ngOnDestroy(): void {
+    if (this.readyListener) {
+      window.removeEventListener('pwa-install-ready', this.readyListener);
     }
   }
 
+  // Fallback direct si l'event arrive après l'init du composant
   @HostListener('window:beforeinstallprompt', ['$event'])
   onBeforeInstallPrompt(event: any): void {
     event.preventDefault();
     this.deferredPrompt = event;
+    (window as any).__pwaInstallEvent = event;
     this.canInstall = true;
     this.dismissed = false;
+  }
+
+  @HostListener('window:appinstalled')
+  onAppInstalled(): void {
+    this.dismissed = true;
+    this.canInstall = false;
+    this.deferredPrompt = null;
+    (window as any).__pwaInstallEvent = null;
+    sessionStorage.setItem('pwa-dismissed', '1');
   }
 
   async install(): Promise<void> {
@@ -94,8 +126,10 @@ export class PwaInstallComponent implements OnInit {
     const { outcome } = await this.deferredPrompt.userChoice;
     if (outcome === 'accepted') {
       this.dismissed = true;
+      sessionStorage.setItem('pwa-dismissed', '1');
     }
     this.deferredPrompt = null;
+    (window as any).__pwaInstallEvent = null;
     this.canInstall = false;
   }
 
