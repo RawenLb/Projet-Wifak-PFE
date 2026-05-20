@@ -53,7 +53,7 @@
     <strong>Banque Wifak BCT</strong>
     <span>Installez l'application pour un accès rapide</span>
   </div>
-  <button class="pwa-btn" id="pwaInstallBtn" onclick="pwaInstall()" style="display:none">
+  <button class="pwa-btn" id="pwaInstallBtn" onclick="pwaInstall()">
     ⬇ Installer
   </button>
   <button class="pwa-copy" onclick="pwaCopy()">📋 Copier le lien</button>
@@ -65,12 +65,25 @@
   window.addEventListener('beforeinstallprompt', function(e) {
     e.preventDefault();
     deferredPrompt = e;
-    document.getElementById('pwaInstallBtn').style.display = 'flex';
   });
   function pwaInstall() {
     if (deferredPrompt) {
+      // Installation native disponible
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
+    } else {
+      // Déjà installée ou browser ne supporte pas — ouvrir directement
+      var isEdge = navigator.userAgent.indexOf('Edg') !== -1;
+      var isChrome = navigator.userAgent.indexOf('Chrome') !== -1 && !isEdge;
+      var msg = '';
+      if (isEdge) {
+        msg = 'Dans Edge : Menu (⋯) → Applications → Installer ce site en tant qu\'application';
+      } else if (isChrome) {
+        msg = 'Dans Chrome : Menu (⋮) → Enregistrer et partager → Créer un raccourci → cocher "Ouvrir en tant que fenêtre"';
+      } else {
+        msg = 'Ouvrez le menu de votre navigateur et cherchez "Installer" ou "Ajouter à l\'écran d\'accueil"';
+      }
+      alert('📱 ' + msg);
     }
   }
   function pwaCopy() {
