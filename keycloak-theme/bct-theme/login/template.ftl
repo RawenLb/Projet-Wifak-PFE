@@ -65,19 +65,26 @@
   window.addEventListener('beforeinstallprompt', function(e) {
     e.preventDefault();
     deferredPrompt = e;
+    // Mettre en évidence le bouton quand le prompt est disponible
+    var btn = document.getElementById('pwaInstallBtn');
+    btn.style.background = 'white';
+    btn.style.color = '#1a3a5c';
+    btn.style.fontWeight = '700';
   });
   function pwaInstall() {
     if (deferredPrompt) {
-      // Installation native disponible — installation directe
       deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
-    } else {
-      // Ouvrir directement la plateforme via HTTPS (installable)
-      window.open('https://0938-197-15-32-24.ngrok-free.app', '_blank');
+      deferredPrompt.userChoice.then(function(choice) {
+        if (choice.outcome === 'accepted') {
+          document.getElementById('pwaBanner').style.display = 'none';
+        }
+        deferredPrompt = null;
+      });
     }
   }
   function pwaCopy() {
-    var link = 'https://0938-197-15-32-24.ngrok-free.app';
+    var link = window.location.origin.replace('8081', '4200').replace('/realms/bct-realm/protocol/openid-connect/auth', '');
+    if (link.indexOf('4200') === -1) link = 'http://localhost:4200';
     navigator.clipboard.writeText(link).then(function() {
       var btn = document.querySelector('.pwa-copy');
       btn.textContent = '✅ Copié !';
