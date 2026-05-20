@@ -5,9 +5,11 @@ import { AppComponent } from './app.component';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ServiceWorkerModule } from '@angular/service-worker';
+import { CommonModule } from '@angular/common';
 
 import { KeycloakInterceptor } from './shared/interceptors/keycloak.interceptor';
 import keycloak from './services/keycloak.service';
+import { PwaInstallComponent } from './shared/pwa-install/pwa-install.component';
 
 // -- Shared --
 import { HomeComponent }             from './shared/home/home.component';
@@ -116,12 +118,16 @@ export function kcFactory() {
     AuditorArchivesComponent,
     AuditorSearchComponent,
     AuditorExportComponent,
+
+    // -- PWA --
+    PwaInstallComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
     FormsModule,
+    CommonModule,
     ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000'
