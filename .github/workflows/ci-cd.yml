@@ -268,3 +268,69 @@ jobs:
           echo "✅ Deployment complete"
           kubectl get pods -n wifak-prod || echo "ℹ️ Cluster not reachable from CI (local cluster)"
         continue-on-error: true
+
+  # ════════════════════════════════════════════════════════════
+  # JOB 6 — Tests unitaires + SonarCloud
+  # ════════════════════════════════════════════════════════════
+  sonarcloud:
+    name: Tests & SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: [build-java, build-frontend]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Nécessaire pour SonarCloud blame
+
+      # ── Java — Authentification ──────────────────────────────
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run tests — Authentification
+        working-directory: ./Authentification
+        run: mvn test jacoco:report -B
+        continue-on-error: true
+
+      - name: Run tests — workflow-declaration
+        working-directory: ./workflow-declaration
+        run: mvn test jacoco:report -B
+        continue-on-error: true
+
+      # ── Angular — Frontend ───────────────────────────────────
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+          cache-dependency-path: bct-frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ./bct-frontend
+        run: npm ci --legacy-peer-deps
+
+      - name: Run Angular tests with coverage
+        working-directory: ./bct-frontend
+        run: npx ng test --watch=false --browsers=ChromeHeadless --code-coverage
+        continue-on-error: true
+
+      # ── SonarCloud Analysis ──────────────────────────────────
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=RawenLb_Projet-Wifak-PFE
+            -Dsonar.organization=rawenlb
+            -Dsonar.sources=Authentification/src/main/java,workflow-declaration/src/main/java,bct-frontend/src
+            -Dsonar.tests=Authentification/src/test/java,workflow-declaration/src/test/java
+            -Dsonar.java.binaries=Authentification/target/classes,workflow-declaration/target/classes
+            -Dsonar.coverage.jacoco.xmlReportPaths=Authentification/target/site/jacoco/jacoco.xml,workflow-declaration/target/site/jacoco/jacoco.xml
+            -Dsonar.javascript.lcov.reportPaths=bct-frontend/coverage/bct-frontend/lcov.info
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/.angular/**,**/target/**
