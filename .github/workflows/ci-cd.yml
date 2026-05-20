@@ -289,16 +289,33 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # Compile + test + jacoco en une seule commande
-      - name: Build, Test & JaCoCo — Authentification
+      # Compile uniquement (sans tests ni MySQL) pour générer target/classes
+      - name: Compile — Authentification
         working-directory: ./Authentification
-        run: ./mvnw clean verify jacoco:report -B -Dtest="KeycloakAdminServiceTest" -DfailIfNoTests=false
+        run: ./mvnw compile -B -DskipTests
         continue-on-error: true
 
-      - name: Build, Test & JaCoCo — workflow-declaration
+      - name: Compile — workflow-declaration
         working-directory: ./workflow-declaration
-        run: ./mvnw clean verify jacoco:report -B -Dtest="DeclarationServiceTest,ValidationServiceTest" -DfailIfNoTests=false
+        run: ./mvnw compile -B -DskipTests
         continue-on-error: true
+
+      # Tests unitaires + JaCoCo (Mockito only, pas besoin de MySQL)
+      - name: Test & JaCoCo — Authentification
+        working-directory: ./Authentification
+        run: ./mvnw test jacoco:report -B -Dtest="KeycloakAdminServiceTest" -DfailIfNoTests=false
+        continue-on-error: true
+
+      - name: Test & JaCoCo — workflow-declaration
+        working-directory: ./workflow-declaration
+        run: ./mvnw test jacoco:report -B -Dtest="DeclarationServiceTest,ValidationServiceTest" -DfailIfNoTests=false
+        continue-on-error: true
+
+      # Créer les dossiers target/classes s'ils n'existent pas (fallback)
+      - name: Ensure target/classes exist
+        run: |
+          mkdir -p Authentification/target/classes
+          mkdir -p workflow-declaration/target/classes
 
       # ── SonarCloud Analysis ──────────────────────────────────
       - name: SonarCloud Scan
