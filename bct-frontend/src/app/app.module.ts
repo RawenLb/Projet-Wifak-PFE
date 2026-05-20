@@ -9,7 +9,7 @@ import { ServiceWorkerModule } from '@angular/service-worker';
 import { KeycloakInterceptor } from './shared/interceptors/keycloak.interceptor';
 import keycloak from './services/keycloak.service';
 
-// â”€â”€ Shared â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Shared --
 import { HomeComponent }             from './shared/home/home.component';
 import { NotificationBellComponent } from './shared/notification-bell/notification-bell.component';
 import { ChatComponent }             from './shared/chat/chat.component';
@@ -18,12 +18,12 @@ import { ConfirmDialogComponent }    from './shared/confirm-dialog/confirm-dialo
 import { ToastComponent }            from './shared/toast/toast.component';
 import { TreatedDeclarationsComponent } from './shared/treated-declarations/treated-declarations.component';
 
-// â”€â”€ Admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Admin --
 import { DashboardLayoutComponent }           from './admin/dashboard-layout/dashboard-layout.component';
 import { UserManagementComponent }            from './admin/user-management/user-management.component';
 import { DeclarationTypeManagementComponent } from './admin/declaration-type-management/declaration-type-management.component';
 
-// â”€â”€ Manager â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Manager --
 import { ManagerLayoutComponent }      from './manager/layout/manager-layout.component';
 import { ManagerDashboardComponent }   from './manager/dashboard/manager-dashboard.component';
 import { ManagerPendingComponent }     from './manager/pending/manager-pending.component';
@@ -33,7 +33,7 @@ import { ManagerReportsComponent }     from './manager/reports/manager-reports.c
 import { ManagerMlDashboardComponent } from './manager/ml-dashboard/manager-ml-dashboard.component';
 import { ManagerTreatedComponent }     from './manager/treated/manager-treated.component';
 
-// â”€â”€ Agent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Agent --
 import { AgentLayoutComponent }              from './agent/layout/agent-layout.component';
 import { AgentDashboardComponent }           from './agent/dashboard/agent-dashboard.component';
 import { DeclarationManagementComponent }    from './agent/declaration-management/declaration-management.component';
@@ -43,40 +43,30 @@ import { AgentDeclarationTypesComponent }    from './agent/declaration-types/age
 import { AgentNotificationsComponent }       from './agent/notifications/agent-notifications.component';
 import { AgentTreatedComponent }             from './agent/treated/agent-treated.component';
 
-// â”€â”€ Auditor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-import { AuditorLayoutComponent }   from './auditor/layout/auditor-layout.component';
+// -- Auditor --
+import { AuditorLayoutComponent }    from './auditor/layout/auditor-layout.component';
 import { AuditorDashboardComponent } from './auditor/dashboard/auditor-dashboard.component';
-import { AuditorHistoryComponent }  from './auditor/history/auditor-history.component';
-import { AuditorLogsComponent }     from './auditor/logs/auditor-logs.component';
-import { AuditorArchivesComponent } from './auditor/archives/auditor-archives.component';
-import { AuditorSearchComponent }   from './auditor/search/auditor-search.component';
-import { AuditorExportComponent }   from './auditor/export/auditor-export.component';
+import { AuditorHistoryComponent }   from './auditor/history/auditor-history.component';
+import { AuditorLogsComponent }      from './auditor/logs/auditor-logs.component';
+import { AuditorArchivesComponent }  from './auditor/archives/auditor-archives.component';
+import { AuditorSearchComponent }    from './auditor/search/auditor-search.component';
+import { AuditorExportComponent }    from './auditor/export/auditor-export.component';
 
 export function kcFactory() {
   return () =>
     keycloak.init({
       onLoad: 'login-required',
       checkLoginIframe: false,
-      pkceMethod: 'S256'
+      pkceMethod: 'S256',
+      silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+      silentCheckSsoFallback: false
     }).then((authenticated) => {
       (window as any).keycloak = keycloak;
-      console.log('='.repeat(60));
-      console.log('ðŸ” KEYCLOAK INITIALIZED');
-      console.log('='.repeat(60));
-      if (authenticated) {
-        console.log('âœ… Authentication: SUCCESS');
-        console.log('ðŸ‘¤ Username:', keycloak.tokenParsed?.['preferred_username']);
-        console.log('ðŸŽ­ Roles:', keycloak.realmAccess?.roles);
-        console.log('');
-        console.log('ðŸ’¡ Debug commands:');
-        console.log('   window.keycloak.tokenParsed');
-        console.log('   window.keycloak.realmAccess.roles');
-      } else {
-        console.log('âŒ Authentication: FAILED');
+      if (!authenticated) {
+        keycloak.login();
       }
-      console.log('='.repeat(60));
     }).catch(error => {
-      console.error('âŒ Keycloak init failed:', error);
+      console.error('Keycloak init failed:', error);
     });
 }
 
@@ -84,7 +74,7 @@ export function kcFactory() {
   declarations: [
     AppComponent,
 
-    // â”€â”€ Shared â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Shared --
     HomeComponent,
     NotificationBellComponent,
     ChatComponent,
@@ -93,12 +83,12 @@ export function kcFactory() {
     ToastComponent,
     TreatedDeclarationsComponent,
 
-    // â”€â”€ Admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Admin --
     DashboardLayoutComponent,
     UserManagementComponent,
     DeclarationTypeManagementComponent,
 
-    // â”€â”€ Manager â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Manager --
     ManagerLayoutComponent,
     ManagerDashboardComponent,
     ManagerPendingComponent,
@@ -108,7 +98,7 @@ export function kcFactory() {
     ManagerMlDashboardComponent,
     ManagerTreatedComponent,
 
-    // â”€â”€ Agent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Agent --
     AgentLayoutComponent,
     AgentDashboardComponent,
     DeclarationManagementComponent,
@@ -118,7 +108,7 @@ export function kcFactory() {
     AgentNotificationsComponent,
     AgentTreatedComponent,
 
-    // â”€â”€ Auditor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Auditor --
     AuditorLayoutComponent,
     AuditorDashboardComponent,
     AuditorHistoryComponent,
@@ -152,4 +142,3 @@ export function kcFactory() {
   bootstrap: [AppComponent],
 })
 export class AppModule {}
-
