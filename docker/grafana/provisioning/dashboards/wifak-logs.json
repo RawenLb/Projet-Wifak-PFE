@@ -2,7 +2,7 @@
   "__inputs": [],
   "__requires": [],
   "annotations": { "list": [] },
-  "description": "Wifak BCT — Logs centralisés (Loki)",
+  "description": "Wifak BCT — Logs centralisés (Loki + Promtail)",
   "editable": true,
   "graphTooltip": 1,
   "id": null,
@@ -11,141 +11,84 @@
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "id": 1,
-      "title": "Logs par service",
+      "title": "📋 Logs par service",
       "type": "row"
     },
     {
       "datasource": { "type": "loki", "uid": "loki" },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
       "id": 10,
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
-      },
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
       "title": "API Gateway — Logs",
       "type": "logs",
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{job=\"docker\"} |= \"wifak-gateway\"",
-          "refId": "A"
-        }
-      ]
+      "targets": [{ "datasource": { "type": "loki", "uid": "loki" }, "expr": "{service=\"api-gateway\"}", "refId": "A" }]
     },
     {
       "datasource": { "type": "loki", "uid": "loki" },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
       "id": 11,
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
-      },
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
       "title": "Authentification Service — Logs",
       "type": "logs",
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{job=\"docker\"} |= \"wifak-auth\"",
-          "refId": "A"
-        }
-      ]
+      "targets": [{ "datasource": { "type": "loki", "uid": "loki" }, "expr": "{service=\"authentification-service\"}", "refId": "A" }]
     },
     {
       "datasource": { "type": "loki", "uid": "loki" },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
       "id": 12,
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
-      },
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
       "title": "Workflow Declaration — Logs",
       "type": "logs",
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{job=\"docker\"} |= \"wifak-workflow\"",
-          "refId": "A"
-        }
-      ]
+      "targets": [{ "datasource": { "type": "loki", "uid": "loki" }, "expr": "{service=\"workflow-declaration\"}", "refId": "A" }]
     },
     {
       "datasource": { "type": "loki", "uid": "loki" },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
       "id": 13,
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
-      },
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
       "title": "Chat Service — Logs",
       "type": "logs",
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{job=\"docker\"} |= \"wifak-chat\"",
-          "refId": "A"
-        }
-      ]
+      "targets": [{ "datasource": { "type": "loki", "uid": "loki" }, "expr": "{service=\"chat-service\"}", "refId": "A" }]
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 },
+      "id": 14,
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "title": "Notification Service — Logs",
+      "type": "logs",
+      "targets": [{ "datasource": { "type": "loki", "uid": "loki" }, "expr": "{service=\"notification-service\"}", "refId": "A" }]
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 17 },
+      "id": 15,
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "title": "Jira Integration — Logs",
+      "type": "logs",
+      "targets": [{ "datasource": { "type": "loki", "uid": "loki" }, "expr": "{service=\"jira-integration-service\"}", "refId": "A" }]
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 },
       "id": 2,
-      "title": "Logs ERROR — tous services",
+      "title": "🔴 Logs ERROR — tous services",
       "type": "row"
     },
     {
       "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 18 },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 26 },
       "id": 20,
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": true,
-        "showLabels": true,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
-      },
-      "title": "Toutes les erreurs — tous containers",
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": true, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "title": "Toutes les erreurs — tous services Wifak",
       "type": "logs",
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{job=\"docker\"} |= \"ERROR\"",
-          "refId": "A"
-        }
-      ]
+      "targets": [{ "datasource": { "type": "loki", "uid": "loki" }, "expr": "{job=\"docker\"} |= \"ERROR\"", "refId": "A" }]
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 28 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
       "id": 3,
-      "title": "Volume de logs par service",
+      "title": "📊 Volume de logs par service",
       "type": "row"
     },
     {
@@ -153,7 +96,7 @@
       "fieldConfig": {
         "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 } }
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 29 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 37 },
       "id": 30,
       "options": { "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
       "title": "Nombre de logs / min par service",
@@ -161,8 +104,8 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "sum by (filename) (rate({job=\"docker\"}[1m]))",
-          "legendFormat": "{{filename}}",
+          "expr": "sum by (service) (rate({job=\"docker\"}[1m]))",
+          "legendFormat": "{{service}}",
           "refId": "A"
         }
       ]
@@ -176,5 +119,5 @@
   "timezone": "browser",
   "title": "Wifak BCT — Logs",
   "uid": "wifak-bct-logs",
-  "version": 1
+  "version": 2
 }
