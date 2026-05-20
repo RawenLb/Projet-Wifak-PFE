@@ -1,10 +1,10 @@
 ---
-# HPA for API Gateway
+# HPA — API Gateway
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: api-gateway-hpa
-  namespace: wifak
+  namespace: wifak-prod
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -19,13 +19,19 @@ spec:
         target:
           type: Utilization
           averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
 ---
-# HPA for Authentification Service
+# HPA — Authentification Service
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: authentification-service-hpa
-  namespace: wifak
+  namespace: wifak-prod
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -41,12 +47,12 @@ spec:
           type: Utilization
           averageUtilization: 70
 ---
-# HPA for Chat Service
+# HPA — Chat Service
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: chat-service-hpa
-  namespace: wifak
+  namespace: wifak-prod
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -62,12 +68,12 @@ spec:
           type: Utilization
           averageUtilization: 70
 ---
-# HPA for Workflow Declaration
+# HPA — Workflow Declaration
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: workflow-declaration-hpa
-  namespace: wifak
+  namespace: wifak-prod
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -83,17 +89,17 @@ spec:
           type: Utilization
           averageUtilization: 70
 ---
-# HPA for Frontend
+# HPA — Frontend
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: frontend-hpa
-  namespace: wifak
+  namespace: wifak-prod
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: frontend
+    name: bct-frontend
   minReplicas: 2
   maxReplicas: 4
   metrics:
