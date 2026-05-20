@@ -72,12 +72,12 @@
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
     } else {
-      // Ouvrir directement la plateforme (déjà installée ou pas de prompt)
-      window.open('http://localhost:4200', '_blank');
+      // Ouvrir directement la plateforme via HTTPS (installable)
+      window.open('https://0938-197-15-32-24.ngrok-free.app', '_blank');
     }
   }
   function pwaCopy() {
-    var link = 'http://localhost:4200';
+    var link = 'https://0938-197-15-32-24.ngrok-free.app';
     navigator.clipboard.writeText(link).then(function() {
       var btn = document.querySelector('.pwa-copy');
       btn.textContent = '✅ Copié !';
