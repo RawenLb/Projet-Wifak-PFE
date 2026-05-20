@@ -139,6 +139,7 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "localhost:host-gateway"
+    user: root
     environment:
       <<: *common-env
       SPRING_PROFILES_ACTIVE: docker

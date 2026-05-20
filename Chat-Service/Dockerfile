@@ -11,7 +11,8 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 RUN addgroup -S wifak && adduser -S wifak -G wifak
 COPY --from=build /app/target/*.jar app.jar
-# Volume for chat file uploads
+# Créer le dossier uploads avec les bonnes permissions AVANT de changer d'utilisateur
+RUN mkdir -p /app/uploads/chat && chown -R wifak:wifak /app/uploads
 VOLUME /app/uploads
 RUN chown wifak:wifak app.jar
 USER wifak
