@@ -289,26 +289,25 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # Compile uniquement (sans tests ni MySQL) pour générer target/classes
-      - name: Compile — Authentification
+      # Compile + Test + JaCoCo en une seule passe (MySQL désactivé via profil test)
+      - name: Test & Coverage — Authentification
         working-directory: ./Authentification
-        run: ./mvnw compile -B -DskipTests
+        run: |
+          ./mvnw test jacoco:report -B \
+            -Dtest="KeycloakAdminServiceTest" \
+            -DfailIfNoTests=false \
+            -Dspring.autoconfigure.exclude="org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration" \
+            -Deureka.client.enabled=false
         continue-on-error: true
 
-      - name: Compile — workflow-declaration
+      - name: Test & Coverage — workflow-declaration
         working-directory: ./workflow-declaration
-        run: ./mvnw compile -B -DskipTests
-        continue-on-error: true
-
-      # Tests unitaires + JaCoCo (Mockito only, pas besoin de MySQL)
-      - name: Test & JaCoCo — Authentification
-        working-directory: ./Authentification
-        run: ./mvnw test jacoco:report -B -Dtest="KeycloakAdminServiceTest" -DfailIfNoTests=false
-        continue-on-error: true
-
-      - name: Test & JaCoCo — workflow-declaration
-        working-directory: ./workflow-declaration
-        run: ./mvnw test jacoco:report -B -Dtest="DeclarationServiceTest,ValidationServiceTest" -DfailIfNoTests=false
+        run: |
+          ./mvnw test jacoco:report -B \
+            -Dtest="DeclarationServiceTest,ValidationServiceTest" \
+            -DfailIfNoTests=false \
+            -Dspring.autoconfigure.exclude="org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration" \
+            -Deureka.client.enabled=false
         continue-on-error: true
 
       # Créer les dossiers target/classes s'ils n'existent pas (fallback)
@@ -316,6 +315,14 @@ jobs:
         run: |
           mkdir -p Authentification/target/classes
           mkdir -p workflow-declaration/target/classes
+
+      # Vérifier que les rapports JaCoCo ont été générés
+      - name: Check JaCoCo reports
+        run: |
+          echo "=== Authentification JaCoCo ==="
+          ls -la Authentification/target/site/jacoco/ 2>/dev/null || echo "No jacoco report found"
+          echo "=== workflow-declaration JaCoCo ==="
+          ls -la workflow-declaration/target/site/jacoco/ 2>/dev/null || echo "No jacoco report found"
 
       # ── SonarCloud Analysis ──────────────────────────────────
       - name: SonarCloud Scan
