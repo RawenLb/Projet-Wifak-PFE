@@ -10,7 +10,12 @@ import { CommonModule } from '@angular/common';
         <strong>Installer l'application</strong>
         <span>Accès rapide depuis votre écran d'accueil</span>
       </div>
+<<<<<<< HEAD
       <button class="pwa-btn" [disabled]="!canInstall" (click)="install()">Installer</button>
+=======
+      <button *ngIf="canInstall" class="pwa-btn" (click)="install()">Installer</button>
+      <button class="pwa-copy" (click)="copyLink()">{{ copied ? 'Copié !' : 'Copier' }}</button>
+>>>>>>> Rawen-Branch
       <button class="pwa-close" (click)="dismiss()">✕</button>
     </div>
   `,
@@ -55,11 +60,24 @@ import { CommonModule } from '@angular/common';
       white-space: nowrap; flex-shrink: 0;
       transition: background 0.15s;
     }
+<<<<<<< HEAD
     .pwa-btn:hover:not(:disabled) { background: #2563a8; }
     .pwa-btn:disabled {
       opacity: 0.45;
       cursor: not-allowed;
     }
+=======
+    .pwa-btn:hover { background: #2563a8; }
+    .pwa-copy {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white; border-radius: 8px;
+      padding: 7px 12px; font-size: 12px;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .pwa-copy:hover { background: rgba(255,255,255,0.2); }
+>>>>>>> Rawen-Branch
     .pwa-close {
       background: transparent; border: none;
       color: rgba(255,255,255,0.4); cursor: pointer;
@@ -72,6 +90,10 @@ import { CommonModule } from '@angular/common';
 export class PwaInstallComponent implements OnInit {
   dismissed = false;
   canInstall = false;
+<<<<<<< HEAD
+=======
+  copied = false;
+>>>>>>> Rawen-Branch
   private deferredPrompt: any = null;
 
   ngOnInit(): void {
@@ -99,6 +121,16 @@ export class PwaInstallComponent implements OnInit {
     this.canInstall = false;
   }
 
+<<<<<<< HEAD
+=======
+  copyLink(): void {
+    navigator.clipboard.writeText(window.location.origin).then(() => {
+      this.copied = true;
+      setTimeout(() => this.copied = false, 2500);
+    });
+  }
+
+>>>>>>> Rawen-Branch
   dismiss(): void {
     this.dismissed = true;
     sessionStorage.setItem('pwa-dismissed', '1');
