@@ -1,0 +1,104 @@
+<div class="landing-page">
+
+  <!-- Background decoration -->
+  <div class="bg-decoration">
+    <div class="bg-circle bg-circle-1"></div>
+    <div class="bg-circle bg-circle-2"></div>
+    <div class="bg-circle bg-circle-3"></div>
+  </div>
+
+  <!-- Main card -->
+  <div class="landing-card">
+
+    <!-- Logo -->
+    <div class="logo-section">
+      <div class="logo-icon">
+        <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
+          <path d="M20 4C20 4 29 13 29 21c0 7-4.5 11-9 13-4.5-2-9-6-9-13C11 13 20 4 20 4z" fill="#C8192E" opacity=".9"/>
+          <path d="M20 10c0 0 6 7 6 12s-3 8-6 9.5c-3-1.5-6-4.5-6-9.5s6-12 6-12z" fill="#A8B4C0" opacity=".75"/>
+          <path d="M20 17c0 0 3 4 3 6.5S21.5 27 20 28c-1.5-1-3-2.5-3-4.5s3-6.5 3-6.5z" fill="white" opacity=".85"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="bank-name">WIFAK BANK</span>
+        <span class="bank-sub">Portail BCT</span>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <div class="hero-section">
+      <h1 class="hero-title">Plateforme de Gestion<br><span class="highlight">des Déclarations BCT</span></h1>
+      <p class="hero-desc">Gérez vos déclarations réglementaires en toute sécurité depuis n'importe quel appareil.</p>
+    </div>
+
+    <!-- Features -->
+    <div class="features-row">
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <span>Sécurisé</span>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <span>Temps réel</span>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/>
+          </svg>
+        </div>
+        <span>Mobile</span>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="actions">
+
+      <!-- Install button -->
+      <button
+        class="btn-install"
+        *ngIf="canInstall && !installDone"
+        (click)="install()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Installer l'application
+      </button>
+
+      <!-- Installed confirmation -->
+      <div class="install-done" *ngIf="installDone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        Application installée
+      </div>
+
+      <!-- Access button -->
+      <button class="btn-access" (click)="goToLogin()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+          <polyline points="10 17 15 12 10 7"/>
+          <line x1="15" y1="12" x2="3" y2="12"/>
+        </svg>
+        Accéder à la plateforme
+      </button>
+
+    </div>
+
+    <!-- Footer -->
+    <p class="landing-footer">Banque Wifak © {{ currentYear }} — Conforme aux exigences BCT</p>
+
+  </div>
+
+</div>

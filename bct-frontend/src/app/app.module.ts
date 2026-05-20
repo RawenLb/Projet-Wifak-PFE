@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { KeycloakInterceptor } from './shared/interceptors/keycloak.interceptor';
 import keycloak from './services/keycloak.service';
 import { PwaInstallComponent } from './shared/pwa-install/pwa-install.component';
+import { LandingComponent } from './shared/landing/landing.component';
 
 // -- Shared --
 import { HomeComponent }             from './shared/home/home.component';
@@ -64,8 +65,6 @@ export function kcFactory() {
       silentCheckSsoFallback: false
     }).then((authenticated) => {
       (window as any).keycloak = keycloak;
-      // Si pas authentifié, on laisse les guards gérer la redirection
-      // (ça permet à la bannière PWA de s'afficher avant le redirect)
     }).catch(error => {
       console.error('Keycloak init failed:', error);
     });
@@ -120,6 +119,7 @@ export function kcFactory() {
 
     // -- PWA --
     PwaInstallComponent,
+    LandingComponent,
   ],
   imports: [
     BrowserModule,

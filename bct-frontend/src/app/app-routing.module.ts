@@ -8,7 +8,8 @@ import { RoleGuard }         from './shared/guards/role.guard';
 import { RoleRedirectGuard } from './shared/guards/Role-redirect.guard';
 
 // ── Shared ────────────────────────────────────────────────────────────
-import { HomeComponent } from './shared/home/home.component';
+import { HomeComponent }    from './shared/home/home.component';
+import { LandingComponent } from './shared/landing/landing.component';
 
 // ── Admin ─────────────────────────────────────────────────────────────
 import { DashboardLayoutComponent }           from './admin/dashboard-layout/dashboard-layout.component';
@@ -45,11 +46,10 @@ import { AuditorExportComponent }    from './auditor/export/auditor-export.compo
 
 const routes: Routes = [
 
-  // ── Root : redirige selon le rôle ──────────────────────────────────
+  // ── Root : page d'accueil publique (sans guard) ────────────────────
   {
     path: '',
-    canActivate: [RoleRedirectGuard],
-    component: HomeComponent,
+    component: LandingComponent,
   },
 
   // ── Pages publiques ─────────────────────────────────────────────────

@@ -22,10 +22,8 @@ export class RoleGuard implements CanActivate {
 
     // Check if user is logged in
     if (!this.authService.isLoggedIn()) {
-      console.log('❌ User not logged in - redirecting to login');
-      const pwaReady = (window as any).__pwaInstallEvent;
-      const delay = pwaReady ? 3000 : 500;
-      setTimeout(() => this.authService.login(), delay);
+      console.log('❌ User not logged in - redirecting to landing');
+      this.router.navigate(['/']);
       return false;
     }
 
