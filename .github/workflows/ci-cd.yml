@@ -324,6 +324,17 @@ jobs:
           echo "=== workflow-declaration JaCoCo ==="
           ls -la workflow-declaration/target/site/jacoco/ 2>/dev/null || echo "No jacoco report found"
 
+      # Upload JaCoCo reports comme artifacts pour debug
+      - name: Upload JaCoCo reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-reports
+          path: |
+            Authentification/target/site/jacoco/jacoco.xml
+            workflow-declaration/target/site/jacoco/jacoco.xml
+          retention-days: 1
+
       # ── SonarCloud Analysis ──────────────────────────────────
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
