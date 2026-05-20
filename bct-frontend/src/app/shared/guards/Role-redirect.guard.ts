@@ -15,7 +15,10 @@ export class RoleRedirectGuard implements CanActivate {
 
   canActivate(): boolean {
     if (!this.authService.isLoggedIn()) {
-      this.authService.login();
+      // Délai de 3s pour laisser la bannière PWA s'afficher avant le redirect
+      const pwaReady = (window as any).__pwaInstallEvent;
+      const delay = pwaReady ? 3000 : 500;
+      setTimeout(() => this.authService.login(), delay);
       return false;
     }
 

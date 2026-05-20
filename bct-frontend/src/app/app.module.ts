@@ -57,16 +57,15 @@ import { AuditorExportComponent }    from './auditor/export/auditor-export.compo
 export function kcFactory() {
   return () =>
     keycloak.init({
-      onLoad: 'login-required',
+      onLoad: 'check-sso',
       checkLoginIframe: false,
       pkceMethod: 'S256',
       silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
       silentCheckSsoFallback: false
     }).then((authenticated) => {
       (window as any).keycloak = keycloak;
-      if (!authenticated) {
-        keycloak.login();
-      }
+      // Si pas authentifié, on laisse les guards gérer la redirection
+      // (ça permet à la bannière PWA de s'afficher avant le redirect)
     }).catch(error => {
       console.error('Keycloak init failed:', error);
     });
