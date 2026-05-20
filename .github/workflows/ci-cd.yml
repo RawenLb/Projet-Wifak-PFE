@@ -292,22 +292,12 @@ jobs:
       # Compile + Test + JaCoCo en une seule passe (MySQL désactivé via profil test)
       - name: Test & Coverage — Authentification
         working-directory: ./Authentification
-        run: |
-          ./mvnw test jacoco:report -B \
-            -Dtest="KeycloakAdminServiceTest" \
-            -DfailIfNoTests=false \
-            -Dspring.autoconfigure.exclude="org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration" \
-            -Deureka.client.enabled=false
+        run: ./mvnw test jacoco:report -B -Dtest="KeycloakAdminServiceTest" -DfailIfNoTests=false -Dspring.profiles.active=test
         continue-on-error: true
 
       - name: Test & Coverage — workflow-declaration
         working-directory: ./workflow-declaration
-        run: |
-          ./mvnw test jacoco:report -B \
-            -Dtest="DeclarationServiceTest,ValidationServiceTest" \
-            -DfailIfNoTests=false \
-            -Dspring.autoconfigure.exclude="org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration" \
-            -Deureka.client.enabled=false
+        run: ./mvnw test jacoco:report -B -Dtest="DeclarationServiceTest,ValidationServiceTest" -DfailIfNoTests=false -Dspring.profiles.active=test
         continue-on-error: true
 
       # Créer les dossiers target/classes s'ils n'existent pas (fallback)

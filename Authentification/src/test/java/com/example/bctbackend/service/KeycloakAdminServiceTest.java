@@ -24,8 +24,11 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import org.springframework.test.context.ActiveProfiles;
+
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
+@ActiveProfiles("test")
 @DisplayName("KeycloakAdminService — Tests unitaires")
 class KeycloakAdminServiceTest {
 

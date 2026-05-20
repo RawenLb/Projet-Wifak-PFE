@@ -25,8 +25,11 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import org.springframework.test.context.ActiveProfiles;
+
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
+@ActiveProfiles("test")
 @DisplayName("DeclarationService — Tests unitaires")
 class DeclarationServiceTest {
 
