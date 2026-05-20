@@ -13,51 +13,124 @@
     </#list>
   </#if>
   <style>
-    .pwa-top-banner {
-      position: fixed; top: 0; left: 0; right: 0;
-      background: linear-gradient(90deg, #1a3a5c 0%, #1e5fa8 60%, #c8102e 100%);
-      color: white; padding: 9px 20px; z-index: 99999;
-      display: flex; align-items: center; gap: 12px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    .pwa-install-banner {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e1e1e;
+      color: white;
+      padding: 12px 16px;
+      z-index: 99999;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+      border-radius: 14px;
+      min-width: 340px;
+      max-width: 480px;
+      animation: slideUp 0.4s ease-out;
+      border: 1px solid rgba(255,255,255,0.08);
     }
-    .pwa-top-banner img { width: 34px; height: 34px; border-radius: 7px; background: white; padding: 3px; }
-    .pwa-top-banner .pwa-info { flex: 1; }
-    .pwa-top-banner .pwa-info strong { display: block; font-size: 13px; font-weight: 700; }
-    .pwa-top-banner .pwa-info span { font-size: 11px; opacity: 0.85; }
-    .pwa-top-banner .pwa-btn {
-      display: flex; align-items: center; gap: 5px;
-      background: white; color: #1a3a5c; border: none;
-      border-radius: 7px; padding: 6px 14px; font-size: 13px;
-      font-weight: 700; cursor: pointer; text-decoration: none;
+    @keyframes slideUp {
+      from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+      to   { transform: translateX(-50%) translateY(0);     opacity: 1; }
     }
-    .pwa-top-banner .pwa-copy {
-      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
-      color: white; border-radius: 7px; padding: 6px 12px;
-      font-size: 12px; cursor: pointer;
+    .pwa-install-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    .pwa-top-banner .pwa-close {
-      background: transparent; border: 1px solid rgba(255,255,255,0.3);
-      color: white; border-radius: 6px; width: 28px; height: 28px;
-      cursor: pointer; font-size: 13px;
+    .pwa-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      background: white;
+      padding: 3px;
     }
-    body { padding-top: 52px !important; }
+    .pwa-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .pwa-text strong {
+      font-size: 14px;
+      font-weight: 700;
+      color: white;
+    }
+    .pwa-text span {
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      margin-top: 2px;
+    }
+    .pwa-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .pwa-btn-install {
+      background: #1a3a5c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .pwa-btn-install:hover {
+      background: #2563a8;
+    }
+    .pwa-btn-copy {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .pwa-btn-copy:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    .pwa-btn-close {
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 4px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .pwa-btn-close:hover {
+      color: white;
+    }
+    body { padding-top: 0 !important; }
   </style>
 </head>
 <body class="login-pf">
 
-<!-- PWA Install Banner -->
-<div class="pwa-top-banner" id="pwaBanner">
-  <img src="${url.resourcesPath}/img/bct-logo.png" alt="Wifak BCT"/>
-  <div class="pwa-info">
-    <strong>Banque Wifak BCT</strong>
-    <span>Installez l'application pour un accès rapide</span>
+<!-- PWA Install Banner — bottom center -->
+<div class="pwa-install-banner" id="pwaBanner">
+  <div class="pwa-install-content">
+    <img src="${url.resourcesPath}/img/bct-logo.png" alt="Wifak BCT" class="pwa-icon"/>
+    <div class="pwa-text">
+      <strong>Installer l'application</strong>
+      <span>Accès rapide depuis votre écran d'accueil</span>
+    </div>
+    <div class="pwa-actions">
+      <button class="pwa-btn-install" id="pwaInstallBtn" onclick="pwaInstall()">Installer</button>
+      <button class="pwa-btn-copy" onclick="pwaCopy()">📋 Copier</button>
+      <button class="pwa-btn-close" onclick="document.getElementById('pwaBanner').style.display='none'">✕</button>
+    </div>
   </div>
-  <button class="pwa-btn" id="pwaInstallBtn" onclick="pwaInstall()">
-    ⬇ Installer
-  </button>
-  <button class="pwa-copy" onclick="pwaCopy()">📋 Copier le lien</button>
-  <button class="pwa-close" onclick="document.getElementById('pwaBanner').style.display='none'">✕</button>
 </div>
 
 <script>
