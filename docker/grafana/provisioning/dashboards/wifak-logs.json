@@ -33,7 +33,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{app=\"api-gateway\"}",
+          "expr": "{job=\"docker\"} |= \"wifak-gateway\"",
           "refId": "A"
         }
       ]
@@ -57,7 +57,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{app=\"authentification-service\"}",
+          "expr": "{job=\"docker\"} |= \"wifak-auth\"",
           "refId": "A"
         }
       ]
@@ -81,7 +81,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{app=\"workflow-declaration\"}",
+          "expr": "{job=\"docker\"} |= \"wifak-workflow\"",
           "refId": "A"
         }
       ]
@@ -105,7 +105,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{app=\"chat-service\"}",
+          "expr": "{job=\"docker\"} |= \"wifak-chat\"",
           "refId": "A"
         }
       ]
@@ -131,12 +131,12 @@
         "sortOrder": "Descending",
         "wrapLogMessage": true
       },
-      "title": "Toutes les erreurs — namespace wifak-prod",
+      "title": "Toutes les erreurs — tous containers",
       "type": "logs",
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{namespace=\"wifak-prod\"} |= \"ERROR\"",
+          "expr": "{job=\"docker\"} |= \"ERROR\"",
           "refId": "A"
         }
       ]
@@ -161,8 +161,8 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "sum by (app) (rate({namespace=\"wifak-prod\"}[1m]))",
-          "legendFormat": "{{app}}",
+          "expr": "sum by (filename) (rate({job=\"docker\"}[1m]))",
+          "legendFormat": "{{filename}}",
           "refId": "A"
         }
       ]

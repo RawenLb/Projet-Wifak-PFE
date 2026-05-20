@@ -10,6 +10,7 @@ volumes:
   declaration-uploads:
   prometheus-data:
   grafana-data:
+  loki-data:
   maven-cache:
 
 # ─── Env commun à tous les services Spring Boot ───────────────────────────────
@@ -343,3 +344,31 @@ services:
       - wifak-network
     depends_on:
       - prometheus
+      - loki
+
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: wifak-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./docker/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - wifak-network
+
+  promtail:
+    image: grafana/promtail:2.9.4
+    container_name: wifak-promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail.yml
+    volumes:
+      - ./docker/promtail/promtail.yml:/etc/promtail/promtail.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - wifak-network
+    depends_on:
+      - loki
