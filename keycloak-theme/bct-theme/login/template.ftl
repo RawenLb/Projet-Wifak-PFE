@@ -68,22 +68,12 @@
   });
   function pwaInstall() {
     if (deferredPrompt) {
-      // Installation native disponible
+      // Installation native disponible — installation directe
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
     } else {
-      // Déjà installée ou browser ne supporte pas — ouvrir directement
-      var isEdge = navigator.userAgent.indexOf('Edg') !== -1;
-      var isChrome = navigator.userAgent.indexOf('Chrome') !== -1 && !isEdge;
-      var msg = '';
-      if (isEdge) {
-        msg = 'Dans Edge : Menu (⋯) → Applications → Installer ce site en tant qu\'application';
-      } else if (isChrome) {
-        msg = 'Dans Chrome : Menu (⋮) → Enregistrer et partager → Créer un raccourci → cocher "Ouvrir en tant que fenêtre"';
-      } else {
-        msg = 'Ouvrez le menu de votre navigateur et cherchez "Installer" ou "Ajouter à l\'écran d\'accueil"';
-      }
-      alert('📱 ' + msg);
+      // Ouvrir directement la plateforme (déjà installée ou pas de prompt)
+      window.open('http://localhost:4200', '_blank');
     }
   }
   function pwaCopy() {
