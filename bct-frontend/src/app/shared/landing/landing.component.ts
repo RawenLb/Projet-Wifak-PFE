@@ -85,8 +85,7 @@ export class LandingComponent implements OnInit, OnDestroy {
   }
 
   goToLogin(): void {
-    // Redirection directe vers Keycloak sans passer par l'instance JS
     const redirectUri = encodeURIComponent(window.location.origin);
-    window.location.href = `http://localhost:8081/realms/bct-realm/protocol/openid-connect/auth?client_id=bct-frontend&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
+    window.location.href = `https://keycloak-production-ee96.up.railway.app/realms/bct-realm/protocol/openid-connect/auth?client_id=bct-frontend&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
   }
 }
