@@ -376,8 +376,14 @@ public class XmlGenerationService {
     public void validateXmlAgainstXsd(String xmlContent, String xsdContent) {
         try {
             SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            // ✅ Fix XXE — désactiver l'accès aux entités externes (CWE-611)
+            schemaFactory.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            schemaFactory.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
             Schema schema = schemaFactory.newSchema(new StreamSource(new StringReader(xsdContent)));
             Validator validator = schema.newValidator();
+            // ✅ Fix XXE — désactiver les external entities sur le validateur
+            validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
             validator.validate(new StreamSource(new StringReader(xmlContent)));
         } catch (Exception e) {
             throw new RuntimeException("Validation XSD: " + e.getMessage(), e);
@@ -396,6 +402,9 @@ public class XmlGenerationService {
 
     private String documentToString(Document doc) throws Exception {
         TransformerFactory tf = TransformerFactory.newInstance();
+        // ✅ Fix XXE — désactiver l'accès aux ressources externes (CWE-611)
+        tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
         Transformer transformer = tf.newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT,   "yes");
         transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
