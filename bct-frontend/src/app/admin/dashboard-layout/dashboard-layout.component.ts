@@ -27,9 +27,10 @@ export class DashboardLayoutComponent implements OnInit {
   ngOnInit(): void {
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe((event: any) => {
-        this.currentRoute = event.url;
-        this.updatePageInfo(event.url);
+      .subscribe((event) => {
+        const navEnd = event as NavigationEnd;
+        this.currentRoute = navEnd.url;
+        this.updatePageInfo(navEnd.url);
       });
 
     this.updatePageInfo(this.router.url);

@@ -1,6 +1,16 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+// Interface pour l'événement PWA beforeinstallprompt (non standard, pas dans TypeScript lib)
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+type PwaWindow = Window & {
+  __pwaInstallEvent?: BeforeInstallPromptEvent;
+};
+
 @Component({
   selector: 'app-pwa-install',
   template: `
@@ -16,21 +26,13 @@ import { CommonModule } from '@angular/common';
   `,
   styles: [`
     .pwa-banner {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
+      position: fixed; bottom: 20px; left: 50%;
       transform: translateX(-50%);
-      background: #1e1e1e;
-      color: white;
-      padding: 12px 16px;
-      z-index: 99999;
+      background: #1e1e1e; color: white;
+      padding: 12px 16px; z-index: 99999;
       box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-      border-radius: 14px;
-      min-width: 320px;
-      max-width: 460px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      border-radius: 14px; min-width: 320px; max-width: 460px;
+      display: flex; align-items: center; gap: 12px;
       border: 1px solid rgba(255,255,255,0.08);
       animation: slideUp 0.4s ease-out;
     }
@@ -38,29 +40,21 @@ import { CommonModule } from '@angular/common';
       from { transform: translateX(-50%) translateY(80px); opacity: 0; }
       to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
     }
-    .pwa-icon {
-      width: 40px; height: 40px;
-      border-radius: 10px; flex-shrink: 0;
-      background: white; padding: 3px;
-    }
-    .pwa-text {
-      flex: 1; display: flex; flex-direction: column;
-    }
+    .pwa-icon { width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; background: white; padding: 3px; }
+    .pwa-text { flex: 1; display: flex; flex-direction: column; }
     .pwa-text strong { font-size: 13px; font-weight: 700; }
     .pwa-text span   { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 2px; }
     .pwa-btn {
       background: #1a3a5c; color: white; border: none;
       border-radius: 8px; padding: 7px 14px;
       font-size: 13px; font-weight: 700; cursor: pointer;
-      white-space: nowrap; flex-shrink: 0;
-      transition: background 0.15s;
+      white-space: nowrap; flex-shrink: 0; transition: background 0.15s;
     }
     .pwa-btn:hover { background: #2563a8; }
     .pwa-close {
       background: transparent; border: none;
       color: rgba(255,255,255,0.4); cursor: pointer;
-      font-size: 18px; padding: 2px; flex-shrink: 0;
-      line-height: 1;
+      font-size: 18px; padding: 2px; flex-shrink: 0; line-height: 1;
     }
     .pwa-close:hover { color: white; }
   `]
@@ -68,26 +62,23 @@ import { CommonModule } from '@angular/common';
 export class PwaInstallComponent implements OnInit, OnDestroy {
   dismissed = false;
   canInstall = false;
-  private deferredPrompt: any = null;
-  private readyListener: any;
+  private deferredPrompt: BeforeInstallPromptEvent | null = null;
+  private readyListener: (() => void) | null = null;
+
+  private get pwaWindow(): PwaWindow { return window as PwaWindow; }
 
   ngOnInit(): void {
     if (sessionStorage.getItem('pwa-dismissed')) {
       this.dismissed = true;
       return;
     }
-
-    // Récupérer l'event capturé dans index.html avant le redirect Keycloak
-    const win = window as any;
-    if (win.__pwaInstallEvent) {
-      this.deferredPrompt = win.__pwaInstallEvent;
+    if (this.pwaWindow.__pwaInstallEvent) {
+      this.deferredPrompt = this.pwaWindow.__pwaInstallEvent;
       this.canInstall = true;
     }
-
-    // Écouter si l'event arrive après le chargement du composant
     this.readyListener = () => {
-      if ((window as any).__pwaInstallEvent) {
-        this.deferredPrompt = (window as any).__pwaInstallEvent;
+      if (this.pwaWindow.__pwaInstallEvent) {
+        this.deferredPrompt = this.pwaWindow.__pwaInstallEvent;
         this.canInstall = true;
         this.dismissed = false;
       }
@@ -101,12 +92,11 @@ export class PwaInstallComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Fallback direct si l'event arrive après l'init du composant
   @HostListener('window:beforeinstallprompt', ['$event'])
-  onBeforeInstallPrompt(event: any): void {
+  onBeforeInstallPrompt(event: BeforeInstallPromptEvent): void {
     event.preventDefault();
     this.deferredPrompt = event;
-    (window as any).__pwaInstallEvent = event;
+    this.pwaWindow.__pwaInstallEvent = event;
     this.canInstall = true;
     this.dismissed = false;
   }
@@ -116,7 +106,7 @@ export class PwaInstallComponent implements OnInit, OnDestroy {
     this.dismissed = true;
     this.canInstall = false;
     this.deferredPrompt = null;
-    (window as any).__pwaInstallEvent = null;
+    this.pwaWindow.__pwaInstallEvent = undefined;
     sessionStorage.setItem('pwa-dismissed', '1');
   }
 
@@ -129,7 +119,7 @@ export class PwaInstallComponent implements OnInit, OnDestroy {
       sessionStorage.setItem('pwa-dismissed', '1');
     }
     this.deferredPrompt = null;
-    (window as any).__pwaInstallEvent = null;
+    this.pwaWindow.__pwaInstallEvent = undefined;
     this.canInstall = false;
   }
 

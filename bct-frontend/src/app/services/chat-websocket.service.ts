@@ -56,14 +56,14 @@ export interface IceSignal {
 
 export interface WsEnvelope {
   type:    string;
-  payload: any;
+  payload: Record<string, unknown>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ChatWebSocketService implements OnDestroy {
 
   private ws:             WebSocket | null = null;
-  private reconnectTimer: any = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectDelay  = 3000;
   private maxReconnects   = 20;
   private reconnectCount  = 0;

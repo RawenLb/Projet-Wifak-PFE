@@ -34,7 +34,7 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
   loading = false;
   actionEnCours: Record<number, boolean> = {};
   lastRefreshed: Date | null = null;
-  autoRefreshInterval: any;
+  autoRefreshInterval: ReturnType<typeof setInterval> | null = null;
 
   // ── Filtres & tri ──────────────────────────────────────
   searchQuery      = '';
@@ -160,7 +160,7 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
     if (this.priorityFilter === 'NOUVEAU') list = list.filter(d => !d.commentaireRejet);
 
     list.sort((a, b) => {
-      let va: any, vb: any;
+      let va: string | number, vb: string | number;
       switch (this.sortField) {
         case 'id':      va = a.id ?? 0;      vb = b.id ?? 0; break;
         case 'type':    va = a.declarationType?.code ?? ''; vb = b.declarationType?.code ?? ''; break;

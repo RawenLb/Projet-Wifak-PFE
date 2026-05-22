@@ -481,6 +481,7 @@ public class XsdAnalyzerService {
 
     /** Récupère le premier élément enfant direct d'un localName donné. */
     private Element getFirstChildElement(Element parent, String localName) {
+        if (parent == null || localName == null) return null;
         NodeList children = parent.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
             if (children.item(i) instanceof Element) {

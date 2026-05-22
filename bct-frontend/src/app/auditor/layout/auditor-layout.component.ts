@@ -28,9 +28,10 @@ export class AuditorLayoutComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.router.events
       .pipe(filter(e => e instanceof NavigationEnd))
-      .subscribe((e: any) => {
-        this.currentRoute = e.urlAfterRedirects;
-        this.updatePageInfo(e.urlAfterRedirects);
+      .subscribe((e) => {
+        const navEnd = e as NavigationEnd;
+        this.currentRoute = navEnd.urlAfterRedirects;
+        this.updatePageInfo(navEnd.urlAfterRedirects);
       });
 
     this.currentRoute = this.router.url;

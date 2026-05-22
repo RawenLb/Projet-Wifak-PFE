@@ -2,6 +2,15 @@ import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+type PwaWindow = Window & {
+  __pwaInstallEvent?: BeforeInstallPromptEvent;
+};
+
 @Component({
   selector: 'app-landing',
   templateUrl: './landing.component.html',
@@ -12,29 +21,27 @@ export class LandingComponent implements OnInit, OnDestroy {
   canInstall = false;
   installDone = false;
   currentYear = new Date().getFullYear();
-  private deferredPrompt: any = null;
-  private readyListener: any;
+  private deferredPrompt: BeforeInstallPromptEvent | null = null;
+  private readyListener: (() => void) | null = null;
+
+  private get pwaWindow(): PwaWindow { return window as PwaWindow; }
 
   constructor(private router: Router, private authService: AuthService) {}
 
   ngOnInit(): void {
-    // Si déjà connecté → rediriger vers le bon dashboard selon le rôle
     if (this.authService.isLoggedIn()) {
       this.redirectByRole();
       return;
     }
 
-    // Récupérer l'event capturé dans index.html
-    const win = window as any;
-    if (win.__pwaInstallEvent) {
-      this.deferredPrompt = win.__pwaInstallEvent;
+    if (this.pwaWindow.__pwaInstallEvent) {
+      this.deferredPrompt = this.pwaWindow.__pwaInstallEvent;
       this.canInstall = true;
     }
 
     this.readyListener = () => {
-      const w = window as any;
-      if (w.__pwaInstallEvent) {
-        this.deferredPrompt = w.__pwaInstallEvent;
+      if (this.pwaWindow.__pwaInstallEvent) {
+        this.deferredPrompt = this.pwaWindow.__pwaInstallEvent;
         this.canInstall = true;
       }
     };
@@ -49,18 +56,18 @@ export class LandingComponent implements OnInit, OnDestroy {
 
   private redirectByRole(): void {
     const roles = this.authService.getRoles();
-    if (roles.includes('ROLE_ADMIN'))    { this.router.navigate(['/dashboard']); return; }
-    if (roles.includes('ROLE_MANAGER'))  { this.router.navigate(['/manager/dashboard']); return; }
-    if (roles.includes('ROLE_AGENT'))    { this.router.navigate(['/agent/dashboard']); return; }
-    if (roles.includes('ROLE_AUDITOR'))  { this.router.navigate(['/auditor/dashboard']); return; }
+    if (roles.includes('ROLE_ADMIN'))   { this.router.navigate(['/dashboard']); return; }
+    if (roles.includes('ROLE_MANAGER')) { this.router.navigate(['/manager/dashboard']); return; }
+    if (roles.includes('ROLE_AGENT'))   { this.router.navigate(['/agent/dashboard']); return; }
+    if (roles.includes('ROLE_AUDITOR')) { this.router.navigate(['/auditor/dashboard']); return; }
     this.router.navigate(['/unauthorized']);
   }
 
   @HostListener('window:beforeinstallprompt', ['$event'])
-  onBeforeInstallPrompt(event: any): void {
+  onBeforeInstallPrompt(event: BeforeInstallPromptEvent): void {
     event.preventDefault();
     this.deferredPrompt = event;
-    (window as any).__pwaInstallEvent = event;
+    this.pwaWindow.__pwaInstallEvent = event;
     this.canInstall = true;
   }
 
@@ -69,7 +76,7 @@ export class LandingComponent implements OnInit, OnDestroy {
     this.canInstall = false;
     this.installDone = true;
     this.deferredPrompt = null;
-    (window as any).__pwaInstallEvent = null;
+    this.pwaWindow.__pwaInstallEvent = undefined;
   }
 
   async install(): Promise<void> {
@@ -81,11 +88,11 @@ export class LandingComponent implements OnInit, OnDestroy {
       this.canInstall = false;
     }
     this.deferredPrompt = null;
-    (window as any).__pwaInstallEvent = null;
+    this.pwaWindow.__pwaInstallEvent = undefined;
   }
 
   goToLogin(): void {
     const redirectUri = encodeURIComponent(window.location.origin);
-    window.location.href = `https://keycloak-production-ee96.up.railway.app/realms/bct-realm/protocol/openid-connect/auth?client_id=bct-frontend&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
+    window.location.href = `http://localhost:8081/realms/bct-realm/protocol/openid-connect/auth?client_id=bct-frontend&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
   }
 }

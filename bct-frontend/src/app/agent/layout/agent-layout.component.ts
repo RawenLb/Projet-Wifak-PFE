@@ -47,9 +47,10 @@ export class AgentLayoutComponent implements OnInit, OnDestroy {
 
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe((event: any) => {
-        this.currentRoute = event.url;
-        this.updatePageInfo(event.url);
+      .subscribe((event) => {
+        const navEnd = event as NavigationEnd;
+        this.currentRoute = navEnd.url;
+        this.updatePageInfo(navEnd.url);
       });
 
     this.currentRoute = this.router.url;
