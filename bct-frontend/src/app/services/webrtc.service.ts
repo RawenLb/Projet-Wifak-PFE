@@ -343,8 +343,9 @@ export class WebRtcService implements OnDestroy {
           ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
           : false
       });
-    } catch (err: any) {
-      if (callType === 'VIDEO' && (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError')) {
+    } catch (err: unknown) {
+      const error = err as { name?: string };
+      if (callType === 'VIDEO' && (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError')) {
         console.warn('[WebRTC] Caméra non trouvée, repli sur audio uniquement');
         return navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       }

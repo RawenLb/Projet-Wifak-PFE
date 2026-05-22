@@ -166,7 +166,7 @@ export class ChatService implements OnDestroy {
       ).subscribe({
         next: res => {
           const token = keycloak.tokenParsed;
-          const msgType = (res.type as any) || 'FILE';
+          const msgType = (res.type as ChatMessage['type']) || 'FILE';
 
           this.ws.sendMessage({
             senderId:    token?.['sub']                ?? '',
@@ -284,14 +284,14 @@ export class ChatService implements OnDestroy {
     }
   }
 
-  private onHistory(msgs: any[]): void {
+  private onHistory(msgs: Record<string, unknown>[]): void {
     const conv = this.activeConv$.value;
     if (!conv) return;
     const normalized = msgs.map(m => this.normalizeMessage(m));
     this.activeConv$.next({ ...conv, messages: normalized });
   }
 
-  private onMsgEdit(updated: any): void {
+  private onMsgEdit(updated: Record<string, unknown>): void {
     const conv = this.activeConv$.value;
     if (!conv) return;
     const normalized = this.normalizeMessage(updated);
@@ -338,11 +338,11 @@ export class ChatService implements OnDestroy {
 
   // ── Normalization ─────────────────────────────────────────────
 
-  private normalizeMessage(raw: any): ChatMessage {
-    let type = ((raw.type ?? 'TEXT') as string).toUpperCase();
+  private normalizeMessage(raw: Record<string, unknown>): ChatMessage {
+    let type = ((raw['type'] ?? 'TEXT') as string).toUpperCase();
 
     if (type === 'FILE') {
-      const name = (raw.fileName ?? raw.content ?? raw.fileUrl ?? '') as string;
+      const name = (raw['fileName'] ?? raw['content'] ?? raw['fileUrl'] ?? '') as string;
       if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(name)) {
         type = 'IMAGE';
       }
@@ -353,30 +353,29 @@ export class ChatService implements OnDestroy {
     }
 
     return {
-      id:          String(raw.id ?? `srv-${Date.now()}`),
-      senderId:    raw.senderId    ?? '',
-      senderName:  raw.senderName  ?? '',
-      senderRole:  raw.senderRole  ?? '',
-      recipientId: raw.recipientId ?? '',
-      content:     raw.content     ?? '',
-      timestamp:   this.normalizeDate(raw.timestamp ?? raw.sentAt),
-      read:        raw.read ?? raw.isRead ?? false,
-      type:        type as any,
-      fileName:    raw.fileName   ?? undefined,
-      fileUrl:     raw.fileUrl    ?? undefined,
-      editedAt:    raw.editedAt   ? this.normalizeDate(raw.editedAt) : undefined,
-      isDeleted:   raw.isDeleted  ?? false,
-      isForwarded: raw.isForwarded ?? false
+      id:          String(raw['id'] ?? `srv-${Date.now()}`),
+      senderId:    (raw['senderId']    as string) ?? '',
+      senderName:  (raw['senderName']  as string) ?? '',
+      senderRole:  (raw['senderRole']  as string) ?? '',
+      recipientId: (raw['recipientId'] as string) ?? '',
+      content:     (raw['content']     as string) ?? '',
+      timestamp:   this.normalizeDate(raw['timestamp'] ?? raw['sentAt']),
+      read:        (raw['read'] ?? raw['isRead'] ?? false) as boolean,
+      type:        type as ChatMessage['type'],
+      fileName:    (raw['fileName']   as string) ?? undefined,
+      fileUrl:     (raw['fileUrl']    as string) ?? undefined,
+      editedAt:    raw['editedAt']   ? this.normalizeDate(raw['editedAt']) : undefined,
+      isDeleted:   (raw['isDeleted']  as boolean) ?? false,
+      isForwarded: (raw['isForwarded'] as boolean) ?? false
     };
   }
 
-  /** Handles ISO string, Java LocalDateTime array [y,mo,d,h,min,s,ns], or timestamp number */
-  private normalizeDate(val: any): string {
+  private normalizeDate(val: unknown): string {
     if (!val) return new Date().toISOString();
     if (typeof val === 'string') return val;
     if (typeof val === 'number') return new Date(val).toISOString();
     if (Array.isArray(val)) {
-      const [y, mo, d, h = 0, min = 0, s = 0] = val;
+      const [y, mo, d, h = 0, min = 0, s = 0] = val as number[];
       return new Date(y, mo - 1, d, h, min, s).toISOString();
     }
     return new Date().toISOString();

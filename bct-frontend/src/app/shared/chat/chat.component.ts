@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ChatService, ChatUser, Conversation } from '../../services/chat.service';
-import { ChatWebSocketService } from '../../services/chat-websocket.service';
+import { ChatWebSocketService, ChatMessage } from '../../services/chat-websocket.service';
 import { WebRtcService } from '../../services/webrtc.service';
 import keycloak from '../../services/keycloak.service';
 
@@ -298,12 +298,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // ── Message context menu ──────────────────────────────────────
 
-  contextMenu: { x: number; y: number; msg: any } | null = null;
+  contextMenu: { x: number; y: number; msg: ChatMessage } | null = null;
   editingMsgId: string | null = null;
   editingContent = '';
-  forwardingMsg: any | null = null;
+  forwardingMsg: ChatMessage | null = null;
 
-  openContextMenu(event: MouseEvent, msg: any): void {
+  openContextMenu(event: MouseEvent, msg: ChatMessage): void {
     event.preventDefault();
     event.stopPropagation();
     this.contextMenu = { x: event.clientX, y: event.clientY, msg };
@@ -313,7 +313,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.contextMenu = null;
   }
 
-  startEdit(msg: any): void {
+  startEdit(msg: ChatMessage): void {
     this.editingMsgId   = msg.id;
     this.editingContent = msg.content;
     this.contextMenu    = null;
@@ -323,7 +323,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     }, 50);
   }
 
-  confirmEdit(msg: any): void {
+  confirmEdit(msg: ChatMessage): void {
     if (!this.editingContent.trim() || this.editingContent === msg.content) {
       this.cancelEdit();
       return;
@@ -338,19 +338,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.editingContent = '';
   }
 
-  confirmDelete(msg: any): void {
+  confirmDelete(msg: ChatMessage): void {
     this.contextMenu = null;
     if (confirm('Supprimer ce message ?')) {
       this.chatSvc.deleteMessage(msg.id);
     }
   }
 
-  startForward(msg: any): void {
+  startForward(msg: ChatMessage): void {
     this.forwardingMsg = msg;
     this.contextMenu   = null;
   }
 
-  confirmForward(targetContact: any): void {
+  confirmForward(targetContact: ChatUser): void {
     if (!this.forwardingMsg) return;
     this.chatSvc.forwardMessage(this.forwardingMsg.id, targetContact.id);
     this.forwardingMsg = null;
@@ -360,7 +360,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.forwardingMsg = null;
   }
 
-  canEditOrDelete(msg: any): boolean {
+  canEditOrDelete(msg: ChatMessage): boolean {
     return msg.senderId === this.myId && !msg.isDeleted;
   }
 
