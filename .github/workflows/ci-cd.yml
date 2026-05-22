@@ -321,4 +321,4 @@ jobs:
             -Dsonar.tests=Authentification/src/test/java,workflow-declaration/src/test/java
             -Dsonar.java.binaries=Authentification/target/classes,workflow-declaration/target/classes
             -Dsonar.coverage.jacoco.xmlReportPaths=Authentification/target/site/jacoco/jacoco.xml,workflow-declaration/target/site/jacoco/jacoco.xml
-            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/.angular/**,**/target/**
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/.angular/**,**/target/**,**/assets/css/**,**/assets/js/**,**/assets/scss/**
