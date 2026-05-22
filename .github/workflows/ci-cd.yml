@@ -300,7 +300,7 @@ jobs:
         working-directory: ./workflow-declaration
         run: |
           chmod +x mvnw
-          ./mvnw test jacoco:report "-Dtest=DeclarationServiceTest,ValidationServiceTest,AuditServiceTest,FileStorageServiceTest" "-DfailIfNoTests=false" "-Dspring.profiles.active=test" -B
+          ./mvnw test jacoco:report "-Dtest=DeclarationServiceTest,ValidationServiceTest,AuditServiceTest,FileStorageServiceTest,DeclarationTypeServiceTest,XsdAnalyzerServiceTest" "-DfailIfNoTests=false" "-Dspring.profiles.active=test" -B
         continue-on-error: true
 
       - name: Ensure target/classes exist
