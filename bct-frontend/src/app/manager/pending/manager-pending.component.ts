@@ -34,7 +34,7 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
   loading = false;
   actionEnCours: Record<number, boolean> = {};
   lastRefreshed: Date | null = null;
-  autoRefreshInterval: ReturnType<typeof setInterval> | null = null;
+  autoRefreshInterval: ReturnType<typeof setInterval> | undefined = undefined;
 
   // ── Filtres & tri ──────────────────────────────────────
   searchQuery      = '';

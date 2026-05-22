@@ -56,14 +56,15 @@ export interface IceSignal {
 
 export interface WsEnvelope {
   type:    string;
-  payload: unknown;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload: any; // Payload WebSocket — type résolu dynamiquement selon le type de message
 }
 
 @Injectable({ providedIn: 'root' })
 export class ChatWebSocketService implements OnDestroy {
 
   private ws:             WebSocket | null = null;
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | undefined = undefined;
   private reconnectDelay  = 3000;
   private maxReconnects   = 20;
   private reconnectCount  = 0;
