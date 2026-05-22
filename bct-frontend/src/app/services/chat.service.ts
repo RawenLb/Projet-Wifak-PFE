@@ -284,17 +284,17 @@ export class ChatService implements OnDestroy {
     }
   }
 
-  private onHistory(msgs: Record<string, unknown>[]): void {
+  private onHistory(msgs: unknown[]): void {
     const conv = this.activeConv$.value;
     if (!conv) return;
-    const normalized = msgs.map(m => this.normalizeMessage(m));
+    const normalized = msgs.map(m => this.normalizeMessage(m as Record<string, unknown>));
     this.activeConv$.next({ ...conv, messages: normalized });
   }
 
-  private onMsgEdit(updated: Record<string, unknown>): void {
+  private onMsgEdit(updated: unknown): void {
     const conv = this.activeConv$.value;
     if (!conv) return;
-    const normalized = this.normalizeMessage(updated);
+    const normalized = this.normalizeMessage(updated as Record<string, unknown>);
     const msgs = conv.messages.map(m => m.id === normalized.id ? normalized : m);
     this.activeConv$.next({ ...conv, messages: msgs });
   }

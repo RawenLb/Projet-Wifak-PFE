@@ -56,7 +56,7 @@ export interface IceSignal {
 
 export interface WsEnvelope {
   type:    string;
-  payload: Record<string, unknown>;
+  payload: unknown;
 }
 
 @Injectable({ providedIn: 'root' })
