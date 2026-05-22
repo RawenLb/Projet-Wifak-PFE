@@ -326,7 +326,7 @@ public class DeclarationController {
         if (d.getContenuFichier() == null || d.getContenuFichier().isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        byte[] fileBytes = d.getContenuFichier().getBytes();
+        byte[] fileBytes = d.getContenuFichier().getBytes(java.nio.charset.StandardCharsets.UTF_8);
         String filename  = d.getNomFichier() != null ? d.getNomFichier() : "declaration_" + id;
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

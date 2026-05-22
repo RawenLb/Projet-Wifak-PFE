@@ -394,7 +394,7 @@ public class KeycloakAdminService {
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
         dto.setEnabled(user.isEnabled());
-        dto.setEmailVerified(user.isEmailVerified());
+        dto.setEmailVerified(Boolean.TRUE.equals(user.isEmailVerified()));
         dto.setCreatedTimestamp(user.getCreatedTimestamp());
 
         try {

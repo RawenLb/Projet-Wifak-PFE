@@ -217,11 +217,14 @@ public class ValidationService {
     public Map<String, Object> compareWithPrevious(Long declarationId, Long previousDeclarationId) {
         log.info("📈 compareWithPrevious — ID: {} vs {}", declarationId, previousDeclarationId);
         Declaration curr = declarationService.findById(declarationId);
-        Declaration prev = declarationService.findById(previousDeclarationId);
-        return aiDeclarationService.compareWithPrevious(
-                curr.getContenuFichier(),
-                prev != null ? prev.getContenuFichier() : null
-        );
+        String prevContent = null;
+        try {
+            Declaration prev = declarationService.findById(previousDeclarationId);
+            prevContent = prev.getContenuFichier();
+        } catch (Exception e) {
+            log.warn("⚠️ Déclaration précédente {} introuvable: {}", previousDeclarationId, e.getMessage());
+        }
+        return aiDeclarationService.compareWithPrevious(curr.getContenuFichier(), prevContent);
     }
 
     // ══════════════════════════════════════════════════════════════

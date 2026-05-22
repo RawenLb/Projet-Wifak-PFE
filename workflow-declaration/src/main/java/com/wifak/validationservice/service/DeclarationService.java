@@ -117,7 +117,8 @@ public class DeclarationService {
     }
 
     private String buildFilename(String code, String periode, String extension) {
-        return String.format("declaration_%s_%s.%s", code, periode.replace("-", ""), extension);
+        String safePeriode = (periode != null) ? periode.replace("-", "") : "unknown";
+        return String.format("declaration_%s_%s.%s", code, safePeriode, extension);
     }
 
     private void validateType(DeclarationType type) {

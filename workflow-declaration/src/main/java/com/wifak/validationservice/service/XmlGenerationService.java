@@ -224,6 +224,11 @@ public class XmlGenerationService {
     ) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            // ✅ Fix XXE — désactiver les entités externes (CWE-611)
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setExpandEntityReferences(false);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.newDocument();
 

@@ -41,7 +41,8 @@ public class FileStorageService {
             String originalFilename = file.getOriginalFilename();
             if (originalFilename == null || originalFilename.contains(".."))
                 throw new RuntimeException("Invalid filename: " + originalFilename);
-            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            int dotIndex = originalFilename.lastIndexOf(".");
+            String extension = dotIndex >= 0 ? originalFilename.substring(dotIndex) : "";
             String uniqueFilename = prefix + "_" + UUID.randomUUID() + extension;
             Files.copy(file.getInputStream(), fileStorageLocation.resolve(uniqueFilename),
                     StandardCopyOption.REPLACE_EXISTING);

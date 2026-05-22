@@ -45,29 +45,33 @@ public class PdfGeneratorService {
         Document document = new Document(PageSize.A4);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        PdfWriter.getInstance(document, baos);
-        document.open();
+        try {
+            PdfWriter.getInstance(document, baos);
+            document.open();
 
-        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, BaseColor.BLACK);
-        Paragraph titleParagraph = new Paragraph(title, titleFont);
-        titleParagraph.setAlignment(Element.ALIGN_CENTER);
-        titleParagraph.setSpacingAfter(20);
-        document.add(titleParagraph);
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, BaseColor.BLACK);
+            Paragraph titleParagraph = new Paragraph(title, titleFont);
+            titleParagraph.setAlignment(Element.ALIGN_CENTER);
+            titleParagraph.setSpacingAfter(20);
+            document.add(titleParagraph);
 
-        Font sectionTitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, BaseColor.BLUE);
-        Font contentFont = FontFactory.getFont(FontFactory.COURIER, 10, BaseColor.DARK_GRAY);
+            Font sectionTitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, BaseColor.BLUE);
+            Font contentFont = FontFactory.getFont(FontFactory.COURIER, 10, BaseColor.DARK_GRAY);
 
-        for (Map.Entry<String, String> section : sections.entrySet()) {
-            Paragraph sectionTitle = new Paragraph(section.getKey(), sectionTitleFont);
-            sectionTitle.setSpacingBefore(15);
-            sectionTitle.setSpacingAfter(10);
-            document.add(sectionTitle);
-            Paragraph sectionContent = new Paragraph(section.getValue(), contentFont);
-            sectionContent.setSpacingAfter(10);
-            document.add(sectionContent);
+            for (Map.Entry<String, String> section : sections.entrySet()) {
+                Paragraph sectionTitle = new Paragraph(section.getKey(), sectionTitleFont);
+                sectionTitle.setSpacingBefore(15);
+                sectionTitle.setSpacingAfter(10);
+                document.add(sectionTitle);
+                Paragraph sectionContent = new Paragraph(section.getValue(), contentFont);
+                sectionContent.setSpacingAfter(10);
+                document.add(sectionContent);
+            }
+            return baos.toByteArray();
+        } finally {
+            if (document.isOpen()) {
+                document.close();
+            }
         }
-
-        document.close();
-        return baos.toByteArray();
     }
 }
