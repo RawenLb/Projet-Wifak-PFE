@@ -8,6 +8,11 @@ import com.wifak.validationservice.repositories.DeclarationTypeRepository;
 import com.wifak.validationservice.service.DeclarationService;
 import com.wifak.validationservice.service.XsdAnalyzerService;
 import com.wifak.validationservice.service.XmlGenerationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -26,6 +31,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/declarations")
 @CrossOrigin(origins = "http://localhost:4200")
+@Tag(name = "Déclarations BCT", description = "Gestion du cycle de vie des déclarations réglementaires BCT")
 public class DeclarationController {
 
     private static final Logger log = LoggerFactory.getLogger(DeclarationController.class);
