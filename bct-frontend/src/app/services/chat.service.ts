@@ -166,7 +166,7 @@ export class ChatService implements OnDestroy {
       ).subscribe({
         next: res => {
           const token = keycloak.tokenParsed;
-          const msgType = (res.type as ChatMessage['type']) || 'FILE';
+          const msgType = (res.type as any) || 'FILE';
 
           this.ws.sendMessage({
             senderId:    token?.['sub']                ?? '',
@@ -284,20 +284,22 @@ export class ChatService implements OnDestroy {
     }
   }
 
-  private onHistory(msgs: unknown[]): void {
+  private onHistory(msgs: any[]): void {
     const conv = this.activeConv$.value;
     if (!conv) return;
-    const normalized = msgs.map(m => this.normalizeMessage(m as Record<string, unknown>));
+    const normalized = msgs.map(m => this.normalizeMessage(m));
     this.activeConv$.next({ ...conv, messages: normalized });
   }
 
-  private onMsgEdit(updated: unknown): void {
+  private onMsgEdit(updated: any): void {
     const conv = this.activeConv$.value;
     if (!conv) return;
-    const normalized = this.normalizeMessage(updated as Record<string, unknown>);
+    const normalized = this.normalizeMessage(updated);
     const msgs = conv.messages.map(m => m.id === normalized.id ? normalized : m);
     this.activeConv$.next({ ...conv, messages: msgs });
-  }  private onMsgDelete(ev: { messageId: string }): void {
+  }
+
+  private onMsgDelete(ev: { messageId: string }): void {
     const conv = this.activeConv$.value;
     if (!conv) return;
     const msgs = conv.messages.map(m =>
@@ -336,12 +338,11 @@ export class ChatService implements OnDestroy {
 
   // ── Normalization ─────────────────────────────────────────────
 
-  private normalizeMessage(raw: Record<string, unknown> | ChatMessage): ChatMessage {
-    const r = raw as Record<string, unknown>;
-    let type = ((r['type'] ?? 'TEXT') as string).toUpperCase();
+  private normalizeMessage(raw: any): ChatMessage {
+    let type = ((raw.type ?? 'TEXT') as string).toUpperCase();
 
     if (type === 'FILE') {
-      const name = (r['fileName'] ?? r['content'] ?? r['fileUrl'] ?? '') as string;
+      const name = (raw.fileName ?? raw.content ?? raw.fileUrl ?? '') as string;
       if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(name)) {
         type = 'IMAGE';
       }
@@ -352,29 +353,30 @@ export class ChatService implements OnDestroy {
     }
 
     return {
-      id:          String(r['id'] ?? `srv-${Date.now()}`),
-      senderId:    (r['senderId']    as string) ?? '',
-      senderName:  (r['senderName']  as string) ?? '',
-      senderRole:  (r['senderRole']  as string) ?? '',
-      recipientId: (r['recipientId'] as string) ?? '',
-      content:     (r['content']     as string) ?? '',
-      timestamp:   this.normalizeDate(r['timestamp'] ?? r['sentAt']),
-      read:        (r['read'] ?? r['isRead'] ?? false) as boolean,
-      type:        type as ChatMessage['type'],
-      fileName:    (r['fileName']   as string) ?? undefined,
-      fileUrl:     (r['fileUrl']    as string) ?? undefined,
-      editedAt:    r['editedAt']   ? this.normalizeDate(r['editedAt']) : undefined,
-      isDeleted:   (r['isDeleted']  as boolean) ?? false,
-      isForwarded: (r['isForwarded'] as boolean) ?? false
+      id:          String(raw.id ?? `srv-${Date.now()}`),
+      senderId:    raw.senderId    ?? '',
+      senderName:  raw.senderName  ?? '',
+      senderRole:  raw.senderRole  ?? '',
+      recipientId: raw.recipientId ?? '',
+      content:     raw.content     ?? '',
+      timestamp:   this.normalizeDate(raw.timestamp ?? raw.sentAt),
+      read:        raw.read ?? raw.isRead ?? false,
+      type:        type as any,
+      fileName:    raw.fileName   ?? undefined,
+      fileUrl:     raw.fileUrl    ?? undefined,
+      editedAt:    raw.editedAt   ? this.normalizeDate(raw.editedAt) : undefined,
+      isDeleted:   raw.isDeleted  ?? false,
+      isForwarded: raw.isForwarded ?? false
     };
   }
 
-  private normalizeDate(val: unknown): string {
+  /** Handles ISO string, Java LocalDateTime array [y,mo,d,h,min,s,ns], or timestamp number */
+  private normalizeDate(val: any): string {
     if (!val) return new Date().toISOString();
     if (typeof val === 'string') return val;
     if (typeof val === 'number') return new Date(val).toISOString();
     if (Array.isArray(val)) {
-      const [y, mo, d, h = 0, min = 0, s = 0] = val as number[];
+      const [y, mo, d, h = 0, min = 0, s = 0] = val;
       return new Date(y, mo - 1, d, h, min, s).toISOString();
     }
     return new Date().toISOString();

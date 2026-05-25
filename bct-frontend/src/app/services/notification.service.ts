@@ -68,7 +68,7 @@ export class NotificationService {
 
           // ── 2. ÉCHÉANCES PROCHES (≤ 2 jours) ────────────────
           if (!['ENVOYEE', 'VALIDEE'].includes(d.statut) && d.dateFin) {
-            const fin = new Date(d.dateFin as string);
+            const fin = new Date(d.dateFin as any);
             const daysLeft = Math.ceil((fin.getTime() - today.getTime()) / 86400000);
             if (daysLeft >= 0 && daysLeft <= 2) {
               notifs.push({

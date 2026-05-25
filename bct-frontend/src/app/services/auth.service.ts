@@ -37,7 +37,7 @@ export class AuthService {
   // ✅ FIX : tokenParsed.realm_access.roles (snake_case) est toujours disponible
   //    keycloak.realmAccess (camelCase, API JS) peut être undefined au runtime
   getRoles(): string[] {
-    const token = keycloak.tokenParsed as { realm_access?: { roles?: string[] } };
+    const token = keycloak.tokenParsed as any;
     return token?.realm_access?.roles ?? [];
   }
 
