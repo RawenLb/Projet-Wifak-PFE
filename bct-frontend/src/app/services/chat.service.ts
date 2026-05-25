@@ -297,9 +297,7 @@ export class ChatService implements OnDestroy {
     const normalized = this.normalizeMessage(updated as Record<string, unknown>);
     const msgs = conv.messages.map(m => m.id === normalized.id ? normalized : m);
     this.activeConv$.next({ ...conv, messages: msgs });
-  }
-
-  private onMsgDelete(ev: { messageId: string }): void {
+  }  private onMsgDelete(ev: { messageId: string }): void {
     const conv = this.activeConv$.value;
     if (!conv) return;
     const msgs = conv.messages.map(m =>
@@ -338,11 +336,12 @@ export class ChatService implements OnDestroy {
 
   // ── Normalization ─────────────────────────────────────────────
 
-  private normalizeMessage(raw: Record<string, unknown>): ChatMessage {
-    let type = ((raw['type'] ?? 'TEXT') as string).toUpperCase();
+  private normalizeMessage(raw: Record<string, unknown> | ChatMessage): ChatMessage {
+    const r = raw as Record<string, unknown>;
+    let type = ((r['type'] ?? 'TEXT') as string).toUpperCase();
 
     if (type === 'FILE') {
-      const name = (raw['fileName'] ?? raw['content'] ?? raw['fileUrl'] ?? '') as string;
+      const name = (r['fileName'] ?? r['content'] ?? r['fileUrl'] ?? '') as string;
       if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(name)) {
         type = 'IMAGE';
       }
@@ -353,20 +352,20 @@ export class ChatService implements OnDestroy {
     }
 
     return {
-      id:          String(raw['id'] ?? `srv-${Date.now()}`),
-      senderId:    (raw['senderId']    as string) ?? '',
-      senderName:  (raw['senderName']  as string) ?? '',
-      senderRole:  (raw['senderRole']  as string) ?? '',
-      recipientId: (raw['recipientId'] as string) ?? '',
-      content:     (raw['content']     as string) ?? '',
-      timestamp:   this.normalizeDate(raw['timestamp'] ?? raw['sentAt']),
-      read:        (raw['read'] ?? raw['isRead'] ?? false) as boolean,
+      id:          String(r['id'] ?? `srv-${Date.now()}`),
+      senderId:    (r['senderId']    as string) ?? '',
+      senderName:  (r['senderName']  as string) ?? '',
+      senderRole:  (r['senderRole']  as string) ?? '',
+      recipientId: (r['recipientId'] as string) ?? '',
+      content:     (r['content']     as string) ?? '',
+      timestamp:   this.normalizeDate(r['timestamp'] ?? r['sentAt']),
+      read:        (r['read'] ?? r['isRead'] ?? false) as boolean,
       type:        type as ChatMessage['type'],
-      fileName:    (raw['fileName']   as string) ?? undefined,
-      fileUrl:     (raw['fileUrl']    as string) ?? undefined,
-      editedAt:    raw['editedAt']   ? this.normalizeDate(raw['editedAt']) : undefined,
-      isDeleted:   (raw['isDeleted']  as boolean) ?? false,
-      isForwarded: (raw['isForwarded'] as boolean) ?? false
+      fileName:    (r['fileName']   as string) ?? undefined,
+      fileUrl:     (r['fileUrl']    as string) ?? undefined,
+      editedAt:    r['editedAt']   ? this.normalizeDate(r['editedAt']) : undefined,
+      isDeleted:   (r['isDeleted']  as boolean) ?? false,
+      isForwarded: (r['isForwarded'] as boolean) ?? false
     };
   }
 
