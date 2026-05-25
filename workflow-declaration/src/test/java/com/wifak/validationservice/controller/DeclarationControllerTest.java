@@ -53,6 +53,8 @@ class DeclarationControllerTest {
         type.setFormat(DeclarationType.DeclarationFormat.XML);
         type.setFrequence(DeclarationType.DeclarationFrequence.MENSUELLE);
         type.setActif(true);
+        type.setXsdContent("<xs:schema/>");
+        type.setSqlQuery("SELECT * FROM test");
 
         declaration = new Declaration();
         declaration.setId(1L);
@@ -202,5 +204,318 @@ class DeclarationControllerTest {
 
         mockMvc.perform(get("/api/declarations/1/download"))
             .andExpect(status().isNotFound());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // PUT /api/declarations/{id}
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("PUT /{id} — met à jour une déclaration → 200")
+    void update_ok() throws Exception {
+        when(declarationService.updateDeclaration(eq(1L), any())).thenReturn(declaration);
+
+        GenerateDeclarationRequest req = new GenerateDeclarationRequest();
+        req.setDeclarationTypeId(1L);
+        req.setPeriode("2025-02");
+        req.setDateDebut(java.time.LocalDate.of(2025, 2, 1));
+        req.setDateFin(java.time.LocalDate.of(2025, 2, 28));
+
+        mockMvc.perform(put("/api/declarations/1")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(1));
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // PATCH /api/declarations/{id}/statut
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("PATCH /{id}/statut — met à jour le statut → 200")
+    void updateStatut_ok() throws Exception {
+        declaration.setStatut(Declaration.DeclarationStatut.EN_VALIDATION);
+        when(declarationService.updateStatut(eq(1L), eq("EN_VALIDATION"), any(), any()))
+            .thenReturn(declaration);
+
+        mockMvc.perform(patch("/api/declarations/1/statut")
+                .with(csrf())
+                .param("statut", "EN_VALIDATION"))
+            .andExpect(status().isOk());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // PATCH /api/declarations/{id}/content
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("PATCH /{id}/content — GENEREE avec contenu valide → 200")
+    void patchContent_ok() throws Exception {
+        when(declarationService.findById(1L)).thenReturn(declaration);
+        when(declarationService.patchContent(eq(1L), anyString())).thenReturn(declaration);
+
+        mockMvc.perform(patch("/api/declarations/1/content")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"xmlContent\": \"<xml>corrected</xml>\"}"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("PATCH /{id}/content — contenu vide → 400")
+    void patchContent_videReturns400() throws Exception {
+        when(declarationService.findById(1L)).thenReturn(declaration);
+
+        mockMvc.perform(patch("/api/declarations/1/content")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"xmlContent\": \"\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("PATCH /{id}/content — statut EN_VALIDATION → 400")
+    void patchContent_enValidation_returns400() throws Exception {
+        declaration.setStatut(Declaration.DeclarationStatut.EN_VALIDATION);
+        when(declarationService.findById(1L)).thenReturn(declaration);
+
+        mockMvc.perform(patch("/api/declarations/1/content")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"xmlContent\": \"<xml>test</xml>\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // POST /api/declarations/analyze-mapping
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /analyze-mapping — XML avec XSD et SQL → 200 avec analyse")
+    void analyzeMapping_xml_ok() throws Exception {
+        when(typeRepository.findById(1L)).thenReturn(java.util.Optional.of(type));
+        when(xmlGenerationService.extractColumnsFromSql(anyString(), any(), any()))
+            .thenReturn(java.util.List.of("col1", "col2"));
+
+        XsdAnalyzerService.MappingAnalysisResult analysis = mock(XsdAnalyzerService.MappingAnalysisResult.class);
+        when(analysis.getXsdFields()).thenReturn(java.util.List.of());
+        when(analysis.getSqlColumns()).thenReturn(java.util.List.of("col1", "col2"));
+        when(analysis.getAutoMapped()).thenReturn(java.util.Map.of());
+        when(analysis.getUnmappedXsdFields()).thenReturn(java.util.List.of());
+        when(analysis.getUnmappedSqlColumns()).thenReturn(java.util.List.of());
+        when(analysis.getCompatibilityScore()).thenReturn(80);
+        when(analysis.getSummary()).thenReturn("OK");
+        when(xsdAnalyzerService.analyzeCompatibility(anyString(), anyList())).thenReturn(analysis);
+
+        mockMvc.perform(post("/api/declarations/analyze-mapping")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"declarationTypeId\": 1, \"dateDebut\": \"2025-01-01\", \"dateFin\": \"2025-01-31\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.applicable").value(true));
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /analyze-mapping — format CSV → applicable=false")
+    void analyzeMapping_csv_notApplicable() throws Exception {
+        type.setFormat(DeclarationType.DeclarationFormat.CSV);
+        when(typeRepository.findById(1L)).thenReturn(java.util.Optional.of(type));
+
+        mockMvc.perform(post("/api/declarations/analyze-mapping")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"declarationTypeId\": 1}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.applicable").value(false));
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /analyze-mapping — XSD absent → 400")
+    void analyzeMapping_xsdAbsent_returns400() throws Exception {
+        type.setXsdContent(null);
+        when(typeRepository.findById(1L)).thenReturn(java.util.Optional.of(type));
+
+        mockMvc.perform(post("/api/declarations/analyze-mapping")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"declarationTypeId\": 1}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /analyze-mapping — SQL absent → 400")
+    void analyzeMapping_sqlAbsent_returns400() throws Exception {
+        type.setSqlQuery(null);
+        when(typeRepository.findById(1L)).thenReturn(java.util.Optional.of(type));
+
+        mockMvc.perform(post("/api/declarations/analyze-mapping")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"declarationTypeId\": 1}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // POST /api/declarations/generate-with-mapping
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /generate-with-mapping — mapping valide → 200")
+    void generateWithMapping_ok() throws Exception {
+        when(declarationService.generateAndSaveWithMapping(anyLong(), anyString(), any(), any(), anyList()))
+            .thenReturn(declaration);
+        doNothing().when(declarationService).notifyJiraTicketCreation(anyLong(), anyString());
+
+        String body = "{\"declarationTypeId\":1,\"periode\":\"2025-01\"," +
+            "\"dateDebut\":\"2025-01-01\",\"dateFin\":\"2025-01-31\"," +
+            "\"mappings\":[{\"xsdFieldName\":\"field1\",\"sqlColumn\":\"col1\",\"required\":false}]}";
+
+        mockMvc.perform(post("/api/declarations/generate-with-mapping")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /generate-with-mapping — mapping vide → 400")
+    void generateWithMapping_mappingVide_returns400() throws Exception {
+        String body = "{\"declarationTypeId\":1,\"periode\":\"2025-01\"," +
+            "\"dateDebut\":\"2025-01-01\",\"dateFin\":\"2025-01-31\",\"mappings\":[]}";
+
+        mockMvc.perform(post("/api/declarations/generate-with-mapping")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isBadRequest());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // Branches supplémentaires — DeclarationController
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /analyze-mapping — type introuvable → 500")
+    void analyzeMapping_typeIntrouvable_returns500() throws Exception {
+        when(typeRepository.findById(99L)).thenReturn(java.util.Optional.empty());
+
+        mockMvc.perform(post("/api/declarations/analyze-mapping")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"declarationTypeId\": 99}"))
+            .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /analyze-mapping — extractColumns échoue → continue avec liste vide")
+    void analyzeMapping_extractColumnsEchoue_continueAvecListeVide() throws Exception {
+        when(typeRepository.findById(1L)).thenReturn(java.util.Optional.of(type));
+        when(xmlGenerationService.extractColumnsFromSql(anyString(), any(), any()))
+            .thenThrow(new RuntimeException("SQL error"));
+
+        XsdAnalyzerService.MappingAnalysisResult analysis = mock(XsdAnalyzerService.MappingAnalysisResult.class);
+        when(analysis.getXsdFields()).thenReturn(java.util.List.of());
+        when(analysis.getSqlColumns()).thenReturn(java.util.List.of());
+        when(analysis.getAutoMapped()).thenReturn(java.util.Map.of());
+        when(analysis.getUnmappedXsdFields()).thenReturn(java.util.List.of());
+        when(analysis.getUnmappedSqlColumns()).thenReturn(java.util.List.of());
+        when(analysis.getCompatibilityScore()).thenReturn(0);
+        when(analysis.getSummary()).thenReturn("No columns");
+        when(xsdAnalyzerService.analyzeCompatibility(anyString(), anyList())).thenReturn(analysis);
+
+        mockMvc.perform(post("/api/declarations/analyze-mapping")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"declarationTypeId\": 1}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.applicable").value(true));
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /generate-with-mapping — champ obligatoire non mappé → 400")
+    void generateWithMapping_champObligatoireNonMappe_returns400() throws Exception {
+        String body = "{\"declarationTypeId\":1,\"periode\":\"2025-01\"," +
+            "\"dateDebut\":\"2025-01-01\",\"dateFin\":\"2025-01-31\"," +
+            "\"mappings\":[{\"xsdFieldName\":\"field1\",\"sqlColumn\":null,\"required\":true,\"source\":\"NONE\"}]}";
+
+        mockMvc.perform(post("/api/declarations/generate-with-mapping")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /generate-with-mapping — erreur service → 500")
+    void generateWithMapping_erreurService_returns500() throws Exception {
+        when(declarationService.generateAndSaveWithMapping(anyLong(), anyString(), any(), any(), anyList()))
+            .thenThrow(new RuntimeException("Generation failed"));
+
+        String body = "{\"declarationTypeId\":1,\"periode\":\"2025-01\"," +
+            "\"dateDebut\":\"2025-01-01\",\"dateFin\":\"2025-01-31\"," +
+            "\"mappings\":[{\"xsdFieldName\":\"field1\",\"sqlColumn\":\"col1\",\"required\":false,\"source\":\"SQL\"}]}";
+
+        mockMvc.perform(post("/api/declarations/generate-with-mapping")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("GET /{id}/download — fichier CSV → Content-Type text/csv")
+    void download_csv_contentType() throws Exception {
+        declaration.setNomFichier("declaration_DECL001_202501.csv");
+        when(declarationService.findById(1L)).thenReturn(declaration);
+
+        mockMvc.perform(get("/api/declarations/1/download"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Content-Type", "text/csv"));
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("GET /{id}/download — fichier TXT → Content-Type text/plain")
+    void download_txt_contentType() throws Exception {
+        declaration.setNomFichier("declaration_DECL001_202501.txt");
+        when(declarationService.findById(1L)).thenReturn(declaration);
+
+        mockMvc.perform(get("/api/declarations/1/download"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Content-Type", "text/plain"));
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("PATCH /{id}/content — erreur service → 500")
+    void patchContent_erreurService_returns500() throws Exception {
+        when(declarationService.findById(1L)).thenReturn(declaration);
+        when(declarationService.patchContent(eq(1L), anyString()))
+            .thenThrow(new RuntimeException("Patch failed"));
+
+        mockMvc.perform(patch("/api/declarations/1/content")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"xmlContent\": \"<xml>test</xml>\"}"))
+            .andExpect(status().isInternalServerError());
     }
 }

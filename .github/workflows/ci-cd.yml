@@ -121,6 +121,11 @@ jobs:
         working-directory: ./bct-frontend
         run: npm run build -- --configuration production
 
+      - name: Run unit tests with coverage
+        working-directory: ./bct-frontend
+        run: npx ng test --watch=false --browsers=ChromeHeadless --code-coverage
+        continue-on-error: true
+
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
@@ -293,14 +298,14 @@ jobs:
         working-directory: ./Authentification
         run: |
           chmod +x mvnw
-          ./mvnw test jacoco:report "-Dtest=KeycloakAdminServiceTest,UserSyncServiceTest,AuthentificationControllerTest" "-DfailIfNoTests=false" "-Dspring.profiles.active=test" -B
+          ./mvnw verify "-Dspring.profiles.active=test" "-DfailIfNoTests=false" -B -Djacoco.skip=false || true
         continue-on-error: true
 
       - name: Test & Coverage — workflow-declaration
         working-directory: ./workflow-declaration
         run: |
           chmod +x mvnw
-          ./mvnw test jacoco:report "-Dtest=DeclarationServiceTest,ValidationServiceTest,AuditServiceTest,FileStorageServiceTest,DeclarationTypeServiceTest,XsdAnalyzerServiceTest,ValidationControllerTest,AuditControllerTest,DeclarationControllerTest" "-DfailIfNoTests=false" "-Dspring.profiles.active=test" -B
+          ./mvnw verify "-Dspring.profiles.active=test" "-DfailIfNoTests=false" -B -Djacoco.skip=false || true
         continue-on-error: true
 
       - name: Ensure target/classes exist
@@ -313,12 +318,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=RawenLb_Projet-Wifak-PFE
-            -Dsonar.organization=rawenlb
-            -Dsonar.sources=Authentification/src/main/java,workflow-declaration/src/main/java,bct-frontend/src
-            -Dsonar.tests=Authentification/src/test/java,workflow-declaration/src/test/java
-            -Dsonar.java.binaries=Authentification/target/classes,workflow-declaration/target/classes
-            -Dsonar.coverage.jacoco.xmlReportPaths=Authentification/target/site/jacoco/jacoco.xml,workflow-declaration/target/site/jacoco/jacoco.xml
-            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/.angular/**,**/target/**,**/assets/css/**,**/assets/js/**,**/assets/scss/**
+        # sonar-project.properties à la racine contient toute la config

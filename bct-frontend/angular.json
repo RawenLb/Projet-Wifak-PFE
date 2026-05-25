@@ -103,7 +103,17 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "codeCoverage": true,
+            "codeCoverageExclude": [
+              "src/main.ts",
+              "src/environments/**",
+              "src/app/**/*.module.ts",
+              "src/app/**/*.routing.ts",
+              "src/app/**/*.routes.ts",
+              "src/app/app.config.ts",
+              "src/app/app.routes.ts"
+            ]
           }
         }
       }
