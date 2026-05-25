@@ -293,14 +293,14 @@ jobs:
         working-directory: ./Authentification
         run: |
           chmod +x mvnw
-          ./mvnw test jacoco:report "-Dtest=KeycloakAdminServiceTest,UserSyncServiceTest" "-DfailIfNoTests=false" "-Dspring.profiles.active=test" -B
+          ./mvnw test jacoco:report "-Dtest=KeycloakAdminServiceTest,UserSyncServiceTest,AuthentificationControllerTest" "-DfailIfNoTests=false" "-Dspring.profiles.active=test" -B
         continue-on-error: true
 
       - name: Test & Coverage — workflow-declaration
         working-directory: ./workflow-declaration
         run: |
           chmod +x mvnw
-          ./mvnw test jacoco:report "-Dtest=DeclarationServiceTest,ValidationServiceTest,AuditServiceTest,FileStorageServiceTest,DeclarationTypeServiceTest,XsdAnalyzerServiceTest" "-DfailIfNoTests=false" "-Dspring.profiles.active=test" -B
+          ./mvnw test jacoco:report "-Dtest=DeclarationServiceTest,ValidationServiceTest,AuditServiceTest,FileStorageServiceTest,DeclarationTypeServiceTest,XsdAnalyzerServiceTest,ValidationControllerTest,AuditControllerTest" "-DfailIfNoTests=false" "-Dspring.profiles.active=test" -B
         continue-on-error: true
 
       - name: Ensure target/classes exist
