@@ -56,18 +56,28 @@ import { AuditorSearchComponent }    from './auditor/search/auditor-search.compo
 import { AuditorExportComponent }    from './auditor/export/auditor-export.component';
 
 export function kcFactory() {
-  return () =>
-    keycloak.init({
-      onLoad: 'check-sso',
+  return () => {
+    // Si l'URL contient un code d'autorisation Keycloak, on doit le traiter
+    const hasCode = window.location.search.includes('code=') ||
+                    window.location.search.includes('session_state=');
+
+    return keycloak.init({
+      onLoad: hasCode ? 'login-required' : 'check-sso',
       checkLoginIframe: false,
       pkceMethod: 'S256',
       silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
-      silentCheckSsoFallback: false
+      silentCheckSsoFallback: false,
+      redirectUri: window.location.origin
     }).then((authenticated) => {
       (window as any).keycloak = keycloak;
+      // Si authentifié après callback, nettoyer l'URL
+      if (authenticated && hasCode) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }).catch(error => {
       console.error('Keycloak init failed:', error);
     });
+  };
 }
 
 @NgModule({

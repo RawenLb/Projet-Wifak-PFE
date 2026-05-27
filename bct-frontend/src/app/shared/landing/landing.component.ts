@@ -30,10 +30,17 @@ export class LandingComponent implements OnInit, OnDestroy {
   constructor(private router: Router, private authService: AuthService) {}
 
   ngOnInit(): void {
+    // Si déjà authentifié (session existante ou callback traité), rediriger
     if (this.authService.isLoggedIn()) {
       this.redirectByRole();
       return;
     }
+
+    // Attendre que Keycloak finisse son init (cas du callback code=...)
+    // keycloak.onAuthSuccess se déclenche quand le token est obtenu
+    keycloak.onAuthSuccess = () => {
+      this.redirectByRole();
+    };
 
     if (this.pwaWindow.__pwaInstallEvent) {
       this.deferredPrompt = this.pwaWindow.__pwaInstallEvent;
@@ -53,6 +60,8 @@ export class LandingComponent implements OnInit, OnDestroy {
     if (this.readyListener) {
       window.removeEventListener('pwa-install-ready', this.readyListener);
     }
+    // Nettoyer le listener Keycloak
+    keycloak.onAuthSuccess = undefined;
   }
 
   private redirectByRole(): void {
