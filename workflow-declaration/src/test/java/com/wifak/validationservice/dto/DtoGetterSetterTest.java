@@ -4,6 +4,7 @@ import com.wifak.validationservice.dto.jira.CreateJiraTicketRequest;
 import com.wifak.validationservice.dto.jira.JiraTicketResponseDTO;
 import com.wifak.validationservice.dto.jira.TransitionJiraTicketRequest;
 import com.wifak.validationservice.entities.Declaration;
+import com.wifak.validationservice.entities.DeclarationTemplate;
 import com.wifak.validationservice.entities.DeclarationType;
 import com.wifak.validationservice.entities.ValidationLog;
 import com.wifak.validationservice.entities.ValidationRule;
@@ -454,5 +455,107 @@ class DtoGetterSetterTest {
         // staticValue null → retourne ""
         fm.setStaticValue(null);
         assertThat(fm.getStaticValue()).isEqualTo("");
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // DeclarationTemplate entity
+    // ══════════════════════════════════════════════════════════════
+    @Test
+    void declarationTemplate_gettersSetters() {
+        DeclarationTemplate tpl = new DeclarationTemplate();
+        tpl.setTemplateContent("<xml>{{CODE}}</xml>");
+        tpl.setVariablesDisponibles("CODE,DATE,MONTANT");
+
+        DeclarationType type = new DeclarationType();
+        type.setCode("DECL001");
+        tpl.setDeclarationType(type);
+
+        assertThat(tpl.getTemplateContent()).isEqualTo("<xml>{{CODE}}</xml>");
+        assertThat(tpl.getVariablesDisponibles()).isEqualTo("CODE,DATE,MONTANT");
+        assertThat(tpl.getDeclarationType().getCode()).isEqualTo("DECL001");
+        assertThat(tpl.getId()).isNull();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // DeclarationType entity — méthodes et enums
+    // ══════════════════════════════════════════════════════════════
+    @Test
+    void declarationType_gettersSetters() {
+        DeclarationType type = new DeclarationType();
+        type.setCode("DECL001");
+        type.setNom("Déclaration mensuelle");
+        type.setDescription("Description test");
+        type.setFormat(DeclarationType.DeclarationFormat.XML);
+        type.setFrequence(DeclarationType.DeclarationFrequence.MENSUELLE);
+        type.setDateLimite("2025-01-31");
+        type.setActif(true);
+        type.setChampsObligatoires("montant,date");
+        type.setXsdContent("<xs:schema/>");
+        type.setXsdFileName("schema.xsd");
+        type.setSqlQuery("SELECT * FROM test");
+        type.setDateCreation(java.time.LocalDateTime.now());
+        type.setDerniereModification(java.time.LocalDateTime.now());
+        type.setCreePar("admin");
+        type.setModifiePar("admin");
+
+        assertThat(type.getCode()).isEqualTo("DECL001");
+        assertThat(type.getNom()).isEqualTo("Déclaration mensuelle");
+        assertThat(type.getDescription()).isEqualTo("Description test");
+        assertThat(type.getFormat()).isEqualTo(DeclarationType.DeclarationFormat.XML);
+        assertThat(type.getFrequence()).isEqualTo(DeclarationType.DeclarationFrequence.MENSUELLE);
+        assertThat(type.getDateLimite()).isEqualTo("2025-01-31");
+        assertThat(type.isActif()).isTrue();
+        assertThat(type.getChampsObligatoires()).isEqualTo("montant,date");
+        assertThat(type.getXsdContent()).isEqualTo("<xs:schema/>");
+        assertThat(type.getXsdFileName()).isEqualTo("schema.xsd");
+        assertThat(type.getSqlQuery()).isEqualTo("SELECT * FROM test");
+        assertThat(type.getCreePar()).isEqualTo("admin");
+        assertThat(type.getModifiePar()).isEqualTo("admin");
+        assertThat(type.getDateCreation()).isNotNull();
+        assertThat(type.getDerniereModification()).isNotNull();
+        assertThat(type.getValidationRules()).isEmpty();
+    }
+
+    @Test
+    void declarationType_addAndClearValidationRules() {
+        DeclarationType type = new DeclarationType();
+        ValidationRule rule = new ValidationRule();
+        rule.setChampConcerne("montant");
+        type.addValidationRule(rule);
+
+        assertThat(type.getValidationRules()).hasSize(1);
+        assertThat(rule.getDeclarationType()).isEqualTo(type);
+
+        type.clearValidationRules();
+        assertThat(type.getValidationRules()).isEmpty();
+        assertThat(rule.getDeclarationType()).isNull();
+    }
+
+    @Test
+    void declarationType_setTemplate_bidirectionnel() {
+        DeclarationType type = new DeclarationType();
+        DeclarationTemplate tpl = new DeclarationTemplate();
+        tpl.setTemplateContent("<xml/>");
+        type.setTemplate(tpl);
+
+        assertThat(type.getTemplate()).isEqualTo(tpl);
+        assertThat(tpl.getDeclarationType()).isEqualTo(type);
+
+        type.setTemplate(null);
+        assertThat(type.getTemplate()).isNull();
+    }
+
+    @Test
+    void declarationType_tousLesFormats() {
+        for (DeclarationType.DeclarationFormat f : DeclarationType.DeclarationFormat.values()) {
+            assertThat(f.name()).isNotNull();
+        }
+    }
+
+    @Test
+    void declarationType_toutesLesFrequences() {
+        for (DeclarationType.DeclarationFrequence f : DeclarationType.DeclarationFrequence.values()) {
+            assertThat(f.name()).isNotNull();
+        }
     }
 }

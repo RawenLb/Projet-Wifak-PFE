@@ -92,4 +92,23 @@ class DtoGetterSetterTest {
         assertThat(user.getUpdatedAt()).isNotNull();
         assertThat(user.getRoles()).containsExactly("ROLE_AGENT");
     }
+
+    @Test
+    void user_builder() {
+        User user = User.builder()
+            .keycloakId("kc-2")
+            .username("bob")
+            .email("bob@test.com")
+            .firstName("Bob")
+            .lastName("Martin")
+            .enabled(true)
+            .emailVerified(true)
+            .roles(Set.of("ROLE_ADMIN"))
+            .build();
+
+        assertThat(user.getKeycloakId()).isEqualTo("kc-2");
+        assertThat(user.getUsername()).isEqualTo("bob");
+        assertThat(user.getEnabled()).isTrue();
+        assertThat(user.getRoles()).contains("ROLE_ADMIN");
+    }
 }
