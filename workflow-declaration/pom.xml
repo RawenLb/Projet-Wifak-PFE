@@ -171,8 +171,6 @@
                     <excludes>
                         <exclude>com/wifak/validationservice/ValidationServiceApplication.class</exclude>
                         <exclude>com/wifak/validationservice/config/**</exclude>
-                        <exclude>com/wifak/validationservice/entities/**</exclude>
-                        <exclude>com/wifak/validationservice/dto/**</exclude>
                         <exclude>com/wifak/validationservice/repositories/**</exclude>
                         <exclude>com/wifak/validationservice/feign/**</exclude>
                         <exclude>com/wifak/validationservice/client/**</exclude>

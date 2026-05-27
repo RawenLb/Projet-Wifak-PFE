@@ -129,8 +129,6 @@
                         <exclude>com/example/bctbackend/BctBackendApplication.class</exclude>
                         <exclude>com/example/bctbackend/config/**</exclude>
                         <exclude>com/example/bctbackend/security/**</exclude>
-                        <exclude>com/example/bctbackend/entities/**</exclude>
-                        <exclude>com/example/bctbackend/dto/**</exclude>
                         <exclude>com/example/bctbackend/repositories/**</exclude>
                         <exclude>com/example/bctbackend/feign/**</exclude>
                     </excludes>
