@@ -313,4 +313,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        # Toute la config est dans sonar-project.properties à la racine
+        with:
+          args: >
+            -Dsonar.projectKey=RawenLb_Projet-Wifak-PFE
+            -Dsonar.organization=rawenlb
+            -Dsonar.sources=Authentification/src/main/java,workflow-declaration/src/main/java
+            -Dsonar.tests=Authentification/src/test/java,workflow-declaration/src/test/java
+            -Dsonar.java.binaries=Authentification/target/classes,workflow-declaration/target/classes
+            -Dsonar.java.test.binaries=Authentification/target/test-classes,workflow-declaration/target/test-classes
+            -Dsonar.coverage.jacoco.xmlReportPaths=Authentification/target/site/jacoco/jacoco.xml,workflow-declaration/target/site/jacoco/jacoco.xml
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/.angular/**,**/target/**
+            -Dsonar.coverage.exclusions=**/BctBackendApplication.java,**/ValidationServiceApplication.java,**/config/**,**/security/**,**/repositories/**,**/feign/**,**/client/**,**/exceptions/**,**/scheduler/**,**/service/PdfGeneratorService.java,**/service/AiDeclarationService.java,**/service/XmlGenerationService.java,**/service/CsvGenerationService.java,**/service/TxtGenerationService.java,**/service/TemplateService.java
