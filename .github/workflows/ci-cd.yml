@@ -298,24 +298,29 @@ jobs:
         working-directory: ./Authentification
         run: |
           chmod +x mvnw
-          ./mvnw verify "-Dspring.profiles.active=test" "-DfailIfNoTests=false" -B -Djacoco.skip=false || true
+          ./mvnw verify "-Dspring.profiles.active=test" "-DfailIfNoTests=false" -B || true
         continue-on-error: true
 
       - name: Test & Coverage — workflow-declaration
         working-directory: ./workflow-declaration
         run: |
           chmod +x mvnw
-          ./mvnw verify "-Dspring.profiles.active=test" "-DfailIfNoTests=false" -B -Djacoco.skip=false || true
+          ./mvnw verify "-Dspring.profiles.active=test" "-DfailIfNoTests=false" -B || true
         continue-on-error: true
-
-      - name: Ensure target/classes exist
-        run: |
-          mkdir -p Authentification/target/classes
-          mkdir -p workflow-declaration/target/classes
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        # sonar-project.properties à la racine contient toute la config
+        with:
+          args: >
+            -Dsonar.projectKey=RawenLb_Projet-Wifak-PFE
+            -Dsonar.organization=rawenlb
+            -Dsonar.sources=Authentification/src/main/java,workflow-declaration/src/main/java
+            -Dsonar.tests=Authentification/src/test/java,workflow-declaration/src/test/java
+            -Dsonar.java.binaries=Authentification/target/classes,workflow-declaration/target/classes
+            -Dsonar.java.test.binaries=Authentification/target/test-classes,workflow-declaration/target/test-classes
+            -Dsonar.coverage.jacoco.xmlReportPaths=Authentification/target/site/jacoco/jacoco.xml,workflow-declaration/target/site/jacoco/jacoco.xml
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/.angular/**,**/target/**
+            -Dsonar.coverage.exclusions=**/BctBackendApplication.java,**/ValidationServiceApplication.java,**/config/**,**/security/**,**/entities/**,**/dto/**,**/repositories/**,**/feign/**,**/client/**,**/exceptions/**,**/scheduler/**,**/PdfGeneratorService.java,**/AiDeclarationService.java,**/XmlGenerationService.java,**/CsvGenerationService.java,**/TxtGenerationService.java,**/TemplateService.java
