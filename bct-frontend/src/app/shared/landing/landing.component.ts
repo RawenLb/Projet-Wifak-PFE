@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import keycloak from '../../services/keycloak.service';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -92,7 +93,8 @@ export class LandingComponent implements OnInit, OnDestroy {
   }
 
   goToLogin(): void {
-    const redirectUri = encodeURIComponent(window.location.origin);
-    window.location.href = `http://localhost:8081/realms/bct-realm/protocol/openid-connect/auth?client_id=bct-frontend&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
+    keycloak.login({
+      redirectUri: window.location.origin
+    });
   }
 }
