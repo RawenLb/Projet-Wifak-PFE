@@ -159,4 +159,86 @@ class ValidationControllerTest {
             .andExpect(jsonPath("$").isArray())
             .andExpect(jsonPath("$.length()").value(5));
     }
+
+    // ══════════════════════════════════════════════════════════════
+    // GET /api/validation/{id}/ai-analysis
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("GET /{id}/ai-analysis → 200")
+    void aiAnalysis_ok() throws Exception {
+        com.wifak.validationservice.dto.AiValidationResult aiResult =
+            new com.wifak.validationservice.dto.AiValidationResult();
+        when(validationService.analyzeWithAi(1L)).thenReturn(aiResult);
+
+        mockMvc.perform(get("/api/validation/1/ai-analysis"))
+            .andExpect(status().isOk());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // GET /api/validation/{id}/ai-summary
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("GET /{id}/ai-summary → 200")
+    void aiSummary_ok() throws Exception {
+        when(validationService.getAiSummary(1L)).thenReturn(java.util.Map.of("score", 85));
+
+        mockMvc.perform(get("/api/validation/1/ai-summary"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.score").value(85));
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // GET /api/validation/{id}/compare/{previousId}
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("GET /{id}/compare/{previousId} → 200")
+    void compareWithPrevious_ok() throws Exception {
+        when(validationService.compareWithPrevious(1L, 2L))
+            .thenReturn(java.util.Map.of("diff", "minor"));
+
+        mockMvc.perform(get("/api/validation/1/compare/2"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.diff").value("minor"));
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // POST /api/validation/{id}/submit avec correctionComment
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /{id}/submit avec correctionComment → 200")
+    void submit_avecCorrectionComment_ok() throws Exception {
+        declaration.setStatut(Declaration.DeclarationStatut.EN_VALIDATION);
+        when(validationService.submitForValidation(eq(1L), eq("correction effectuée")))
+            .thenReturn(declaration);
+
+        mockMvc.perform(post("/api/validation/1/submit")
+                .with(csrf())
+                .param("correctionComment", "correction effectuée"))
+            .andExpect(status().isOk());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // POST /api/validation/{id}/send
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /{id}/send → 200")
+    void markAsSent_ok() throws Exception {
+        Declaration envoyee = new Declaration();
+        envoyee.setId(1L);
+        envoyee.setStatut(Declaration.DeclarationStatut.ENVOYEE);
+        when(validationService.markAsSent(1L)).thenReturn(envoyee);
+
+        mockMvc.perform(post("/api/validation/1/send").with(csrf()))
+            .andExpect(status().isOk());
+    }
 }

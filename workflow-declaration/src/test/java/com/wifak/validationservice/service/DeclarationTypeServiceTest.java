@@ -206,6 +206,57 @@ class DeclarationTypeServiceTest {
     }
 
     // ══════════════════════════════════════════════════════════════
+    // update
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    @DisplayName("update — met à jour tous les champs")
+    void update_ok() {
+        when(repository.findById(1L)).thenReturn(Optional.of(type));
+        when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        DeclarationType updated = new DeclarationType();
+        updated.setCode("DECL002");
+        updated.setNom("Nouveau nom");
+        updated.setFormat(DeclarationType.DeclarationFormat.CSV);
+        updated.setFrequence(DeclarationType.DeclarationFrequence.ANNUELLE);
+        updated.setActif(false);
+
+        DeclarationType result = service.update(1L, updated);
+
+        assertThat(result.getCode()).isEqualTo("DECL002");
+        assertThat(result.getNom()).isEqualTo("Nouveau nom");
+        assertThat(result.isActif()).isFalse();
+        verify(repository).save(any());
+    }
+
+    @Test
+    @DisplayName("update — ID inexistant → RuntimeException")
+    void update_inexistant_throwsException() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.update(99L, type))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("introuvable");
+    }
+
+    @Test
+    @DisplayName("update — champs null corrigés automatiquement")
+    void update_corrigeNullAuditFields() {
+        type.setDateCreation(null);
+        type.setDerniereModification(null);
+        type.setCreePar(null);
+        when(repository.findById(1L)).thenReturn(Optional.of(type));
+        when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        DeclarationType result = service.update(1L, type);
+
+        assertThat(result.getDateCreation()).isNotNull();
+        assertThat(result.getDerniereModification()).isNotNull();
+        assertThat(result.getCreePar()).isNotNull();
+    }
+
+    // ══════════════════════════════════════════════════════════════
     // fixNullAuditFields — testé via toggleStatus avec champs null
     // ══════════════════════════════════════════════════════════════
 

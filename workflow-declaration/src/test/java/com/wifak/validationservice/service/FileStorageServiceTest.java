@@ -130,4 +130,29 @@ class FileStorageServiceTest {
         assertThatCode(() -> service.deleteFile("nonexistent.xml"))
             .doesNotThrowAnyException();
     }
+
+    @Test
+    @DisplayName("storeFile — fichier vide → RuntimeException")
+    void storeFile_fichierVide_throwsException() {
+        MockMultipartFile file = new MockMultipartFile(
+            "file", "empty.xml", "application/xml", new byte[0]
+        );
+
+        assertThatThrownBy(() -> service.storeFile(file, "prefix"))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("empty");
+    }
+
+    @Test
+    @DisplayName("storeFile — nom de fichier null → RuntimeException")
+    void storeFile_nomNull_throwsException() {
+        // MockMultipartFile avec originalFilename null → getOriginalFilename() retourne ""
+        // On teste avec un nom contenant ".." pour déclencher l'exception
+        MockMultipartFile file = new MockMultipartFile(
+            "file", "../../evil.xml", "application/xml", "<xml/>".getBytes()
+        );
+
+        assertThatThrownBy(() -> service.storeFile(file, "prefix"))
+            .isInstanceOf(RuntimeException.class);
+    }
 }

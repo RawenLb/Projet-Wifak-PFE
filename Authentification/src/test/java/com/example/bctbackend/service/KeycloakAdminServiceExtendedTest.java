@@ -590,6 +590,147 @@ class KeycloakAdminServiceExtendedTest {
 
         assertThatCode(() -> service.updateUser(userId, dto)).doesNotThrowAnyException();
     }
+    // ══════════════════════════════════════════════════════════════
+    // createUser — chemin heureux complet
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    @DisplayName("createUser — succès avec rôles → retourne userId")
+    void createUser_succes_avecRoles() throws Exception {
+        com.example.bctbackend.dto.CreateUserRequest req = new com.example.bctbackend.dto.CreateUserRequest();
+        req.setUsername("newuser");
+        req.setEmail("new@test.com");
+        req.setFirstName("New");
+        req.setLastName("User");
+        req.setRoles(List.of("ROLE_AGENT"));
+
+        when(usersResource.search("newuser", true)).thenReturn(Collections.emptyList());
+        when(usersResource.search("new@test.com", null, null, null, 0, 10))
+            .thenReturn(Collections.emptyList());
+
+        jakarta.ws.rs.core.Response mockResponse = mock(jakarta.ws.rs.core.Response.class);
+        when(mockResponse.getStatus()).thenReturn(201);
+        when(mockResponse.getHeaderString("Location"))
+            .thenReturn("http://keycloak/auth/admin/realms/bct-realm/users/new-user-id");
+        when(usersResource.create(any())).thenReturn(mockResponse);
+
+        // Mock pour assignRoles
+        UserResource newUserResource = mockUserResourceWithRoles(
+            buildKcUser("new-user-id", "newuser", "new@test.com", true), List.of("ROLE_AGENT"));
+        RoleMappingResource roleMappingResource = mock(RoleMappingResource.class);
+        RoleScopeResource roleScopeResource = mock(RoleScopeResource.class);
+        when(usersResource.get("new-user-id")).thenReturn(newUserResource);
+        when(newUserResource.roles()).thenReturn(roleMappingResource);
+        when(roleMappingResource.realmLevel()).thenReturn(roleScopeResource);
+        when(roleScopeResource.listEffective()).thenReturn(Collections.emptyList());
+
+        RoleResource roleResource = mock(RoleResource.class);
+        RoleRepresentation roleAgent = new RoleRepresentation();
+        roleAgent.setName("ROLE_AGENT");
+        when(realmResource.roles()).thenReturn(rolesResource);
+        when(rolesResource.get("ROLE_AGENT")).thenReturn(roleResource);
+        when(roleResource.toRepresentation()).thenReturn(roleAgent);
+
+        when(userRepository.findByKeycloakId("new-user-id")).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        String userId = service.createUser(req);
+
+        assertThat(userId).isEqualTo("new-user-id");
+    }
+
+    @Test
+    @DisplayName("createUser — Keycloak retourne 409 → RuntimeException")
+    void createUser_keycloak409_throwsException() {
+        com.example.bctbackend.dto.CreateUserRequest req = new com.example.bctbackend.dto.CreateUserRequest();
+        req.setUsername("newuser");
+        req.setEmail("new@test.com");
+
+        when(usersResource.search("newuser", true)).thenReturn(Collections.emptyList());
+        when(usersResource.search("new@test.com", null, null, null, 0, 10))
+            .thenReturn(Collections.emptyList());
+
+        jakarta.ws.rs.core.Response mockResponse = mock(jakarta.ws.rs.core.Response.class);
+        when(mockResponse.getStatus()).thenReturn(409);
+        when(mockResponse.hasEntity()).thenReturn(false);
+        when(usersResource.create(any())).thenReturn(mockResponse);
+
+        assertThatThrownBy(() -> service.createUser(req))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("409");
+    }
+
+    @Test
+    @DisplayName("createUser — Keycloak 409 avec entity → lit le body d'erreur")
+    void createUser_keycloak409_avecEntity() {
+        com.example.bctbackend.dto.CreateUserRequest req = new com.example.bctbackend.dto.CreateUserRequest();
+        req.setUsername("newuser");
+        req.setEmail("new@test.com");
+
+        when(usersResource.search("newuser", true)).thenReturn(Collections.emptyList());
+        when(usersResource.search("new@test.com", null, null, null, 0, 10))
+            .thenReturn(Collections.emptyList());
+
+        jakarta.ws.rs.core.Response mockResponse = mock(jakarta.ws.rs.core.Response.class);
+        when(mockResponse.getStatus()).thenReturn(409);
+        when(mockResponse.hasEntity()).thenReturn(true);
+        when(mockResponse.readEntity(String.class)).thenReturn("User already exists");
+        when(usersResource.create(any())).thenReturn(mockResponse);
+
+        assertThatThrownBy(() -> service.createUser(req))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("User already exists");
+    }
+
+    @Test
+    @DisplayName("createUser — Location header null → RuntimeException")
+    void createUser_locationNull_throwsException() {
+        com.example.bctbackend.dto.CreateUserRequest req = new com.example.bctbackend.dto.CreateUserRequest();
+        req.setUsername("newuser");
+        req.setEmail("new@test.com");
+
+        when(usersResource.search("newuser", true)).thenReturn(Collections.emptyList());
+        when(usersResource.search("new@test.com", null, null, null, 0, 10))
+            .thenReturn(Collections.emptyList());
+
+        jakarta.ws.rs.core.Response mockResponse = mock(jakarta.ws.rs.core.Response.class);
+        when(mockResponse.getStatus()).thenReturn(201);
+        when(mockResponse.getHeaderString("Location")).thenReturn(null);
+        when(usersResource.create(any())).thenReturn(mockResponse);
+
+        assertThatThrownBy(() -> service.createUser(req))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("Location header");
+    }
+
+    @Test
+    @DisplayName("createUser — sans rôles → pas d'appel assignRoles")
+    void createUser_sansRoles_pasAssignRoles() {
+        com.example.bctbackend.dto.CreateUserRequest req = new com.example.bctbackend.dto.CreateUserRequest();
+        req.setUsername("newuser");
+        req.setEmail("new@test.com");
+        req.setRoles(null);
+
+        when(usersResource.search("newuser", true)).thenReturn(Collections.emptyList());
+        when(usersResource.search("new@test.com", null, null, null, 0, 10))
+            .thenReturn(Collections.emptyList());
+
+        jakarta.ws.rs.core.Response mockResponse = mock(jakarta.ws.rs.core.Response.class);
+        when(mockResponse.getStatus()).thenReturn(201);
+        when(mockResponse.getHeaderString("Location"))
+            .thenReturn("http://keycloak/users/new-user-id");
+        when(usersResource.create(any())).thenReturn(mockResponse);
+
+        UserResource newUserResource = mockUserResourceWithRoles(
+            buildKcUser("new-user-id", "newuser", "new@test.com", true), Collections.emptyList());
+        when(usersResource.get("new-user-id")).thenReturn(newUserResource);
+        when(userRepository.findByKeycloakId("new-user-id")).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        String userId = service.createUser(req);
+
+        assertThat(userId).isEqualTo("new-user-id");
+    }
 
     // ══════════════════════════════════════════════════════════════
     // sendPasswordResetEmail
