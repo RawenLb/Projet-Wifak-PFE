@@ -131,7 +131,7 @@ spring:
   datasource:
     url: jdbc:mysql://mysql:3306/wifak_validation?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
-    password: wifak2024
+    password: ${MYSQL_ROOT_PASSWORD:wifak2024}
   security:
     oauth2:
       resourceserver:

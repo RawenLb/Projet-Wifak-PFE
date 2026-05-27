@@ -35,10 +35,10 @@ spring:
 keycloak:
   auth-server-url: http://localhost:8081
   realm: bct-realm
-  admin-username: admin
-  admin-password: admin
+  admin-username: ${KEYCLOAK_ADMIN_USERNAME:admin}
+  admin-password: ${KEYCLOAK_ADMIN_PASSWORD:changeme}
   admin-client-id: bct-backend
-  admin-client-secret: UQIUjf1lHznBjmmdUlNleh8N9yMwzBaG
+  admin-client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:changeme}
 
 logging:
   level:
