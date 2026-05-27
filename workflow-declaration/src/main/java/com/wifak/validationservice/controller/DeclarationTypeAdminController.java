@@ -171,10 +171,24 @@ public class DeclarationTypeAdminController {
             LocalDate dateDebut = LocalDate.parse(body.get("dateDebut"));
             LocalDate dateFin = LocalDate.parse(body.get("dateFin"));
             DeclarationType type = service.getById(id);
-            if (type.getSqlQuery() == null || type.getSqlQuery().trim().isEmpty()) {
+            String sqlQuery = type.getSqlQuery();
+            if (sqlQuery == null || sqlQuery.trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Aucune requête SQL configurée pour ce type"));
             }
-            List<String> columns = xmlGenerationService.extractColumnsFromSql(type.getSqlQuery(), dateDebut, dateFin);
+            // Validation de sécurité : seules les requêtes SELECT sont autorisées
+            String normalizedQuery = sqlQuery.trim().toUpperCase();
+            if (!normalizedQuery.startsWith("SELECT")) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Seules les requêtes SELECT sont autorisées"));
+            }
+            // Bloquer les instructions dangereuses dans la requête
+            String[] forbidden = {"DROP", "DELETE", "INSERT", "UPDATE", "TRUNCATE", "ALTER", "CREATE", "EXEC", "--", ";"};
+            for (String keyword : forbidden) {
+                if (normalizedQuery.contains(keyword)) {
+                    log.warn("⚠️ Requête SQL refusée — mot-clé interdit détecté: {}", keyword);
+                    return ResponseEntity.badRequest().body(Map.of("error", "Requête SQL non autorisée"));
+                }
+            }
+            List<String> columns = xmlGenerationService.extractColumnsFromSql(sqlQuery, dateDebut, dateFin);
             log.info("✅ Test SQL réussi — colonnes: {}", columns);
             return ResponseEntity.ok(Map.of("success", true, "colonnesDisponibles", columns, "message", "Requête SQL valide"));
         } catch (Exception e) {

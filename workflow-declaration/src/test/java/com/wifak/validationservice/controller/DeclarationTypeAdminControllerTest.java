@@ -312,4 +312,18 @@ class DeclarationTypeAdminControllerTest {
                 .content("{\"dateDebut\": \"2025-01-01\", \"dateFin\": \"2025-01-31\"}"))
             .andExpect(status().isBadRequest());
     }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("POST /{id}/sql/test — SQL avec DROP → 400 (injection bloquée)")
+    void testSqlQuery_sqlDrop_returns400() throws Exception {
+        type.setSqlQuery("SELECT * FROM test; DROP TABLE test");
+        when(service.getById(1L)).thenReturn(type);
+
+        mockMvc.perform(post("/api/admin/declaration-types/1/sql/test")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"dateDebut\": \"2025-01-01\", \"dateFin\": \"2025-01-31\"}"))
+            .andExpect(status().isBadRequest());
+    }
 }
