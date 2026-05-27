@@ -49,10 +49,10 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
 
 jira:
-  base-url: https://wifak-bct.atlassian.net
-  project-key: BCT
-  user-email: rawene.labaoui@gmail.com
-  api-token: ATATT3xFfGF0UVSZvQVI2t9HROjHGkcwd4v_fwaRn-COM9ARnLL_yuskLYajF4Ah68fi5XEGzGsc7ZetuWkynScY3b4e1gyS5S9yAU1-GNIUQM2pINPUup7csQgycgvCoeXS_JvD_TAywtK2m5LoqEs21dIsvaS0gjMyioadlEo9P7qSS0XNHCY=F664B0C6
+  base-url: ${JIRA_BASE_URL:https://wifak-bct.atlassian.net}
+  project-key: ${JIRA_PROJECT_KEY:BCT}
+  user-email: ${JIRA_USER_EMAIL:rawene.labaoui@gmail.com}
+  api-token: ${JIRA_API_TOKEN:changeme}
   transitions:
     to-do: "10001"
     in-progress: "10002"
