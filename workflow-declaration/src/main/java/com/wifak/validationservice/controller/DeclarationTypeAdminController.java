@@ -28,6 +28,10 @@ public class DeclarationTypeAdminController {
 
     private static final Logger log = LoggerFactory.getLogger(DeclarationTypeAdminController.class);
 
+    // Mots-clés SQL dangereux — protection contre les injections SQL
+    private static final String[] SQL_FORBIDDEN_KEYWORDS =
+        {"DROP", "DELETE", "INSERT", "UPDATE", "TRUNCATE", "ALTER", "CREATE", "EXEC", "--", ";"};
+
     private final DeclarationTypeService service;
     private final ValidationRuleRepository validationRuleRepository;
     private final PdfGeneratorService pdfGeneratorService;
@@ -181,8 +185,7 @@ public class DeclarationTypeAdminController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Seules les requêtes SELECT sont autorisées"));
             }
             // Bloquer les instructions dangereuses dans la requête
-            String[] forbidden = {"DROP", "DELETE", "INSERT", "UPDATE", "TRUNCATE", "ALTER", "CREATE", "EXEC", "--", ";"};
-            for (String keyword : forbidden) {
+            for (String keyword : SQL_FORBIDDEN_KEYWORDS) {
                 if (normalizedQuery.contains(keyword)) {
                     log.warn("⚠️ Requête SQL refusée — mot-clé interdit détecté: {}", keyword);
                     return ResponseEntity.badRequest().body(Map.of("error", "Requête SQL non autorisée"));
