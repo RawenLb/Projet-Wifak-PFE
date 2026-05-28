@@ -52,10 +52,6 @@ class ValidationControllerTest {
         declaration.setPeriode("2025-01");
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // GET /api/validation/pending
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "MANAGER")
     @DisplayName("GET /pending — retourne liste des déclarations en attente")
@@ -71,15 +67,10 @@ class ValidationControllerTest {
     @WithMockUser(roles = "AGENT")
     @DisplayName("GET /pending — AGENT → accès refusé par @PreAuthorize")
     void getPending_agent_forbidden() throws Exception {
-        // Note: @WebMvcTest sans SecurityConfig — @PreAuthorize non actif
         when(validationService.getPendingDeclarations()).thenReturn(Collections.emptyList());
         mockMvc.perform(get("/api/validation/pending"))
             .andExpect(status().isOk());
     }
-
-    // ══════════════════════════════════════════════════════════════
-    // GET /api/validation/stats
-    // ══════════════════════════════════════════════════════════════
 
     @Test
     @WithMockUser(roles = "MANAGER")
@@ -95,10 +86,6 @@ class ValidationControllerTest {
             .andExpect(jsonPath("$.total").value(10));
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // POST /api/validation/{id}/validate
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "MANAGER")
     @DisplayName("POST /{id}/validate — manager valide une déclaration")
@@ -109,10 +96,6 @@ class ValidationControllerTest {
         mockMvc.perform(post("/api/validation/1/validate").with(csrf()))
             .andExpect(status().isOk());
     }
-
-    // ══════════════════════════════════════════════════════════════
-    // POST /api/validation/{id}/reject
-    // ══════════════════════════════════════════════════════════════
 
     @Test
     @WithMockUser(roles = "MANAGER")
@@ -131,10 +114,6 @@ class ValidationControllerTest {
             .andExpect(status().isOk());
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // GET /api/validation/{id}/history
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "MANAGER")
     @DisplayName("GET /{id}/history — retourne l'historique")
@@ -146,10 +125,6 @@ class ValidationControllerTest {
             .andExpect(jsonPath("$").isArray());
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // GET /api/validation/reject-templates
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "MANAGER")
     @DisplayName("GET /reject-templates — retourne les templates de rejet")
@@ -159,10 +134,6 @@ class ValidationControllerTest {
             .andExpect(jsonPath("$").isArray())
             .andExpect(jsonPath("$.length()").value(5));
     }
-
-    // ══════════════════════════════════════════════════════════════
-    // GET /api/validation/{id}/ai-analysis
-    // ══════════════════════════════════════════════════════════════
 
     @Test
     @WithMockUser(roles = "MANAGER")
@@ -176,10 +147,6 @@ class ValidationControllerTest {
             .andExpect(status().isOk());
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // GET /api/validation/{id}/ai-summary
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "MANAGER")
     @DisplayName("GET /{id}/ai-summary → 200")
@@ -190,10 +157,6 @@ class ValidationControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.score").value(85));
     }
-
-    // ══════════════════════════════════════════════════════════════
-    // GET /api/validation/{id}/compare/{previousId}
-    // ══════════════════════════════════════════════════════════════
 
     @Test
     @WithMockUser(roles = "MANAGER")
@@ -206,10 +169,6 @@ class ValidationControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.diff").value("minor"));
     }
-
-    // ══════════════════════════════════════════════════════════════
-    // POST /api/validation/{id}/submit avec correctionComment
-    // ══════════════════════════════════════════════════════════════
 
     @Test
     @WithMockUser(roles = "AGENT")
@@ -224,10 +183,6 @@ class ValidationControllerTest {
                 .param("correctionComment", "correction effectuée"))
             .andExpect(status().isOk());
     }
-
-    // ══════════════════════════════════════════════════════════════
-    // POST /api/validation/{id}/send
-    // ══════════════════════════════════════════════════════════════
 
     @Test
     @WithMockUser(roles = "AGENT")
