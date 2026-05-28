@@ -18,11 +18,11 @@ import java.util.*;
  * Si admin-client-secret est renseigné  → client_credentials vers /{realm}
  * Si admin-username est renseigné       → password grant    vers /master
  *
- * Config actuelle (notification application.yml) :
- *   admin-client-id:     bct-backend
- *   admin-client-secret: UQIUjf1lHznBjmmdUlNleh8N9yMwzBaG
- *   admin-username:      admin
- *   admin-password:      admin
+ * Config via variables d'environnement (voir application.yml) :
+ *   admin-client-id:     ${KEYCLOAK_ADMIN_CLIENT_ID}
+ *   admin-client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+ *   admin-username:      ${KEYCLOAK_ADMIN_USERNAME}
+ *   admin-password:      ${KEYCLOAK_ADMIN_PASSWORD}
  *
  * → Le secret étant renseigné, c'est client_credentials qui sera utilisé
  *   (même priorité que dans KeycloakAdminConfig du bct-backend).
