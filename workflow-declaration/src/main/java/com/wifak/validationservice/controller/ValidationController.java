@@ -20,6 +20,7 @@ import java.util.Map;
 public class ValidationController {
 
     private static final Logger log = LoggerFactory.getLogger(ValidationController.class);
+    private static final String LABEL_KEY = "label";
     private final ValidationService validationService;
 
     public ValidationController(ValidationService validationService) {
@@ -117,15 +118,15 @@ public class ValidationController {
     public ResponseEntity<List<Map<String, String>>> getRejectTemplates() {
         log.info("ðŸ“ [GET] /api/validation/reject-templates");
         List<Map<String, String>> templates = List.of(
-            Map.of("id", "1", "label", "DonnÃ©es incomplÃ¨tes",
+            Map.of("id", "1", LABEL_KEY, "DonnÃ©es incomplÃ¨tes",
                    "text", "La dÃ©claration est incomplÃ¨te. Veuillez vÃ©rifier et complÃ©ter tous les champs obligatoires."),
-            Map.of("id", "2", "label", "Montants incorrects",
+            Map.of("id", "2", LABEL_KEY, "Montants incorrects",
                    "text", "Les montants dÃ©clarÃ©s ne correspondent pas aux donnÃ©es comptables. Veuillez corriger les montants."),
-            Map.of("id", "3", "label", "PÃ©riode incorrecte",
+            Map.of("id", "3", LABEL_KEY, "PÃ©riode incorrecte",
                    "text", "La pÃ©riode de dÃ©claration est incorrecte. Veuillez vÃ©rifier les dates de dÃ©but et de fin."),
-            Map.of("id", "4", "label", "Format non conforme",
+            Map.of("id", "4", LABEL_KEY, "Format non conforme",
                    "text", "Le format du fichier ne respecte pas les spÃ©cifications BCT. Veuillez rÃ©gÃ©nÃ©rer la dÃ©claration."),
-            Map.of("id", "5", "label", "DonnÃ©es fictives dÃ©tectÃ©es",
+            Map.of("id", "5", LABEL_KEY, "DonnÃ©es fictives dÃ©tectÃ©es",
                    "text", "Des donnÃ©es de test ou fictives ont Ã©tÃ© dÃ©tectÃ©es. Veuillez utiliser des donnÃ©es rÃ©elles.")
         );
         return ResponseEntity.ok(templates);

@@ -122,7 +122,7 @@ public class XsdAnalyzerService {
     private List<XsdFieldInfo> parseXsdFields(String xsdContent) {
         List<XsdFieldInfo> fields = new ArrayList<>();
         if (xsdContent == null || xsdContent.trim().isEmpty()) {
-            log.warn("âš ï¸ XSD vide ou null");
+            log.warn("âš ï¸ XSD vide ou null");
             return fields;
         }
 
@@ -175,7 +175,7 @@ public class XsdAnalyzerService {
     /**
      * âœ… Parse le XML en supprimant le prologue <?xml...?> si prÃ©sent.
      * C'est le correctif principal pour l'erreur
-     * "La cible de l'instruction de traitement correspondant Ã  [xX][mM][lL] n'est pas autorisÃ©e."
+     * "La cible de l'instruction de traitement correspondant Ã  [xX][mM][lL] n'est pas autorisÃ©e."
      */
     private Document parseXml(String xsdContent) throws Exception {
         String content = xsdContent.trim();
@@ -312,7 +312,7 @@ public class XsdAnalyzerService {
             }
         }
 
-        // Champ feuille â†’ ajouter Ã  la liste
+        // Champ feuille â†’ ajouter Ã  la liste
         fields.add(new XsdFieldInfo(name, path, resolvedType, required,
                 defVal.isEmpty() ? null : defVal, maxO));
         log.debug("  âœ… Champ: {} [{}] requis={}", path, resolvedType, required);

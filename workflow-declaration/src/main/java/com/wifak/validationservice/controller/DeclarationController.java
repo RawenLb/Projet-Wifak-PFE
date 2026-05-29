@@ -28,6 +28,7 @@ import java.util.Map;
 public class DeclarationController {
 
     private static final Logger log = LoggerFactory.getLogger(DeclarationController.class);
+    private static final String ERROR_KEY = "error";
 
     private final DeclarationService        declarationService;
     private final XsdAnalyzerService        xsdAnalyzerService;
@@ -87,15 +88,13 @@ public class DeclarationController {
 
             // VÃ©rifier que le XSD est disponible
             if (type.getXsdContent() == null || type.getXsdContent().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Aucun XSD n'est configurÃ© pour ce type. Uploadez d'abord le fichier XSD."
+                return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Aucun XSD n'est configurÃ© pour ce type. Uploadez d'abord le fichier XSD."
                 ));
             }
 
             // VÃ©rifier que la SQL est disponible
             if (type.getSqlQuery() == null || type.getSqlQuery().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Aucune requÃªte SQL configurÃ©e pour ce type."
+                return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Aucune requÃªte SQL configurÃ©e pour ce type."
                 ));
             }
 
@@ -107,7 +106,7 @@ public class DeclarationController {
             try {
                 sqlColumns = xmlGenerationService.extractColumnsFromSql(type.getSqlQuery(), dateDebut, dateFin);
             } catch (Exception e) {
-                log.warn("âš ï¸ Impossible d'extraire les colonnes SQL: {}", e.getMessage());
+                log.warn("âš ï¸ Impossible d'extraire les colonnes SQL: {}", e.getMessage());
                 sqlColumns = List.of(); // On continue avec une liste vide
             }
 
@@ -134,7 +133,7 @@ public class DeclarationController {
         } catch (Exception e) {
             log.error("âŒ Erreur analyse mapping: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
     // âœ… GENERATE WITH MAPPING â€” gÃ©nÃ©ration XML avec mapping validÃ©
@@ -150,8 +149,7 @@ public class DeclarationController {
 
         try {
             if (req.getMappings() == null || req.getMappings().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Le mapping est obligatoire pour ce mode de gÃ©nÃ©ration."
+                return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Le mapping est obligatoire pour ce mode de gÃ©nÃ©ration."
                 ));
             }
 
@@ -162,8 +160,7 @@ public class DeclarationController {
                     .count();
 
             if (requiredUnmapped > 0) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", requiredUnmapped + " champ(s) obligatoire(s) du XSD n'ont pas de valeur assignÃ©e (ni SQL ni statique).",
+                return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, requiredUnmapped + " champ(s) obligatoire(s) du XSD n'ont pas de valeur assignÃ©e (ni SQL ni statique).",
                         "type", "REQUIRED_FIELDS_MISSING"
                 ));
             }
@@ -182,7 +179,7 @@ public class DeclarationController {
         } catch (Exception e) {
             log.error("âŒ Erreur gÃ©nÃ©ration avec mapping: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
     // GET MY DECLARATIONS
@@ -242,14 +239,13 @@ public class DeclarationController {
             // Seules les dÃ©clarations REJETEE ou GENEREE sont modifiables
             if (declaration.getStatut() != Declaration.DeclarationStatut.GENEREE &&
                     declaration.getStatut() != Declaration.DeclarationStatut.REJETEE) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Seules les dÃ©clarations GENEREE ou REJETEE peuvent Ãªtre modifiÃ©es."
+                return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Seules les dÃ©clarations GENEREE ou REJETEE peuvent Ãªtre modifiÃ©es."
                 ));
             }
 
             // Validation XML basique
             if (req.getXmlContent() == null || req.getXmlContent().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Contenu XML vide"));
+                return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Contenu XML vide"));
             }
 
             Declaration updated = declarationService.patchContent(id, req.getXmlContent());
@@ -258,7 +254,7 @@ public class DeclarationController {
         } catch (Exception e) {
             log.error("âŒ Erreur patch content: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
