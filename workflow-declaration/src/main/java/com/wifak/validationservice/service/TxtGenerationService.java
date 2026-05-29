@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 public class TxtGenerationService {
 
     private static final Logger log = LoggerFactory.getLogger(TxtGenerationService.class);
+    private static final int LINE_WIDTH = 80;
     private final JdbcTemplate jdbcTemplate;
 
     public TxtGenerationService(JdbcTemplate jdbcTemplate) {
@@ -25,7 +26,7 @@ public class TxtGenerationService {
 
     public String generateTxtFromSql(String sqlQuery, LocalDate dateDebut, LocalDate dateFin,
                                      String typeCode, String periode) {
-        log.info("📄 Génération TXT — Type: {}, Période: {}", typeCode, periode);
+        log.info("ðŸ“„ GÃ©nÃ©ration TXT â€” Type: {}, PÃ©riode: {}", typeCode, periode);
 
         String executableSql = sqlQuery
                 .replace(":dateDebut", "'" + dateDebut.toString() + "'")
@@ -35,7 +36,7 @@ public class TxtGenerationService {
         try {
             rows = jdbcTemplate.queryForList(executableSql);
         } catch (Exception e) {
-            log.error("❌ Erreur SQL TXT: {}", e.getMessage());
+            log.error("âŒ Erreur SQL TXT: {}", e.getMessage());
             throw new RuntimeException("Erreur SQL: " + e.getMessage());
         }
 
@@ -48,18 +49,18 @@ public class TxtGenerationService {
         txt.append("GENERE_LE=").append(timestamp).append("\r\n");
         txt.append("DATE_DEBUT=").append(dateDebut).append("\r\n");
         txt.append("DATE_FIN=").append(dateFin).append("\r\n");
-        txt.append("=".repeat(80)).append("\r\n");
+        txt.append("=".repeat(LINE_WIDTH)).append("\r\n");
 
         if (rows.isEmpty()) {
             txt.append("AUCUNE_DONNEE\r\n");
-            txt.append("=".repeat(80)).append("\r\n");
+            txt.append("=".repeat(LINE_WIDTH)).append("\r\n");
             txt.append("FIN_DECLARATION\r\n");
             return txt.toString();
         }
 
         Set<String> columns = rows.get(0).keySet();
         txt.append(String.join(delimiter, columns)).append("\r\n");
-        txt.append("-".repeat(80)).append("\r\n");
+        txt.append("-".repeat(LINE_WIDTH)).append("\r\n");
 
         int lineNum = 1;
         for (Map<String, Object> row : rows) {
@@ -69,11 +70,11 @@ public class TxtGenerationService {
             txt.append(lineNum++).append(delimiter).append(line).append("\r\n");
         }
 
-        txt.append("=".repeat(80)).append("\r\n");
+        txt.append("=".repeat(LINE_WIDTH)).append("\r\n");
         txt.append("TOTAL_LIGNES=").append(rows.size()).append("\r\n");
         txt.append("FIN_DECLARATION=").append(LocalDate.now()).append("\r\n");
 
-        log.info("✅ TXT généré — {} colonnes, {} lignes", columns.size(), rows.size());
+        log.info("âœ… TXT gÃ©nÃ©rÃ© â€” {} colonnes, {} lignes", columns.size(), rows.size());
         return txt.toString();
     }
 }

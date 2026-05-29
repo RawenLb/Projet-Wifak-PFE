@@ -63,7 +63,7 @@ public class ChatController {
         try {
             return ResponseEntity.ok(chatService.editMessage(messageId, jwt.getSubject(), newContent));
         } catch (SecurityException e) {
-            return ResponseEntity.status(403).build();
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
@@ -77,7 +77,7 @@ public class ChatController {
         try {
             return ResponseEntity.ok(chatService.deleteMessage(messageId, jwt.getSubject()));
         } catch (SecurityException e) {
-            return ResponseEntity.status(403).build();
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }

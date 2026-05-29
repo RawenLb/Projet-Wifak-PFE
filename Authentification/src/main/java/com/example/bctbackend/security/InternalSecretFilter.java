@@ -19,6 +19,8 @@ import java.util.List;
 @Component
 public class InternalSecretFilter extends OncePerRequestFilter {
 
+    private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
+
     @Value("${app.internal-secret:wifak-internal-secret-2024}")
     private String internalSecret;
 
@@ -28,10 +30,10 @@ public class InternalSecretFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        String secret = request.getHeader("X-Internal-Secret");
+        String secret = request.getHeader(INTERNAL_SECRET_HEADER);
 
         if (internalSecret.equals(secret)) {
-            // Authentifie la requête comme service interne
+            // Authentifie la requÃƒÂªte comme service interne
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(
                             "internal-service",

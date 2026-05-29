@@ -34,8 +34,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            // CSRF désactivé intentionnellement : API REST stateless sécurisée par JWT
-            // Les tokens JWT protègent contre les attaques CSRF (pas de session cookie)
+            // CSRF dÃ©sactivÃ© intentionnellement : API REST stateless sÃ©curisÃ©e par JWT
+            // Les tokens JWT protÃ¨gent contre les attaques CSRF (pas de session cookie)
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

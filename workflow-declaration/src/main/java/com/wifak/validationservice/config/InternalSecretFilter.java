@@ -15,11 +15,13 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Filtre qui authentifie les appels service-à-service via X-Internal-Secret.
- * Utilisé par chat-service pour appeler les endpoints /api/admin/** de workflow-declaration.
+ * Filtre qui authentifie les appels service-Ã -service via X-Internal-Secret.
+ * UtilisÃ© par chat-service pour appeler les endpoints /api/admin/** de workflow-declaration.
  */
 @Component
 public class InternalSecretFilter extends OncePerRequestFilter {
+
+    private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
 
     @Value("${app.internal-secret:wifak-internal-secret-2024}")
     private String internalSecret;
@@ -30,7 +32,7 @@ public class InternalSecretFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        String secret = request.getHeader("X-Internal-Secret");
+        String secret = request.getHeader(INTERNAL_SECRET_HEADER);
 
         if (internalSecret.equals(secret)) {
             UsernamePasswordAuthenticationToken auth =

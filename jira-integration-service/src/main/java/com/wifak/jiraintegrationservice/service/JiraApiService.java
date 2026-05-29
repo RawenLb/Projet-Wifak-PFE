@@ -16,6 +16,13 @@ public class JiraApiService {
 
     private static final Logger log = LoggerFactory.getLogger(JiraApiService.class);
 
+    // Jira transition IDs (configured in Jira project workflow)
+    private static final String TRANSITION_IN_PROGRESS = "31";
+    private static final String TRANSITION_REJECTED     = "4";
+    private static final String TRANSITION_RESUBMITTED  = "3";
+    private static final String TRANSITION_VALIDATED    = "41";
+    private static final String TRANSITION_SENT         = "2";
+
     @Value("${jira.base-url}")
     private String jiraBaseUrl;
 
@@ -155,11 +162,11 @@ public class JiraApiService {
     //  2 : VALIDÃ‰E  â†’ ENVOYÃ‰E      (ENVOYEE)
     public String mapBctStatutToTransitionId(String statut) {
         return switch (statut.toUpperCase()) {
-            case "EN_VALIDATION" -> "31";
-            case "REJETEE"       -> "4";
-            case "RESOUMISE"     -> "3";
-            case "VALIDEE"       -> "41";
-            case "ENVOYEE"       -> "2";
+            case "EN_VALIDATION" -> TRANSITION_IN_PROGRESS;
+            case "REJETEE"       -> TRANSITION_REJECTED;
+            case "RESOUMISE"     -> TRANSITION_RESUBMITTED;
+            case "VALIDEE"       -> TRANSITION_VALIDATED;
+            case "ENVOYEE"       -> TRANSITION_SENT;
             default -> throw new IllegalArgumentException("Statut BCT inconnu: " + statut);
         };
     }

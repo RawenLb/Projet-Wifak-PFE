@@ -31,7 +31,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                    WebSocketHandler wsHandler, Map<String, Object> attributes) {
         String query = request.getURI().getQuery();
-        if (query == null) { log.warn("[Chat WS] Handshake rejected — no query string"); return false; }
+        if (query == null) { log.warn("[Chat WS] Handshake rejected â€” no query string"); return false; }
 
         String token = Arrays.stream(query.split("&"))
             .filter(p -> p.startsWith("token="))
@@ -39,12 +39,12 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             .findFirst().orElse(null);
 
         if (token == null || token.isBlank()) {
-            log.warn("[Chat WS] Handshake rejected — missing token"); return false;
+            log.warn("[Chat WS] Handshake rejected â€” missing token"); return false;
         }
 
         try {
             token = java.net.URLDecoder.decode(token, java.nio.charset.StandardCharsets.UTF_8);
-        } catch (Exception ignored) {}
+        } catch (Exception e) { log.debug("[Chat WS] Token URL decode failed, using raw token: {}", e.getMessage()); }
 
         try {
             Jwt jwt = jwtDecoder.decode(token);
@@ -71,7 +71,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             }
 
             if (primaryRole == null) {
-                log.warn("[Chat WS] Handshake rejected — no chat role for user {}", username); return false;
+                log.warn("[Chat WS] Handshake rejected â€” no chat role for user {}", username); return false;
             }
 
             attributes.put("userId",   userId);
@@ -82,7 +82,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             return true;
 
         } catch (JwtException e) {
-            log.warn("[Chat WS] Handshake rejected — invalid JWT: {}", e.getMessage()); return false;
+            log.warn("[Chat WS] Handshake rejected â€” invalid JWT: {}", e.getMessage()); return false;
         } catch (Exception e) {
             log.error("[Chat WS] Handshake error: {}", e.getMessage(), e); return false;
         }

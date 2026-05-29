@@ -11,17 +11,17 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * Filtre de sécurité inter-services.
+ * Filtre de sÃƒÆ’Ã‚Â©curitÃƒÆ’Ã‚Â© inter-services.
  *
  * Les appels aux webhooks doivent contenir le header :
- *   X-Internal-Secret: <valeur configurée dans app.internal-secret>
+ *   X-Internal-Secret: <valeur configurÃƒÆ’Ã‚Â©e dans app.internal-secret>
  *
- * Les endpoints /actuator/** sont exemptés.
+ * Les endpoints /actuator/** sont exemptÃƒÆ’Ã‚Â©s.
  */
 public class InternalSecretFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(InternalSecretFilter.class);
-    private static final String SECRET_HEADER = "X-Internal-Secret";
+    private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
 
     private final String expectedSecret;
 
@@ -43,15 +43,15 @@ public class InternalSecretFilter extends OncePerRequestFilter {
             return;
         }
 
-        String receivedSecret = request.getHeader(SECRET_HEADER);
+        String receivedSecret = request.getHeader(INTERNAL_SECRET_HEADER);
 
         if (receivedSecret == null || !receivedSecret.equals(expectedSecret)) {
-            log.warn("🚫 Accès refusé — secret manquant ou invalide [{}] {}",
+            log.warn("ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â« AccÃƒÆ’Ã‚Â¨s refusÃƒÆ’Ã‚Â© ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â secret manquant ou invalide [{}] {}",
                     request.getMethod(), path);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write(
-                    "{\"error\":\"Accès non autorisé — header X-Internal-Secret invalide\"}"
+                    "{\"error\":\"AccÃƒÆ’Ã‚Â¨s non autorisÃƒÆ’Ã‚Â© ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â header X-Internal-Secret invalide\"}"
             );
             return;
         }
