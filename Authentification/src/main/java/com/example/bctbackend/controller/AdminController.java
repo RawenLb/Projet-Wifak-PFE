@@ -90,7 +90,7 @@ public class AdminController {
             String userId = keycloakAdminService.createUser(request);
             log.info("âœ… User created successfully: {}", userId);
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(Map.of("userId", userId, "message", "User created successfully"));
+                    .body(Map.of("userId", userId, MESSAGE_KEY, "User created successfully"));
         } catch (Exception e) {
             log.error("âŒ Error creating user: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
