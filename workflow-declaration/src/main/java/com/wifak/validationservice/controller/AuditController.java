@@ -16,15 +16,14 @@ import java.time.LocalTime;
 import java.util.List;
 
 /**
- * Contrôleur dédié à l'espace auditeur.
+ * ContrÃ´leur dÃ©diÃ© Ã  l'espace auditeur.
  * Tous les endpoints sont en lecture seule (GET uniquement).
- * Accessible uniquement avec le rôle AUDITOR (ou ADMIN).
+ * Accessible uniquement avec le rÃ´le AUDITOR (ou ADMIN).
  *
- * Routes exposées via Gateway : /api/audit/**
+ * Routes exposÃ©es via Gateway : /api/audit/**
  */
 @RestController
 @RequestMapping("/api/audit")
-@CrossOrigin(origins = "http://localhost:4200")
 public class AuditController {
 
     private static final Logger log = LoggerFactory.getLogger(AuditController.class);
@@ -34,15 +33,15 @@ public class AuditController {
     public AuditController(AuditService auditService) {
         this.auditService = auditService;
     }
-    // 1. TOUS LES LOGS (journal de traçabilité complet)
+    // 1. TOUS LES LOGS (journal de traÃ§abilitÃ© complet)
     //    GET /api/audit/logs
     @GetMapping("/logs")
     @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN')")
     public ResponseEntity<List<AuditLogDTO>> getAllLogs() {
-        log.info("📋 [GET] /api/audit/logs");
+        log.info("ðŸ“‹ [GET] /api/audit/logs");
         return ResponseEntity.ok(auditService.getAllLogs());
     }
-    // 2. LOGS FILTRÉS (recherche avancée)
+    // 2. LOGS FILTRÃ‰S (recherche avancÃ©e)
     //    GET /api/audit/logs/search?action=VALIDATE&effectuePar=john&from=2025-01-01&to=2025-12-31
     @GetMapping("/logs/search")
     @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN')")
@@ -52,7 +51,7 @@ public class AuditController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
-        log.info("🔍 [GET] /api/audit/logs/search — action={}, user={}, from={}, to={}",
+        log.info("ðŸ” [GET] /api/audit/logs/search â€” action={}, user={}, from={}, to={}",
                 action, effectuePar, from, to);
 
         LocalDateTime fromDt = from != null ? from.atStartOfDay()          : null;
@@ -60,13 +59,13 @@ public class AuditController {
 
         return ResponseEntity.ok(auditService.searchLogs(action, effectuePar, fromDt, toDt));
     }
-    // 3. LOGS D'UNE DÉCLARATION SPÉCIFIQUE
+    // 3. LOGS D'UNE DÃ‰CLARATION SPÃ‰CIFIQUE
     //    GET /api/audit/logs/declaration/{id}
     @GetMapping("/logs/declaration/{declarationId}")
     @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN')")
     public ResponseEntity<List<AuditLogDTO>> getLogsByDeclaration(
             @PathVariable Long declarationId) {
-        log.info("📜 [GET] /api/audit/logs/declaration/{}", declarationId);
+        log.info("ðŸ“œ [GET] /api/audit/logs/declaration/{}", declarationId);
         return ResponseEntity.ok(auditService.getLogsByDeclaration(declarationId));
     }
     // 4. LISTE DES UTILISATEURS DISTINCTS (pour les filtres)
@@ -74,15 +73,15 @@ public class AuditController {
     @GetMapping("/users")
     @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN')")
     public ResponseEntity<List<String>> getDistinctUsers() {
-        log.info("👥 [GET] /api/audit/users");
+        log.info("ðŸ‘¥ [GET] /api/audit/users");
         return ResponseEntity.ok(auditService.getDistinctUsers());
     }
-    // 5. STATISTIQUES COMPLÈTES POUR LE TABLEAU DE BORD
+    // 5. STATISTIQUES COMPLÃˆTES POUR LE TABLEAU DE BORD
     //    GET /api/audit/stats
     @GetMapping("/stats")
     @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN')")
     public ResponseEntity<AuditStatsDTO> getAuditStats() {
-        log.info("📊 [GET] /api/audit/stats");
+        log.info("ðŸ“Š [GET] /api/audit/stats");
         return ResponseEntity.ok(auditService.getAuditStats());
     }
 }

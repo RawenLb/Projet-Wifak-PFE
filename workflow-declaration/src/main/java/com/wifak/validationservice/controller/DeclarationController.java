@@ -25,7 +25,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/declarations")
-@CrossOrigin(origins = "http://localhost:4200")
 public class DeclarationController {
 
     private static final Logger log = LoggerFactory.getLogger(DeclarationController.class);
@@ -49,13 +48,13 @@ public class DeclarationController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null ? auth.getName() : "system";
     }
-    // GENERATE — sans mapping (comportement existant)
+    // GENERATE â€” sans mapping (comportement existant)
     @PostMapping("/generate")
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     public ResponseEntity<Declaration> generateDeclaration(
             @RequestBody GenerateDeclarationRequest req) {
 
-        log.info("🚀 Génération — Type: {}, Période: {}", req.getDeclarationTypeId(), req.getPeriode());
+        log.info("ðŸš€ GÃ©nÃ©ration â€” Type: {}, PÃ©riode: {}", req.getDeclarationTypeId(), req.getPeriode());
 
         Declaration saved = declarationService.generateAndSave(
                 req.getDeclarationTypeId(),
@@ -66,37 +65,37 @@ public class DeclarationController {
         declarationService.notifyJiraTicketCreation(saved.getId(), getCurrentUsername());
         return ResponseEntity.ok(saved);
     }
-    // ✅ ANALYZE MAPPING — analyse compatibilité XSD ↔ SQL
+    // âœ… ANALYZE MAPPING â€” analyse compatibilitÃ© XSD â†” SQL
     // POST /api/declarations/analyze-mapping
     // Body: { declarationTypeId, dateDebut, dateFin }
     @PostMapping("/analyze-mapping")
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     public ResponseEntity<?> analyzeMapping(@RequestBody AnalyzeMappingRequest req) {
-        log.info("🔍 Analyse mapping — Type: {}", req.getDeclarationTypeId());
+        log.info("ðŸ” Analyse mapping â€” Type: {}", req.getDeclarationTypeId());
 
         try {
             DeclarationType type = typeRepository.findById(req.getDeclarationTypeId())
                     .orElseThrow(() -> new RuntimeException("Type introuvable: " + req.getDeclarationTypeId()));
 
-            // Vérifier que c'est du XML
+            // VÃ©rifier que c'est du XML
             if (type.getFormat() != DeclarationType.DeclarationFormat.XML) {
                 Map<String, Object> resp = new HashMap<>();
                 resp.put("applicable", false);
-                resp.put("message", "Le mapping XSD ↔ SQL s'applique uniquement aux déclarations de format XML.");
+                resp.put("message", "Le mapping XSD â†” SQL s'applique uniquement aux dÃ©clarations de format XML.");
                 return ResponseEntity.ok(resp);
             }
 
-            // Vérifier que le XSD est disponible
+            // VÃ©rifier que le XSD est disponible
             if (type.getXsdContent() == null || type.getXsdContent().trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Aucun XSD n'est configuré pour ce type. Uploadez d'abord le fichier XSD."
+                        "error", "Aucun XSD n'est configurÃ© pour ce type. Uploadez d'abord le fichier XSD."
                 ));
             }
 
-            // Vérifier que la SQL est disponible
+            // VÃ©rifier que la SQL est disponible
             if (type.getSqlQuery() == null || type.getSqlQuery().trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Aucune requête SQL configurée pour ce type."
+                        "error", "Aucune requÃªte SQL configurÃ©e pour ce type."
                 ));
             }
 
@@ -108,15 +107,15 @@ public class DeclarationController {
             try {
                 sqlColumns = xmlGenerationService.extractColumnsFromSql(type.getSqlQuery(), dateDebut, dateFin);
             } catch (Exception e) {
-                log.warn("⚠️ Impossible d'extraire les colonnes SQL: {}", e.getMessage());
+                log.warn("âš ï¸ Impossible d'extraire les colonnes SQL: {}", e.getMessage());
                 sqlColumns = List.of(); // On continue avec une liste vide
             }
 
-            // Analyser la compatibilité XSD ↔ SQL
+            // Analyser la compatibilitÃ© XSD â†” SQL
             XsdAnalyzerService.MappingAnalysisResult analysis =
                     xsdAnalyzerService.analyzeCompatibility(type.getXsdContent(), sqlColumns);
 
-            // Enrichir la réponse
+            // Enrichir la rÃ©ponse
             Map<String, Object> response = new HashMap<>();
             response.put("applicable",          true);
             response.put("xsdFields",           analysis.getXsdFields());
@@ -129,30 +128,30 @@ public class DeclarationController {
             response.put("declarationTypeCode", type.getCode());
             response.put("declarationTypeNom",  type.getNom());
 
-            log.info("✅ Analyse terminée — score: {}%", analysis.getCompatibilityScore());
+            log.info("âœ… Analyse terminÃ©e â€” score: {}%", analysis.getCompatibilityScore());
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ Erreur analyse mapping: {}", e.getMessage());
+            log.error("âŒ Erreur analyse mapping: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage()));
         }
     }
-    // ✅ GENERATE WITH MAPPING — génération XML avec mapping validé
+    // âœ… GENERATE WITH MAPPING â€” gÃ©nÃ©ration XML avec mapping validÃ©
     // POST /api/declarations/generate-with-mapping
     @PostMapping("/generate-with-mapping")
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     public ResponseEntity<?> generateWithMapping(
             @RequestBody GenerateWithMappingRequest req) {
 
-        log.info("🚀 Génération avec mapping — Type: {}, Période: {}, {} mappings",
+        log.info("ðŸš€ GÃ©nÃ©ration avec mapping â€” Type: {}, PÃ©riode: {}, {} mappings",
                 req.getDeclarationTypeId(), req.getPeriode(),
                 req.getMappings() != null ? req.getMappings().size() : 0);
 
         try {
             if (req.getMappings() == null || req.getMappings().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Le mapping est obligatoire pour ce mode de génération."
+                        "error", "Le mapping est obligatoire pour ce mode de gÃ©nÃ©ration."
                 ));
             }
 
@@ -164,7 +163,7 @@ public class DeclarationController {
 
             if (requiredUnmapped > 0) {
                 return ResponseEntity.badRequest().body(Map.of(
-                        "error", requiredUnmapped + " champ(s) obligatoire(s) du XSD n'ont pas de valeur assignée (ni SQL ni statique).",
+                        "error", requiredUnmapped + " champ(s) obligatoire(s) du XSD n'ont pas de valeur assignÃ©e (ni SQL ni statique).",
                         "type", "REQUIRED_FIELDS_MISSING"
                 ));
             }
@@ -181,7 +180,7 @@ public class DeclarationController {
             return ResponseEntity.ok(saved);
 
         } catch (Exception e) {
-            log.error("❌ Erreur génération avec mapping: {}", e.getMessage());
+            log.error("âŒ Erreur gÃ©nÃ©ration avec mapping: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage()));
         }
@@ -236,15 +235,15 @@ public class DeclarationController {
             @PathVariable Long id,
             @RequestBody PatchContentRequest req) {
 
-        log.info("✏️ Patch XML content — ID: {}", id);
+        log.info("âœï¸ Patch XML content â€” ID: {}", id);
         try {
             Declaration declaration = declarationService.findById(id);
 
-            // Seules les déclarations REJETEE ou GENEREE sont modifiables
+            // Seules les dÃ©clarations REJETEE ou GENEREE sont modifiables
             if (declaration.getStatut() != Declaration.DeclarationStatut.GENEREE &&
                     declaration.getStatut() != Declaration.DeclarationStatut.REJETEE) {
                 return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Seules les déclarations GENEREE ou REJETEE peuvent être modifiées."
+                        "error", "Seules les dÃ©clarations GENEREE ou REJETEE peuvent Ãªtre modifiÃ©es."
                 ));
             }
 
@@ -257,7 +256,7 @@ public class DeclarationController {
             return ResponseEntity.ok(updated);
 
         } catch (Exception e) {
-            log.error("❌ Erreur patch content: {}", e.getMessage());
+            log.error("âŒ Erreur patch content: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage()));
         }
@@ -314,7 +313,7 @@ public class DeclarationController {
         public void      setDateFin(LocalDate v)      { dateFin = v; }
     }
 
-    /** DTO pour la génération avec mapping */
+    /** DTO pour la gÃ©nÃ©ration avec mapping */
     public static class GenerateWithMappingRequest {
         private Long      declarationTypeId;
         private String    periode;

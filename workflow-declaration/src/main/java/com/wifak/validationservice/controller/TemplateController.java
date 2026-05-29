@@ -19,7 +19,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/templates")
-@CrossOrigin(origins = "http://localhost:4200")
 public class TemplateController {
 
     private final TemplateService templateService;
@@ -29,7 +28,7 @@ public class TemplateController {
     }
 
     /**
-     * ✅ Générer un fichier à partir d'un template
+     * âœ… GÃ©nÃ©rer un fichier Ã  partir d'un template
      *
      * POST /api/templates/generate
      * Body: {
@@ -51,7 +50,7 @@ public class TemplateController {
                     request.getData()
             );
 
-            // ✅ MODIFICATION ICI : Utiliser le service
+            // âœ… MODIFICATION ICI : Utiliser le service
             String extension = templateService.getFileExtension(request.getDeclarationTypeId());
             MediaType mediaType = determineMediaType(extension);
 
@@ -72,29 +71,29 @@ public class TemplateController {
     }
 
     /**
-     * ✅ Générer et sauvegarder un fichier sur le serveur
+     * âœ… GÃ©nÃ©rer et sauvegarder un fichier sur le serveur
      *
      * POST /api/templates/generate-and-save
      */
     @PostMapping("/generate-and-save")
     public ResponseEntity<?> generateAndSaveFile(@RequestBody GenerateFileRequest request) {
         try {
-            // ✅ Valider les données
+            // âœ… Valider les donnÃ©es
             templateService.validateTemplateData(request.getDeclarationTypeId(), request.getData());
 
-            // ✅ Générer le contenu
+            // âœ… GÃ©nÃ©rer le contenu
             String fileContent = templateService.generateFile(
                     request.getDeclarationTypeId(),
                     request.getData()
             );
 
-            // ✅ Créer le dossier uploads s'il n'existe pas
+            // âœ… CrÃ©er le dossier uploads s'il n'existe pas
             Path uploadsDir = Paths.get("uploads");
             if (!Files.exists(uploadsDir)) {
                 Files.createDirectories(uploadsDir);
             }
 
-            // ✅ Sauvegarder le fichier
+            // âœ… Sauvegarder le fichier
             String extension = determineFileExtension(request.getDeclarationTypeId());
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
             String fileName = "declaration_" + timestamp + "." + extension;
@@ -102,10 +101,10 @@ public class TemplateController {
 
             Files.write(filePath, fileContent.getBytes());
 
-            // ✅ Retourner les informations du fichier
+            // âœ… Retourner les informations du fichier
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "Fichier sauvegardé avec succès");
+            response.put("message", "Fichier sauvegardÃ© avec succÃ¨s");
             response.put("fileName", fileName);
             response.put("filePath", filePath.toString());
             response.put("fileSize", fileContent.length());
@@ -127,7 +126,7 @@ public class TemplateController {
     }
 
     /**
-     * ✅ Obtenir la liste des variables requises pour un type de déclaration
+     * âœ… Obtenir la liste des variables requises pour un type de dÃ©claration
      *
      * GET /api/templates/{declarationTypeId}/variables
      */
@@ -150,7 +149,7 @@ public class TemplateController {
     }
 
     /**
-     * ✅ Prévisualiser un template avec des données exemple
+     * âœ… PrÃ©visualiser un template avec des donnÃ©es exemple
      *
      * GET /api/templates/{declarationTypeId}/preview
      */
@@ -172,7 +171,7 @@ public class TemplateController {
     }
 
     /**
-     * ✅ Valider des données par rapport au template (sans générer le fichier)
+     * âœ… Valider des donnÃ©es par rapport au template (sans gÃ©nÃ©rer le fichier)
      *
      * POST /api/templates/validate
      */
@@ -186,7 +185,7 @@ public class TemplateController {
 
             Map<String, Object> response = new HashMap<>();
             response.put("valid", isValid);
-            response.put("message", "Les données sont valides");
+            response.put("message", "Les donnÃ©es sont valides");
             response.put("timestamp", LocalDateTime.now().toString());
 
             return ResponseEntity.ok(response);
@@ -203,15 +202,15 @@ public class TemplateController {
     // ========== HELPER METHODS ==========
 
     /**
-     * Déterminer l'extension du fichier selon le type de déclaration
+     * DÃ©terminer l'extension du fichier selon le type de dÃ©claration
      */
     private String determineFileExtension(Long declarationTypeId) {
-        // Cette méthode n'est plus nécessaire si tu utilises le service
+        // Cette mÃ©thode n'est plus nÃ©cessaire si tu utilises le service
         return templateService.getFileExtension(declarationTypeId);
     }
 
     /**
-     * Déterminer le MediaType selon l'extension
+     * DÃ©terminer le MediaType selon l'extension
      */
     private MediaType determineMediaType(String extension) {
         return switch (extension.toLowerCase()) {
@@ -227,7 +226,7 @@ public class TemplateController {
     // ========== DTOs ==========
 
     /**
-     * DTO pour les requêtes de génération de fichier
+     * DTO pour les requÃªtes de gÃ©nÃ©ration de fichier
      */
     public static class GenerateFileRequest {
         private Long declarationTypeId;

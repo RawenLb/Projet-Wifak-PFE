@@ -20,6 +20,7 @@ import java.util.UUID;
 public class ChatFileController {
 
     private static final Logger log = LoggerFactory.getLogger(ChatFileController.class);
+    private static final long MAX_FILE_SIZE_BYTES = 20L * 1024 * 1024; // 20 MB
 
     @Value("${file.chat-upload-dir:uploads/chat}")
     private String chatUploadDir;
@@ -48,7 +49,7 @@ public class ChatFileController {
             HttpServletRequest request) {
 
         if (file.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error", "Empty file"));
-        if (file.getSize() > 20 * 1024 * 1024)
+        if (file.getSize() > MAX_FILE_SIZE_BYTES)
             return ResponseEntity.badRequest().body(Map.of("error", "File too large (max 20MB)"));
 
         String contentType = file.getContentType();
@@ -81,7 +82,7 @@ public class ChatFileController {
             Files.copy(file.getInputStream(), uploadPath.resolve(storedName),
                     StandardCopyOption.REPLACE_EXISTING);
 
-            // URL dynamique basée sur la requête entrante (fonctionne derrière un proxy/gateway)
+            // URL dynamique basÃ©e sur la requÃªte entrante (fonctionne derriÃ¨re un proxy/gateway)
             String baseUrl = request.getScheme() + "://" + request.getServerName()
                     + ":" + request.getServerPort();
             String fileUrl = baseUrl + "/api/chat/files/" + storedName;
@@ -89,7 +90,7 @@ public class ChatFileController {
             String msgType = IMAGE_TYPES.contains(contentType) ? "IMAGE"
                     : contentType.startsWith("audio/") ? "VOICE" : "FILE";
 
-            log.info("[ChatFile] Uploaded: {} → {} ({})", originalName, storedName, msgType);
+            log.info("[ChatFile] Uploaded: {} â†’ {} ({})", originalName, storedName, msgType);
             return ResponseEntity.ok(Map.of("url", fileUrl, "fileName", originalName, "type", msgType));
 
         } catch (IOException e) {

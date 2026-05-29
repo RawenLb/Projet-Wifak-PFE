@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/jira")
-@CrossOrigin(origins = "http://localhost:4200")
 public class JiraController {
 
     private static final Logger log = LoggerFactory.getLogger(JiraController.class);
@@ -27,7 +26,7 @@ public class JiraController {
     public ResponseEntity<JiraTicketResponseDTO> createTicket(
             @RequestBody CreateTicketRequest req) {
 
-        log.info("🎫 Create ticket for declaration {}", req.getDeclarationId());
+        log.info("ðŸŽ« Create ticket for declaration {}", req.getDeclarationId());
 
         JiraTicketResponseDTO response =
                 service.createTicketForDeclaration(
@@ -44,7 +43,7 @@ public class JiraController {
     public ResponseEntity<JiraTicketResponseDTO> transitionTicket(
             @RequestBody TransitionTicketRequest req) {
 
-        log.info("🔄 Transition declaration {} → {}",
+        log.info("ðŸ”„ Transition declaration {} â†’ {}",
                 req.getDeclarationId(),
                 req.getNewBctStatut());
 
@@ -57,13 +56,13 @@ public class JiraController {
     public ResponseEntity<JiraTicketResponseDTO> getTicket(
             @PathVariable Long declarationId) {
 
-        log.info("🔍 Get ticket for declaration {}", declarationId);
+        log.info("ðŸ” Get ticket for declaration {}", declarationId);
 
         return service.findTicketForDeclaration(declarationId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> {
-                    log.warn("⚠️ Ticket not found for declaration {}", declarationId);
-                    return ResponseEntity.notFound().build(); // ✅ FIX
+                    log.warn("âš ï¸ Ticket not found for declaration {}", declarationId);
+                    return ResponseEntity.notFound().build(); // âœ… FIX
                 });
     }
 
@@ -84,11 +83,11 @@ public class JiraController {
             @RequestBody(required = false) JiraWebhookPayload payload) {
 
         if (payload == null) {
-            log.warn("⚠️ Webhook reçu avec payload vide");
+            log.warn("âš ï¸ Webhook reÃ§u avec payload vide");
             return ResponseEntity.ok().build();
         }
 
-        log.info("📨 Jira webhook event={} ticket={}",
+        log.info("ðŸ“¨ Jira webhook event={} ticket={}",
                 payload.getWebhookEvent(),
                 payload.getIssueKey());
 
@@ -97,7 +96,7 @@ public class JiraController {
             String newStatus = payload.extractNewStatus();
 
             if (newStatus != null) {
-                log.info("📌 Status changed in Jira {} → {}",
+                log.info("ðŸ“Œ Status changed in Jira {} â†’ {}",
                         payload.getIssueKey(),
                         newStatus);
             }

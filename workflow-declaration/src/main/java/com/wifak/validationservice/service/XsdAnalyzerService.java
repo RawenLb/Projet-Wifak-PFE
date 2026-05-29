@@ -18,11 +18,12 @@ import java.util.stream.Collectors;
 public class XsdAnalyzerService {
 
     private static final Logger log = LoggerFactory.getLogger(XsdAnalyzerService.class);
+    private static final int MAX_XSD_DEPTH = 10;
     private static final String XS_NS = "http://www.w3.org/2001/XMLSchema";
 
     /**
-     * Champs générés automatiquement par le backend dans l'en-tête XML.
-     * Ils ne doivent PAS apparaître dans le panneau de mapping utilisateur.
+     * Champs gÃ©nÃ©rÃ©s automatiquement par le backend dans l'en-tÃªte XML.
+     * Ils ne doivent PAS apparaÃ®tre dans le panneau de mapping utilisateur.
      */
     private static final Set<String> AUTO_HEADER_FIELDS = new HashSet<>(Arrays.asList(
             "codedeclaration", "periode", "datedebut", "datefin",
@@ -36,7 +37,7 @@ public class XsdAnalyzerService {
                 .replace("_", "").replace("-", "").replace(" ", "");
         return AUTO_HEADER_FIELDS.contains(normalized);
     }
-    // RÉSULTAT
+    // RÃ‰SULTAT
     public static class XsdFieldInfo {
         private String  name;
         private String  path;
@@ -87,18 +88,18 @@ public class XsdAnalyzerService {
         public String getSummary()                          { return summary; }
         public void setSummary(String v)                    { summary = v; }
     }
-    // POINT D'ENTRÉE
+    // POINT D'ENTRÃ‰E
     public MappingAnalysisResult analyzeCompatibility(String xsdContent, List<String> sqlColumns) {
-        log.info("🔍 Analyse XSD — {} colonnes SQL disponibles", sqlColumns.size());
+        log.info("ðŸ” Analyse XSD â€” {} colonnes SQL disponibles", sqlColumns.size());
 
         List<XsdFieldInfo> allFields  = parseXsdFields(xsdContent);
 
-        // ✅ Filtrer les champs d'en-tête auto-gérés par le backend
+        // âœ… Filtrer les champs d'en-tÃªte auto-gÃ©rÃ©s par le backend
         List<XsdFieldInfo> xsdFields = allFields.stream()
                 .filter(f -> !isAutoHeaderField(f.getName()))
                 .collect(Collectors.toList());
 
-        log.info("📋 {} champs XSD mappables ({} ignorés car auto-générés)",
+        log.info("ðŸ“‹ {} champs XSD mappables ({} ignorÃ©s car auto-gÃ©nÃ©rÃ©s)",
                 xsdFields.size(), allFields.size() - xsdFields.size());
 
         Map<String, String> autoMapped    = buildAutoMapping(xsdFields, sqlColumns);
@@ -117,26 +118,26 @@ public class XsdAnalyzerService {
         result.setSummary(summary);
         return result;
     }
-    // ✅ PARSING XSD — robuste avec ou sans prologue <?xml?>
+    // âœ… PARSING XSD â€” robuste avec ou sans prologue <?xml?>
     private List<XsdFieldInfo> parseXsdFields(String xsdContent) {
         List<XsdFieldInfo> fields = new ArrayList<>();
         if (xsdContent == null || xsdContent.trim().isEmpty()) {
-            log.warn("⚠️ XSD vide ou null");
+            log.warn("âš ï¸ XSD vide ou null");
             return fields;
         }
 
         try {
             Document doc = parseXml(xsdContent);
 
-            // Récupérer tous les xs:complexType nommés pour résolution des références
+            // RÃ©cupÃ©rer tous les xs:complexType nommÃ©s pour rÃ©solution des rÃ©fÃ©rences
             Map<String, Element> namedComplexTypes = collectNamedComplexTypes(doc);
-            log.debug("🗂️ {} complexType(s) nommé(s) trouvés", namedComplexTypes.size());
+            log.debug("ðŸ—‚ï¸ {} complexType(s) nommÃ©(s) trouvÃ©s", namedComplexTypes.size());
 
-            // Trouver l'élément racine (xs:element de niveau schema)
+            // Trouver l'Ã©lÃ©ment racine (xs:element de niveau schema)
             NodeList topElements = doc.getElementsByTagNameNS(XS_NS, "element");
             for (int i = 0; i < topElements.getLength(); i++) {
                 Element el = (Element) topElements.item(i);
-                // Ne traiter que les éléments directs enfants de xs:schema
+                // Ne traiter que les Ã©lÃ©ments directs enfants de xs:schema
                 if (el.getParentNode() instanceof Element) {
                     Element parent = (Element) el.getParentNode();
                     String parentLocal = parent.getLocalName();
@@ -144,7 +145,7 @@ public class XsdAnalyzerService {
                         String rootName = el.getAttribute("name");
                         String typeName = el.getAttribute("type");
                         if (!typeName.isEmpty()) {
-                            // Résoudre via complexType nommé
+                            // RÃ©soudre via complexType nommÃ©
                             String typeNameLocal = stripNsPrefix(typeName);
                             Element complexType = namedComplexTypes.get(typeNameLocal);
                             if (complexType != null) {
@@ -159,39 +160,39 @@ public class XsdAnalyzerService {
                                         inlineType, rootName, namedComplexTypes, fields, 0);
                             }
                         }
-                        break; // Traiter seulement le premier élément racine
+                        break; // Traiter seulement le premier Ã©lÃ©ment racine
                     }
                 }
             }
 
         } catch (Exception e) {
-            log.error("❌ Erreur parsing XSD : {}", e.getMessage(), e);
+            log.error("âŒ Erreur parsing XSD : {}", e.getMessage(), e);
         }
 
         return fields;
     }
 
     /**
-     * ✅ Parse le XML en supprimant le prologue <?xml...?> si présent.
+     * âœ… Parse le XML en supprimant le prologue <?xml...?> si prÃ©sent.
      * C'est le correctif principal pour l'erreur
-     * "La cible de l'instruction de traitement correspondant à [xX][mM][lL] n'est pas autorisée."
+     * "La cible de l'instruction de traitement correspondant Ã  [xX][mM][lL] n'est pas autorisÃ©e."
      */
     private Document parseXml(String xsdContent) throws Exception {
         String content = xsdContent.trim();
 
-        // ✅ Supprimer le prologue <?xml ... ?> s'il est présent
+        // âœ… Supprimer le prologue <?xml ... ?> s'il est prÃ©sent
         if (content.startsWith("<?xml") || content.startsWith("<?XML")) {
             int prologEnd = content.indexOf("?>");
             if (prologEnd != -1) {
                 content = content.substring(prologEnd + 2).trim();
-                log.debug("🔧 Prologue XML supprimé avant parsing");
+                log.debug("ðŸ”§ Prologue XML supprimÃ© avant parsing");
             }
         }
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
 
-        // Sécurité : désactiver les entités externes (XXE)
+        // SÃ©curitÃ© : dÃ©sactiver les entitÃ©s externes (XXE)
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false);
         factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
         factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
@@ -204,7 +205,7 @@ public class XsdAnalyzerService {
         byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
         return builder.parse(new ByteArrayInputStream(bytes));
     }
-    // COLLECTE DES COMPLEXTYPE NOMMÉS
+    // COLLECTE DES COMPLEXTYPE NOMMÃ‰S
     private Map<String, Element> collectNamedComplexTypes(Document doc) {
         Map<String, Element> map = new LinkedHashMap<>();
         NodeList cts = doc.getElementsByTagNameNS(XS_NS, "complexType");
@@ -217,13 +218,13 @@ public class XsdAnalyzerService {
         }
         return map;
     }
-    // COLLECTE RÉCURSIVE DES CHAMPS
+    // COLLECTE RÃ‰CURSIVE DES CHAMPS
     private void collectFieldsFromComplexType(Element complexType,
                                               String parentPath,
                                               Map<String, Element> namedTypes,
                                               List<XsdFieldInfo> fields,
                                               int depth) {
-        if (depth > 10) return; // Protection anti-boucle infinie
+        if (depth > MAX_XSD_DEPTH) return; // Protection anti-boucle infinie
 
         // Chercher xs:sequence, xs:all, xs:choice
         for (String groupTag : new String[]{"sequence", "all", "choice"}) {
@@ -280,15 +281,15 @@ public class XsdAnalyzerService {
         int     maxO     = "unbounded".equals(maxOcc) ? Integer.MAX_VALUE
                 : (maxOcc.isEmpty() ? 1 : parseIntSafe(maxOcc, 1));
 
-        // Résoudre le type
+        // RÃ©soudre le type
         String resolvedType = resolveSimpleTypeName(typeName);
 
-        // Vérifier si c'est un type complexe référencé
+        // VÃ©rifier si c'est un type complexe rÃ©fÃ©rencÃ©
         if (!typeName.isEmpty()) {
             String localTypeName = stripNsPrefix(typeName);
             Element namedType = namedTypes.get(localTypeName);
             if (namedType != null) {
-                // C'est un sous-type complexe → descendre récursivement
+                // C'est un sous-type complexe â†’ descendre rÃ©cursivement
                 collectFieldsFromComplexType(namedType, path, namedTypes, fields, depth + 1);
                 return;
             }
@@ -311,17 +312,17 @@ public class XsdAnalyzerService {
             }
         }
 
-        // Champ feuille → ajouter à la liste
+        // Champ feuille â†’ ajouter Ã  la liste
         fields.add(new XsdFieldInfo(name, path, resolvedType, required,
                 defVal.isEmpty() ? null : defVal, maxO));
-        log.debug("  ✅ Champ: {} [{}] requis={}", path, resolvedType, required);
+        log.debug("  âœ… Champ: {} [{}] requis={}", path, resolvedType, required);
     }
-    // AUTO-MAPPING XSD ↔ SQL
+    // AUTO-MAPPING XSD â†” SQL
     private Map<String, String> buildAutoMapping(List<XsdFieldInfo> xsdFields,
                                                  List<String> sqlColumns) {
         Map<String, String> mapping = new LinkedHashMap<>();
 
-        // Index SQL normalisé → nom original
+        // Index SQL normalisÃ© â†’ nom original
         Map<String, String> sqlIndex = new LinkedHashMap<>();
         for (String col : sqlColumns) {
             sqlIndex.put(normalize(col), col);
@@ -330,13 +331,13 @@ public class XsdAnalyzerService {
         for (XsdFieldInfo field : xsdFields) {
             String normField = normalize(field.getName());
 
-            // 1) Correspondance exacte normalisée
+            // 1) Correspondance exacte normalisÃ©e
             if (sqlIndex.containsKey(normField)) {
                 mapping.put(field.getName(), sqlIndex.get(normField));
                 continue;
             }
 
-            // 2) Recherche partielle (XSD ⊂ SQL ou SQL ⊂ XSD)
+            // 2) Recherche partielle (XSD âŠ‚ SQL ou SQL âŠ‚ XSD)
             String best = null;
             for (Map.Entry<String, String> entry : sqlIndex.entrySet()) {
                 String normSql = entry.getKey();
@@ -350,7 +351,7 @@ public class XsdAnalyzerService {
             }
         }
 
-        log.info("🔗 Auto-mapping : {}/{} champs mappés automatiquement",
+        log.info("ðŸ”— Auto-mapping : {}/{} champs mappÃ©s automatiquement",
                 mapping.size(), xsdFields.size());
         return mapping;
     }
@@ -386,7 +387,7 @@ public class XsdAnalyzerService {
                 .filter(f -> f.isRequired() && autoMapped.containsKey(f.getName()))
                 .count();
         if (requiredTotal == 0) {
-            // Pas de champs obligatoires : score basé sur tous les champs
+            // Pas de champs obligatoires : score basÃ© sur tous les champs
             return (int) Math.round((double) autoMapped.size() / xsdFields.size() * 100);
         }
         return (int) Math.round((double) requiredMapped / requiredTotal * 100);
@@ -401,18 +402,18 @@ public class XsdAnalyzerService {
                 .count();
 
         if (score >= 80) {
-            return String.format("Excellente compatibilité — %d/%d champs obligatoires mappés automatiquement.",
+            return String.format("Excellente compatibilitÃ© â€” %d/%d champs obligatoires mappÃ©s automatiquement.",
                     requiredMapped, required);
         } else if (score >= 50) {
-            return String.format("Compatibilité partielle — %d/%d champs obligatoires mappés. Vérifiez les champs manquants.",
+            return String.format("CompatibilitÃ© partielle â€” %d/%d champs obligatoires mappÃ©s. VÃ©rifiez les champs manquants.",
                     requiredMapped, required);
         } else {
-            return String.format("Faible compatibilité — seulement %d/%d champs obligatoires mappés. Configurez les mappings manuellement.",
+            return String.format("Faible compatibilitÃ© â€” seulement %d/%d champs obligatoires mappÃ©s. Configurez les mappings manuellement.",
                     requiredMapped, required);
         }
     }
     // UTILITAIRES
-    /** Normalise un nom de champ pour la comparaison : minuscule, sans séparateurs. */
+    /** Normalise un nom de champ pour la comparaison : minuscule, sans sÃ©parateurs. */
     private String normalize(String name) {
         if (name == null) return "";
         return name.toLowerCase()
@@ -421,14 +422,14 @@ public class XsdAnalyzerService {
                 .replace(" ", "");
     }
 
-    /** Supprime le préfixe d'espace de noms (ex: xs:string → string). */
+    /** Supprime le prÃ©fixe d'espace de noms (ex: xs:string â†’ string). */
     private String stripNsPrefix(String typeName) {
         if (typeName == null) return "";
         int colon = typeName.lastIndexOf(':');
         return colon >= 0 ? typeName.substring(colon + 1) : typeName;
     }
 
-    /** Résout les types XSD simples en noms lisibles. */
+    /** RÃ©sout les types XSD simples en noms lisibles. */
     private String resolveSimpleTypeName(String rawType) {
         String t = stripNsPrefix(rawType);
         switch (t) {
@@ -446,7 +447,7 @@ public class XsdAnalyzerService {
         }
     }
 
-    /** Récupère le premier élément enfant direct d'un localName donné. */
+    /** RÃ©cupÃ¨re le premier Ã©lÃ©ment enfant direct d'un localName donnÃ©. */
     private Element getFirstChildElement(Element parent, String localName) {
         if (parent == null || localName == null) return null;
         NodeList children = parent.getChildNodes();

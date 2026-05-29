@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 public class KeycloakAdminService {
 
     private static final Logger log = LoggerFactory.getLogger(KeycloakAdminService.class);
+    private static final int HTTP_CREATED = 201;
+    private static final int MAX_SEARCH_RESULTS = 100;
 
     private final Keycloak keycloak;
     private final UserRepository userRepository;
@@ -36,7 +38,6 @@ public class KeycloakAdminService {
     @Value("${keycloak.realm}")
     private String realm;
 
-    // Propriétés injectées depuis application.yml
     @Value("${app.frontend-client-id}")
     private String clientId;
 
@@ -71,7 +72,7 @@ public class KeycloakAdminService {
     }
 
     public List<UserDTO> searchUsers(String search) {
-        List<UserRepresentation> users = getUsersResource().search(search, 0, 100);
+        List<UserRepresentation> users = getUsersResource().search(search, 0, MAX_SEARCH_RESULTS);
         return users.stream()
                 .map(this::convertToUserDTO)
                 .collect(Collectors.toList());
@@ -96,7 +97,7 @@ public class KeycloakAdminService {
         try {
             response = getUsersResource().create(kcUser);
 
-            if (response.getStatus() != 201) {
+            if (response.getStatus() != HTTP_CREATED) {
                 String errorBody = "";
                 if (response.hasEntity()) {
                     try {

@@ -8,6 +8,7 @@ import com.wifak.notificationservice.entities.NotificationLog;
 import com.wifak.notificationservice.repositories.NotificationLogRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
@@ -20,6 +21,9 @@ import java.util.List;
 public class NotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
+
+    @Value("${app.frontend-url:http://localhost:4200}")
+    private String appFrontendUrl;
 
     private final EmailService emailService;
     private final DeclarationClient declarationClient;
@@ -35,19 +39,19 @@ public class NotificationService {
         this.keycloakUserClient = keycloakUserClient;
         this.notificationLogRepository = notificationLogRepository;
     }
-    // 1. NOTIFICATION MANAGER — déclaration en attente de validation
-    //    Appelée depuis le validation-service via REST (webhook interne)
+    // 1. NOTIFICATION MANAGER â€” dÃ©claration en attente de validation
+    //    AppelÃ©e depuis le validation-service via REST (webhook interne)
     public void notifyManagerPendingValidation(Long declarationId) {
-        log.info("📧 [PENDING] Notification manager — déclaration {}", declarationId);
+        log.info("ðŸ“§ [PENDING] Notification manager â€” dÃ©claration {}", declarationId);
 
         try {
             DeclarationDTO decl = declarationClient.getById(declarationId);
 
-            // Récupère tous les managers depuis Keycloak
+            // RÃ©cupÃ¨re tous les managers depuis Keycloak
             List<UserEmailDTO> managers = keycloakUserClient.getUsersByRole("ROLE_MANAGER");
 
             if (managers.isEmpty()) {
-                log.warn("⚠️  Aucun manager trouvé dans Keycloak pour la déclaration {}", declarationId);
+                log.warn("âš ï¸  Aucun manager trouvÃ© dans Keycloak pour la dÃ©claration {}", declarationId);
                 return;
             }
 
@@ -60,11 +64,11 @@ public class NotificationService {
                 ctx.setVariable("periode", decl.getPeriode());
                 ctx.setVariable("generePar", decl.getGenerePar());
                 ctx.setVariable("dateGeneration", decl.getDateGeneration());
-                ctx.setVariable("appUrl", "http://localhost:4200/declarations/" + declarationId);
+                ctx.setVariable("appUrl", appFrontendUrl + "/declarations/" + declarationId);
 
                 emailService.sendHtmlEmail(
                         manager.getEmail(),
-                        "📋 Déclaration en attente de validation — " + buildDeclarationCode(decl),
+                        "ðŸ“‹ DÃ©claration en attente de validation â€” " + buildDeclarationCode(decl),
                         "pending-validation",
                         ctx
                 );
@@ -73,14 +77,14 @@ public class NotificationService {
             }
 
         } catch (Exception e) {
-            log.error("❌ Erreur notification manager (déclaration {}) : {}", declarationId, e.getMessage(), e);
+            log.error("âŒ Erreur notification manager (dÃ©claration {}) : {}", declarationId, e.getMessage(), e);
             saveLog(declarationId, "PENDING_VALIDATION", "managers", "ERROR", e.getMessage());
         }
     }
-    // 2. NOTIFICATION AGENT — déclaration rejetée
-    //    Appelée depuis le validation-service via REST (webhook interne)
+    // 2. NOTIFICATION AGENT â€” dÃ©claration rejetÃ©e
+    //    AppelÃ©e depuis le validation-service via REST (webhook interne)
     public void notifyAgentDeclarationRejected(Long declarationId, String commentaireRejet) {
-        log.info("📧 [REJET] Notification agent — déclaration {}", declarationId);
+        log.info("ðŸ“§ [REJET] Notification agent â€” dÃ©claration {}", declarationId);
 
         try {
             DeclarationDTO decl = declarationClient.getById(declarationId);
@@ -89,7 +93,7 @@ public class NotificationService {
             UserEmailDTO agent = keycloakUserClient.getUserByUsername(agentUsername);
 
             if (agent == null || agent.getEmail() == null || agent.getEmail().isBlank()) {
-                log.warn("⚠️  Email introuvable pour l'agent '{}' (déclaration {})", agentUsername, declarationId);
+                log.warn("âš ï¸  Email introuvable pour l'agent '{}' (dÃ©claration {})", agentUsername, declarationId);
                 return;
             }
 
@@ -99,11 +103,11 @@ public class NotificationService {
             ctx.setVariable("periode", decl.getPeriode());
             ctx.setVariable("commentaireRejet", commentaireRejet != null ? commentaireRejet : "Aucun commentaire fourni.");
             ctx.setVariable("rejectedBy", decl.getValidePar());
-            ctx.setVariable("appUrl", "http://localhost:4200/declarations/" + declarationId);
+            ctx.setVariable("appUrl", appFrontendUrl + "/declarations/" + declarationId);
 
             emailService.sendHtmlEmail(
                     agent.getEmail(),
-                    "❌ Déclaration rejetée — Action requise — " + buildDeclarationCode(decl),
+                    "âŒ DÃ©claration rejetÃ©e â€” Action requise â€” " + buildDeclarationCode(decl),
                     "declaration-rejected",
                     ctx
             );
@@ -111,15 +115,15 @@ public class NotificationService {
             saveLog(declarationId, "REJECTION", agent.getEmail(), "OK", null);
 
         } catch (Exception e) {
-            log.error("❌ Erreur notification rejet (déclaration {}) : {}", declarationId, e.getMessage(), e);
+            log.error("âŒ Erreur notification rejet (dÃ©claration {}) : {}", declarationId, e.getMessage(), e);
             saveLog(declarationId, "REJECTION", "agent", "ERROR", e.getMessage());
         }
     }
-    // 3. ALERTE ÉCHÉANCE — tâche planifiée tous les jours à 8h00
-    //    Vérifie les déclarations à échéance dans 2 jours ou moins
-    @Scheduled(cron = "0 0 8 * * *")   // tous les jours à 08:00
+    // 3. ALERTE Ã‰CHÃ‰ANCE â€” tÃ¢che planifiÃ©e tous les jours Ã  8h00
+    //    VÃ©rifie les dÃ©clarations Ã  Ã©chÃ©ance dans 2 jours ou moins
+    @Scheduled(cron = "0 0 8 * * *")   // tous les jours Ã  08:00
     public void checkUpcomingDeadlines() {
-        log.info("⏰ [SCHEDULER] Vérification des échéances — {}", LocalDate.now());
+        log.info("â° [SCHEDULER] VÃ©rification des Ã©chÃ©ances â€” {}", LocalDate.now());
 
         try {
             List<DeclarationDTO> all = declarationClient.getAll();
@@ -129,22 +133,22 @@ public class NotificationService {
                     .filter(d -> !isTerminal(d.getStatut()))          // exclut ENVOYEE / VALIDEE
                     .filter(d -> {
                         long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), d.getDateFin());
-                        return daysLeft >= 0 && daysLeft <= 2;        // aujourd'hui, demain ou après-demain
+                        return daysLeft >= 0 && daysLeft <= 2;        // aujourd'hui, demain ou aprÃ¨s-demain
                     })
                     .toList();
 
-            log.info("⚠️  {} déclaration(s) proche(s) de l'échéance", nearDeadline.size());
+            log.info("âš ï¸  {} dÃ©claration(s) proche(s) de l'Ã©chÃ©ance", nearDeadline.size());
 
             for (DeclarationDTO decl : nearDeadline) {
                 sendDeadlineAlert(decl);
             }
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors de la vérification des échéances : {}", e.getMessage(), e);
+            log.error("âŒ Erreur lors de la vÃ©rification des Ã©chÃ©ances : {}", e.getMessage(), e);
         }
     }
 
-    // ── Helper : envoi de l'alerte d'échéance ────────────────────
+    // â”€â”€ Helper : envoi de l'alerte d'Ã©chÃ©ance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void sendDeadlineAlert(DeclarationDTO decl) {
         long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), decl.getDateFin());
@@ -153,7 +157,7 @@ public class NotificationService {
         try {
             UserEmailDTO agent = keycloakUserClient.getUserByUsername(agentUsername);
             if (agent == null || agent.getEmail() == null || agent.getEmail().isBlank()) {
-                log.warn("⚠️  Email introuvable pour '{}' (déclaration {})", agentUsername, decl.getId());
+                log.warn("âš ï¸  Email introuvable pour '{}' (dÃ©claration {})", agentUsername, decl.getId());
                 return;
             }
 
@@ -164,23 +168,23 @@ public class NotificationService {
             ctx.setVariable("dateFin", decl.getDateFin());
             ctx.setVariable("daysLeft", daysLeft);
             ctx.setVariable("statut", decl.getStatut());
-            ctx.setVariable("appUrl", "http://localhost:4200/declarations/" + decl.getId());
+            ctx.setVariable("appUrl", appFrontendUrl + "/declarations/" + decl.getId());
 
             String subject = daysLeft == 0
-                    ? "🔴 URGENT — Échéance aujourd'hui — " + buildDeclarationCode(decl)
-                    : "⚠️ Échéance dans " + daysLeft + " jour(s) — " + buildDeclarationCode(decl);
+                    ? "ðŸ”´ URGENT â€” Ã‰chÃ©ance aujourd'hui â€” " + buildDeclarationCode(decl)
+                    : "âš ï¸ Ã‰chÃ©ance dans " + daysLeft + " jour(s) â€” " + buildDeclarationCode(decl);
 
             emailService.sendHtmlEmail(agent.getEmail(), subject, "deadline-alert", ctx);
 
             saveLog(decl.getId(), "DEADLINE_ALERT", agent.getEmail(), "OK", "J+" + daysLeft);
 
         } catch (Exception e) {
-            log.error("❌ Erreur alerte échéance (déclaration {}) : {}", decl.getId(), e.getMessage(), e);
+            log.error("âŒ Erreur alerte Ã©chÃ©ance (dÃ©claration {}) : {}", decl.getId(), e.getMessage(), e);
             saveLog(decl.getId(), "DEADLINE_ALERT", agentUsername, "ERROR", e.getMessage());
         }
     }
 
-    // ── Helpers ──────────────────────────────────────────────────
+    // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private String buildDeclarationCode(DeclarationDTO decl) {
         if (decl.getDeclarationType() != null && decl.getDeclarationType().getCode() != null) {
@@ -203,7 +207,7 @@ public class NotificationService {
             entry.setDetail(detail);
             notificationLogRepository.save(entry);
         } catch (Exception e) {
-            log.error("⚠️  Impossible de sauvegarder le log de notification : {}", e.getMessage());
+            log.error("âš ï¸  Impossible de sauvegarder le log de notification : {}", e.getMessage());
         }
     }
 }

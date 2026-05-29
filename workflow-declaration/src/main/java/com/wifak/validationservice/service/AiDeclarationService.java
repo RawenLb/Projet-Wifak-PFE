@@ -10,17 +10,17 @@ import java.util.*;
 import java.util.regex.*;
 
 /**
- * AiDeclarationService — Validation 100% règles métier locale (sans IA / sans cloud)
- * Banque Wifak — Plateforme de gestion des déclarations réglementaires BCT
+ * AiDeclarationService â€” Validation 100% rÃ¨gles mÃ©tier locale (sans IA / sans cloud)
+ * Banque Wifak â€” Plateforme de gestion des dÃ©clarations rÃ©glementaires BCT
  *
  * Conforme au Cahier des Charges (BF10, BF15, BF16, BF17) :
- *  - BF10 : Contrôle de conformité (structure + métier)
- *  - BF15 : Détection des anomalies par règles BCT
- *  - BF16 : Score de risque calculé localement
- *  - BF17 : Aide à la correction via templates de motifs de rejet
+ *  - BF10 : ContrÃ´le de conformitÃ© (structure + mÃ©tier)
+ *  - BF15 : DÃ©tection des anomalies par rÃ¨gles BCT
+ *  - BF16 : Score de risque calculÃ© localement
+ *  - BF17 : Aide Ã  la correction via templates de motifs de rejet
  *
- * ✅ Zéro dépendance externe — Instantané — Sécurisé (données jamais transmises)
- * Seuil de validation : score ≥ 70 → VALIDÉE | score < 70 → REJETÉE
+ * âœ… ZÃ©ro dÃ©pendance externe â€” InstantanÃ© â€” SÃ©curisÃ© (donnÃ©es jamais transmises)
+ * Seuil de validation : score â‰¥ 70 â†’ VALIDÃ‰E | score < 70 â†’ REJETÃ‰E
  */
 @Service
 public class AiDeclarationService {
@@ -28,7 +28,7 @@ public class AiDeclarationService {
     private static final Logger log = LoggerFactory.getLogger(AiDeclarationService.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // ── Seuils de validation ──
+    // â”€â”€ Seuils de validation â”€â”€
     private static final int SCORE_INITIAL          = 100;
     private static final int SCORE_MIN              = 0;
     private static final int SCORE_VALIDATION_SEUIL = 70;
@@ -47,12 +47,12 @@ public class AiDeclarationService {
     private static final int RISK_SCORE_FAIBLE      = 70;
     private static final int RISK_SCORE_MOYEN       = 40;
 
-    // ── Taux de provision réglementaires BCT par classe de risque ──
+    // â”€â”€ Taux de provision rÃ©glementaires BCT par classe de risque â”€â”€
     private static final Map<String, Double> TAUX_PROVISION = Map.of(
             "A", 0.05, "B", 0.10, "C", 0.20, "D", 0.50
     );
 
-    // ── Valeurs autorisées par type de déclaration ──
+    // â”€â”€ Valeurs autorisÃ©es par type de dÃ©claration â”€â”€
     private static final Set<String> TYPES_RISQUE      = Set.of("CHANGE", "TAUX");
     private static final Set<String> TYPES_OPERATION   = Set.of("CREDIT", "DEPOT", "VIREMENT", "GARANTIE", "EMISSION");
     private static final Set<String> STATUTS_OPERATION = Set.of("ACTIF", "CLOTURE", "EN_COURS", "CONTENTIEUX");
@@ -60,59 +60,59 @@ public class AiDeclarationService {
     private static final Set<String> TYPES_CLIENT      = Set.of("ENTREPRISE", "PME", "TPE", "GE", "STARTUP");
     private static final Set<String> TYPES_CONTREP     = Set.of("ENTREPRISE", "BANQUE", "ETAT", "PARTICULIER");
     private static final Set<String> TYPES_ENGAGEMENT  = Set.of("BILAN", "HORS_BILAN");
-    // POINT D'ENTRÉE PRINCIPAL — BF10 + BF15
-    // Validation complète par règles métier — résultat instantané
+    // POINT D'ENTRÃ‰E PRINCIPAL â€” BF10 + BF15
+    // Validation complÃ¨te par rÃ¨gles mÃ©tier â€” rÃ©sultat instantanÃ©
     public AiValidationResult analyzeDeclaration(String contenu, String nomFichier) {
-        log.info("⚡ [BF10/BF15] Validation règles métier: {}", nomFichier);
+        log.info("âš¡ [BF10/BF15] Validation rÃ¨gles mÃ©tier: {}", nomFichier);
         String format = detectFormat(nomFichier, contenu);
-        log.info("📄 Format détecté: {}", format);
+        log.info("ðŸ“„ Format dÃ©tectÃ©: {}", format);
 
-        // Étape 1 : Validation structurelle
+        // Ã‰tape 1 : Validation structurelle
         List<String> structureErrors = validateStructureOnly(contenu, format);
         if (!structureErrors.isEmpty()) {
-            log.warn("❌ Structure invalide: {}", structureErrors);
+            log.warn("âŒ Structure invalide: {}", structureErrors);
             return reject(structureErrors, 0);
         }
 
-        // Étape 2 : Validation métier complète
+        // Ã‰tape 2 : Validation mÃ©tier complÃ¨te
         return validateBusinessRules(contenu, nomFichier, format);
     }
-    // VALIDATION MÉTIER PRINCIPALE
+    // VALIDATION MÃ‰TIER PRINCIPALE
     private AiValidationResult validateBusinessRules(String contenu, String nomFichier, String format) {
         String typeDeclaration = detectTypeDeclaration(nomFichier, contenu);
-        log.info("📋 Type déclaration détecté: {}", typeDeclaration);
+        log.info("ðŸ“‹ Type dÃ©claration dÃ©tectÃ©: {}", typeDeclaration);
 
         List<String> anomalies = new ArrayList<>();
-        int score = 100;
+        int score = SCORE_INITIAL;
 
-        // ── 1. Validation de l'en-tête ──
+        // â”€â”€ 1. Validation de l'en-tÃªte â”€â”€
         Map<String, String> entete = extractEssentialFields(contenu);
         List<String> enteteErrors = validateEntete(entete, contenu);
         anomalies.addAll(enteteErrors);
         score -= enteteErrors.size() * PENALITE_ENTETE;
 
-        // ── 2. Extraction et validation des lignes ──
+        // â”€â”€ 2. Extraction et validation des lignes â”€â”€
         List<Map<String, String>> lignes = extractLignes(contenu);
 
-        // Vérification du nombre de lignes vs NombreLignes déclaré
+        // VÃ©rification du nombre de lignes vs NombreLignes dÃ©clarÃ©
         String nombreLignesDeclare = extractTagOutsideLignes(contenu, "nombrelignes");
         if (nombreLignesDeclare != null) {
             try {
                 int declared = Integer.parseInt(nombreLignesDeclare.trim());
                 if (declared != lignes.size()) {
                     anomalies.add(String.format(
-                            "Incohérence du nombre de lignes : en-tête déclare %d ligne(s) mais %d ligne(s) trouvée(s) dans <Donnees>",
+                            "IncohÃ©rence du nombre de lignes : en-tÃªte dÃ©clare %d ligne(s) mais %d ligne(s) trouvÃ©e(s) dans <Donnees>",
                             declared, lignes.size()));
                     score -= PENALITE_INCOHERENCE;
                 }
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException e) { log.debug("Non-numeric NombreLignes, skipping: {}", e.getMessage()); }
         }
 
         if (lignes.isEmpty()) {
-            anomalies.add("Aucune ligne de données trouvée dans <Donnees> — la déclaration est vide");
+            anomalies.add("Aucune ligne de donnÃ©es trouvÃ©e dans <Donnees> â€” la dÃ©claration est vide");
             score -= PENALITE_VIDE;
         } else {
-            // ── 3. Validation par type de déclaration ──
+            // â”€â”€ 3. Validation par type de dÃ©claration â”€â”€
             List<String> lignesErrors = switch (typeDeclaration) {
                 case "BCT_01" -> validateBCT01(lignes);
                 case "BCT_02" -> validateBCT02(lignes);
@@ -122,22 +122,22 @@ public class AiDeclarationService {
                 default -> validateGeneric(lignes);
             };
             anomalies.addAll(lignesErrors);
-            // Pénalité proportionnelle : chaque anomalie sur lignes réduit le score
+            // PÃ©nalitÃ© proportionnelle : chaque anomalie sur lignes rÃ©duit le score
             score -= (int) Math.min(PENALITE_LIGNES_MAX, lignesErrors.size() * PENALITE_LIGNES_UNIT);
         }
 
-        // ── 4. Détection de données fictives / de test ──
+        // â”€â”€ 4. DÃ©tection de donnÃ©es fictives / de test â”€â”€
         List<String> fictifErrors = detectFictiveData(lignes, typeDeclaration);
         anomalies.addAll(fictifErrors);
         score -= fictifErrors.size() * PENALITE_FICTIF;
 
-        // Score final borné entre 0 et 100
+        // Score final bornÃ© entre 0 et 100
         score = Math.max(SCORE_MIN, Math.min(SCORE_INITIAL, score));
 
         boolean valid = score >= SCORE_VALIDATION_SEUIL;
         String recommendation = valid ? "VALIDATE" : "REJECT";
 
-        log.info("✅ Validation terminée — Score: {}/100, Décision: {}, Anomalies: {}",
+        log.info("âœ… Validation terminÃ©e â€” Score: {}/100, DÃ©cision: {}, Anomalies: {}",
                 score, recommendation, anomalies.size());
 
         AiValidationResult result = new AiValidationResult();
@@ -145,11 +145,11 @@ public class AiDeclarationService {
         result.setScore(score);
         result.setRecommendation(recommendation);
         result.setAnomalies(anomalies.isEmpty()
-                ? List.of("✅ Aucune anomalie détectée — déclaration conforme aux règles BCT")
+                ? List.of("âœ… Aucune anomalie dÃ©tectÃ©e â€” dÃ©claration conforme aux rÃ¨gles BCT")
                 : anomalies);
         return result;
     }
-    // VALIDATION EN-TÊTE
+    // VALIDATION EN-TÃŠTE
     private List<String> validateEntete(Map<String, String> entete, String contenu) {
         List<String> errors = new ArrayList<>();
 
@@ -159,38 +159,38 @@ public class AiDeclarationService {
         String code     = entete.get("code");
 
         if (isBlankOrFictive(code)) {
-            errors.add("En-tête : CodeDeclaration absent ou vide");
+            errors.add("En-tÃªte : CodeDeclaration absent ou vide");
         }
         if (isBlankOrFictive(periode)) {
-            errors.add("En-tête : Période absente ou vide (format attendu : YYYY-MM)");
+            errors.add("En-tÃªte : PÃ©riode absente ou vide (format attendu : YYYY-MM)");
         }
         if (isBlankOrFictive(debut)) {
-            errors.add("En-tête : DateDebut absente ou vide");
+            errors.add("En-tÃªte : DateDebut absente ou vide");
         } else if (!debut.matches("\\d{4}-\\d{2}-01")) {
-            errors.add("En-tête : DateDebut '" + debut + "' doit être le 1er jour du mois (format : YYYY-MM-01)");
+            errors.add("En-tÃªte : DateDebut '" + debut + "' doit Ãªtre le 1er jour du mois (format : YYYY-MM-01)");
         }
         if (isBlankOrFictive(fin)) {
-            errors.add("En-tête : DateFin absente ou vide");
+            errors.add("En-tÃªte : DateFin absente ou vide");
         } else {
-            // Vérifier que la date de fin est cohérente avec la période
+            // VÃ©rifier que la date de fin est cohÃ©rente avec la pÃ©riode
             if (periode != null && !periode.isBlank()) {
                 String[] parts = periode.split("-");
                 if (parts.length == 2 && !fin.startsWith(periode)) {
-                    errors.add("En-tête : DateFin '" + fin + "' ne correspond pas à la période '" + periode + "'");
+                    errors.add("En-tÃªte : DateFin '" + fin + "' ne correspond pas Ã  la pÃ©riode '" + periode + "'");
                 }
             }
         }
 
-        // Cohérence début / fin
+        // CohÃ©rence dÃ©but / fin
         if (debut != null && fin != null && !debut.isBlank() && !fin.isBlank()) {
             if (debut.compareTo(fin) > 0) {
-                errors.add("En-tête : DateDebut '" + debut + "' est postérieure à DateFin '" + fin + "'");
+                errors.add("En-tÃªte : DateDebut '" + debut + "' est postÃ©rieure Ã  DateFin '" + fin + "'");
             }
         }
 
         return errors;
     }
-    // BCT_01 — Risques de Change et de Taux
+    // BCT_01 â€” Risques de Change et de Taux
     private List<String> validateBCT01(List<Map<String, String>> lignes) {
         List<String> errors = new ArrayList<>();
         Set<String> ids = new HashSet<>();
@@ -205,7 +205,7 @@ public class AiDeclarationService {
 
             if (!isBlank(id)) {
                 if (!ids.add(id))
-                    errors.add("Ligne " + num + " : IdClient '" + id + "' en double (doit être unique)");
+                    errors.add("Ligne " + num + " : IdClient '" + id + "' en double (doit Ãªtre unique)");
             }
             checkEnum(num, l, "TypeRisque", TYPES_RISQUE, errors);
             checkPositiveAmount(num, l, "MontantExposition", errors);
@@ -214,7 +214,7 @@ public class AiDeclarationService {
         }
         return errors;
     }
-    // BCT_02 — Positions de Change
+    // BCT_02 â€” Positions de Change
     private List<String> validateBCT02(List<Map<String, String>> lignes) {
         List<String> errors = new ArrayList<>();
 
@@ -230,7 +230,7 @@ public class AiDeclarationService {
             checkPositiveAmount(num, l, "LimiteAuthorisee", errors);
             checkDateFormat(num, l, "DatePosition", errors);
 
-            // Vérifier PositionNette = PositionAchat - PositionVente
+            // VÃ©rifier PositionNette = PositionAchat - PositionVente
             Double achat  = parseDouble(l.get("PositionAchat"));
             Double vente  = parseDouble(l.get("PositionVente"));
             Double nette  = parseDouble(l.get("PositionNette"));
@@ -238,14 +238,14 @@ public class AiDeclarationService {
                 double expected = achat - vente;
                 if (Math.abs(nette - expected) > 0.01) {
                     errors.add(String.format(
-                            "Ligne %d : PositionNette (%.2f) ≠ PositionAchat - PositionVente (%.2f)",
+                            "Ligne %d : PositionNette (%.2f) â‰  PositionAchat - PositionVente (%.2f)",
                             num, nette, expected));
                 }
             }
         }
         return errors;
     }
-    // BCT_03 — Grandes Expositions
+    // BCT_03 â€” Grandes Expositions
     private List<String> validateBCT03(List<Map<String, String>> lignes) {
         List<String> errors = new ArrayList<>();
         Set<String> ids = new HashSet<>();
@@ -266,15 +266,15 @@ public class AiDeclarationService {
             checkEnum(num, l, "TypeEngagement",   TYPES_ENGAGEMENT, errors);
             checkPositiveAmount(num, l, "MontantExposition", errors);
 
-            // PourcentageFP doit être entre 0 et 100
+            // PourcentageFP doit Ãªtre entre 0 et 100
             Double pct = parseDouble(l.get("PourcentageFP"));
             if (pct != null && (pct <= 0 || pct > 100)) {
-                errors.add("Ligne " + num + " : PourcentageFP (" + pct + ") doit être entre 0 et 100");
+                errors.add("Ligne " + num + " : PourcentageFP (" + pct + ") doit Ãªtre entre 0 et 100");
             }
         }
         return errors;
     }
-    // BCT_04 — Opérations Bancaires Trimestrielles
+    // BCT_04 â€” OpÃ©rations Bancaires Trimestrielles
     private List<String> validateBCT04(List<Map<String, String>> lignes) {
         List<String> errors = new ArrayList<>();
         Set<String> ids = new HashSet<>();
@@ -298,7 +298,7 @@ public class AiDeclarationService {
         }
         return errors;
     }
-    // BCT_05 — Crédits Accordés aux Entreprises
+    // BCT_05 â€” CrÃ©dits AccordÃ©s aux Entreprises
     private List<String> validateBCT05(List<Map<String, String>> lignes) {
         List<String> errors = new ArrayList<>();
         Set<String> ids = new HashSet<>();
@@ -314,7 +314,7 @@ public class AiDeclarationService {
 
             if (!isBlank(id)) {
                 if (!ids.add(id))
-                    errors.add("Ligne " + num + " : IdClient '" + id + "' en double (doit être unique)");
+                    errors.add("Ligne " + num + " : IdClient '" + id + "' en double (doit Ãªtre unique)");
             }
 
             checkEnum(num, l, "ClasseRisque", CLASSES_RISQUE, errors);
@@ -327,40 +327,40 @@ public class AiDeclarationService {
             Double provision = parseDouble(l.get("Provision"));
             String classe    = l.get("ClasseRisque");
 
-            // Règle critique : MontantImpaye ≤ MontantCredit
+            // RÃ¨gle critique : MontantImpaye â‰¤ MontantCredit
             if (credit != null && impaye != null && impaye > credit + 0.01) {
                 errors.add(String.format(
-                        "Ligne %d [%s] CRITIQUE : MontantImpaye (%.2f TND) > MontantCredit (%.2f TND) — incohérence mathématique",
+                        "Ligne %d [%s] CRITIQUE : MontantImpaye (%.2f TND) > MontantCredit (%.2f TND) â€” incohÃ©rence mathÃ©matique",
                         num, id != null ? id : "?", impaye, credit));
             }
 
-            // Règle provision : Provision ≥ MontantImpaye × taux(classe)
+            // RÃ¨gle provision : Provision â‰¥ MontantImpaye Ã— taux(classe)
             if (classe != null && impaye != null && provision != null) {
                 Double taux = TAUX_PROVISION.get(classe.toUpperCase());
                 if (taux != null) {
                     double mini = impaye * taux;
                     if (provision < mini - 0.01) {
                         errors.add(String.format(
-                                "Ligne %d [%s] : Provision insuffisante (%.2f TND) < minimum réglementaire BCT (%.2f TND) pour classe %s (taux %.0f%%)",
+                                "Ligne %d [%s] : Provision insuffisante (%.2f TND) < minimum rÃ©glementaire BCT (%.2f TND) pour classe %s (taux %.0f%%)",
                                 num, id != null ? id : "?", provision, mini, classe, taux * 100));
                     }
                 }
             }
 
-            // DureeRetard doit être ≥ 0
+            // DureeRetard doit Ãªtre â‰¥ 0
             Double retard = parseDouble(l.get("DureeRetard"));
             if (retard != null && retard < 0) {
-                errors.add("Ligne " + num + " : DureeRetard (" + retard.intValue() + ") ne peut pas être négatif");
+                errors.add("Ligne " + num + " : DureeRetard (" + retard.intValue() + ") ne peut pas Ãªtre nÃ©gatif");
             }
 
-            // Impayé doit être ≥ 0
+            // ImpayÃ© doit Ãªtre â‰¥ 0
             if (impaye != null && impaye < 0) {
-                errors.add("Ligne " + num + " : MontantImpaye (" + impaye + ") ne peut pas être négatif");
+                errors.add("Ligne " + num + " : MontantImpaye (" + impaye + ") ne peut pas Ãªtre nÃ©gatif");
             }
         }
         return errors;
     }
-    // VALIDATION GÉNÉRIQUE (type inconnu)
+    // VALIDATION GÃ‰NÃ‰RIQUE (type inconnu)
     private List<String> validateGeneric(List<Map<String, String>> lignes) {
         List<String> errors = new ArrayList<>();
         for (int i = 0; i < lignes.size(); i++) {
@@ -368,12 +368,12 @@ public class AiDeclarationService {
             int num = i + 1;
             long emptyFields = l.values().stream().filter(this::isBlank).count();
             if (emptyFields > 0) {
-                errors.add("Ligne " + num + " : " + emptyFields + " champ(s) vide(s) détecté(s)");
+                errors.add("Ligne " + num + " : " + emptyFields + " champ(s) vide(s) dÃ©tectÃ©(s)");
             }
         }
         return errors;
     }
-    // DÉTECTION DE DONNÉES FICTIVES / DE TEST
+    // DÃ‰TECTION DE DONNÃ‰ES FICTIVES / DE TEST
     private static final Set<String> MOTS_FICTIFS = Set.of(
             "test", "null", "n/a", "na", "xxx", "yyy", "zzz", "demo",
             "exemple", "example", "fictif", "fake", "dummy", "toto", "titi",
@@ -392,7 +392,7 @@ public class AiDeclarationService {
                             "' contient une valeur fictive/de test ('" + val + "')");
                 }
             }
-            // Détecter si tous les montants sont à 0
+            // DÃ©tecter si tous les montants sont Ã  0
             String[] montantFields = {"MontantCredit", "MontantImpaye", "MontantOperation",
                     "MontantExposition", "PositionAchat", "PositionVente"};
             boolean allZero = Arrays.stream(montantFields)
@@ -404,27 +404,27 @@ public class AiDeclarationService {
                     .filter(Objects::nonNull)
                     .count();
             if (montantCount > 0 && allZero) {
-                errors.add("Ligne " + num + " : Tous les montants sont à zéro — données probablement fictives ou non initialisées");
+                errors.add("Ligne " + num + " : Tous les montants sont Ã  zÃ©ro â€” donnÃ©es probablement fictives ou non initialisÃ©es");
             }
         }
         return errors;
     }
-    // BF15 — RÉSUMÉ ANALYTIQUE (pour le tableau de bord)
+    // BF15 â€” RÃ‰SUMÃ‰ ANALYTIQUE (pour le tableau de bord)
     public Map<String, Object> buildAiSummary(String contenu, String nomFichier) {
         Map<String, Object> summary = new LinkedHashMap<>();
         String format = detectFormat(nomFichier, contenu);
 
         if (!"XML".equals(format)) {
             summary.put("format", format);
-            summary.put("message", "Résumé analytique disponible uniquement pour les fichiers XML BCT");
+            summary.put("message", "RÃ©sumÃ© analytique disponible uniquement pour les fichiers XML BCT");
             return summary;
         }
 
         Map<String, String> essentials = extractEssentialFields(contenu);
-        summary.put("periode",        essentials.getOrDefault("periode", "—"));
-        summary.put("dateDebut",       essentials.getOrDefault("date_debut", "—"));
-        summary.put("dateFin",         essentials.getOrDefault("date_fin", "—"));
-        summary.put("codeDeclaration", essentials.getOrDefault("code", "—"));
+        summary.put("periode",        essentials.getOrDefault("periode", "â€”"));
+        summary.put("dateDebut",       essentials.getOrDefault("date_debut", "â€”"));
+        summary.put("dateFin",         essentials.getOrDefault("date_fin", "â€”"));
+        summary.put("codeDeclaration", essentials.getOrDefault("code", "â€”"));
 
         List<Map<String, String>> lignes = extractLignes(contenu);
         summary.put("nombreLignes", lignes.size());
@@ -449,7 +449,7 @@ public class AiDeclarationService {
 
             if (credit != null && impaye != null && impaye > credit + 0.01) {
                 anomalies.add(buildAnomalie(idx, idClient, "MONTANT_IMPAYE_INCOHERENT", "CRITIQUE",
-                        String.format("Impayé (%.0f TND) > Crédit (%.0f TND)", impaye, credit)));
+                        String.format("ImpayÃ© (%.0f TND) > CrÃ©dit (%.0f TND)", impaye, credit)));
             }
             if (classe != null && impaye != null && provision != null) {
                 Double taux = TAUX_PROVISION.get(classe.toUpperCase());
@@ -479,9 +479,9 @@ public class AiDeclarationService {
 
         return summary;
     }
-    // BF16 — SCORE DE RISQUE
+    // BF16 â€” SCORE DE RISQUE
     private int computeRiskScore(List<Map<String, Object>> anomalies, double totalCredit, double totalImpaye) {
-        int score = 100;
+        int score = SCORE_INITIAL;
         long critiques = anomalies.stream().filter(a -> "CRITIQUE".equals(a.get("severity"))).count();
         long majeures  = anomalies.stream().filter(a -> "MAJEURE".equals(a.get("severity"))).count();
         score -= (int)(critiques * PENALITE_CRITIQUE);
@@ -493,12 +493,12 @@ public class AiDeclarationService {
         }
         return Math.max(SCORE_MIN, Math.min(SCORE_INITIAL, score));
     }
-    // BF15 — COMPARAISON AVEC PÉRIODE PRÉCÉDENTE
+    // BF15 â€” COMPARAISON AVEC PÃ‰RIODE PRÃ‰CÃ‰DENTE
     public Map<String, Object> compareWithPrevious(String contenuCurrent, String contenuPrevious) {
         Map<String, Object> result = new LinkedHashMap<>();
         if (contenuPrevious == null || contenuPrevious.isBlank()) {
             result.put("available", false);
-            result.put("message", "Aucune déclaration précédente disponible pour comparaison");
+            result.put("message", "Aucune dÃ©claration prÃ©cÃ©dente disponible pour comparaison");
             return result;
         }
         Map<String, Object> curr = buildAiSummary(contenuCurrent, "current.xml");
@@ -511,8 +511,8 @@ public class AiDeclarationService {
         result.put("alerteVariation",    isVariationAnormale(curr, prev));
         return result;
     }
-    // BF17 — TEMPLATES DE MOTIFS DE REJET
-    // HELPERS — Vérification des champs
+    // BF17 â€” TEMPLATES DE MOTIFS DE REJET
+    // HELPERS â€” VÃ©rification des champs
     private List<String> checkRequired(int num, Map<String, String> ligne, String... fields) {
         List<String> errors = new ArrayList<>();
         for (String field : fields) {
@@ -528,7 +528,7 @@ public class AiDeclarationService {
         String val = ligne.get(field);
         if (!isBlank(val) && !allowed.contains(val.toUpperCase().trim())) {
             errors.add("Ligne " + num + " : '" + field + "' = '" + val +
-                    "' invalide. Valeurs autorisées : " + String.join(", ", allowed));
+                    "' invalide. Valeurs autorisÃ©es : " + String.join(", ", allowed));
         }
     }
 
@@ -539,7 +539,7 @@ public class AiDeclarationService {
             if (d == null) {
                 errors.add("Ligne " + num + " : '" + field + "' = '" + val + "' n'est pas un nombre valide");
             } else if (d <= 0) {
-                errors.add("Ligne " + num + " : '" + field + "' (" + d + ") doit être > 0");
+                errors.add("Ligne " + num + " : '" + field + "' (" + d + ") doit Ãªtre > 0");
             }
         }
     }
@@ -551,7 +551,7 @@ public class AiDeclarationService {
             if (d == null) {
                 errors.add("Ligne " + num + " : '" + field + "' = '" + val + "' n'est pas un nombre valide");
             } else if (d < 0) {
-                errors.add("Ligne " + num + " : '" + field + "' (" + d + ") ne peut pas être négatif");
+                errors.add("Ligne " + num + " : '" + field + "' (" + d + ") ne peut pas Ãªtre nÃ©gatif");
             }
         }
     }
@@ -559,7 +559,7 @@ public class AiDeclarationService {
     private void checkDateFormat(int num, Map<String, String> ligne, String field, List<String> errors) {
         String val = ligne.get(field);
         if (!isBlank(val) && !val.matches("\\d{4}-\\d{2}-\\d{2}")) {
-            errors.add("Ligne " + num + " : '" + field + "' = '" + val + "' — format attendu : YYYY-MM-DD");
+            errors.add("Ligne " + num + " : '" + field + "' = '" + val + "' â€” format attendu : YYYY-MM-DD");
         }
     }
 
@@ -571,18 +571,18 @@ public class AiDeclarationService {
         if (isBlank(s)) return true;
         return MOTS_FICTIFS.contains(s.trim().toLowerCase());
     }
-    // PRÉ-VALIDATION STRUCTURELLE
+    // PRÃ‰-VALIDATION STRUCTURELLE
     private List<String> validateStructureOnly(String contenu, String format) {
         List<String> errors = new ArrayList<>();
         if (contenu == null || contenu.trim().isEmpty()) {
-            errors.add("Fichier vide — aucune donnée à analyser");
+            errors.add("Fichier vide â€” aucune donnÃ©e Ã  analyser");
             return errors;
         }
         if ("XML".equals(format) && !isWellFormedXml(contenu)) {
-            errors.add("XML malformé — syntaxe invalide (balises non fermées, caractères interdits, etc.)");
+            errors.add("XML malformÃ© â€” syntaxe invalide (balises non fermÃ©es, caractÃ¨res interdits, etc.)");
         }
         if ("CSV".equals(format) && contenu.split("\n").length < 2) {
-            errors.add("CSV invalide — au moins une ligne d'en-tête et une ligne de données requises");
+            errors.add("CSV invalide â€” au moins une ligne d'en-tÃªte et une ligne de donnÃ©es requises");
         }
         return errors;
     }
@@ -597,7 +597,7 @@ public class AiDeclarationService {
             return false;
         }
     }
-    // DÉTECTION FORMAT ET TYPE
+    // DÃ‰TECTION FORMAT ET TYPE
     private String detectFormat(String nomFichier, String contenu) {
         if (nomFichier != null) {
             String lower = nomFichier.toLowerCase();
@@ -628,7 +628,7 @@ public class AiDeclarationService {
         if (mAttr.find()) return mAttr.group(1).trim();
         return "INCONNU";
     }
-    // UTILITAIRES — Comparaison périodes
+    // UTILITAIRES â€” Comparaison pÃ©riodes
     private double computeVariation(Map<String, Object> curr, Map<String, Object> prev, String key) {
         try {
             double c = toDouble(curr.get(key));
@@ -648,7 +648,7 @@ public class AiDeclarationService {
         if (o instanceof Number n) return n.doubleValue();
         try { return Double.parseDouble(o.toString()); } catch (Exception e) { return 0; }
     }
-    // UTILITAIRES — Extraction XML
+    // UTILITAIRES â€” Extraction XML
     private Double parseDouble(String s) {
         if (s == null || s.isBlank()) return null;
         try { return Double.parseDouble(s.replace(",", ".")); }

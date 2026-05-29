@@ -17,7 +17,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/validation")
-@CrossOrigin(origins = "http://localhost:4200")
 public class ValidationController {
 
     private static final Logger log = LoggerFactory.getLogger(ValidationController.class);
@@ -40,7 +39,7 @@ public class ValidationController {
     @PostMapping("/{id}/validate")
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<Declaration> validateDeclaration(@PathVariable Long id) {
-        log.info("✅ [POST] /api/validation/{}/validate", id);
+        log.info("âœ… [POST] /api/validation/{}/validate", id);
         return ResponseEntity.ok(validationService.validateDeclaration(id));
     }
 
@@ -50,7 +49,7 @@ public class ValidationController {
     public ResponseEntity<Declaration> rejectDeclaration(
             @PathVariable Long id,
             @RequestBody RejectRequest request) {
-        log.info("❌ [POST] /api/validation/{}/reject", id);
+        log.info("âŒ [POST] /api/validation/{}/reject", id);
         return ResponseEntity.ok(validationService.rejectDeclaration(id, request.getCommentaire()));
     }
 
@@ -58,7 +57,7 @@ public class ValidationController {
     @PostMapping("/{id}/send")
     @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN')")
     public ResponseEntity<Declaration> markAsSent(@PathVariable Long id) {
-        log.info("📨 [POST] /api/validation/{}/send", id);
+        log.info("ðŸ“¨ [POST] /api/validation/{}/send", id);
         return ResponseEntity.ok(validationService.markAsSent(id));
     }
 
@@ -66,7 +65,7 @@ public class ValidationController {
     @GetMapping("/pending")
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<List<Declaration>> getPendingDeclarations() {
-        log.info("📋 [GET] /api/validation/pending");
+        log.info("ðŸ“‹ [GET] /api/validation/pending");
         return ResponseEntity.ok(validationService.getPendingDeclarations());
     }
 
@@ -74,7 +73,7 @@ public class ValidationController {
     @GetMapping("/stats")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'AUDITOR')")
     public ResponseEntity<DeclarationService.DeclarationStats> getStats() {
-        log.info("📊 [GET] /api/validation/stats");
+        log.info("ðŸ“Š [GET] /api/validation/stats");
         return ResponseEntity.ok(validationService.getStats());
     }
 
@@ -82,7 +81,7 @@ public class ValidationController {
     @GetMapping("/{id}/history")
     @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN', 'AUDITOR')")
     public ResponseEntity<List<ValidationLog>> getHistory(@PathVariable Long id) {
-        log.info("📜 [GET] /api/validation/{}/history", id);
+        log.info("ðŸ“œ [GET] /api/validation/{}/history", id);
         return ResponseEntity.ok(validationService.getHistory(id));
     }
 
@@ -90,7 +89,7 @@ public class ValidationController {
     @GetMapping("/{id}/ai-analysis")
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<AiValidationResult> aiAnalysis(@PathVariable Long id) {
-        log.info("🤖 [GET] /api/validation/{}/ai-analysis", id);
+        log.info("ðŸ¤– [GET] /api/validation/{}/ai-analysis", id);
         return ResponseEntity.ok(validationService.analyzeWithAi(id));
     }
 
@@ -98,36 +97,36 @@ public class ValidationController {
     @GetMapping("/{id}/ai-summary")
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<Map<String, Object>> aiSummary(@PathVariable Long id) {
-        log.info("📋 [GET] /api/validation/{}/ai-summary", id);
+        log.info("ðŸ“‹ [GET] /api/validation/{}/ai-summary", id);
         return ResponseEntity.ok(validationService.getAiSummary(id));
     }
 
-    // 10. COMPARAISON PÉRIODE PRÉCÉDENTE
+    // 10. COMPARAISON PÃ‰RIODE PRÃ‰CÃ‰DENTE
     @GetMapping("/{id}/compare/{previousId}")
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<Map<String, Object>> compareWithPrevious(
             @PathVariable Long id,
             @PathVariable Long previousId) {
-        log.info("📈 [GET] /api/validation/{}/compare/{}", id, previousId);
+        log.info("ðŸ“ˆ [GET] /api/validation/{}/compare/{}", id, previousId);
         return ResponseEntity.ok(validationService.compareWithPrevious(id, previousId));
     }
 
-    // 11. REJECT TEMPLATES — templates de motifs de rejet prédéfinis
+    // 11. REJECT TEMPLATES â€” templates de motifs de rejet prÃ©dÃ©finis
     @GetMapping("/reject-templates")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'AGENT')")
     public ResponseEntity<List<Map<String, String>>> getRejectTemplates() {
-        log.info("📝 [GET] /api/validation/reject-templates");
+        log.info("ðŸ“ [GET] /api/validation/reject-templates");
         List<Map<String, String>> templates = List.of(
-            Map.of("id", "1", "label", "Données incomplètes",
-                   "text", "La déclaration est incomplète. Veuillez vérifier et compléter tous les champs obligatoires."),
+            Map.of("id", "1", "label", "DonnÃ©es incomplÃ¨tes",
+                   "text", "La dÃ©claration est incomplÃ¨te. Veuillez vÃ©rifier et complÃ©ter tous les champs obligatoires."),
             Map.of("id", "2", "label", "Montants incorrects",
-                   "text", "Les montants déclarés ne correspondent pas aux données comptables. Veuillez corriger les montants."),
-            Map.of("id", "3", "label", "Période incorrecte",
-                   "text", "La période de déclaration est incorrecte. Veuillez vérifier les dates de début et de fin."),
+                   "text", "Les montants dÃ©clarÃ©s ne correspondent pas aux donnÃ©es comptables. Veuillez corriger les montants."),
+            Map.of("id", "3", "label", "PÃ©riode incorrecte",
+                   "text", "La pÃ©riode de dÃ©claration est incorrecte. Veuillez vÃ©rifier les dates de dÃ©but et de fin."),
             Map.of("id", "4", "label", "Format non conforme",
-                   "text", "Le format du fichier ne respecte pas les spécifications BCT. Veuillez régénérer la déclaration."),
-            Map.of("id", "5", "label", "Données fictives détectées",
-                   "text", "Des données de test ou fictives ont été détectées. Veuillez utiliser des données réelles.")
+                   "text", "Le format du fichier ne respecte pas les spÃ©cifications BCT. Veuillez rÃ©gÃ©nÃ©rer la dÃ©claration."),
+            Map.of("id", "5", "label", "DonnÃ©es fictives dÃ©tectÃ©es",
+                   "text", "Des donnÃ©es de test ou fictives ont Ã©tÃ© dÃ©tectÃ©es. Veuillez utiliser des donnÃ©es rÃ©elles.")
         );
         return ResponseEntity.ok(templates);
     }

@@ -32,7 +32,7 @@ public class ChatService {
         this.authClient       = authClient;
     }
 
-    // ── Edit message ──────────────────────────────────────────────
+    // â”€â”€ Edit message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @Transactional
     public ChatMessageDTO editMessage(Long messageId, String requesterId, String newContent) {
@@ -49,7 +49,7 @@ public class ChatService {
         return ChatMessageDTO.from(msgRepo.save(msg));
     }
 
-    // ── Delete message ────────────────────────────────────────────
+    // â”€â”€ Delete message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @Transactional
     public ChatMessageDTO deleteMessage(Long messageId, String requesterId) {
@@ -66,7 +66,7 @@ public class ChatService {
         return ChatMessageDTO.from(msgRepo.save(msg));
     }
 
-    // ── Forward message ───────────────────────────────────────────
+    // â”€â”€ Forward message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @Transactional
     public ChatMessageDTO forwardMessage(Long messageId, String forwarderId,
@@ -87,13 +87,13 @@ public class ChatService {
         return ChatMessageDTO.from(msgRepo.save(forwarded));
     }
 
-    // ── Save call-ended ───────────────────────────────────────────
+    // â”€â”€ Save call-ended â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @Transactional
     public ChatMessageDTO saveCallEnded(String callerId, String callerName,
                                         String recipientId, String callType, int durationSec) {
-        String typeLabel     = "VIDEO".equalsIgnoreCase(callType) ? "Appel vidéo" : "Appel audio";
-        String content       = typeLabel + " terminé · " + formatDuration(durationSec);
+        String typeLabel     = "VIDEO".equalsIgnoreCase(callType) ? "Appel vidÃ©o" : "Appel audio";
+        String content       = typeLabel + " terminÃ© Â· " + formatDuration(durationSec);
         String recipientName = resolveUserName(recipientId);
 
         ChatMessage msg = ChatMessage.builder()
@@ -105,13 +105,13 @@ public class ChatService {
         return ChatMessageDTO.from(msgRepo.save(msg));
     }
 
-    // ── Save missed call ──────────────────────────────────────────
+    // â”€â”€ Save missed call â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @Transactional
     public ChatMessageDTO saveMissedCall(String callerId, String callerName,
                                          String recipientId, String callType) {
         String label         = "VIDEO".equalsIgnoreCase(callType)
-                ? "Appel vidéo manqué" : "Appel audio manqué";
+                ? "Appel vidÃ©o manquÃ©" : "Appel audio manquÃ©";
         String recipientName = resolveUserName(recipientId);
 
         ChatMessage msg = ChatMessage.builder()
@@ -123,7 +123,7 @@ public class ChatService {
         return ChatMessageDTO.from(msgRepo.save(msg));
     }
 
-    // ── Save message ──────────────────────────────────────────────
+    // â”€â”€ Save message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @Transactional
     public ChatMessageDTO saveMessage(String senderId, String senderName, String senderRole,
@@ -143,7 +143,7 @@ public class ChatService {
         return ChatMessageDTO.from(msgRepo.save(msg));
     }
 
-    // ── Conversation history ──────────────────────────────────────
+    // â”€â”€ Conversation history â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @Transactional(readOnly = true)
     public List<ChatMessageDTO> getConversation(String userId, String partnerId) {
@@ -151,19 +151,19 @@ public class ChatService {
                 .stream().map(ChatMessageDTO::from).collect(Collectors.toList());
     }
 
-    // ── Mark read ─────────────────────────────────────────────────
+    // â”€â”€ Mark read â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @Transactional
     public void markRead(String senderId, String recipientId) {
         msgRepo.markAllRead(senderId, recipientId);
     }
 
-    // ── Contact list ──────────────────────────────────────────────
+    // â”€â”€ Contact list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
-     * Tous les rôles chat (AGENT, MANAGER, ADMIN) voient
+     * Tous les rÃ´les chat (AGENT, MANAGER, ADMIN) voient
      * tous les autres utilisateurs (AGENT + MANAGER + ADMIN),
-     * sauf eux-mêmes.
+     * sauf eux-mÃªmes.
      */
     @Transactional(readOnly = true)
     public List<ChatContactDTO> getContacts(String currentUserId, Set<String> currentUserRoles) {
@@ -216,7 +216,7 @@ public class ChatService {
         return contacts;
     }
 
-    // ── Build contact DTO ─────────────────────────────────────────
+    // â”€â”€ Build contact DTO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private ChatContactDTO buildContactDTO(String currentUserId, UserDTO partner) {
         String partnerId = partner.getId();
@@ -224,7 +224,7 @@ public class ChatService {
         long unread = 0;
         try {
             unread = msgRepo.countUnread(partnerId, currentUserId);
-        } catch (Exception ignored) {}
+        } catch (Exception e) { log.debug("[Chat] Ignored exception: {}", e.getMessage()); }
 
         String lastMsg         = null;
         LocalDateTime lastTime = null;
@@ -238,7 +238,7 @@ public class ChatService {
                 lastMsg  = latest.getContent();
                 lastTime = latest.getSentAt();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { log.debug("[Chat] Ignored exception: {}", e.getMessage()); }
 
         String firstName = partner.getFirstName() != null ? partner.getFirstName() : "";
         String lastName  = partner.getLastName()  != null ? partner.getLastName()  : "";
@@ -259,7 +259,7 @@ public class ChatService {
                 .build();
     }
 
-    // ── Helpers ───────────────────────────────────────────────────
+    // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private String resolveDisplayRole(List<String> roles) {
         if (roles == null || roles.isEmpty()) return "USER";
