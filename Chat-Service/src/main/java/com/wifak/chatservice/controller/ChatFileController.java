@@ -21,6 +21,7 @@ public class ChatFileController {
 
     private static final Logger log = LoggerFactory.getLogger(ChatFileController.class);
     private static final long MAX_FILE_SIZE_BYTES = 20L * 1024 * 1024; // 20 MB
+    private static final String CACHE_MAX_AGE = "max-age=86400";
 
     @Value("${file.chat-upload-dir:uploads/chat}")
     private String chatUploadDir;
@@ -82,7 +83,7 @@ public class ChatFileController {
             Files.copy(file.getInputStream(), uploadPath.resolve(storedName),
                     StandardCopyOption.REPLACE_EXISTING);
 
-            // URL dynamique basÃ©e sur la requÃªte entrante (fonctionne derriÃ¨re un proxy/gateway)
+            // URL dynamique basÃƒÂ©e sur la requÃƒÂªte entrante (fonctionne derriÃƒÂ¨re un proxy/gateway)
             String baseUrl = request.getScheme() + "://" + request.getServerName()
                     + ":" + request.getServerPort();
             String fileUrl = baseUrl + "/api/chat/files/" + storedName;
@@ -90,7 +91,7 @@ public class ChatFileController {
             String msgType = IMAGE_TYPES.contains(contentType) ? "IMAGE"
                     : contentType.startsWith("audio/") ? "VOICE" : "FILE";
 
-            log.info("[ChatFile] Uploaded: {} â†’ {} ({})", originalName, storedName, msgType);
+            log.info("[ChatFile] Uploaded: {} Ã¢â€ â€™ {} ({})", originalName, storedName, msgType);
             return ResponseEntity.ok(Map.of("url", fileUrl, "fileName", originalName, "type", msgType));
 
         } catch (IOException e) {
@@ -120,7 +121,7 @@ public class ChatFileController {
             return ResponseEntity.ok()
                     .header("Content-Type", contentType)
                     .header("Content-Disposition", "inline; filename=\"" + filename + "\"")
-                    .header("Cache-Control", "max-age=86400")
+                    .header("Cache-Control", CACHE_MAX_AGE)
                     .body(resource);
 
         } catch (Exception e) {

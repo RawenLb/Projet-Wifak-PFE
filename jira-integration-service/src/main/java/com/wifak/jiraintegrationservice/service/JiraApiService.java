@@ -30,19 +30,19 @@ public class JiraApiService {
     @PostConstruct
     public void validateConfig() {
         if (userEmail == null || userEmail.isBlank())
-            log.error("❌ jira.user-email est vide ou non configuré !");
+            log.error("âŒ jira.user-email est vide ou non configurÃ© !");
         else
-            log.info("✅ Jira user-email configuré : {}", userEmail.trim());
+            log.info("âœ… Jira user-email configurÃ© : {}", userEmail.trim());
 
         if (apiToken == null || apiToken.isBlank())
-            log.error("❌ jira.api-token est vide ou non configuré !");
+            log.error("âŒ jira.api-token est vide ou non configurÃ© !");
         else
-            log.info("✅ Jira api-token configuré : longueur={}", apiToken.trim().length());
+            log.info("âœ… Jira api-token configurÃ© : longueur={}", apiToken.trim().length());
 
         if (jiraBaseUrl == null || jiraBaseUrl.isBlank())
-            log.error("❌ jira.base-url est vide ou non configuré !");
+            log.error("âŒ jira.base-url est vide ou non configurÃ© !");
         else
-            log.info("✅ Jira base-url : {}", jiraBaseUrl.trim());
+            log.info("âœ… Jira base-url : {}", jiraBaseUrl.trim());
     }
     private HttpHeaders buildHeaders() {
         HttpHeaders headers = new HttpHeaders();
@@ -57,11 +57,11 @@ public class JiraApiService {
 
     // ================= CREATE =================
     /**
-     * Crée un ticket Jira.
+     * CrÃ©e un ticket Jira.
      *
-     * @param summary          Titre du ticket  — ex. "BCT_01 - Avril 2025"
+     * @param summary          Titre du ticket  â€” ex. "BCT_01 - Avril 2025"
      * @param description      Corps du ticket (texte multi-ligne)
-     * @param assigneeUsername Username Jira du responsable (peut être null)
+     * @param assigneeUsername Username Jira du responsable (peut Ãªtre null)
      */
     public Map<String, Object> createTicket(String summary,
                                             String description,
@@ -71,13 +71,12 @@ public class JiraApiService {
         fields.put("summary",   summary);
         fields.put("issuetype", Map.of("name", "Task"));
 
-        // ✅ Assigné au responsable si username fourni
+        // âœ… AssignÃ© au responsable si username fourni
         if (assigneeUsername != null && !assigneeUsername.isBlank()) {
             fields.put("assignee", Map.of("name", assigneeUsername)); // Jira Server : "name"
-            // Pour Jira Cloud remplacer par : Map.of("accountId", assigneeAccountId)
-        }
+                    }
 
-        // ✅ Description ADF (Atlassian Document Format)
+        // âœ… Description ADF (Atlassian Document Format)
         fields.put("description", Map.of(
                 "type",    "doc",
                 "version", 1,
@@ -92,7 +91,7 @@ public class JiraApiService {
         ));
 
         HttpEntity<?> entity = new HttpEntity<>(Map.of("fields", fields), buildHeaders());
-        log.debug("📡 Appel Jira CREATE : {}/rest/api/3/issue", jiraBaseUrl.trim());
+        log.debug("ðŸ“¡ Appel Jira CREATE : {}/rest/api/3/issue", jiraBaseUrl.trim());
 
         ResponseEntity<Map> response = restTemplate.exchange(
                 jiraBaseUrl.trim() + "/rest/api/3/issue",
@@ -110,7 +109,7 @@ public class JiraApiService {
                 "transition", Map.of("id", transitionId)
         );
         HttpEntity<?> entity = new HttpEntity<>(body, buildHeaders());
-        log.debug("📡 Appel Jira TRANSITION : ticketId={} transitionId={}", ticketId, transitionId);
+        log.debug("ðŸ“¡ Appel Jira TRANSITION : ticketId={} transitionId={}", ticketId, transitionId);
 
         restTemplate.exchange(
                 jiraBaseUrl.trim() + "/rest/api/3/issue/" + ticketId + "/transitions",
@@ -146,14 +145,14 @@ public class JiraApiService {
         );
     }
 
-    // ================= MAPPING BCT → JIRA TRANSITION ID =================
+    // ================= MAPPING BCT â†’ JIRA TRANSITION ID =================
     // Workflow Jira actuel :
-    //  1 : Début    → TO DO        (Create — ticket démarre en TO DO)
-    // 31 : Tous     → IN PROGRESS  (EN_VALIDATION — soumission)
-    //  4 : IN PROG  → REJETÉE      (REJETEE)
-    //  3 : REJETÉE  → IN PROGRESS  (RESOUMISE)
-    // 41 : Tous     → VALIDÉE      (VALIDEE)
-    //  2 : VALIDÉE  → ENVOYÉE      (ENVOYEE)
+    //  1 : DÃ©but    â†’ TO DO        (Create â€” ticket dÃ©marre en TO DO)
+    // 31 : Tous     â†’ IN PROGRESS  (EN_VALIDATION â€” soumission)
+    //  4 : IN PROG  â†’ REJETÃ‰E      (REJETEE)
+    //  3 : REJETÃ‰E  â†’ IN PROGRESS  (RESOUMISE)
+    // 41 : Tous     â†’ VALIDÃ‰E      (VALIDEE)
+    //  2 : VALIDÃ‰E  â†’ ENVOYÃ‰E      (ENVOYEE)
     public String mapBctStatutToTransitionId(String statut) {
         return switch (statut.toUpperCase()) {
             case "EN_VALIDATION" -> "31";

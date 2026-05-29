@@ -82,7 +82,7 @@ public class KeycloakAdminService {
     public String createUser(CreateUserRequest request) {
         validateCreateUserRequest(request);
 
-        log.info("🔄 Creating user in Keycloak: {} ({})", request.getUsername(), request.getEmail());
+        log.info("ðŸ”„ Creating user in Keycloak: {} ({})", request.getUsername(), request.getEmail());
 
         UserRepresentation kcUser = new UserRepresentation();
         kcUser.setUsername(request.getUsername());
@@ -106,7 +106,7 @@ public class KeycloakAdminService {
                         errorBody = "Unable to read error details";
                     }
                 }
-                log.error("❌ Keycloak returned status {}: {}", response.getStatus(), errorBody);
+                log.error("âŒ Keycloak returned status {}: {}", response.getStatus(), errorBody);
                 throw new RuntimeException(
                         String.format("Failed to create user in Keycloak (Status %d): %s",
                                 response.getStatus(), errorBody)
@@ -118,19 +118,19 @@ public class KeycloakAdminService {
                 throw new RuntimeException("No Location header in Keycloak response");
             }
             String userId = locationHeader.substring(locationHeader.lastIndexOf('/') + 1);
-            log.info("✅ User created in Keycloak with ID: {}", userId);
+            log.info("âœ… User created in Keycloak with ID: {}", userId);
 
             if (request.getRoles() != null && !request.getRoles().isEmpty()) {
                 try {
                     assignRoles(userId, request.getRoles());
-                    log.info("✅ Roles assigned: {}", request.getRoles());
+                    log.info("âœ… Roles assigned: {}", request.getRoles());
                 } catch (Exception e) {
-                    log.error("❌ Failed to assign roles: {}", e.getMessage());
+                    log.error("âŒ Failed to assign roles: {}", e.getMessage());
                 }
             }
 
-            // ✅ MODIFIÉ — executeActionsEmail avec clientId + frontendUrl
-            // L'employé définit son mdp sur Keycloak → redirigé vers ta plateforme Angular
+            // âœ… MODIFIÃ‰ â€” executeActionsEmail avec clientId + frontendUrl
+            // L'employÃ© dÃ©finit son mdp sur Keycloak â†’ redirigÃ© vers ta plateforme Angular
             try {
                 UserResource newUserResource = getUsersResource().get(userId);
                 newUserResource.executeActionsEmail(
@@ -138,16 +138,16 @@ public class KeycloakAdminService {
                         frontendUrl,
                         Arrays.asList("UPDATE_PASSWORD", "VERIFY_EMAIL")
                 );
-                log.info("✅ Activation email sent to: {} (redirect → {})", request.getEmail(), frontendUrl);
+                log.info("âœ… Activation email sent to: {} (redirect â†’ {})", request.getEmail(), frontendUrl);
             } catch (Exception e) {
-                log.error("❌ Failed to send activation email: {}", e.getMessage());
+                log.error("âŒ Failed to send activation email: {}", e.getMessage());
             }
 
             try {
                 syncUserToMySQL(userId);
-                log.info("✅ User synced to MySQL: {}", userId);
+                log.info("âœ… User synced to MySQL: {}", userId);
             } catch (Exception e) {
-                log.error("❌ Failed to sync to MySQL: {}", e.getMessage());
+                log.error("âŒ Failed to sync to MySQL: {}", e.getMessage());
             }
 
             return userId;
@@ -206,7 +206,7 @@ public class KeycloakAdminService {
 
     @Transactional
     public void updateUser(String userId, UserDTO userDTO) {
-        log.info("🔄 Updating user in Keycloak: {}", userId);
+        log.info("ðŸ”„ Updating user in Keycloak: {}", userId);
         UserResource userResource = getUsersResource().get(userId);
         UserRepresentation kcUser = userResource.toRepresentation();
         kcUser.setEmail(userDTO.getEmail());
@@ -214,24 +214,24 @@ public class KeycloakAdminService {
         kcUser.setLastName(userDTO.getLastName());
         kcUser.setEnabled(userDTO.isEnabled());
         userResource.update(kcUser);
-        log.info("✅ User updated in Keycloak: {}", userId);
+        log.info("âœ… User updated in Keycloak: {}", userId);
         syncUserToMySQL(userId);
     }
 
     @Transactional
     public void deleteUser(String userId) {
-        log.info("🔄 Deleting user: {}", userId);
+        log.info("ðŸ”„ Deleting user: {}", userId);
         if (userRepository.existsByKeycloakId(userId)) {
             userRepository.deleteById(userId);
-            log.info("✅ User deleted from MySQL: {}", userId);
+            log.info("âœ… User deleted from MySQL: {}", userId);
         }
         getUsersResource().get(userId).remove();
-        log.info("✅ User deleted from Keycloak: {}", userId);
+        log.info("âœ… User deleted from Keycloak: {}", userId);
     }
 
     @Transactional
     public void toggleUserStatus(String userId, boolean enabled) {
-        log.info("🔄 Toggling user status: {} -> {}", userId, enabled);
+        log.info("ðŸ”„ Toggling user status: {} -> {}", userId, enabled);
         UserResource userResource = getUsersResource().get(userId);
         UserRepresentation user = userResource.toRepresentation();
         user.setEnabled(enabled);
@@ -239,7 +239,7 @@ public class KeycloakAdminService {
         syncUserToMySQL(userId);
     }
 
-    // ✅ MODIFIÉ — sendPasswordResetEmail avec clientId + frontendUrl
+    // âœ… MODIFIÃ‰ â€” sendPasswordResetEmail avec clientId + frontendUrl
     public void sendPasswordResetEmail(String userId) {
         getUsersResource().get(userId)
                 .executeActionsEmail(
@@ -247,7 +247,7 @@ public class KeycloakAdminService {
                         frontendUrl,
                         Arrays.asList("UPDATE_PASSWORD")
                 );
-        log.info("✅ Password reset email resent for user: {} (redirect → {})", userId, frontendUrl);
+        log.info("âœ… Password reset email resent for user: {} (redirect â†’ {})", userId, frontendUrl);
     }
 
     // ========== ROLE MANAGEMENT ==========
@@ -271,7 +271,7 @@ public class KeycloakAdminService {
 
     @Transactional
     public void assignRoles(String userId, List<String> roleNames) {
-        log.info("🔄 Assigning roles to user {}: {}", userId, roleNames);
+        log.info("ðŸ”„ Assigning roles to user {}: {}", userId, roleNames);
         List<RoleRepresentation> rolesToAdd = roleNames.stream()
                 .map(roleName -> {
                     try {
@@ -292,7 +292,7 @@ public class KeycloakAdminService {
 
     @Transactional
     public void removeRoles(String userId, List<String> roleNames) {
-        log.info("🔄 Removing roles from user {}: {}", userId, roleNames);
+        log.info("ðŸ”„ Removing roles from user {}: {}", userId, roleNames);
         List<RoleRepresentation> rolesToRemove = roleNames.stream()
                 .map(roleName -> {
                     try {
@@ -359,17 +359,17 @@ public class KeycloakAdminService {
                 );
             }
             userRepository.save(dbUser);
-            log.debug("✅ User synced to MySQL: {}", kcUser.getUsername());
+            log.debug("âœ… User synced to MySQL: {}", kcUser.getUsername());
 
         } catch (Exception e) {
-            log.error("❌ Failed to sync user {} to MySQL: {}", keycloakUserId, e.getMessage());
+            log.error("âŒ Failed to sync user {} to MySQL: {}", keycloakUserId, e.getMessage());
             throw new RuntimeException("Failed to sync user to MySQL", e);
         }
     }
 
     @Transactional
     public void syncAllUsersToMySQL() {
-        log.info("🔄 Starting full sync...");
+        log.info("ðŸ”„ Starting full sync...");
         List<UserRepresentation> allUsers = getUsersResource().list();
         int successCount = 0;
         int errorCount = 0;
@@ -378,11 +378,11 @@ public class KeycloakAdminService {
                 syncUserToMySQL(kcUser.getId());
                 successCount++;
             } catch (Exception e) {
-                log.error("❌ Failed to sync user {}: {}", kcUser.getUsername(), e.getMessage());
+                log.error("âŒ Failed to sync user {}: {}", kcUser.getUsername(), e.getMessage());
                 errorCount++;
             }
         }
-        log.info("✅ Sync complete: {} success, {} errors", successCount, errorCount);
+        log.info("âœ… Sync complete: {} success, {} errors", successCount, errorCount);
     }
 
     // ========== HELPERS ==========
