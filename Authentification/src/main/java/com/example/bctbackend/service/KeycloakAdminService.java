@@ -36,11 +36,11 @@ public class KeycloakAdminService {
     @Value("${keycloak.realm}")
     private String realm;
 
-    // ✅ MODIFIÉ — Ajout des 2 nouvelles propriétés
-    @Value("${app.frontend-client-id}")    // → "bct-frontend"
+    // Propriétés injectées depuis application.yml
+    @Value("${app.frontend-client-id}")
     private String clientId;
 
-    @Value("${app.cors.allowed-origins}")  // → "http://localhost:4200"
+    @Value("${app.cors.allowed-origins}")
     private String frontendUrl;
 
     public KeycloakAdminService(Keycloak keycloak, UserRepository userRepository) {
@@ -133,8 +133,8 @@ public class KeycloakAdminService {
             try {
                 UserResource newUserResource = getUsersResource().get(userId);
                 newUserResource.executeActionsEmail(
-                        clientId,    // "bct-frontend"
-                        frontendUrl, // "http://localhost:4200"
+                        clientId,
+                        frontendUrl,
                         Arrays.asList("UPDATE_PASSWORD", "VERIFY_EMAIL")
                 );
                 log.info("✅ Activation email sent to: {} (redirect → {})", request.getEmail(), frontendUrl);
@@ -242,8 +242,8 @@ public class KeycloakAdminService {
     public void sendPasswordResetEmail(String userId) {
         getUsersResource().get(userId)
                 .executeActionsEmail(
-                        clientId,    // "bct-frontend"
-                        frontendUrl, // "http://localhost:4200"
+                        clientId,
+                        frontendUrl,
                         Arrays.asList("UPDATE_PASSWORD")
                 );
         log.info("✅ Password reset email resent for user: {} (redirect → {})", userId, frontendUrl);
