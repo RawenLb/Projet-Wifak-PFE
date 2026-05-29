@@ -16,6 +16,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Configuration
 public class FeignConfig {
 
+    private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
+
     private static final Logger log = LoggerFactory.getLogger(FeignConfig.class);
 
     @Value("${app.internal-secret:wifak-internal-secret-2024}")
@@ -26,7 +28,7 @@ public class FeignConfig {
         return requestTemplate -> {
 
             // ✅ Toujours envoyer le secret inter-services
-            requestTemplate.header("X-Internal-Secret", internalSecret);
+            requestTemplate.header(INTERNAL_SECRET_HEADER, internalSecret);
 
             // ── Stratégie 1 : depuis SecurityContextHolder (thread courant) ──
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();

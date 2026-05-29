@@ -22,6 +22,7 @@ public class AdminController {
 
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
     private static final String ERROR_KEY = "error";
+    private static final String MESSAGE_KEY = "message";
     private final KeycloakAdminService keycloakAdminService;
 
     public AdminController(KeycloakAdminService keycloakAdminService) {
@@ -108,7 +109,7 @@ public class AdminController {
         try {
             keycloakAdminService.updateUser(userId, userDTO);
             log.info("âœ… User updated successfully: {}", userId);
-            return ResponseEntity.ok(Map.of("message", "User updated successfully"));
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "User updated successfully"));
         } catch (Exception e) {
             log.error("âŒ Error updating user {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -125,7 +126,7 @@ public class AdminController {
         try {
             keycloakAdminService.deleteUser(userId);
             log.info("âœ… User deleted successfully: {}", userId);
-            return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "User deleted successfully"));
         } catch (Exception e) {
             log.error("âŒ Error deleting user {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -144,7 +145,7 @@ public class AdminController {
         try {
             keycloakAdminService.toggleUserStatus(userId, enabled);
             log.info("âœ… User status updated: {} -> {}", userId, enabled);
-            return ResponseEntity.ok(Map.of("message", "User status updated successfully"));
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "User status updated successfully"));
         } catch (Exception e) {
             log.error("âŒ Error updating user status {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -161,7 +162,7 @@ public class AdminController {
         try {
             keycloakAdminService.sendPasswordResetEmail(userId);
             log.info("âœ… Password reset email sent: {}", userId);
-            return ResponseEntity.ok(Map.of("message", "Password reset email sent successfully"));
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Password reset email sent successfully"));
         } catch (Exception e) {
             log.error("âŒ Error sending password reset {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -214,7 +215,7 @@ public class AdminController {
         try {
             keycloakAdminService.assignRoles(userId, roleNames);
             log.info("âœ… Roles assigned successfully to user: {}", userId);
-            return ResponseEntity.ok(Map.of("message", "Roles assigned successfully"));
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Roles assigned successfully"));
         } catch (Exception e) {
             log.error("âŒ Error assigning roles to user {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -233,7 +234,7 @@ public class AdminController {
         try {
             keycloakAdminService.removeRoles(userId, roleNames);
             log.info("âœ… Roles removed successfully from user: {}", userId);
-            return ResponseEntity.ok(Map.of("message", "Roles removed successfully"));
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Roles removed successfully"));
         } catch (Exception e) {
             log.error("âŒ Error removing roles from user {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -270,7 +271,7 @@ public class AdminController {
         try {
             keycloakAdminService.syncAllUsersToMySQL();
             log.info("âœ… All users synchronized successfully");
-            return ResponseEntity.ok(Map.of("message", "All users synchronized to MySQL successfully"));
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "All users synchronized to MySQL successfully"));
         } catch (Exception e) {
             log.error("âŒ Error synchronizing users: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -287,7 +288,7 @@ public class AdminController {
         try {
             keycloakAdminService.syncUserToMySQL(userId);
             log.info("âœ… User synchronized successfully: {}", userId);
-            return ResponseEntity.ok(Map.of("message", "User synchronized to MySQL successfully"));
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "User synchronized to MySQL successfully"));
         } catch (Exception e) {
             log.error("âŒ Error synchronizing user {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
