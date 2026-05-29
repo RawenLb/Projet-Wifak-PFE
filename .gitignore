@@ -32,3 +32,6 @@ ml-service/models/saved/
 # ── OS ─────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+workflow-declaration/uploads/
+Authentification/uploads/
