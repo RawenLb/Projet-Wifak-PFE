@@ -22,6 +22,7 @@ public class ChatFileController {
     private static final Logger log = LoggerFactory.getLogger(ChatFileController.class);
     private static final long MAX_FILE_SIZE_BYTES = 20L * 1024 * 1024; // 20 MB
     private static final String CACHE_MAX_AGE = "max-age=86400";
+    private static final String ERROR_KEY = "error";
 
     @Value("${file.chat-upload-dir:uploads/chat}")
     private String chatUploadDir;
@@ -49,16 +50,16 @@ public class ChatFileController {
             @RequestParam("file") MultipartFile file,
             HttpServletRequest request) {
 
-        if (file.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error", "Empty file"));
+        if (file.isEmpty()) return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Empty file"));
         if (file.getSize() > MAX_FILE_SIZE_BYTES)
-            return ResponseEntity.badRequest().body(Map.of("error", "File too large (max 20MB)"));
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "File too large (max 20MB)"));
 
         String contentType = file.getContentType();
         if (contentType == null) contentType = "application/octet-stream";
         if (contentType.contains(";")) contentType = contentType.split(";")[0].trim();
 
         if (!ALLOWED_TYPES.contains(contentType))
-            return ResponseEntity.badRequest().body(Map.of("error", "File type not allowed: " + contentType));
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "File type not allowed: " + contentType));
 
         try {
             Path uploadPath = Paths.get(chatUploadDir);
@@ -83,7 +84,7 @@ public class ChatFileController {
             Files.copy(file.getInputStream(), uploadPath.resolve(storedName),
                     StandardCopyOption.REPLACE_EXISTING);
 
-            // URL dynamique basÃƒÂ©e sur la requÃƒÂªte entrante (fonctionne derriÃƒÂ¨re un proxy/gateway)
+            // URL dynamique basÃƒÆ’Ã‚Â©e sur la requÃƒÆ’Ã‚Âªte entrante (fonctionne derriÃƒÆ’Ã‚Â¨re un proxy/gateway)
             String baseUrl = request.getScheme() + "://" + request.getServerName()
                     + ":" + request.getServerPort();
             String fileUrl = baseUrl + "/api/chat/files/" + storedName;
@@ -91,13 +92,13 @@ public class ChatFileController {
             String msgType = IMAGE_TYPES.contains(contentType) ? "IMAGE"
                     : contentType.startsWith("audio/") ? "VOICE" : "FILE";
 
-            log.info("[ChatFile] Uploaded: {} Ã¢â€ â€™ {} ({})", originalName, storedName, msgType);
+            log.info("[ChatFile] Uploaded: {} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ {} ({})", originalName, storedName, msgType);
             return ResponseEntity.ok(Map.of("url", fileUrl, "fileName", originalName, "type", msgType));
 
         } catch (IOException e) {
             log.error("[ChatFile] Upload failed: {}", e.getMessage());
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Upload failed: " + e.getMessage()));
+                    .body(Map.of(ERROR_KEY, "Upload failed: " + e.getMessage()));
         }
     }
 

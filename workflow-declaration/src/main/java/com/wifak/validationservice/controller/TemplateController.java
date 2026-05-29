@@ -21,6 +21,7 @@ import java.util.Map;
 @RequestMapping("/api/templates")
 public class TemplateController {
 
+    private static final String ERROR_KEY = "error";
     private final TemplateService templateService;
 
     public TemplateController(TemplateService templateService) {
@@ -28,7 +29,7 @@ public class TemplateController {
     }
 
     /**
-     * âœ… GÃ©nÃ©rer un fichier Ã  partir d'un template
+     * Ã¢Å“â€¦ GÃƒÂ©nÃƒÂ©rer un fichier ÃƒÂ  partir d'un template
      *
      * POST /api/templates/generate
      * Body: {
@@ -50,7 +51,7 @@ public class TemplateController {
                     request.getData()
             );
 
-            // âœ… MODIFICATION ICI : Utiliser le service
+            // Ã¢Å“â€¦ MODIFICATION ICI : Utiliser le service
             String extension = templateService.getFileExtension(request.getDeclarationTypeId());
             MediaType mediaType = determineMediaType(extension);
 
@@ -64,36 +65,36 @@ public class TemplateController {
 
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
+            error.put(ERROR_KEY, e.getMessage());
             error.put("timestamp", LocalDateTime.now().toString());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         }
     }
 
     /**
-     * âœ… GÃ©nÃ©rer et sauvegarder un fichier sur le serveur
+     * Ã¢Å“â€¦ GÃƒÂ©nÃƒÂ©rer et sauvegarder un fichier sur le serveur
      *
      * POST /api/templates/generate-and-save
      */
     @PostMapping("/generate-and-save")
     public ResponseEntity<?> generateAndSaveFile(@RequestBody GenerateFileRequest request) {
         try {
-            // âœ… Valider les donnÃ©es
+            // Ã¢Å“â€¦ Valider les donnÃƒÂ©es
             templateService.validateTemplateData(request.getDeclarationTypeId(), request.getData());
 
-            // âœ… GÃ©nÃ©rer le contenu
+            // Ã¢Å“â€¦ GÃƒÂ©nÃƒÂ©rer le contenu
             String fileContent = templateService.generateFile(
                     request.getDeclarationTypeId(),
                     request.getData()
             );
 
-            // âœ… CrÃ©er le dossier uploads s'il n'existe pas
+            // Ã¢Å“â€¦ CrÃƒÂ©er le dossier uploads s'il n'existe pas
             Path uploadsDir = Paths.get("uploads");
             if (!Files.exists(uploadsDir)) {
                 Files.createDirectories(uploadsDir);
             }
 
-            // âœ… Sauvegarder le fichier
+            // Ã¢Å“â€¦ Sauvegarder le fichier
             String extension = determineFileExtension(request.getDeclarationTypeId());
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
             String fileName = "declaration_" + timestamp + "." + extension;
@@ -101,10 +102,10 @@ public class TemplateController {
 
             Files.write(filePath, fileContent.getBytes());
 
-            // âœ… Retourner les informations du fichier
+            // Ã¢Å“â€¦ Retourner les informations du fichier
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "Fichier sauvegardÃ© avec succÃ¨s");
+            response.put("message", "Fichier sauvegardÃƒÂ© avec succÃƒÂ¨s");
             response.put("fileName", fileName);
             response.put("filePath", filePath.toString());
             response.put("fileSize", fileContent.length());
@@ -114,19 +115,19 @@ public class TemplateController {
 
         } catch (IOException e) {
             Map<String, String> error = new HashMap<>();
-            error.put("error", "Erreur lors de la sauvegarde du fichier: " + e.getMessage());
+            error.put(ERROR_KEY, "Erreur lors de la sauvegarde du fichier: " + e.getMessage());
             error.put("timestamp", LocalDateTime.now().toString());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
+            error.put(ERROR_KEY, e.getMessage());
             error.put("timestamp", LocalDateTime.now().toString());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         }
     }
 
     /**
-     * âœ… Obtenir la liste des variables requises pour un type de dÃ©claration
+     * Ã¢Å“â€¦ Obtenir la liste des variables requises pour un type de dÃƒÂ©claration
      *
      * GET /api/templates/{declarationTypeId}/variables
      */
@@ -143,13 +144,13 @@ public class TemplateController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
+            error.put(ERROR_KEY, e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
     }
 
     /**
-     * âœ… PrÃ©visualiser un template avec des donnÃ©es exemple
+     * Ã¢Å“â€¦ PrÃƒÂ©visualiser un template avec des donnÃƒÂ©es exemple
      *
      * GET /api/templates/{declarationTypeId}/preview
      */
@@ -165,13 +166,13 @@ public class TemplateController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
+            error.put(ERROR_KEY, e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
     }
 
     /**
-     * âœ… Valider des donnÃ©es par rapport au template (sans gÃ©nÃ©rer le fichier)
+     * Ã¢Å“â€¦ Valider des donnÃƒÂ©es par rapport au template (sans gÃƒÂ©nÃƒÂ©rer le fichier)
      *
      * POST /api/templates/validate
      */
@@ -185,14 +186,14 @@ public class TemplateController {
 
             Map<String, Object> response = new HashMap<>();
             response.put("valid", isValid);
-            response.put("message", "Les donnÃ©es sont valides");
+            response.put("message", "Les donnÃƒÂ©es sont valides");
             response.put("timestamp", LocalDateTime.now().toString());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("valid", false);
-            response.put("error", e.getMessage());
+            response.put(ERROR_KEY, e.getMessage());
             response.put("timestamp", LocalDateTime.now().toString());
 
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -202,15 +203,15 @@ public class TemplateController {
     // ========== HELPER METHODS ==========
 
     /**
-     * DÃ©terminer l'extension du fichier selon le type de dÃ©claration
+     * DÃƒÂ©terminer l'extension du fichier selon le type de dÃƒÂ©claration
      */
     private String determineFileExtension(Long declarationTypeId) {
-        // Cette mÃ©thode n'est plus nÃ©cessaire si tu utilises le service
+        // Cette mÃƒÂ©thode n'est plus nÃƒÂ©cessaire si tu utilises le service
         return templateService.getFileExtension(declarationTypeId);
     }
 
     /**
-     * DÃ©terminer le MediaType selon l'extension
+     * DÃƒÂ©terminer le MediaType selon l'extension
      */
     private MediaType determineMediaType(String extension) {
         return switch (extension.toLowerCase()) {
@@ -226,7 +227,7 @@ public class TemplateController {
     // ========== DTOs ==========
 
     /**
-     * DTO pour les requÃªtes de gÃ©nÃ©ration de fichier
+     * DTO pour les requÃƒÂªtes de gÃƒÂ©nÃƒÂ©ration de fichier
      */
     public static class GenerateFileRequest {
         private Long declarationTypeId;

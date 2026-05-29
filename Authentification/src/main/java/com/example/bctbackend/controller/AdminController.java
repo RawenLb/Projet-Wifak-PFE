@@ -21,6 +21,7 @@ import java.util.Map;
 public class AdminController {
 
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
+    private static final String ERROR_KEY = "error";
     private final KeycloakAdminService keycloakAdminService;
 
     public AdminController(KeycloakAdminService keycloakAdminService) {
@@ -34,30 +35,30 @@ public class AdminController {
      */
     @GetMapping("/users")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
-        log.info("📋 Admin requesting all users");
+        log.info("ðŸ“‹ Admin requesting all users");
         try {
             List<UserDTO> users = keycloakAdminService.getAllUsers();
-            log.info("✅ Retrieved {} users", users.size());
+            log.info("âœ… Retrieved {} users", users.size());
             return ResponseEntity.ok(users);
         } catch (Exception e) {
-            log.error("❌ Error getting users: {}", e.getMessage());
+            log.error("âŒ Error getting users: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     /**
-     * Get user by ID — accessible aussi par les services internes (chat-service)
+     * Get user by ID â€” accessible aussi par les services internes (chat-service)
      */
     @GetMapping("/users/{userId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_INTERNAL')")
     public ResponseEntity<UserDTO> getUserById(@PathVariable String userId) {
-        log.info("🔍 Admin requesting user: {}", userId);
+        log.info("ðŸ” Admin requesting user: {}", userId);
         try {
             UserDTO user = keycloakAdminService.getUserById(userId);
-            log.info("✅ Retrieved user: {}", user.getUsername());
+            log.info("âœ… Retrieved user: {}", user.getUsername());
             return ResponseEntity.ok(user);
         } catch (Exception e) {
-            log.error("❌ Error getting user {}: {}", userId, e.getMessage());
+            log.error("âŒ Error getting user {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
@@ -67,13 +68,13 @@ public class AdminController {
      */
     @GetMapping("/users/search")
     public ResponseEntity<List<UserDTO>> searchUsers(@RequestParam String query) {
-        log.info("🔍 Admin searching users: {}", query);
+        log.info("ðŸ” Admin searching users: {}", query);
         try {
             List<UserDTO> users = keycloakAdminService.searchUsers(query);
-            log.info("✅ Found {} users", users.size());
+            log.info("âœ… Found {} users", users.size());
             return ResponseEntity.ok(users);
         } catch (Exception e) {
-            log.error("❌ Error searching users: {}", e.getMessage());
+            log.error("âŒ Error searching users: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -83,16 +84,16 @@ public class AdminController {
      */
     @PostMapping("/users")
     public ResponseEntity<Map<String, String>> createUser(@RequestBody CreateUserRequest request) {
-        log.info("➕ Admin creating user: {}", request.getUsername());
+        log.info("âž• Admin creating user: {}", request.getUsername());
         try {
             String userId = keycloakAdminService.createUser(request);
-            log.info("✅ User created successfully: {}", userId);
+            log.info("âœ… User created successfully: {}", userId);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(Map.of("userId", userId, "message", "User created successfully"));
         } catch (Exception e) {
-            log.error("❌ Error creating user: {}", e.getMessage());
+            log.error("âŒ Error creating user: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
@@ -103,15 +104,15 @@ public class AdminController {
     public ResponseEntity<Map<String, String>> updateUser(
             @PathVariable String userId,
             @RequestBody UserDTO userDTO) {
-        log.info("✏️ Admin updating user: {}", userId);
+        log.info("âœï¸ Admin updating user: {}", userId);
         try {
             keycloakAdminService.updateUser(userId, userDTO);
-            log.info("✅ User updated successfully: {}", userId);
+            log.info("âœ… User updated successfully: {}", userId);
             return ResponseEntity.ok(Map.of("message", "User updated successfully"));
         } catch (Exception e) {
-            log.error("❌ Error updating user {}: {}", userId, e.getMessage());
+            log.error("âŒ Error updating user {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
@@ -120,15 +121,15 @@ public class AdminController {
      */
     @DeleteMapping("/users/{userId}")
     public ResponseEntity<Map<String, String>> deleteUser(@PathVariable String userId) {
-        log.info("🗑️ Admin deleting user: {}", userId);
+        log.info("ðŸ—‘ï¸ Admin deleting user: {}", userId);
         try {
             keycloakAdminService.deleteUser(userId);
-            log.info("✅ User deleted successfully: {}", userId);
+            log.info("âœ… User deleted successfully: {}", userId);
             return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
         } catch (Exception e) {
-            log.error("❌ Error deleting user {}: {}", userId, e.getMessage());
+            log.error("âŒ Error deleting user {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
@@ -139,15 +140,15 @@ public class AdminController {
     public ResponseEntity<Map<String, String>> toggleUserStatus(
             @PathVariable String userId,
             @RequestParam boolean enabled) {
-        log.info("🔄 Admin toggling user status: {} -> {}", userId, enabled);
+        log.info("ðŸ”„ Admin toggling user status: {} -> {}", userId, enabled);
         try {
             keycloakAdminService.toggleUserStatus(userId, enabled);
-            log.info("✅ User status updated: {} -> {}", userId, enabled);
+            log.info("âœ… User status updated: {} -> {}", userId, enabled);
             return ResponseEntity.ok(Map.of("message", "User status updated successfully"));
         } catch (Exception e) {
-            log.error("❌ Error updating user status {}: {}", userId, e.getMessage());
+            log.error("âŒ Error updating user status {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
@@ -156,15 +157,15 @@ public class AdminController {
      */
     @PostMapping("/users/{userId}/reset-password")
     public ResponseEntity<Map<String, String>> resetPassword(@PathVariable String userId) {
-        log.info("🔐 Admin requesting password reset for user: {}", userId);
+        log.info("ðŸ” Admin requesting password reset for user: {}", userId);
         try {
             keycloakAdminService.sendPasswordResetEmail(userId);
-            log.info("✅ Password reset email sent: {}", userId);
+            log.info("âœ… Password reset email sent: {}", userId);
             return ResponseEntity.ok(Map.of("message", "Password reset email sent successfully"));
         } catch (Exception e) {
-            log.error("❌ Error sending password reset {}: {}", userId, e.getMessage());
+            log.error("âŒ Error sending password reset {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
@@ -175,13 +176,13 @@ public class AdminController {
      */
     @GetMapping("/roles")
     public ResponseEntity<List<RoleDTO>> getAllRoles() {
-        log.info("📋 Admin requesting all roles");
+        log.info("ðŸ“‹ Admin requesting all roles");
         try {
             List<RoleDTO> roles = keycloakAdminService.getAllRoles();
-            log.info("✅ Retrieved {} roles", roles.size());
+            log.info("âœ… Retrieved {} roles", roles.size());
             return ResponseEntity.ok(roles);
         } catch (Exception e) {
-            log.error("❌ Error getting roles: {}", e.getMessage());
+            log.error("âŒ Error getting roles: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -191,13 +192,13 @@ public class AdminController {
      */
     @GetMapping("/users/{userId}/roles")
     public ResponseEntity<List<RoleDTO>> getUserRoles(@PathVariable String userId) {
-        log.info("🔍 Admin requesting roles for user: {}", userId);
+        log.info("ðŸ” Admin requesting roles for user: {}", userId);
         try {
             List<RoleDTO> roles = keycloakAdminService.getUserRoles(userId);
-            log.info("✅ Retrieved {} roles for user {}", roles.size(), userId);
+            log.info("âœ… Retrieved {} roles for user {}", roles.size(), userId);
             return ResponseEntity.ok(roles);
         } catch (Exception e) {
-            log.error("❌ Error getting roles for user {}: {}", userId, e.getMessage());
+            log.error("âŒ Error getting roles for user {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -209,15 +210,15 @@ public class AdminController {
     public ResponseEntity<Map<String, String>> assignRoles(
             @PathVariable String userId,
             @RequestBody List<String> roleNames) {
-        log.info("➕ Admin assigning roles to user {}: {}", userId, roleNames);
+        log.info("âž• Admin assigning roles to user {}: {}", userId, roleNames);
         try {
             keycloakAdminService.assignRoles(userId, roleNames);
-            log.info("✅ Roles assigned successfully to user: {}", userId);
+            log.info("âœ… Roles assigned successfully to user: {}", userId);
             return ResponseEntity.ok(Map.of("message", "Roles assigned successfully"));
         } catch (Exception e) {
-            log.error("❌ Error assigning roles to user {}: {}", userId, e.getMessage());
+            log.error("âŒ Error assigning roles to user {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
@@ -228,31 +229,31 @@ public class AdminController {
     public ResponseEntity<Map<String, String>> removeRoles(
             @PathVariable String userId,
             @RequestBody List<String> roleNames) {
-        log.info("➖ Admin removing roles from user {}: {}", userId, roleNames);
+        log.info("âž– Admin removing roles from user {}: {}", userId, roleNames);
         try {
             keycloakAdminService.removeRoles(userId, roleNames);
-            log.info("✅ Roles removed successfully from user: {}", userId);
+            log.info("âœ… Roles removed successfully from user: {}", userId);
             return ResponseEntity.ok(Map.of("message", "Roles removed successfully"));
         } catch (Exception e) {
-            log.error("❌ Error removing roles from user {}: {}", userId, e.getMessage());
+            log.error("âŒ Error removing roles from user {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
     /**
-     * Get users by role — accessible aussi par les services internes (chat-service)
+     * Get users by role â€” accessible aussi par les services internes (chat-service)
      */
     @GetMapping("/roles/{roleName}/users")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_INTERNAL')")
     public ResponseEntity<List<UserDTO>> getUsersByRole(@PathVariable String roleName) {
-        log.info("🔍 Admin requesting users with role: {}", roleName);
+        log.info("ðŸ” Admin requesting users with role: {}", roleName);
         try {
             List<UserDTO> users = keycloakAdminService.getUsersByRole(roleName);
-            log.info("✅ Retrieved {} users with role {}", users.size(), roleName);
+            log.info("âœ… Retrieved {} users with role {}", users.size(), roleName);
             return ResponseEntity.ok(users);
         } catch (Exception e) {
-            log.error("❌ Error getting users by role {}: {}", roleName, e.getMessage());
+            log.error("âŒ Error getting users by role {}: {}", roleName, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -265,15 +266,15 @@ public class AdminController {
      */
     @PostMapping("/sync/all-users")
     public ResponseEntity<Map<String, String>> syncAllUsers() {
-        log.info("🔄 Admin requesting full user synchronization to MySQL");
+        log.info("ðŸ”„ Admin requesting full user synchronization to MySQL");
         try {
             keycloakAdminService.syncAllUsersToMySQL();
-            log.info("✅ All users synchronized successfully");
+            log.info("âœ… All users synchronized successfully");
             return ResponseEntity.ok(Map.of("message", "All users synchronized to MySQL successfully"));
         } catch (Exception e) {
-            log.error("❌ Error synchronizing users: {}", e.getMessage());
+            log.error("âŒ Error synchronizing users: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
@@ -282,15 +283,15 @@ public class AdminController {
      */
     @PostMapping("/sync/user/{userId}")
     public ResponseEntity<Map<String, String>> syncUser(@PathVariable String userId) {
-        log.info("🔄 Admin requesting sync for user: {}", userId);
+        log.info("ðŸ”„ Admin requesting sync for user: {}", userId);
         try {
             keycloakAdminService.syncUserToMySQL(userId);
-            log.info("✅ User synchronized successfully: {}", userId);
+            log.info("âœ… User synchronized successfully: {}", userId);
             return ResponseEntity.ok(Map.of("message", "User synchronized to MySQL successfully"));
         } catch (Exception e) {
-            log.error("❌ Error synchronizing user {}: {}", userId, e.getMessage());
+            log.error("âŒ Error synchronizing user {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
@@ -299,13 +300,13 @@ public class AdminController {
      */
     @GetMapping("/mysql/users")
     public ResponseEntity<List<User>> getMySQLUsers() {
-        log.info("📋 Admin requesting MySQL users");
+        log.info("ðŸ“‹ Admin requesting MySQL users");
         try {
             List<User> users = keycloakAdminService.getAllMySQLUsers();
-            log.info("✅ Retrieved {} users from MySQL", users.size());
+            log.info("âœ… Retrieved {} users from MySQL", users.size());
             return ResponseEntity.ok(users);
         } catch (Exception e) {
-            log.error("❌ Error getting MySQL users: {}", e.getMessage());
+            log.error("âŒ Error getting MySQL users: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -315,13 +316,13 @@ public class AdminController {
      */
     @GetMapping("/mysql/users/{keycloakId}")
     public ResponseEntity<User> getMySQLUser(@PathVariable String keycloakId) {
-        log.info("🔍 Admin requesting MySQL user: {}", keycloakId);
+        log.info("ðŸ” Admin requesting MySQL user: {}", keycloakId);
         try {
             return keycloakAdminService.getMySQLUser(keycloakId)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
-            log.error("❌ Error getting MySQL user {}: {}", keycloakId, e.getMessage());
+            log.error("âŒ Error getting MySQL user {}: {}", keycloakId, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

@@ -27,6 +27,7 @@ import java.util.Map;
 public class DeclarationTypeAdminController {
 
     private static final Logger log = LoggerFactory.getLogger(DeclarationTypeAdminController.class);
+    private static final String ERROR_KEY = "error";
 
     // Mots-clés SQL dangereux — protection contre les injections SQL
     private static final String[] SQL_FORBIDDEN_KEYWORDS =
@@ -114,7 +115,7 @@ public class DeclarationTypeAdminController {
         try {
             String originalFilename = file.getOriginalFilename();
             if (originalFilename == null || !originalFilename.toLowerCase().endsWith(".xsd")) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Le fichier doit être un fichier .xsd"));
+                return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Le fichier doit être un fichier .xsd"));
             }
             String xsdContent = new String(file.getBytes(), StandardCharsets.UTF_8);
             service.saveXsd(id, originalFilename, xsdContent);
@@ -122,7 +123,7 @@ public class DeclarationTypeAdminController {
             return ResponseEntity.ok(Map.of("message", "XSD uploadé avec succès", "fileName", originalFilename));
         } catch (Exception e) {
             log.error("❌ Erreur upload XSD: {}", e.getMessage());
-            return ResponseEntity.internalServerError().body(Map.of("error", "Erreur lors de l'upload du XSD: " + e.getMessage()));
+            return ResponseEntity.internalServerError().body(Map.of(ERROR_KEY, "Erreur lors de l'upload du XSD: " + e.getMessage()));
         }
     }
 
@@ -154,10 +155,10 @@ public class DeclarationTypeAdminController {
         log.info("💾 Sauvegarde SQL pour type: {}", id);
         String sqlQuery = body.get("sqlQuery");
         if (sqlQuery == null || sqlQuery.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "La requête SQL ne peut pas être vide"));
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "La requête SQL ne peut pas être vide"));
         }
         if (!sqlQuery.trim().toUpperCase().startsWith("SELECT")) {
-            return ResponseEntity.badRequest().body(Map.of("error", "La requête SQL doit commencer par SELECT"));
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "La requête SQL doit commencer par SELECT"));
         }
         service.saveSqlQuery(id, sqlQuery);
         log.info("✅ SQL sauvegardé pour type: {}", id);
@@ -177,18 +178,18 @@ public class DeclarationTypeAdminController {
             DeclarationType type = service.getById(id);
             String sqlQuery = type.getSqlQuery();
             if (sqlQuery == null || sqlQuery.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Aucune requête SQL configurée pour ce type"));
+                return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Aucune requête SQL configurée pour ce type"));
             }
             // Validation de sécurité : seules les requêtes SELECT sont autorisées
             String normalizedQuery = sqlQuery.trim().toUpperCase();
             if (!normalizedQuery.startsWith("SELECT")) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Seules les requêtes SELECT sont autorisées"));
+                return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Seules les requêtes SELECT sont autorisées"));
             }
             // Bloquer les instructions dangereuses dans la requête
             for (String keyword : SQL_FORBIDDEN_KEYWORDS) {
                 if (normalizedQuery.contains(keyword)) {
                     log.warn("⚠️ Requête SQL refusée — mot-clé interdit détecté: {}", keyword);
-                    return ResponseEntity.badRequest().body(Map.of("error", "Requête SQL non autorisée"));
+                    return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Requête SQL non autorisée"));
                 }
             }
             List<String> columns = xmlGenerationService.extractColumnsFromSql(sqlQuery, dateDebut, dateFin);
@@ -196,7 +197,7 @@ public class DeclarationTypeAdminController {
             return ResponseEntity.ok(Map.of("success", true, "colonnesDisponibles", columns, "message", "Requête SQL valide"));
         } catch (Exception e) {
             log.error("❌ Erreur test SQL: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(Map.of("error", "Erreur lors du test SQL: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Erreur lors du test SQL: " + e.getMessage()));
         }
     }
 
