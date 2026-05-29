@@ -20,10 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("DTOs et Entités — Tests getters/setters")
 class DtoGetterSetterTest {
-
-    // ══════════════════════════════════════════════════════════════
     // AiValidationResult
-    // ══════════════════════════════════════════════════════════════
     @Test
     void aiValidationResult_gettersSetters() {
         AiValidationResult r = new AiValidationResult();
@@ -37,10 +34,7 @@ class DtoGetterSetterTest {
         assertThat(r.getAnomalies()).hasSize(1);
         assertThat(r.getRecommendation()).isEqualTo("Corriger le format");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // AuditLogDTO
-    // ══════════════════════════════════════════════════════════════
     @Test
     void auditLogDTO_gettersSetters() {
         AuditLogDTO dto = new AuditLogDTO();
@@ -70,10 +64,7 @@ class DtoGetterSetterTest {
         assertThat(dto.getCommentaire()).isEqualTo("test");
         assertThat(dto.getDateAction()).isNotNull();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // AuditStatsDTO
-    // ══════════════════════════════════════════════════════════════
     @Test
     void auditStatsDTO_gettersSetters() {
         AuditStatsDTO dto = new AuditStatsDTO();
@@ -114,10 +105,7 @@ class DtoGetterSetterTest {
         assertThat(dto.getTopAgents()).hasSize(1);
         assertThat(dto.getTopManagers()).hasSize(1);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GenerateDeclarationRequest
-    // ══════════════════════════════════════════════════════════════
     @Test
     void generateDeclarationRequest_gettersSetters() {
         GenerateDeclarationRequest req = new GenerateDeclarationRequest();
@@ -136,20 +124,14 @@ class DtoGetterSetterTest {
             2L, "2025-02", LocalDate.of(2025, 2, 1), LocalDate.of(2025, 2, 28));
         assertThat(req2.getDeclarationTypeId()).isEqualTo(2L);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // RejectRequest
-    // ══════════════════════════════════════════════════════════════
     @Test
     void rejectRequest_gettersSetters() {
         RejectRequest req = new RejectRequest();
         req.setCommentaire("Format incorrect");
         assertThat(req.getCommentaire()).isEqualTo("Format incorrect");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // ValidationStatsDTO
-    // ══════════════════════════════════════════════════════════════
     @Test
     void validationStatsDTO_gettersSetters() {
         ValidationStatsDTO dto = new ValidationStatsDTO();
@@ -166,10 +148,7 @@ class DtoGetterSetterTest {
         assertThat(dto.getRejetees()).isEqualTo(2L);
         assertThat(dto.getEnvoyees()).isEqualTo(1L);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // DeclarationDTO
-    // ══════════════════════════════════════════════════════════════
     @Test
     void declarationDTO_gettersSetters() {
         DeclarationDTO dto = new DeclarationDTO();
@@ -213,10 +192,7 @@ class DtoGetterSetterTest {
         assertThat(dto.getFileFormat()).isEqualTo("XML");
         assertThat(dto.getFrequence()).isEqualTo("MENSUELLE");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // Jira DTOs
-    // ══════════════════════════════════════════════════════════════
     @Test
     void createJiraTicketRequest_gettersSetters() {
         CreateJiraTicketRequest req = new CreateJiraTicketRequest();
@@ -268,10 +244,7 @@ class DtoGetterSetterTest {
         assertThat(dto.getJiraStatus()).isEqualTo("OPEN");
         assertThat(dto.getMessage()).isEqualTo("Created");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // ValidationLog entity
-    // ══════════════════════════════════════════════════════════════
     @Test
     void validationLog_gettersSetters() {
         ValidationLog log = new ValidationLog();
@@ -291,10 +264,7 @@ class DtoGetterSetterTest {
         assertThat(log.getCommentaire()).isEqualTo("test");
         assertThat(log.getDateAction()).isNotNull();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // ValidationRule entity
-    // ══════════════════════════════════════════════════════════════
     @Test
     void validationRule_gettersSetters() {
         ValidationRule rule = new ValidationRule();
@@ -308,10 +278,7 @@ class DtoGetterSetterTest {
         assertThat(rule.getMessageErreur()).isEqualTo("Montant invalide");
         assertThat(rule.isObligatoire()).isTrue();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // XsdSqlMappingRequest
-    // ══════════════════════════════════════════════════════════════
     @Test
     void xsdSqlMappingRequest_gettersSetters() {
         XsdSqlMappingRequest req = new XsdSqlMappingRequest();
@@ -341,10 +308,7 @@ class DtoGetterSetterTest {
             assertThat(s.toJson()).isNotNull();
         }
     }
-
-    // ══════════════════════════════════════════════════════════════
     // Declaration entity
-    // ══════════════════════════════════════════════════════════════
     @Test
     void declaration_gettersSetters() {
         Declaration d = new Declaration();
@@ -387,10 +351,7 @@ class DtoGetterSetterTest {
             assertThat(s.name()).isNotNull();
         }
     }
-
-    // ══════════════════════════════════════════════════════════════
     // DeclarationDTO — branches des méthodes helper
-    // ══════════════════════════════════════════════════════════════
     @Test
     void declarationDTO_helperMethods_nullDeclarationType() {
         DeclarationDTO dto = new DeclarationDTO();
@@ -439,10 +400,7 @@ class DtoGetterSetterTest {
 
         assertThat(dto.getFileFormat()).isEqualTo("UNKNOWN");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // XsdSqlMappingRequest — branches null
-    // ══════════════════════════════════════════════════════════════
     @Test
     void xsdSqlMappingRequest_nullValues() {
         XsdSqlMappingRequest.FieldMapping fm = new XsdSqlMappingRequest.FieldMapping();
@@ -456,10 +414,7 @@ class DtoGetterSetterTest {
         fm.setStaticValue(null);
         assertThat(fm.getStaticValue()).isEqualTo("");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // DeclarationTemplate entity
-    // ══════════════════════════════════════════════════════════════
     @Test
     void declarationTemplate_gettersSetters() {
         DeclarationTemplate tpl = new DeclarationTemplate();
@@ -475,10 +430,7 @@ class DtoGetterSetterTest {
         assertThat(tpl.getDeclarationType().getCode()).isEqualTo("DECL001");
         assertThat(tpl.getId()).isNull();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // DeclarationType entity — méthodes et enums
-    // ══════════════════════════════════════════════════════════════
     @Test
     void declarationType_gettersSetters() {
         DeclarationType type = new DeclarationType();

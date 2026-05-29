@@ -2,8 +2,6 @@ package com.wifak.validationservice.service;
 
 import com.wifak.validationservice.client.NotificationClient;
 import com.wifak.validationservice.dto.AiValidationResult;
-import com.wifak.validationservice.dto.DeclarationDTO;
-import com.wifak.validationservice.dto.ValidationStatsDTO;
 import com.wifak.validationservice.dto.jira.TransitionJiraTicketRequest;
 import com.wifak.validationservice.entities.Declaration;
 import com.wifak.validationservice.entities.ValidationLog;
@@ -46,10 +44,7 @@ public class ValidationService {
         this.logRepository        = logRepository;
         this.notificationClient   = notificationClient;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 1. SOUMETTRE — GENEREE | REJETEE → EN_VALIDATION
-    // ══════════════════════════════════════════════════════════════
     public Declaration submitForValidation(Long declarationId, String correctionComment) {
         String currentUser = getCurrentUsername();
         log.info("📤 submitForValidation — ID: {}, user: {}", declarationId, currentUser);
@@ -89,10 +84,7 @@ public class ValidationService {
 
         return updated;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 2. VALIDER — EN_VALIDATION → VALIDEE
-    // ══════════════════════════════════════════════════════════════
     public Declaration validateDeclaration(Long declarationId) {
         String currentUser = getCurrentUsername();
         log.info("✅ validateDeclaration — ID: {}, manager: {}", declarationId, currentUser);
@@ -109,10 +101,7 @@ public class ValidationService {
 
         return updated;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 3. REJETER — EN_VALIDATION → REJETEE
-    // ══════════════════════════════════════════════════════════════
     public Declaration rejectDeclaration(Long declarationId, String commentaire) {
         String currentUser = getCurrentUsername();
         log.info("❌ rejectDeclaration — ID: {}, manager: {}", declarationId, currentUser);
@@ -143,10 +132,7 @@ public class ValidationService {
 
         return updated;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 4. ENVOYER — VALIDEE → ENVOYEE
-    // ══════════════════════════════════════════════════════════════
     public Declaration markAsSent(Long declarationId) {
         String currentUser = getCurrentUsername();
         log.info("📨 markAsSent — ID: {}, user: {}", declarationId, currentUser);
@@ -163,33 +149,21 @@ public class ValidationService {
 
         return updated;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 5. PENDING
-    // ══════════════════════════════════════════════════════════════
     public List<Declaration> getPendingDeclarations() {
         return declarationService.getAllDeclarations().stream()
                 .filter(d -> d.getStatut() == Declaration.DeclarationStatut.EN_VALIDATION)
                 .collect(Collectors.toList());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 6. STATS
-    // ══════════════════════════════════════════════════════════════
     public DeclarationService.DeclarationStats getStats() {
         return declarationService.getStats();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 7. HISTORY
-    // ══════════════════════════════════════════════════════════════
     public List<ValidationLog> getHistory(Long declarationId) {
         return logRepository.findByDeclarationIdOrderByDateActionDesc(declarationId);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 8. AI ANALYSIS
-    // ══════════════════════════════════════════════════════════════
     public AiValidationResult analyzeWithAi(Long declarationId) {
         log.info("🤖 analyzeWithAi — ID: {}", declarationId);
         Declaration decl = declarationService.findById(declarationId);
@@ -198,10 +172,7 @@ public class ValidationService {
                 decl.getNomFichier()
         );
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 9. AI SUMMARY
-    // ══════════════════════════════════════════════════════════════
     public Map<String, Object> getAiSummary(Long declarationId) {
         log.info("📊 getAiSummary — ID: {}", declarationId);
         Declaration decl = declarationService.findById(declarationId);
@@ -210,10 +181,7 @@ public class ValidationService {
                 decl.getNomFichier()
         );
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 10. COMPARAISON PÉRIODE PRÉCÉDENTE
-    // ══════════════════════════════════════════════════════════════
     public Map<String, Object> compareWithPrevious(Long declarationId, Long previousDeclarationId) {
         log.info("📈 compareWithPrevious — ID: {} vs {}", declarationId, previousDeclarationId);
         Declaration curr = declarationService.findById(declarationId);
@@ -226,10 +194,7 @@ public class ValidationService {
         }
         return aiDeclarationService.compareWithPrevious(curr.getContenuFichier(), prevContent);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // UTILITAIRES PRIVÉS
-    // ══════════════════════════════════════════════════════════════
     private String getCurrentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null) throw new RuntimeException("Utilisateur non authentifié");

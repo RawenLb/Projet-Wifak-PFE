@@ -35,11 +35,7 @@ class FileStorageServiceTest {
         ReflectionTestUtils.setField(service, "uploadDir", tempDir.toString());
         service.init();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // storeFile
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("storeFile — fichier valide → retourne le nom unique")
     void storeFile_fichierValide_retourneNom() {
@@ -84,11 +80,7 @@ class FileStorageServiceTest {
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("Invalid filename");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // loadFileAsResource
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("loadFileAsResource — fichier existant → retourne la ressource")
     void loadFileAsResource_fichierExistant_retourneRessource() throws IOException {
@@ -108,11 +100,7 @@ class FileStorageServiceTest {
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("File not found");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // deleteFile
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("deleteFile — fichier existant → supprimé")
     void deleteFile_fichierExistant_supprime() throws IOException {

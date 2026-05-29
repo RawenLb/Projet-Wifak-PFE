@@ -1,8 +1,5 @@
 package com.wifak.validationservice.dto.jira;
-// ════════════════════════════════════════════════════════════════
 // Fichier : validation-service/src/main/java/com/wifak/validationservice/dto/jira/CreateJiraTicketRequest.java
-// ════════════════════════════════════════════════════════════════
-
 public class CreateJiraTicketRequest {
     private Long declarationId;
     private String submittedBy; // username Keycloak de l'agent

@@ -1,8 +1,5 @@
 package com.wifak.validationservice.dto.jira;
-// ════════════════════════════════════════════════════════════════
 // Fichier : validation-service/src/main/java/com/wifak/validationservice/dto/jira/TransitionJiraTicketRequest.java
-// ════════════════════════════════════════════════════════════════
-
 public class TransitionJiraTicketRequest {
     private Long declarationId;
     private String newBctStatut;  // EN_VALIDATION | VALIDEE | REJETEE | ENVOYEE

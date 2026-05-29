@@ -87,11 +87,7 @@ class DeclarationServiceExtendedTest {
         when(ctx.getAuthentication()).thenReturn(auth);
         SecurityContextHolder.setContext(ctx);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getAllDeclarations
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getAllDeclarations — retourne toutes les déclarations")
     void getAllDeclarations_retourneTout() {
@@ -102,11 +98,7 @@ class DeclarationServiceExtendedTest {
         assertThat(result).hasSize(1);
         verify(declarationRepository).findAll();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getMyDeclarations
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getMyDeclarations — retourne les déclarations de l'utilisateur courant")
     void getMyDeclarations_retourneLesMiennes() {
@@ -127,11 +119,7 @@ class DeclarationServiceExtendedTest {
 
         assertThat(result).isEmpty();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // notifyJiraTicketCreation
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("notifyJiraTicketCreation — Jira disponible → ticket créé")
     void notifyJira_disponible_ok() {
@@ -151,11 +139,7 @@ class DeclarationServiceExtendedTest {
         assertThatCode(() -> service.notifyJiraTicketCreation(1L, "agent1"))
             .doesNotThrowAnyException();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // generateAndSave — formats CSV et TXT
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("generateAndSave — format CSV → génère via CsvGenerationService")
     void generateAndSave_csv_ok() {
@@ -213,11 +197,7 @@ class DeclarationServiceExtendedTest {
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("99");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // generateAndSaveWithMapping
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("generateAndSaveWithMapping — XML avec mapping → sauvegarde avec mappingJson")
     void generateAndSaveWithMapping_xml_ok() throws Exception {
@@ -271,11 +251,7 @@ class DeclarationServiceExtendedTest {
             LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31), List.of(mapping)))
             .doesNotThrowAnyException();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // patchContent — cas REJETEE
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("patchContent — statut REJETEE → mise à jour OK")
     void patchContent_rejetee_ok() {
@@ -299,11 +275,7 @@ class DeclarationServiceExtendedTest {
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("VALIDEE");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // updateStatut — cas VALIDEE, ENVOYEE
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("updateStatut — VALIDEE → dateValidation et validePar définis")
     void updateStatut_validee_ok() {
@@ -362,11 +334,7 @@ class DeclarationServiceExtendedTest {
         assertThat(result.getValidePar()).isEqualTo("agent1");
         assertThat(result.getCommentaireRejet()).isEqualTo("Erreur format");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // updateDeclaration
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("updateDeclaration — GENEREE → régénère et sauvegarde")
     void updateDeclaration_generee_ok() {
@@ -475,11 +443,7 @@ class DeclarationServiceExtendedTest {
         assertThatCode(() -> service.updateDeclaration(1L, req)).doesNotThrowAnyException();
         verify(xmlGenerationService).generateXmlFromXsdAndSql(anyString(), anyString(), any(), any(), anyString(), anyString());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // deleteDeclaration — cas ENVOYEE
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("deleteDeclaration — ENVOYEE → RuntimeException")
     void deleteDeclaration_envoyee_throwsException() {

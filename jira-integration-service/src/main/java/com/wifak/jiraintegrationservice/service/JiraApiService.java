@@ -44,8 +44,6 @@ public class JiraApiService {
         else
             log.info("✅ Jira base-url : {}", jiraBaseUrl.trim());
     }
-
-    // ─────────────────────────────────────────────────────────────
     private HttpHeaders buildHeaders() {
         HttpHeaders headers = new HttpHeaders();
         String credentials = userEmail.trim() + ":" + apiToken.trim();

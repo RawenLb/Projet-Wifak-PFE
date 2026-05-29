@@ -64,11 +64,7 @@ class DeclarationControllerTest {
         declaration.setNomFichier("declaration_DECL001_202501.xml");
         declaration.setContenuFichier("<xml>test</xml>");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/declarations
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("GET / — retourne toutes les déclarations")
@@ -80,11 +76,7 @@ class DeclarationControllerTest {
             .andExpect(jsonPath("$[0].id").value(1))
             .andExpect(jsonPath("$[0].statut").value("GENEREE"));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/declarations/my
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("GET /my — retourne les déclarations de l'agent")
@@ -95,11 +87,7 @@ class DeclarationControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].periode").value("2025-01"));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/declarations/{id}
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("GET /{id} — retourne une déclaration par ID")
@@ -121,11 +109,7 @@ class DeclarationControllerTest {
         mockMvc.perform(get("/api/declarations/99"))
             .andExpect(status().is5xxServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/declarations/generate
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("POST /generate — génère une déclaration")
@@ -147,11 +131,7 @@ class DeclarationControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(1));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/declarations/stats
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("GET /stats — retourne les statistiques")
@@ -165,11 +145,7 @@ class DeclarationControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.total").value(5));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // DELETE /api/declarations/{id}
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("DELETE /{id} — supprime une déclaration")
@@ -179,11 +155,7 @@ class DeclarationControllerTest {
         mockMvc.perform(delete("/api/declarations/1").with(csrf()))
             .andExpect(status().isNoContent());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/declarations/{id}/download
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("GET /{id}/download — télécharge le fichier")
@@ -205,11 +177,7 @@ class DeclarationControllerTest {
         mockMvc.perform(get("/api/declarations/1/download"))
             .andExpect(status().isNotFound());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // PUT /api/declarations/{id}
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("PUT /{id} — met à jour une déclaration → 200")
@@ -229,11 +197,7 @@ class DeclarationControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(1));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // PATCH /api/declarations/{id}/statut
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "MANAGER")
     @DisplayName("PATCH /{id}/statut — met à jour le statut → 200")
@@ -247,11 +211,7 @@ class DeclarationControllerTest {
                 .param("statut", "EN_VALIDATION"))
             .andExpect(status().isOk());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // PATCH /api/declarations/{id}/content
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("PATCH /{id}/content — GENEREE avec contenu valide → 200")
@@ -292,11 +252,7 @@ class DeclarationControllerTest {
                 .content("{\"xmlContent\": \"<xml>test</xml>\"}"))
             .andExpect(status().isBadRequest());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/declarations/analyze-mapping
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("POST /analyze-mapping — XML avec XSD et SQL → 200 avec analyse")
@@ -365,11 +321,7 @@ class DeclarationControllerTest {
                 .content("{\"declarationTypeId\": 1}"))
             .andExpect(status().isBadRequest());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/declarations/generate-with-mapping
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("POST /generate-with-mapping — mapping valide → 200")
@@ -403,11 +355,7 @@ class DeclarationControllerTest {
                 .content(body))
             .andExpect(status().isBadRequest());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // Branches supplémentaires — DeclarationController
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("POST /analyze-mapping — type introuvable → 500")

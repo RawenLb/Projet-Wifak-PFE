@@ -54,11 +54,7 @@ class AdminControllerTest {
         roleDTO.setId("role-1");
         roleDTO.setName("ROLE_AGENT");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/admin/users
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("GET /users — retourne la liste des utilisateurs")
@@ -79,11 +75,7 @@ class AdminControllerTest {
         mockMvc.perform(get("/api/admin/users"))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/admin/users/{userId}
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("GET /users/{id} — retourne l'utilisateur")
@@ -105,11 +97,7 @@ class AdminControllerTest {
         mockMvc.perform(get("/api/admin/users/unknown"))
             .andExpect(status().isNotFound());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/admin/users/search
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("GET /users/search — retourne les résultats")
@@ -131,11 +119,7 @@ class AdminControllerTest {
         mockMvc.perform(get("/api/admin/users/search").param("query", "test"))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/admin/users
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("POST /users — crée un utilisateur → 201")
@@ -176,11 +160,7 @@ class AdminControllerTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error").exists());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // PUT /api/admin/users/{userId}
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("PUT /users/{id} — met à jour l'utilisateur → 200")
@@ -208,11 +188,7 @@ class AdminControllerTest {
                 .content(objectMapper.writeValueAsString(userDTO)))
             .andExpect(status().isBadRequest());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // DELETE /api/admin/users/{userId}
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("DELETE /users/{id} — supprime l'utilisateur → 200")
@@ -234,11 +210,7 @@ class AdminControllerTest {
         mockMvc.perform(delete("/api/admin/users/user-1").with(csrf()))
             .andExpect(status().isBadRequest());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // PATCH /api/admin/users/{userId}/status
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("PATCH /users/{id}/status — active l'utilisateur → 200")
@@ -264,11 +236,7 @@ class AdminControllerTest {
                 .param("enabled", "false"))
             .andExpect(status().isBadRequest());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/admin/users/{userId}/reset-password
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("POST /users/{id}/reset-password — envoie l'email → 200")
@@ -290,11 +258,7 @@ class AdminControllerTest {
         mockMvc.perform(post("/api/admin/users/user-1/reset-password").with(csrf()))
             .andExpect(status().isBadRequest());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/admin/roles
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("GET /roles — retourne tous les rôles")
@@ -315,11 +279,7 @@ class AdminControllerTest {
         mockMvc.perform(get("/api/admin/roles"))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/admin/users/{userId}/roles
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("GET /users/{id}/roles — retourne les rôles de l'utilisateur")
@@ -341,11 +301,7 @@ class AdminControllerTest {
         mockMvc.perform(get("/api/admin/users/user-1/roles"))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/admin/users/{userId}/roles
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("POST /users/{id}/roles — assigne les rôles → 200")
@@ -373,11 +329,7 @@ class AdminControllerTest {
                 .content("[\"ROLE_AGENT\"]"))
             .andExpect(status().isBadRequest());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // DELETE /api/admin/users/{userId}/roles
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("DELETE /users/{id}/roles — retire les rôles → 200")
@@ -405,11 +357,7 @@ class AdminControllerTest {
                 .content("[\"ROLE_AGENT\"]"))
             .andExpect(status().isBadRequest());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/admin/roles/{roleName}/users
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("GET /roles/{roleName}/users — retourne les utilisateurs du rôle")
@@ -431,11 +379,7 @@ class AdminControllerTest {
         mockMvc.perform(get("/api/admin/roles/ROLE_AGENT/users"))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/admin/sync/all-users
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("POST /sync/all-users — synchronise tous les utilisateurs → 200")
@@ -457,11 +401,7 @@ class AdminControllerTest {
         mockMvc.perform(post("/api/admin/sync/all-users").with(csrf()))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/admin/sync/user/{userId}
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("POST /sync/user/{id} — synchronise un utilisateur → 200")
@@ -483,11 +423,7 @@ class AdminControllerTest {
         mockMvc.perform(post("/api/admin/sync/user/user-1").with(csrf()))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/admin/mysql/users
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("GET /mysql/users — retourne les utilisateurs MySQL → 200")
@@ -512,11 +448,7 @@ class AdminControllerTest {
         mockMvc.perform(get("/api/admin/mysql/users"))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/admin/mysql/users/{keycloakId}
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("GET /mysql/users/{id} — retourne l'utilisateur MySQL → 200")

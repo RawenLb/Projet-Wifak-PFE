@@ -17,11 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthentificationControllerTest {
 
     @Autowired MockMvc mockMvc;
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/test/admin
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     @DisplayName("GET /admin — ROLE_ADMIN → 200 OK")
@@ -40,11 +36,7 @@ class AuthentificationControllerTest {
         mockMvc.perform(get("/api/test/admin"))
             .andExpect(status().isOk());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/test/agent
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_AGENT")
     @DisplayName("GET /agent — ROLE_AGENT → 200 OK")
@@ -61,11 +53,7 @@ class AuthentificationControllerTest {
         mockMvc.perform(get("/api/test/agent"))
             .andExpect(status().isOk());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/test/manager
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_MANAGER")
     @DisplayName("GET /manager — ROLE_MANAGER → 200 OK")
@@ -74,11 +62,7 @@ class AuthentificationControllerTest {
             .andExpect(status().isOk())
             .andExpect(content().string("MANAGER OK"));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/test/auditor
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(authorities = "ROLE_AUDITOR")
     @DisplayName("GET /auditor — ROLE_AUDITOR → 200 OK")
@@ -87,11 +71,7 @@ class AuthentificationControllerTest {
             .andExpect(status().isOk())
             .andExpect(content().string("AUDITOR OK"));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/test/public/hello
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser
     @DisplayName("GET /public/hello — avec auth → 200 OK")

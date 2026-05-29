@@ -37,11 +37,7 @@ public class XmlGenerationService {
     public XmlGenerationService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
-
-    // ════════════════════════════════════════════════════════════
     // GÉNÉRATION SANS MAPPING (mode générique)
-    // ════════════════════════════════════════════════════════════
-
     public String generateXmlFromXsdAndSql(
             String xsdContent,
             String sqlQuery,
@@ -61,11 +57,7 @@ public class XmlGenerationService {
         validateOptional(xmlContent, xsdContent);
         return xmlContent;
     }
-
-    // ════════════════════════════════════════════════════════════
     // ✅ GÉNÉRATION AVEC MAPPING XSD ↔ SQL — CORRIGÉE
-    // ════════════════════════════════════════════════════════════
-
     public String generateXmlFromMapping(
             String xsdContent,
             String sqlQuery,
@@ -110,8 +102,6 @@ public class XmlGenerationService {
         validateOptional(xmlContent, xsdContent);
         return xmlContent;
     }
-
-    // ════════════════════════════════════════════════════════════
     // ✅ CONSTRUCTION XML AVEC MAPPING — structure correcte
     //
     //  <Declaration code="..." periode="...">
@@ -126,7 +116,6 @@ public class XmlGenerationService {
     //      ...
     //    </Donnees>
     //  </Declaration>
-    // ════════════════════════════════════════════════════════════
     private static final Set<String> AUTO_HEADER_FIELD_NAMES = new HashSet<>(Arrays.asList(
             "CodeDeclaration", "Periode", "DateDebut", "DateFin",
             "NombreLignes", "DateGeneration"
@@ -210,11 +199,7 @@ public class XmlGenerationService {
             log.error("❌ Erreur construction XML avec mapping: {}", e.getMessage(), e);
             throw new RuntimeException("Erreur lors de la construction du XML: " + e.getMessage(), e);
         }}
-
-    // ════════════════════════════════════════════════════════════
     // CONSTRUCTION XML GÉNÉRIQUE (sans mapping)
-    // ════════════════════════════════════════════════════════════
-
     private String buildXml(
             String declarationCode,
             String periode,
@@ -269,11 +254,7 @@ public class XmlGenerationService {
             throw new RuntimeException("Erreur lors de la construction du XML: " + e.getMessage(), e);
         }
     }
-
-    // ════════════════════════════════════════════════════════════
     // EXÉCUTION SQL
-    // ════════════════════════════════════════════════════════════
-
     private List<Map<String, Object>> executeSqlQuery(
             String sqlQuery,
             LocalDate dateDebut,
@@ -310,11 +291,7 @@ public class XmlGenerationService {
         }
         return args;
     }
-
-    // ════════════════════════════════════════════════════════════
     // EXTRACTION COLONNES
-    // ════════════════════════════════════════════════════════════
-
     public List<String> extractColumnsFromSql(String sqlQuery, LocalDate dateDebut, LocalDate dateFin) {
         try {
             String dateDébutStr = dateDebut != null ? dateDebut.toString() : "2000-01-01";
@@ -363,11 +340,7 @@ public class XmlGenerationService {
             throw new RuntimeException("Impossible d'extraire les colonnes: " + e.getMessage(), e);
         }
     }
-
-    // ════════════════════════════════════════════════════════════
     // VALIDATION XSD (optionnelle)
-    // ════════════════════════════════════════════════════════════
-
     private void validateOptional(String xmlContent, String xsdContent) {
         if (xsdContent == null || xsdContent.trim().isEmpty()) return;
         try {
@@ -394,11 +367,7 @@ public class XmlGenerationService {
             throw new RuntimeException("Validation XSD: " + e.getMessage(), e);
         }
     }
-
-    // ════════════════════════════════════════════════════════════
     // UTILITAIRES
-    // ════════════════════════════════════════════════════════════
-
     private void addElement(Document doc, Element parent, String tagName, String value) {
         Element el = doc.createElement(tagName);
         el.setTextContent(value != null ? value : "");

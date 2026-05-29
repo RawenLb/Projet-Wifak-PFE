@@ -26,11 +26,7 @@ class AuditControllerTest {
 
     @Autowired MockMvc mockMvc;
     @MockBean  AuditService auditService;
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/audit/logs
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AUDITOR")
     @DisplayName("GET /logs — AUDITOR → 200 OK")
@@ -66,11 +62,7 @@ class AuditControllerTest {
         mockMvc.perform(get("/api/audit/logs"))
             .andExpect(status().isOk()); // Security désactivée en @WebMvcTest sans config
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/audit/logs/search
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AUDITOR")
     @DisplayName("GET /logs/search — filtre par action")
@@ -93,11 +85,7 @@ class AuditControllerTest {
         mockMvc.perform(get("/api/audit/logs/search"))
             .andExpect(status().isOk());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/audit/logs/declaration/{id}
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AUDITOR")
     @DisplayName("GET /logs/declaration/{id} → 200 OK")
@@ -108,11 +96,7 @@ class AuditControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isArray());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/audit/users
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AUDITOR")
     @DisplayName("GET /users — retourne les utilisateurs distincts")
@@ -123,11 +107,7 @@ class AuditControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0]").value("agent1"));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/audit/stats
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AUDITOR")
     @DisplayName("GET /stats — retourne les statistiques d'audit")

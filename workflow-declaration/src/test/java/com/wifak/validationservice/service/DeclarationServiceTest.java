@@ -73,11 +73,7 @@ class DeclarationServiceTest {
         when(ctx.getAuthentication()).thenReturn(auth);
         SecurityContextHolder.setContext(ctx);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // validateType
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("validateType — type inactif → RuntimeException")
     void validateType_inactif_throwsException() {
@@ -116,11 +112,7 @@ class DeclarationServiceTest {
         ).isInstanceOf(RuntimeException.class)
          .hasMessageContaining("SQL");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // deleteDeclaration
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("deleteDeclaration — EN_VALIDATION → RuntimeException")
     void deleteDeclaration_enValidation_throwsException() {
@@ -152,11 +144,7 @@ class DeclarationServiceTest {
             .doesNotThrowAnyException();
         verify(declarationRepository).delete(genereeDeclaration);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // patchContent
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("patchContent — EN_VALIDATION → RuntimeException")
     void patchContent_enValidation_throwsException() {
@@ -178,11 +166,7 @@ class DeclarationServiceTest {
         assertThat(result).isNotNull();
         verify(declarationRepository).save(any());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // updateStatut
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("updateStatut — REJETEE sans commentaire → RuntimeException")
     void updateStatut_rejetee_sansCommentaire_throwsException() {
@@ -215,11 +199,7 @@ class DeclarationServiceTest {
             declarationService.updateStatut(1L, "STATUT_INEXISTANT", null, null)
         ).isInstanceOf(RuntimeException.class);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getStats
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getStats — retourne les compteurs corrects")
     void getStats_retourneCompteurs() {
@@ -239,11 +219,7 @@ class DeclarationServiceTest {
         assertThat(stats.getRejetees()).isEqualTo(1L);
         assertThat(stats.getEnvoyees()).isEqualTo(2L);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // findById
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("findById — ID inexistant → RuntimeException")
     void findById_inexistant_throwsException() {

@@ -50,11 +50,7 @@ class KeycloakAdminServiceTest {
         when(keycloak.realm("bct-realm")).thenReturn(realmResource);
         when(realmResource.users()).thenReturn(usersResource);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // isValidEmail — méthode privée testée via createUser
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("createUser — email invalide → IllegalArgumentException")
     void createUser_emailInvalide_throwsException() {
@@ -109,11 +105,7 @@ class KeycloakAdminServiceTest {
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("already exists");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // deleteUser
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("deleteUser — supprime d'abord MySQL puis Keycloak")
     void deleteUser_ordreCorrect() {
@@ -148,11 +140,7 @@ class KeycloakAdminServiceTest {
         verify(userRepository, never()).deleteById(any());
         verify(userResource).remove();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getAllRoles — filtre ROLE_
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getAllRoles — filtre uniquement les rôles ROLE_")
     void getAllRoles_filtreRolesCorrectement() {
@@ -173,11 +161,7 @@ class KeycloakAdminServiceTest {
         assertThat(roles).extracting("name")
             .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_AGENT");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // syncUserToMySQL
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("syncUserToMySQL — crée un nouvel utilisateur si absent")
     void syncUserToMySQL_nouvelUtilisateur() {

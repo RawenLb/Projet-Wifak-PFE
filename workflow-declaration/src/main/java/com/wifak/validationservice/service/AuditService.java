@@ -30,19 +30,13 @@ public class AuditService {
         this.logRepository     = logRepository;
         this.declarationService = declarationService;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 1. TOUS LES LOGS (enrichis avec infos déclaration)
-    // ══════════════════════════════════════════════════════════════
     public List<AuditLogDTO> getAllLogs() {
         log.info("📋 [AuditService] getAllLogs");
         List<ValidationLog> logs = logRepository.findAllByOrderByDateActionDesc();
         return enrichLogs(logs);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 2. LOGS FILTRÉS
-    // ══════════════════════════════════════════════════════════════
     public List<AuditLogDTO> searchLogs(String action, String effectuePar,
                                         LocalDateTime from, LocalDateTime to) {
         log.info("🔍 [AuditService] searchLogs — action={}, user={}", action, effectuePar);
@@ -51,25 +45,16 @@ public class AuditService {
         List<ValidationLog> logs = logRepository.findWithFilters(actionParam, effectueParParam, from, to);
         return enrichLogs(logs);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 3. LOGS D'UNE DÉCLARATION
-    // ══════════════════════════════════════════════════════════════
     public List<AuditLogDTO> getLogsByDeclaration(Long declarationId) {
         log.info("📜 [AuditService] getLogsByDeclaration — id={}", declarationId);
         return enrichLogs(logRepository.findByDeclarationIdOrderByDateActionDesc(declarationId));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 4. UTILISATEURS DISTINCTS
-    // ══════════════════════════════════════════════════════════════
     public List<String> getDistinctUsers() {
         return logRepository.findDistinctEffectuePar();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 5. STATISTIQUES COMPLÈTES
-    // ══════════════════════════════════════════════════════════════
     public AuditStatsDTO getAuditStats() {
         log.info("📊 [AuditService] getAuditStats");
         AuditStatsDTO stats = new AuditStatsDTO();
@@ -129,10 +114,7 @@ public class AuditService {
 
         return stats;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // UTILITAIRES PRIVÉS
-    // ══════════════════════════════════════════════════════════════
     private List<AuditLogDTO> enrichLogs(List<ValidationLog> logs) {
         if (logs.isEmpty()) return Collections.emptyList();
 

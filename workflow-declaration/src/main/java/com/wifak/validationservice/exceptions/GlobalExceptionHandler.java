@@ -17,24 +17,28 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<Map<String, Object>> handleValidationException(ValidationException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(ex.getMessage(), 400));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(errorBody(ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
     }
 
     @ExceptionHandler(DeclarationNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(DeclarationNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(ex.getMessage(), 404));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(errorBody(ex.getMessage(), HttpStatus.NOT_FOUND.value()));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(errorBody("Accès refusé : vous n'avez pas les droits nécessaires", 403));
+                .body(errorBody("Accès refusé : vous n'avez pas les droits nécessaires",
+                        HttpStatus.FORBIDDEN.value()));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(errorBody("Erreur interne : " + ex.getMessage(), 500));
+                .body(errorBody("Erreur interne : " + ex.getMessage(),
+                        HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
 
     private Map<String, Object> errorBody(String message, int status) {

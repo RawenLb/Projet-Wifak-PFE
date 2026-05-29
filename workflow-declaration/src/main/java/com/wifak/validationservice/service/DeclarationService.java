@@ -131,11 +131,7 @@ public class DeclarationService {
                             " ». Veuillez contacter l'administrateur.");
         }
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GENERATE — sans mapping (CSV, TXT, XML générique)
-    // ══════════════════════════════════════════════════════════════
-
     @Transactional
     public Declaration generateAndSave(Long typeId, String periode,
                                        LocalDate dateDebut, LocalDate dateFin) {
@@ -184,12 +180,7 @@ public class DeclarationService {
         log.info("✅ Contenu patché — ID: {}", saved.getId());
         return saved;
     }
-
-
-    // ══════════════════════════════════════════════════════════════
     // ✅ GENERATE WITH MAPPING — XML avec mapping XSD ↔ SQL
-    // ══════════════════════════════════════════════════════════════
-
     @Transactional
     public Declaration generateAndSaveWithMapping(
             Long typeId,
@@ -244,11 +235,7 @@ public class DeclarationService {
         declaration.setNomFichier(filename);
         return declaration;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // NOTIFY JIRA
-    // ══════════════════════════════════════════════════════════════
-
     public void notifyJiraTicketCreation(Long declarationId, String username) {
         try {
             jiraClient.createTicket(new CreateTicketRequest(declarationId, username));
@@ -257,11 +244,7 @@ public class DeclarationService {
             log.warn("⚠️ Jira non disponible — ticket non créé: {}", e.getMessage());
         }
     }
-
-    // ══════════════════════════════════════════════════════════════
     // QUERIES
-    // ══════════════════════════════════════════════════════════════
-
     public List<Declaration> getMyDeclarations() {
         String username = getCurrentUsername();
         log.info("👤 getMyDeclarations — username='{}'", username);
@@ -279,11 +262,7 @@ public class DeclarationService {
         return declarationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Déclaration introuvable: " + id));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // UPDATE
-    // ══════════════════════════════════════════════════════════════
-
     @Transactional
     public Declaration updateDeclaration(Long id, GenerateDeclarationRequest request) {
         log.info("✏️ updateDeclaration — ID: {}", id);
@@ -344,11 +323,7 @@ public class DeclarationService {
         log.info("✅ Déclaration mise à jour — ID: {}", saved.getId());
         return saved;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // DELETE
-    // ══════════════════════════════════════════════════════════════
-
     @Transactional
     public void deleteDeclaration(Long id) {
         log.info("🗑️ deleteDeclaration — ID: {}", id);
@@ -365,11 +340,7 @@ public class DeclarationService {
         declarationRepository.delete(declaration);
         log.info("✅ Déclaration supprimée — ID: {}", id);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // UPDATE STATUT
-    // ══════════════════════════════════════════════════════════════
-
     @Transactional
     public Declaration updateStatut(Long id, String nouveauStatut,
                                     String commentaire, String validePar) {
@@ -410,11 +381,7 @@ public class DeclarationService {
 
         return declarationRepository.save(declaration);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // STATS
-    // ══════════════════════════════════════════════════════════════
-
     public DeclarationStats getStats() {
         DeclarationStats stats = new DeclarationStats();
         stats.setTotal(declarationRepository.count());

@@ -1,8 +1,5 @@
 package com.wifak.validationservice.dto.jira;
-// ════════════════════════════════════════════════════════════════
 // Fichier : validation-service/src/main/java/com/wifak/validationservice/dto/jira/JiraTicketResponseDTO.java
-// ════════════════════════════════════════════════════════════════
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)

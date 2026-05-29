@@ -32,21 +32,14 @@ public class NotificationController {
         this.notificationService = notificationService;
         this.emailService = emailService;  // ← ajouter ça
     }
-    // ══════════════════════════════════════════════════════════════
     // 1. DÉCLARATION EN ATTENTE → notifier les managers
-    // ══════════════════════════════════════════════════════════════
-
     @PostMapping("/pending-validation")
     public ResponseEntity<Void> notifyPendingValidation(@RequestBody NotificationRequest request) {
         log.info("📥 [POST] /api/notifications/pending-validation — déclaration {}", request.getDeclarationId());
         notificationService.notifyManagerPendingValidation(request.getDeclarationId());
         return ResponseEntity.ok().build();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 2. DÉCLARATION REJETÉE → notifier l'agent
-    // ══════════════════════════════════════════════════════════════
-
     @PostMapping("/rejection")
     public ResponseEntity<Void> notifyRejection(@RequestBody NotificationRequest request) {
         log.info("📥 [POST] /api/notifications/rejection — déclaration {}", request.getDeclarationId());
@@ -56,12 +49,8 @@ public class NotificationController {
         );
         return ResponseEntity.ok().build();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 3. DÉCLENCHER MANUELLEMENT LA VÉRIFICATION DES ÉCHÉANCES
     //    (Pratique en développement / tests)
-    // ══════════════════════════════════════════════════════════════
-
     @PostMapping("/check-deadlines")
     public ResponseEntity<Void> triggerDeadlineCheck() {
         log.info("📥 [POST] /api/notifications/check-deadlines — déclenchement manuel");

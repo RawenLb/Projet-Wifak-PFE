@@ -1,8 +1,6 @@
-// ════════════════════════════════════════════════════════════════════
 // MlServiceFeignClient.java
 // Client Feign vers le ML Service FastAPI (port 8090)
 // BF17 — Clustering erreurs + suggestions de correction
-// ════════════════════════════════════════════════════════════════════
 package com.wifak.validationservice.feign;
 
 import org.springframework.cloud.openfeign.FeignClient;

@@ -49,11 +49,7 @@ public class DeclarationController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null ? auth.getName() : "system";
     }
-
-    // ─────────────────────────────────────────────────────────────────
     // GENERATE — sans mapping (comportement existant)
-    // ─────────────────────────────────────────────────────────────────
-
     @PostMapping("/generate")
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     public ResponseEntity<Declaration> generateDeclaration(
@@ -70,13 +66,9 @@ public class DeclarationController {
         declarationService.notifyJiraTicketCreation(saved.getId(), getCurrentUsername());
         return ResponseEntity.ok(saved);
     }
-
-    // ─────────────────────────────────────────────────────────────────
     // ✅ ANALYZE MAPPING — analyse compatibilité XSD ↔ SQL
     // POST /api/declarations/analyze-mapping
     // Body: { declarationTypeId, dateDebut, dateFin }
-    // ─────────────────────────────────────────────────────────────────
-
     @PostMapping("/analyze-mapping")
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     public ResponseEntity<?> analyzeMapping(@RequestBody AnalyzeMappingRequest req) {
@@ -146,12 +138,8 @@ public class DeclarationController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
-
-    // ─────────────────────────────────────────────────────────────────
     // ✅ GENERATE WITH MAPPING — génération XML avec mapping validé
     // POST /api/declarations/generate-with-mapping
-    // ─────────────────────────────────────────────────────────────────
-
     @PostMapping("/generate-with-mapping")
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     public ResponseEntity<?> generateWithMapping(
@@ -198,41 +186,25 @@ public class DeclarationController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
-
-    // ─────────────────────────────────────────────────────────────────
     // GET MY DECLARATIONS
-    // ─────────────────────────────────────────────────────────────────
-
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     public ResponseEntity<List<Declaration>> getMyDeclarations() {
         return ResponseEntity.ok(declarationService.getMyDeclarations());
     }
-
-    // ─────────────────────────────────────────────────────────────────
     // GET ALL
-    // ─────────────────────────────────────────────────────────────────
-
     @GetMapping
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'AUDITOR', 'INTERNAL')")
     public ResponseEntity<List<Declaration>> getAllDeclarations() {
         return ResponseEntity.ok(declarationService.getAllDeclarations());
     }
-
-    // ─────────────────────────────────────────────────────────────────
     // GET BY ID
-    // ─────────────────────────────────────────────────────────────────
-
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN', 'INTERNAL', 'AUDITOR')")
     public ResponseEntity<Declaration> getDeclarationById(@PathVariable Long id) {
         return ResponseEntity.ok(declarationService.findById(id));
     }
-
-    // ─────────────────────────────────────────────────────────────────
     // UPDATE
-    // ─────────────────────────────────────────────────────────────────
-
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     public ResponseEntity<Declaration> updateDeclaration(
@@ -240,22 +212,14 @@ public class DeclarationController {
             @RequestBody GenerateDeclarationRequest req) {
         return ResponseEntity.ok(declarationService.updateDeclaration(id, req));
     }
-
-    // ─────────────────────────────────────────────────────────────────
     // DELETE
-    // ─────────────────────────────────────────────────────────────────
-
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     public ResponseEntity<Void> deleteDeclaration(@PathVariable Long id) {
         declarationService.deleteDeclaration(id);
         return ResponseEntity.noContent().build();
     }
-
-    // ─────────────────────────────────────────────────────────────────
     // UPDATE STATUT
-    // ─────────────────────────────────────────────────────────────────
-
     @PatchMapping("/{id}/statut")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'INTERNAL', 'AGENT')")
     public ResponseEntity<Declaration> updateStatut(
@@ -305,20 +269,13 @@ public class DeclarationController {
         public String getXmlContent()          { return xmlContent; }
         public void   setXmlContent(String v)  { xmlContent = v; }
     }
-    // ─────────────────────────────────────────────────────────────────
     // STATS
-    // ─────────────────────────────────────────────────────────────────
-
     @GetMapping("/stats")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'AUDITOR')")
     public ResponseEntity<DeclarationService.DeclarationStats> getStats() {
         return ResponseEntity.ok(declarationService.getStats());
     }
-
-    // ─────────────────────────────────────────────────────────────────
     // DOWNLOAD
-    // ─────────────────────────────────────────────────────────────────
-
     @GetMapping("/{id}/download")
     @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN', 'INTERNAL', 'AUDITOR')")
     public ResponseEntity<byte[]> downloadDeclaration(@PathVariable Long id) {
@@ -342,11 +299,7 @@ public class DeclarationController {
         if (lower.endsWith(".pdf"))  return "application/pdf";
         return "application/xml";
     }
-
-    // ─────────────────────────────────────────────────────────────────
     // DTOs internes
-    // ─────────────────────────────────────────────────────────────────
-
     /** DTO pour l'analyse de mapping */
     public static class AnalyzeMappingRequest {
         private Long      declarationTypeId;

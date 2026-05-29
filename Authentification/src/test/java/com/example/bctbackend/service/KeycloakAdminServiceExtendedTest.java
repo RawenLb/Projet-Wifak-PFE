@@ -48,11 +48,7 @@ class KeycloakAdminServiceExtendedTest {
         when(keycloak.realm("bct-realm")).thenReturn(realmResource);
         when(realmResource.users()).thenReturn(usersResource);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getAllUsers
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getAllUsers — retourne la liste convertie en UserDTO")
     void getAllUsers_retourneListe() {
@@ -82,11 +78,7 @@ class KeycloakAdminServiceExtendedTest {
 
         assertThat(result).isEmpty();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getUserById
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getUserById — retourne le UserDTO correspondant")
     void getUserById_retourneDTO() {
@@ -122,11 +114,7 @@ class KeycloakAdminServiceExtendedTest {
         assertThat(result.getUsername()).isEqualTo("alice");
         assertThat(result.getRoles()).isEmpty();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // searchUsers
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("searchUsers — retourne les utilisateurs correspondants")
     void searchUsers_retourneResultats() {
@@ -151,11 +139,7 @@ class KeycloakAdminServiceExtendedTest {
 
         assertThat(result).isEmpty();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // updateUser
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("updateUser — met à jour Keycloak et synchronise MySQL")
     void updateUser_metsAJourEtSync() {
@@ -178,11 +162,7 @@ class KeycloakAdminServiceExtendedTest {
         verify(userResource).update(argThat(u -> "newalice@test.com".equals(u.getEmail())));
         verify(userRepository).save(any(User.class));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // assignRoles
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("assignRoles — assigne les rôles existants et synchronise")
     void assignRoles_assigneEtSync() {
@@ -246,11 +226,7 @@ class KeycloakAdminServiceExtendedTest {
         assertThatCode(() -> service.assignRoles(userId, Collections.emptyList()))
             .doesNotThrowAnyException();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // removeRoles
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("removeRoles — retire les rôles et synchronise")
     void removeRoles_retireEtSync() {
@@ -298,11 +274,7 @@ class KeycloakAdminServiceExtendedTest {
         assertThatCode(() -> service.removeRoles(userId, List.of("ROLE_INEXISTANT")))
             .doesNotThrowAnyException();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getUserRoles
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getUserRoles — retourne uniquement les rôles ROLE_")
     void getUserRoles_filtreRoles() {
@@ -326,11 +298,7 @@ class KeycloakAdminServiceExtendedTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("ROLE_AGENT");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getUsersByRole
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getUsersByRole — retourne les utilisateurs du rôle")
     void getUsersByRole_retourneUtilisateurs() {
@@ -348,11 +316,7 @@ class KeycloakAdminServiceExtendedTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getUsername()).isEqualTo("alice");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // syncAllUsersToMySQL
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("syncAllUsersToMySQL — synchronise tous les utilisateurs")
     void syncAllUsersToMySQL_synchroniseTous() {
@@ -395,11 +359,7 @@ class KeycloakAdminServiceExtendedTest {
         // bob doit quand même être synchronisé
         verify(userRepository, times(1)).save(any(User.class));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // syncUserToMySQL — cas d'erreur
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("syncUserToMySQL — erreur Keycloak → RuntimeException")
     void syncUserToMySQL_erreurKeycloak_throwsException() {
@@ -483,11 +443,7 @@ class KeycloakAdminServiceExtendedTest {
         assertThat(result.get(0).getRoles()).containsOnly("ROLE_AGENT");
         assertThat(result.get(0).isEmailVerified()).isTrue();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // createUser — branches de validateCreateUserRequest
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("createUser — email déjà existant → IllegalArgumentException")
     void createUser_emailExistant_throwsException() {
@@ -590,10 +546,7 @@ class KeycloakAdminServiceExtendedTest {
 
         assertThatCode(() -> service.updateUser(userId, dto)).doesNotThrowAnyException();
     }
-    // ══════════════════════════════════════════════════════════════
     // createUser — chemin heureux complet
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("createUser — succès avec rôles → retourne userId")
     void createUser_succes_avecRoles() throws Exception {
@@ -731,11 +684,7 @@ class KeycloakAdminServiceExtendedTest {
 
         assertThat(userId).isEqualTo("new-user-id");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // sendPasswordResetEmail
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("sendPasswordResetEmail — appelle executeActionsEmail")
     void sendPasswordResetEmail_appelleExecuteActions() {
@@ -753,11 +702,7 @@ class KeycloakAdminServiceExtendedTest {
             argThat(list -> list.contains("UPDATE_PASSWORD"))
         );
     }
-
-    // ══════════════════════════════════════════════════════════════
     // Helpers
-    // ══════════════════════════════════════════════════════════════
-
     private UserRepresentation buildKcUser(String id, String username, String email, boolean enabled) {
         UserRepresentation u = new UserRepresentation();
         u.setId(id);

@@ -45,11 +45,7 @@ class UserSyncServiceTest {
         when(keycloak.realm("bct-realm")).thenReturn(realmResource);
         when(realmResource.users()).thenReturn(usersResource);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // toggleUserStatus
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("toggleUserStatus — active l'utilisateur")
     void toggleUserStatus_active() {
@@ -93,11 +89,7 @@ class UserSyncServiceTest {
 
         verify(userResource).update(argThat(u -> !u.isEnabled()));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // isValidEmail — testé via createUser
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("isValidEmail — email avec sous-domaine → valide")
     void isValidEmail_sousdomaine_valide() {
@@ -130,11 +122,7 @@ class UserSyncServiceTest {
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("email");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getMySQLUser / getAllMySQLUsers
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getMySQLUser — retourne l'utilisateur si présent")
     void getMySQLUser_present() {
@@ -169,11 +157,7 @@ class UserSyncServiceTest {
 
         assertThat(result).hasSize(2);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // Helpers
-    // ══════════════════════════════════════════════════════════════
-
     private UserRepresentation buildKcUser(String id, String username, boolean enabled) {
         UserRepresentation u = new UserRepresentation();
         u.setId(id);

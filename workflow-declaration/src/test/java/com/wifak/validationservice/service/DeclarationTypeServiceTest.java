@@ -56,11 +56,7 @@ class DeclarationTypeServiceTest {
         when(ctx.getAuthentication()).thenReturn(auth);
         SecurityContextHolder.setContext(ctx);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // create
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("create — code unique → sauvegarde OK")
     void create_codeUnique_ok() {
@@ -82,11 +78,7 @@ class DeclarationTypeServiceTest {
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("existe déjà");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getAll
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getAll — retourne tous les types")
     void getAll_retourneTous() {
@@ -97,11 +89,7 @@ class DeclarationTypeServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getCode()).isEqualTo("DECL001");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getById
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getById — ID existant → retourne le type")
     void getById_existant_ok() {
@@ -121,11 +109,7 @@ class DeclarationTypeServiceTest {
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("99");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // delete
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("delete — ID existant → suppression OK")
     void delete_existant_ok() {
@@ -145,11 +129,7 @@ class DeclarationTypeServiceTest {
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("introuvable");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // toggleStatus
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("toggleStatus — actif → inactif")
     void toggleStatus_actifVersInactif() {
@@ -173,11 +153,7 @@ class DeclarationTypeServiceTest {
 
         assertThat(result.isActif()).isTrue();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // saveXsd
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("saveXsd — sauvegarde le contenu XSD")
     void saveXsd_ok() {
@@ -189,11 +165,7 @@ class DeclarationTypeServiceTest {
         assertThat(result.getXsdFileName()).isEqualTo("schema.xsd");
         assertThat(result.getXsdContent()).isEqualTo("<xs:schema/>");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // saveSqlQuery
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("saveSqlQuery — sauvegarde la requête SQL")
     void saveSqlQuery_ok() {
@@ -204,11 +176,7 @@ class DeclarationTypeServiceTest {
 
         assertThat(result.getSqlQuery()).isEqualTo("SELECT * FROM test");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // update
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("update — met à jour tous les champs")
     void update_ok() {
@@ -255,11 +223,7 @@ class DeclarationTypeServiceTest {
         assertThat(result.getDerniereModification()).isNotNull();
         assertThat(result.getCreePar()).isNotNull();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // fixNullAuditFields — testé via toggleStatus avec champs null
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("toggleStatus — corrige les champs null automatiquement")
     void toggleStatus_corrigeNullAuditFields() {

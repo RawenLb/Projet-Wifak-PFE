@@ -35,12 +35,8 @@ public class NotificationService {
         this.keycloakUserClient = keycloakUserClient;
         this.notificationLogRepository = notificationLogRepository;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 1. NOTIFICATION MANAGER — déclaration en attente de validation
     //    Appelée depuis le validation-service via REST (webhook interne)
-    // ══════════════════════════════════════════════════════════════
-
     public void notifyManagerPendingValidation(Long declarationId) {
         log.info("📧 [PENDING] Notification manager — déclaration {}", declarationId);
 
@@ -81,12 +77,8 @@ public class NotificationService {
             saveLog(declarationId, "PENDING_VALIDATION", "managers", "ERROR", e.getMessage());
         }
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 2. NOTIFICATION AGENT — déclaration rejetée
     //    Appelée depuis le validation-service via REST (webhook interne)
-    // ══════════════════════════════════════════════════════════════
-
     public void notifyAgentDeclarationRejected(Long declarationId, String commentaireRejet) {
         log.info("📧 [REJET] Notification agent — déclaration {}", declarationId);
 
@@ -123,12 +115,8 @@ public class NotificationService {
             saveLog(declarationId, "REJECTION", "agent", "ERROR", e.getMessage());
         }
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 3. ALERTE ÉCHÉANCE — tâche planifiée tous les jours à 8h00
     //    Vérifie les déclarations à échéance dans 2 jours ou moins
-    // ══════════════════════════════════════════════════════════════
-
     @Scheduled(cron = "0 0 8 * * *")   // tous les jours à 08:00
     public void checkUpcomingDeadlines() {
         log.info("⏰ [SCHEDULER] Vérification des échéances — {}", LocalDate.now());

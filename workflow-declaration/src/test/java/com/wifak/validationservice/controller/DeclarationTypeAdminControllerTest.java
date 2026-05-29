@@ -52,11 +52,7 @@ class DeclarationTypeAdminControllerTest {
         type.setFormat(DeclarationType.DeclarationFormat.XML);
         type.setFrequence(DeclarationType.DeclarationFrequence.MENSUELLE);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/admin/declaration-types
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("POST / — crée un type de déclaration → 200")
@@ -70,11 +66,7 @@ class DeclarationTypeAdminControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("DECL001"));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/admin/declaration-types
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("GET / — retourne tous les types → 200")
@@ -95,11 +87,7 @@ class DeclarationTypeAdminControllerTest {
         mockMvc.perform(get("/api/admin/declaration-types"))
             .andExpect(status().isOk());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/admin/declaration-types/{id}
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("GET /{id} — retourne le type → 200")
@@ -110,11 +98,7 @@ class DeclarationTypeAdminControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("DECL001"));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // PUT /api/admin/declaration-types/{id}
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("PUT /{id} — met à jour le type → 200")
@@ -128,11 +112,7 @@ class DeclarationTypeAdminControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("DECL001"));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // DELETE /api/admin/declaration-types/{id}
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("DELETE /{id} — supprime le type → 200")
@@ -143,11 +123,7 @@ class DeclarationTypeAdminControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").exists());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // PATCH /api/admin/declaration-types/{id}/toggle
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("PATCH /{id}/toggle — bascule le statut → 200")
@@ -159,11 +135,7 @@ class DeclarationTypeAdminControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.actif").value(false));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/admin/declaration-types/{id}/validation-rules
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("GET /{id}/validation-rules — retourne les règles → 200")
@@ -174,11 +146,7 @@ class DeclarationTypeAdminControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isArray());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/admin/declaration-types/{id}/xsd
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("POST /{id}/xsd — upload XSD valide → 200")
@@ -209,11 +177,7 @@ class DeclarationTypeAdminControllerTest {
                 .with(csrf()))
             .andExpect(status().isBadRequest());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/admin/declaration-types/{id}/xsd/download
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("GET /{id}/xsd/download — XSD présent → 200 avec fichier")
@@ -237,11 +201,7 @@ class DeclarationTypeAdminControllerTest {
         mockMvc.perform(get("/api/admin/declaration-types/1/xsd/download"))
             .andExpect(status().isNotFound());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // PATCH /api/admin/declaration-types/{id}/sql
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("PATCH /{id}/sql — SQL SELECT valide → 200")
@@ -277,11 +237,7 @@ class DeclarationTypeAdminControllerTest {
                 .content("{\"sqlQuery\": \"DELETE FROM test\"}"))
             .andExpect(status().isBadRequest());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/admin/declaration-types/{id}/sql/test
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("POST /{id}/sql/test — SQL valide → 200 avec colonnes")

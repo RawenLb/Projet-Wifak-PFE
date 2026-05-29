@@ -74,11 +74,7 @@ class ValidationServiceTest {
         when(ctx.getAuthentication()).thenReturn(auth);
         SecurityContextHolder.setContext(ctx);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // submitForValidation
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("submitForValidation — statut GENEREE → EN_VALIDATION OK")
     void submit_generee_ok() {
@@ -114,11 +110,7 @@ class ValidationServiceTest {
         assertThatThrownBy(() -> validationService.submitForValidation(3L, null))
             .isInstanceOf(IllegalStateException.class);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // validateDeclaration
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("validateDeclaration — EN_VALIDATION → VALIDEE OK")
     void validate_enValidation_ok() {
@@ -143,11 +135,7 @@ class ValidationServiceTest {
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("EN_VALIDATION");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // rejectDeclaration
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("rejectDeclaration — commentaire vide → IllegalArgumentException")
     void reject_commentaireVide_throwsException() {
@@ -180,11 +168,7 @@ class ValidationServiceTest {
 
         assertThat(result.getStatut()).isEqualTo(Declaration.DeclarationStatut.REJETEE);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // markAsSent
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("markAsSent — VALIDEE → ENVOYEE OK")
     void markAsSent_validee_ok() {

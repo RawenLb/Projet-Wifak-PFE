@@ -1,7 +1,6 @@
 package com.wifak.validationservice.feign;
 
 import com.wifak.validationservice.dto.CreateTicketRequest;
-import com.wifak.validationservice.dto.jira.CreateJiraTicketRequest;
 import com.wifak.validationservice.dto.jira.TransitionJiraTicketRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;

@@ -49,11 +49,7 @@ class MlIntegrationControllerTest {
         declaration.setPeriode("2025-01");
         declaration.setCommentaireRejet("Format incorrect");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/ml/health
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("GET /health — ML service UP → 200")
@@ -75,11 +71,7 @@ class MlIntegrationControllerTest {
             .andExpect(status().isServiceUnavailable())
             .andExpect(jsonPath("$.status").value("DOWN"));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/ml/diagnostics
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("GET /diagnostics — ADMIN → 200")
@@ -99,11 +91,7 @@ class MlIntegrationControllerTest {
         mockMvc.perform(get("/api/ml/diagnostics"))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/ml/bf17/declaration/{id}/suggestions
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("GET /bf17/declaration/{id}/suggestions — avec commentaire rejet → 200")
@@ -139,11 +127,7 @@ class MlIntegrationControllerTest {
         mockMvc.perform(get("/api/ml/bf17/declaration/99/suggestions"))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/ml/bf17/analyze-comment
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("POST /bf17/analyze-comment — commentaire valide → 200")
@@ -180,11 +164,7 @@ class MlIntegrationControllerTest {
                 .content("{\"reject_comment\": \"Erreur format\"}"))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/ml/bf17/clusters
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("GET /bf17/clusters → 200")
@@ -206,11 +186,7 @@ class MlIntegrationControllerTest {
         mockMvc.perform(get("/api/ml/bf17/clusters"))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/ml/bf17/stats
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("GET /bf17/stats → 200")
@@ -230,11 +206,7 @@ class MlIntegrationControllerTest {
         mockMvc.perform(get("/api/ml/bf17/stats"))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/ml/bf17/train
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("POST /bf17/train — ADMIN → 200")
@@ -254,11 +226,7 @@ class MlIntegrationControllerTest {
         mockMvc.perform(post("/api/ml/bf17/train").with(csrf()))
             .andExpect(status().isInternalServerError());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/ml/train-all
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("POST /train-all — ADMIN → 200")

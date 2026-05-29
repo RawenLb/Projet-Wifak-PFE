@@ -78,11 +78,7 @@ class AuditServiceTest {
         rejectLog.setCommentaire("Format incorrect");
         rejectLog.setDateAction(LocalDateTime.now());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getAllLogs
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getAllLogs — retourne liste vide si aucun log")
     void getAllLogs_listeVide() {
@@ -114,11 +110,7 @@ class AuditServiceTest {
 
         assertThatCode(() -> auditService.getAllLogs()).doesNotThrowAnyException();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getLogsByDeclaration
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getLogsByDeclaration — retourne les logs d'une déclaration")
     void getLogsByDeclaration_retourneLogs() {
@@ -130,11 +122,7 @@ class AuditServiceTest {
 
         assertThat(result).hasSize(2);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getDistinctUsers
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getDistinctUsers — retourne les utilisateurs distincts")
     void getDistinctUsers_retourneUtilisateurs() {
@@ -144,11 +132,7 @@ class AuditServiceTest {
 
         assertThat(result).containsExactlyInAnyOrder("agent1", "manager1");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getAuditStats
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getAuditStats — calcule les taux correctement")
     void getAuditStats_calculeLesTaux() {
@@ -208,11 +192,7 @@ class AuditServiceTest {
         assertThat(stats.getTopAgents().get(0).getUsername()).isEqualTo("agent1");
         assertThat(stats.getTopAgents().get(0).getCount()).isEqualTo(2L);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // searchLogs
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("searchLogs — filtre par action")
     void searchLogs_filtreParAction() {

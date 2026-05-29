@@ -34,24 +34,16 @@ public class AuditController {
     public AuditController(AuditService auditService) {
         this.auditService = auditService;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 1. TOUS LES LOGS (journal de traçabilité complet)
     //    GET /api/audit/logs
-    // ══════════════════════════════════════════════════════════════
-
     @GetMapping("/logs")
     @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN')")
     public ResponseEntity<List<AuditLogDTO>> getAllLogs() {
         log.info("📋 [GET] /api/audit/logs");
         return ResponseEntity.ok(auditService.getAllLogs());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 2. LOGS FILTRÉS (recherche avancée)
     //    GET /api/audit/logs/search?action=VALIDATE&effectuePar=john&from=2025-01-01&to=2025-12-31
-    // ══════════════════════════════════════════════════════════════
-
     @GetMapping("/logs/search")
     @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN')")
     public ResponseEntity<List<AuditLogDTO>> searchLogs(
@@ -68,12 +60,8 @@ public class AuditController {
 
         return ResponseEntity.ok(auditService.searchLogs(action, effectuePar, fromDt, toDt));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 3. LOGS D'UNE DÉCLARATION SPÉCIFIQUE
     //    GET /api/audit/logs/declaration/{id}
-    // ══════════════════════════════════════════════════════════════
-
     @GetMapping("/logs/declaration/{declarationId}")
     @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN')")
     public ResponseEntity<List<AuditLogDTO>> getLogsByDeclaration(
@@ -81,24 +69,16 @@ public class AuditController {
         log.info("📜 [GET] /api/audit/logs/declaration/{}", declarationId);
         return ResponseEntity.ok(auditService.getLogsByDeclaration(declarationId));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 4. LISTE DES UTILISATEURS DISTINCTS (pour les filtres)
     //    GET /api/audit/users
-    // ══════════════════════════════════════════════════════════════
-
     @GetMapping("/users")
     @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN')")
     public ResponseEntity<List<String>> getDistinctUsers() {
         log.info("👥 [GET] /api/audit/users");
         return ResponseEntity.ok(auditService.getDistinctUsers());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // 5. STATISTIQUES COMPLÈTES POUR LE TABLEAU DE BORD
     //    GET /api/audit/stats
-    // ══════════════════════════════════════════════════════════════
-
     @GetMapping("/stats")
     @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN')")
     public ResponseEntity<AuditStatsDTO> getAuditStats() {

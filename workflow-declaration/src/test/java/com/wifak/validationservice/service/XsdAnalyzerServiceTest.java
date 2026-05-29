@@ -40,11 +40,7 @@ class XsdAnalyzerServiceTest {
     void setUp() {
         service = new XsdAnalyzerService();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // analyzeCompatibility
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("analyzeCompatibility — XSD valide avec colonnes SQL → résultat non null")
     void analyzeCompatibility_xsdValide_retourneResultat() {

@@ -89,11 +89,7 @@ class ValidationServiceExtendedTest {
         when(ctx.getAuthentication()).thenReturn(auth);
         SecurityContextHolder.setContext(ctx);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // submitForValidation — branches Jira et notification
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("submitForValidation — ticket Jira existant → transition appelée")
     void submit_jiraTicketExistant_transitionAppelee() {
@@ -153,11 +149,7 @@ class ValidationServiceExtendedTest {
             "RESOUMISE".equals(((TransitionJiraTicketRequest) r).getNewBctStatut())
         ));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // validateDeclaration — Jira échoue
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("validateDeclaration — Jira échoue → warn sans exception")
     void validate_jiraEchoue_pasException() {
@@ -171,11 +163,7 @@ class ValidationServiceExtendedTest {
         assertThatCode(() -> validationService.validateDeclaration(2L))
             .doesNotThrowAnyException();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // rejectDeclaration — notification et Jira
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("rejectDeclaration — notification échoue → warn sans exception")
     void reject_notificationEchoue_pasException() {
@@ -207,11 +195,7 @@ class ValidationServiceExtendedTest {
         assertThatCode(() -> validationService.rejectDeclaration(2L, "Erreur format"))
             .doesNotThrowAnyException();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // markAsSent — Jira échoue
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("markAsSent — Jira échoue → warn sans exception")
     void markAsSent_jiraEchoue_pasException() {
@@ -225,11 +209,7 @@ class ValidationServiceExtendedTest {
         assertThatCode(() -> validationService.markAsSent(3L))
             .doesNotThrowAnyException();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getPendingDeclarations
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getPendingDeclarations — filtre EN_VALIDATION")
     void getPendingDeclarations_filtreEnValidation() {
@@ -252,11 +232,7 @@ class ValidationServiceExtendedTest {
 
         assertThat(result).isEmpty();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getStats
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getStats — délègue à declarationService")
     void getStats_delegue() {
@@ -269,11 +245,7 @@ class ValidationServiceExtendedTest {
         assertThat(result.getTotal()).isEqualTo(10L);
         verify(declarationService).getStats();
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getHistory
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getHistory — retourne les logs triés")
     void getHistory_retourneLogs() {
@@ -287,11 +259,7 @@ class ValidationServiceExtendedTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getAction()).isEqualTo("SUBMIT");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // analyzeWithAi
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("analyzeWithAi — délègue à aiDeclarationService")
     void analyzeWithAi_delegue() {
@@ -304,11 +272,7 @@ class ValidationServiceExtendedTest {
         assertThat(result).isNotNull();
         verify(aiDeclarationService).analyzeDeclaration("<xml>content</xml>", "decl_1.xml");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // getAiSummary
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("getAiSummary — délègue à aiDeclarationService")
     void getAiSummary_delegue() {
@@ -320,11 +284,7 @@ class ValidationServiceExtendedTest {
 
         assertThat(result).containsKey("score");
     }
-
-    // ══════════════════════════════════════════════════════════════
     // compareWithPrevious
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @DisplayName("compareWithPrevious — déclaration précédente trouvée")
     void compareWithPrevious_precedenteTrouvee() {

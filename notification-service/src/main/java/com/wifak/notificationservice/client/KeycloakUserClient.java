@@ -51,11 +51,7 @@ public class KeycloakUserClient {
     private String adminPassword;
 
     private final RestTemplate restTemplate = new RestTemplate();
-
-    // ══════════════════════════════════════════════════════════════
     // Token admin — même logique que KeycloakAdminConfig bct-backend
-    // ══════════════════════════════════════════════════════════════
-
     private String getAdminToken() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -104,11 +100,7 @@ public class KeycloakUserClient {
             throw new RuntimeException("Échec authentification Keycloak admin : " + e.getMessage());
         }
     }
-
-    // ══════════════════════════════════════════════════════════════
     // Récupérer un utilisateur par username
-    // ══════════════════════════════════════════════════════════════
-
     public UserEmailDTO getUserByUsername(String username) {
         try {
             String token = getAdminToken();
@@ -135,11 +127,7 @@ public class KeycloakUserClient {
             return null;
         }
     }
-
-    // ══════════════════════════════════════════════════════════════
     // Récupérer tous les utilisateurs d'un rôle realm
-    // ══════════════════════════════════════════════════════════════
-
     public List<UserEmailDTO> getUsersByRole(String roleName) {
         try {
             String token = getAdminToken();
@@ -169,11 +157,7 @@ public class KeycloakUserClient {
             return List.of();
         }
     }
-
-    // ══════════════════════════════════════════════════════════════
     // Mapper Map Keycloak → DTO
-    // ══════════════════════════════════════════════════════════════
-
     @SuppressWarnings("unchecked")
     private UserEmailDTO mapToUserEmailDTO(Map<String, Object> user) {
         UserEmailDTO dto = new UserEmailDTO();

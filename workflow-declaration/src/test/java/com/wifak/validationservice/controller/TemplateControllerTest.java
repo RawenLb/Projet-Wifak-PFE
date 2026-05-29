@@ -30,11 +30,7 @@ class TemplateControllerTest {
     @Autowired ObjectMapper objectMapper;
 
     @MockBean TemplateService templateService;
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/templates/generate
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("POST /generate — données valides → 200 avec contenu")
@@ -75,11 +71,7 @@ class TemplateControllerTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error").exists());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/templates/generate-and-save
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("POST /generate-and-save — données valides → 200")
@@ -120,11 +112,7 @@ class TemplateControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/templates/{declarationTypeId}/variables
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("GET /{id}/variables — retourne les variables → 200")
@@ -147,11 +135,7 @@ class TemplateControllerTest {
         mockMvc.perform(get("/api/templates/99/variables"))
             .andExpect(status().isNotFound());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // GET /api/templates/{declarationTypeId}/preview
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("GET /{id}/preview — retourne la prévisualisation → 200")
@@ -173,11 +157,7 @@ class TemplateControllerTest {
         mockMvc.perform(get("/api/templates/99/preview"))
             .andExpect(status().isNotFound());
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POST /api/templates/validate
-    // ══════════════════════════════════════════════════════════════
-
     @Test
     @WithMockUser(roles = "AGENT")
     @DisplayName("POST /validate — données valides → 200 valid=true")

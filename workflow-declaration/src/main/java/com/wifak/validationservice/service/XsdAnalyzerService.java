@@ -36,12 +36,7 @@ public class XsdAnalyzerService {
                 .replace("_", "").replace("-", "").replace(" ", "");
         return AUTO_HEADER_FIELDS.contains(normalized);
     }
-
-
-    // ══════════════════════════════════════════════════════════════
     // RÉSULTAT
-    // ══════════════════════════════════════════════════════════════
-
     public static class XsdFieldInfo {
         private String  name;
         private String  path;
@@ -92,11 +87,7 @@ public class XsdAnalyzerService {
         public String getSummary()                          { return summary; }
         public void setSummary(String v)                    { summary = v; }
     }
-
-    // ══════════════════════════════════════════════════════════════
     // POINT D'ENTRÉE
-    // ══════════════════════════════════════════════════════════════
-
     public MappingAnalysisResult analyzeCompatibility(String xsdContent, List<String> sqlColumns) {
         log.info("🔍 Analyse XSD — {} colonnes SQL disponibles", sqlColumns.size());
 
@@ -126,11 +117,7 @@ public class XsdAnalyzerService {
         result.setSummary(summary);
         return result;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // ✅ PARSING XSD — robuste avec ou sans prologue <?xml?>
-    // ══════════════════════════════════════════════════════════════
-
     private List<XsdFieldInfo> parseXsdFields(String xsdContent) {
         List<XsdFieldInfo> fields = new ArrayList<>();
         if (xsdContent == null || xsdContent.trim().isEmpty()) {
@@ -217,11 +204,7 @@ public class XsdAnalyzerService {
         byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
         return builder.parse(new ByteArrayInputStream(bytes));
     }
-
-    // ══════════════════════════════════════════════════════════════
     // COLLECTE DES COMPLEXTYPE NOMMÉS
-    // ══════════════════════════════════════════════════════════════
-
     private Map<String, Element> collectNamedComplexTypes(Document doc) {
         Map<String, Element> map = new LinkedHashMap<>();
         NodeList cts = doc.getElementsByTagNameNS(XS_NS, "complexType");
@@ -234,11 +217,7 @@ public class XsdAnalyzerService {
         }
         return map;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // COLLECTE RÉCURSIVE DES CHAMPS
-    // ══════════════════════════════════════════════════════════════
-
     private void collectFieldsFromComplexType(Element complexType,
                                               String parentPath,
                                               Map<String, Element> namedTypes,
@@ -337,11 +316,7 @@ public class XsdAnalyzerService {
                 defVal.isEmpty() ? null : defVal, maxO));
         log.debug("  ✅ Champ: {} [{}] requis={}", path, resolvedType, required);
     }
-
-    // ══════════════════════════════════════════════════════════════
     // AUTO-MAPPING XSD ↔ SQL
-    // ══════════════════════════════════════════════════════════════
-
     private Map<String, String> buildAutoMapping(List<XsdFieldInfo> xsdFields,
                                                  List<String> sqlColumns) {
         Map<String, String> mapping = new LinkedHashMap<>();
@@ -379,11 +354,7 @@ public class XsdAnalyzerService {
                 mapping.size(), xsdFields.size());
         return mapping;
     }
-
-    // ══════════════════════════════════════════════════════════════
     // HELPERS CALCUL
-    // ══════════════════════════════════════════════════════════════
-
     private List<String> computeUnmappedXsd(List<XsdFieldInfo> xsdFields,
                                             Map<String, String> autoMapped) {
         List<String> unmapped = new ArrayList<>();
@@ -440,11 +411,7 @@ public class XsdAnalyzerService {
                     requiredMapped, required);
         }
     }
-
-    // ══════════════════════════════════════════════════════════════
     // UTILITAIRES
-    // ══════════════════════════════════════════════════════════════
-
     /** Normalise un nom de champ pour la comparaison : minuscule, sans séparateurs. */
     private String normalize(String name) {
         if (name == null) return "";
