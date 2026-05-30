@@ -195,7 +195,7 @@ public class DeclarationTypeAdminController {
             }
             List<String> columns = xmlGenerationService.extractColumnsFromSql(sqlQuery, dateDebut, dateFin);
             log.info("✅ Test SQL réussi — colonnes: {}", columns);
-            return ResponseEntity.ok(Map.of("success", true, "colonnesDisponibles", columns, "message", "Requête SQL valide"));
+            return ResponseEntity.ok(Map.of("success", true, "colonnesDisponibles", columns, MESSAGE_KEY, "Requête SQL valide"));
         } catch (Exception e) {
             log.error("❌ Erreur test SQL: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Erreur lors du test SQL: " + e.getMessage()));

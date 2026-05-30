@@ -17,6 +17,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public class FeignConfig {
 
     private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
+    private static final String AUTHORIZATION_HEADER = "Authorization";
 
     private static final Logger log = LoggerFactory.getLogger(FeignConfig.class);
 
@@ -34,7 +35,7 @@ public class FeignConfig {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.getCredentials() instanceof Jwt jwt) {
                 log.debug("🔑 Feign JWT propagé depuis SecurityContext (sub: {})", jwt.getSubject());
-                requestTemplate.header("Authorization", "Bearer " + jwt.getTokenValue());
+                requestTemplate.header(AUTHORIZATION_HEADER, "Bearer " + jwt.getTokenValue());
                 return;
             }
 
@@ -43,10 +44,10 @@ public class FeignConfig {
                     (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
                 HttpServletRequest request = attrs.getRequest();
-                String bearerHeader = request.getHeader("Authorization");
+                String bearerHeader = request.getHeader(AUTHORIZATION_HEADER);
                 if (bearerHeader != null && bearerHeader.startsWith("Bearer ")) {
                     log.debug("🔑 Feign JWT propagé depuis HttpServletRequest header");
-                    requestTemplate.header("Authorization", bearerHeader);
+                    requestTemplate.header(AUTHORIZATION_HEADER, bearerHeader);
                     return;
                 }
             }
