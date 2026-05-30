@@ -28,6 +28,7 @@ public class DeclarationTypeAdminController {
 
     private static final Logger log = LoggerFactory.getLogger(DeclarationTypeAdminController.class);
     private static final String ERROR_KEY = "error";
+    private static final String MESSAGE_KEY = "message";
 
     // Mots-clés SQL dangereux — protection contre les injections SQL
     private static final String[] SQL_FORBIDDEN_KEYWORDS =
@@ -87,7 +88,7 @@ public class DeclarationTypeAdminController {
     public ResponseEntity<Map<String, String>> delete(@PathVariable Long id) {
         log.info("🗑️ Suppression type déclaration: {}", id);
         service.delete(id);
-        return ResponseEntity.ok(Map.of("message", "Type de déclaration supprimé avec succès"));
+        return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Type de déclaration supprimé avec succès"));
     }
 
     @PatchMapping("/{id}/toggle")
@@ -120,7 +121,7 @@ public class DeclarationTypeAdminController {
             String xsdContent = new String(file.getBytes(), StandardCharsets.UTF_8);
             service.saveXsd(id, originalFilename, xsdContent);
             log.info("✅ XSD uploadé avec succès: {}", originalFilename);
-            return ResponseEntity.ok(Map.of("message", "XSD uploadé avec succès", "fileName", originalFilename));
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "XSD uploadé avec succès", "fileName", originalFilename));
         } catch (Exception e) {
             log.error("❌ Erreur upload XSD: {}", e.getMessage());
             return ResponseEntity.internalServerError().body(Map.of(ERROR_KEY, "Erreur lors de l'upload du XSD: " + e.getMessage()));
@@ -162,7 +163,7 @@ public class DeclarationTypeAdminController {
         }
         service.saveSqlQuery(id, sqlQuery);
         log.info("✅ SQL sauvegardé pour type: {}", id);
-        return ResponseEntity.ok(Map.of("message", "Requête SQL sauvegardée avec succès"));
+        return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Requête SQL sauvegardée avec succès"));
     }
 
     @PostMapping("/{id}/sql/test")
