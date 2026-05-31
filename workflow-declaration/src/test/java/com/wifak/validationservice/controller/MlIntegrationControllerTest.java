@@ -246,4 +246,45 @@ class MlIntegrationControllerTest {
         mockMvc.perform(post("/api/ml/train-all").with(csrf()))
             .andExpect(status().isInternalServerError());
     }
+    // POST /api/ml/bf17/analyze-content
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /bf17/analyze-content — contenu valide → 200")
+    void analyzeContent_ok() throws Exception {
+        when(mlClient.analyzeContent(anyMap()))
+            .thenReturn(Map.of("alert_count", (Object) 0, "has_critical", false));
+
+        mockMvc.perform(post("/api/ml/bf17/analyze-content")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"content\": \"<xml>test</xml>\", \"type_code\": \"BCT_05\", \"file_format\": \"XML\"}"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENT")
+    @DisplayName("POST /bf17/analyze-content — erreur ML → 500")
+    void analyzeContent_erreurML_returns500() throws Exception {
+        when(mlClient.analyzeContent(anyMap())).thenThrow(new RuntimeException("ML error"));
+
+        mockMvc.perform(post("/api/ml/bf17/analyze-content")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"content\": \"<xml>test</xml>\", \"type_code\": \"BCT_05\"}"))
+            .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("POST /bf17/analyze-content — MANAGER autorisé → 200")
+    void analyzeContent_manager_ok() throws Exception {
+        when(mlClient.analyzeContent(anyMap()))
+            .thenReturn(Map.of("alert_count", (Object) 2, "has_critical", true));
+
+        mockMvc.perform(post("/api/ml/bf17/analyze-content")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"content\": \"<xml>data</xml>\", \"type_code\": \"BCT_01\", \"file_format\": \"XML\"}"))
+            .andExpect(status().isOk());
+    }
 }

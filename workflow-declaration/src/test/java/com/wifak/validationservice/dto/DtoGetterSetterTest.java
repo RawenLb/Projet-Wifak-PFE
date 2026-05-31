@@ -351,6 +351,21 @@ class DtoGetterSetterTest {
             assertThat(s.name()).isNotNull();
         }
     }
+
+    @Test
+    @DisplayName("Declaration — dateDebut et dateFin avec @JsonFormat yyyy-MM-dd")
+    void declaration_dateDebutDateFin_jsonFormat() {
+        Declaration d = new Declaration();
+        d.setDateDebut(LocalDate.of(2026, 5, 1));
+        d.setDateFin(LocalDate.of(2026, 5, 31));
+
+        // Vérifier que les getters retournent les bonnes valeurs
+        assertThat(d.getDateDebut()).isEqualTo(LocalDate.of(2026, 5, 1));
+        assertThat(d.getDateFin()).isEqualTo(LocalDate.of(2026, 5, 31));
+        assertThat(d.getDateDebut().getYear()).isEqualTo(2026);
+        assertThat(d.getDateFin().getMonthValue()).isEqualTo(5);
+        assertThat(d.getDateFin().getDayOfMonth()).isEqualTo(31);
+    }
     // DeclarationDTO — branches des méthodes helper
     @Test
     void declarationDTO_helperMethods_nullDeclarationType() {
