@@ -19,6 +19,7 @@
       </div>
     </div>
     <button
+      *ngIf="canTrain"
       class="btn-train"
       [disabled]="trainLoading"
       (click)="trainModel()"

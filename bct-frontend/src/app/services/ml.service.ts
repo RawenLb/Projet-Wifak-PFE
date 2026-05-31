@@ -74,6 +74,29 @@ export interface Bf17Stats {
   silhouette_score:        number;
 }
 
+/** Réponse de l'analyse Z-Score du contenu. */
+export interface ContentAnalysisResponse {
+  type_code:     string;
+  file_format:   string;
+  features:      Record<string, number>;
+  alerts:        ZScoreAlert[];
+  alert_count:   number;
+  has_critical:  boolean;
+  ref_available: boolean;
+}
+
+export interface ZScoreAlert {
+  field:      string;
+  value:      number;
+  mean:       number;
+  std:        number;
+  z_score:    number;
+  pct_change: number;
+  severity:   'critique' | 'élevé' | 'moyen';
+  n_ref:      number;
+  message:    string;
+}
+
 /** État du ML Service. */
 export interface MlHealth {
   status:  string;
@@ -198,17 +221,28 @@ private readonly base = `http://localhost:8088/api/ml`;
   // BF17 — ENTRAÎNEMENT (ADMIN)
   // ════════════════════════════════════════════════════════════════════
 
-  /** Lance le ré-entraînement BF17 en arrière-plan. */
-  trainModel(): Observable<TrainResponse> {
-    return this.http
-      .post<TrainResponse>(`${this.base}/bf17/train`, {}, { headers: this.headers() })
-      .pipe(catchError(this.handleError));
-  }
-
   /** Alias train-all (bouton global dashboard). */
   trainAll(): Observable<TrainResponse> {
     return this.http
       .post<TrainResponse>(`${this.base}/train-all`, {}, { headers: this.headers() })
+      .pipe(catchError(this.handleError));
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  // XML CONTENT ANALYSIS — Z-Score
+  // ════════════════════════════════════════════════════════════════════
+
+  /**
+   * Analyse le contenu XML/CSV d'une déclaration via Z-Score.
+   * Détecte les anomalies statistiques par rapport à l'historique.
+   */
+  analyzeContent(content: string, typeCode: string, fileFormat = 'XML'): Observable<ContentAnalysisResponse> {
+    return this.http
+      .post<ContentAnalysisResponse>(
+        `${this.base}/bf17/analyze-content`,
+        { content, type_code: typeCode, file_format: fileFormat },
+        { headers: this.headers() }
+      )
       .pipe(catchError(this.handleError));
   }
 

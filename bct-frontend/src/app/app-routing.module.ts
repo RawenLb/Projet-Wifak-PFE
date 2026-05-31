@@ -121,7 +121,6 @@ const routes: Routes = [
       { path: 'history',   component: ManagerHistoryComponent },
       { path: 'calendar',  component: ManagerCalendarComponent },
       { path: 'reports',   component: ManagerReportsComponent },
-      { path: 'ml',        component: ManagerMlDashboardComponent },
       { path: 'treated',   component: ManagerTreatedComponent },
     ],
   },

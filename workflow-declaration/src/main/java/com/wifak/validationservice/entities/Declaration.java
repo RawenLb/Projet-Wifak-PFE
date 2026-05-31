@@ -24,7 +24,9 @@ public class Declaration {
     @Column(nullable = false)
     private String periode;
 
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateDebut;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateFin;
 
     private String nomFichier;

@@ -1,4 +1,5 @@
 ﻿import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { DeclarationService, Declaration } from '../../services/Declaration.service';
 import {
@@ -95,7 +96,8 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
     private validationService: ValidationService,
     public jiraService: JiraService,
     private confirmDialog: ConfirmDialogService,
-    private toast: ToastService
+    private toast: ToastService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -103,6 +105,26 @@ export class ManagerPendingComponent implements OnInit, OnDestroy {
     this.charger();
     this.loadRejectTemplates();
     this.autoRefreshInterval = setInterval(() => this.charger(true), 60000);
+
+    // Handle highlight queryParam from calendar navigation
+    this.route.queryParams.subscribe(params => {
+      const highlightId = params['highlight'] ? +params['highlight'] : null;
+      if (highlightId) {
+        const tryOpen = () => {
+          const decl = this.pending.find(d => d.id === highlightId);
+          if (decl) {
+            this.ouvrirLecteur(decl);
+          }
+        };
+        const interval = setInterval(() => {
+          if (!this.loading && this.pending.length > 0) {
+            clearInterval(interval);
+            tryOpen();
+          }
+        }, 200);
+        setTimeout(() => clearInterval(interval), 5000);
+      }
+    });
   }
 
   ngOnDestroy(): void {

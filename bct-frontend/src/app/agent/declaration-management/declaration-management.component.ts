@@ -2,6 +2,7 @@
 // ✅ VERSION CORRIGÉE — Flux XSD upload → SQL → Mapping → Génération
 
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
   DeclarationService,
   Declaration,
@@ -132,12 +133,43 @@ export class DeclarationManagementComponent implements OnInit {
     private validationService:      ValidationService,
     private jiraService:            JiraService,
     private confirmDialog:          ConfirmDialogService,
-    private toast:                  ToastService
+    private toast:                  ToastService,
+    private route:                  ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.loadDeclarations();
     this.loadDeclarationTypes();
+
+    // Handle queryParams from notification buttons (highlight + action)
+    this.route.queryParams.subscribe(params => {
+      const highlightId = params['highlight'] ? +params['highlight'] : null;
+      const action      = params['action'];
+      if (highlightId) {
+        // Wait for declarations to load, then act
+        const tryAct = () => {
+          const decl = this.declarations.find(d => d.id === highlightId);
+          if (decl) {
+            if (action === 'correct' && this.canCorrect(decl)) {
+              this.openCorrectModal(decl);
+            } else if (action === 'submit' && this.canSubmit(decl)) {
+              this.submitForValidation(decl);
+            } else {
+              this.openDetailsModal(decl);
+            }
+          }
+        };
+        // Retry after data loads
+        const interval = setInterval(() => {
+          if (!this.loadingDeclarations && this.declarations.length > 0) {
+            clearInterval(interval);
+            tryAct();
+          }
+        }, 200);
+        // Timeout after 5s
+        setTimeout(() => clearInterval(interval), 5000);
+      }
+    });
   }
 
   // ══════════════════════════════════════════════════════

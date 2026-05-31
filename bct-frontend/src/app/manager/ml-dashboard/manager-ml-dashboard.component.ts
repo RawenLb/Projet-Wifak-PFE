@@ -5,6 +5,7 @@ import {
   MlService, MlHealth, Bf17Stats, ClusterSummary,
   ErrorAnalysisResponse, CorrectionSuggestion,
 } from '../../services/ml.service';
+import { KeycloakAdminService } from '../../services/keycloak-admin.service';
 
 @Component({
   selector:    'app-manager-ml-dashboard',
@@ -49,9 +50,14 @@ export class ManagerMlDashboardComponent implements OnInit, OnDestroy {
     'La période déclarée ne correspond pas aux dates de début et de fin.',
   ];
 
-  constructor(public ml: MlService) {}
+  isAdmin = false;
+
+  constructor(public ml: MlService, private kcAdmin: KeycloakAdminService) {}
+
+  get canTrain(): boolean { return this.isAdmin; }
 
   ngOnInit(): void {
+    this.isAdmin = this.kcAdmin.hasRole('ADMIN') || this.kcAdmin.hasRole('ROLE_ADMIN');
     this.loadHealth();
     this.loadStats();
     this.loadClusters();

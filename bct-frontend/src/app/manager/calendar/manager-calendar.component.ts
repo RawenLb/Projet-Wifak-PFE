@@ -218,7 +218,7 @@ export class ManagerCalendarComponent implements OnInit {
 
   openEvent(e: CalendarEvent): void {
     if (e.declarationId) {
-      this.router.navigate(['/manager/dashboard'], {
+      this.router.navigate(['/manager/pending'], {
         queryParams: { highlight: e.declarationId }
       });
     }
@@ -226,14 +226,14 @@ export class ManagerCalendarComponent implements OnInit {
 
   voirDeclaration(e: CalendarEvent): void {
     if (e.declarationId) {
-      this.router.navigate(['/manager/dashboard'], {
+      this.router.navigate(['/manager/pending'], {
         queryParams: { highlight: e.declarationId }
       });
     }
   }
 
   voirDeclarationById(d: Declaration): void {
-    this.router.navigate(['/manager/dashboard'], {
+    this.router.navigate(['/manager/pending'], {
       queryParams: { highlight: d.id }
     });
   }

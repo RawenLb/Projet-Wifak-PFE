@@ -82,12 +82,12 @@ export interface Declaration {
   nomFichier?: string;
   contenuFichier?: string;
   dateDebut?: string;
-  dateFin?: string;
+  dateFin?: any;        // may be string "2026-04-30" or array [2026,4,30] from Jackson
   sqlQueryUsed?: string;
   xsdFileNameUsed?: string;
-  dateGeneration?: string;
-  dateValidation?: string;
-  dateEnvoi?: string;
+  dateGeneration?: any; // may be string or array [2026,4,5,14,30,0] from Jackson
+  dateValidation?: any; // may be string or array from Jackson
+  dateEnvoi?: any;      // may be string or array from Jackson
   generePar?: string;
   validePar?: string;
   commentaireRejet?: string;

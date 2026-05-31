@@ -32,8 +32,7 @@
     </div>
 
     <!-- Info déclaration + tabs -->
-    <div class="corr-meta-row">
-      <div class="corr-meta-info">
+    <div class="corr-meta-row">      <div class="corr-meta-info">
         <span class="corr-code-badge">{{ declaration?.declarationType?.code }}</span>
         <span class="corr-period">{{ declaration?.periode }}</span>
         <span class="corr-format-badge" [ngClass]="'fmt-' + (declaration?.declarationType?.format?.toLowerCase() ?? 'xml')">
@@ -68,6 +67,179 @@
           </svg>
           XSD + SQL
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       BF17 — SUGGESTIONS DE CORRECTION INTELLIGENTES
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="bf17-panel" *ngIf="declaration?.commentaireRejet">
+
+    <!-- En-tête cliquable -->
+    <div class="bf17-header" (click)="bf17Expanded = !bf17Expanded">
+      <div class="bf17-header-left">
+        <span class="bf17-icon">🗂️</span>
+        <div>
+          <span class="bf17-title">Aide intelligente BF17</span>
+          <span class="bf17-subtitle">Corrections similaires dans l'historique</span>
+        </div>
+        <span class="bf17-loading-dot" *ngIf="bf17Loading">
+          <span class="spin-xs"></span>
+        </span>
+        <span class="bf17-badge-ok" *ngIf="bf17Result && bf17Result.suggestions.length > 0">
+          {{ bf17Result.suggestions.length }} suggestion(s)
+        </span>
+        <span class="bf17-badge-empty" *ngIf="bf17Result && bf17Result.suggestions.length === 0">
+          Aucun historique similaire
+        </span>
+      </div>
+      <svg class="bf17-chevron" [class.rotated]="bf17Expanded"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </div>
+
+    <!-- Corps -->
+    <div class="bf17-body" *ngIf="bf17Expanded">
+
+      <!-- Chargement -->
+      <div class="bf17-loading" *ngIf="bf17Loading">
+        <span class="spin-sm"></span>
+        <span>Analyse en cours...</span>
+      </div>
+
+      <!-- Erreur ML Service -->
+      <div class="bf17-unavailable" *ngIf="!bf17Loading && bf17Error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        {{ bf17Error }} — <button class="bf17-retry" (click)="loadBf17Suggestions()">Réessayer</button>
+      </div>
+
+      <!-- Résultat -->
+      <ng-container *ngIf="!bf17Loading && bf17Result">
+
+        <!-- Cluster détecté -->
+        <div class="bf17-cluster-row">
+          <span class="bf17-cluster-label">{{ bf17Result.cluster_label }}</span>
+          <span class="bf17-cluster-meta">
+            {{ bf17Result.similar_cases_count }} cas similaires ·
+            {{ ml.formatRate(bf17Result.success_rate) }} résolus
+            <ng-container *ngIf="bf17Result.avg_delay_hours !== null">
+              · ⏱ {{ ml.formatDelay(bf17Result.avg_delay_hours) }}
+            </ng-container>
+          </span>
+        </div>
+
+        <!-- Mots-clés -->
+        <div class="bf17-keywords" *ngIf="bf17Result.cluster_keywords.length > 0">
+          <span class="bf17-kw" *ngFor="let kw of bf17Result.cluster_keywords">{{ kw }}</span>
+        </div>
+
+        <!-- Aucune suggestion -->
+        <div class="bf17-no-sugg" *ngIf="bf17Result.suggestions.length === 0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <p>Aucune correction similaire dans l'historique.</p>
+          <p class="bf17-no-sugg-hint">Décrivez votre correction ci-dessous — elle sera capitalisée automatiquement.</p>
+        </div>
+
+        <!-- Liste des suggestions -->
+        <div class="bf17-suggestions" *ngIf="bf17Result.suggestions.length > 0">
+          <div class="bf17-sugg-intro">
+            Dans <strong>{{ ml.formatRate(bf17Result.success_rate) }}</strong> des cas similaires,
+            la correction appliquée a été :
+          </div>
+
+          <div class="bf17-sugg-item"
+               *ngFor="let s of bf17Result.suggestions; let i = index"
+               [class.bf17-sugg-active]="bf17ActiveSugg === i"
+               (click)="toggleBf17Suggestion(i)">
+
+            <div class="bf17-sugg-header">
+              <span class="bf17-sugg-rank">#{{ s.rank }}</span>
+              <div class="bf17-sugg-main">
+                <div class="bf17-sugg-text">{{ s.correction_applied }}</div>
+                <div class="bf17-sugg-meta">
+                  Par <strong>{{ s.corrected_by || '—' }}</strong>
+                  <span *ngIf="s.delay_hours !== null"> · ⏱ {{ ml.formatDelay(s.delay_hours) }}</span>
+                  <span class="bf17-validated" *ngIf="s.was_validated">✅ Validée BCT</span>
+                </div>
+              </div>
+              <div class="bf17-sugg-right">
+                <div class="bf17-sim-bar">
+                  <div class="bf17-sim-fill" [style.width.%]="s.similarity_score * 100"></div>
+                </div>
+                <span class="bf17-sim-pct">{{ ml.formatRate(s.similarity_score) }}</span>
+              </div>
+              <!-- Bouton Appliquer -->
+              <button class="bf17-apply-btn"
+                      (click)="$event.stopPropagation(); applySuggestion(s.correction_applied)"
+                      title="Utiliser cette correction">
+                ↓ Appliquer
+              </button>
+            </div>
+
+            <!-- Détail expandable -->
+            <div class="bf17-sugg-detail" *ngIf="bf17ActiveSugg === i">
+              <div class="bf17-detail-row">
+                <span class="bf17-detail-key">Erreur similaire :</span>
+                <span class="bf17-detail-val">{{ s.reject_comment }}</span>
+              </div>
+              <div class="bf17-detail-row">
+                <span class="bf17-detail-key">Correction :</span>
+                <span class="bf17-detail-val">{{ s.correction_applied }}</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       Z-SCORE — ANOMALIES STATISTIQUES DU CONTENU
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="bf17-panel zscore-panel"
+       *ngIf="declaration?.contenuFichier && (zscoreLoading || zscoreAlerts.length > 0)">
+
+    <div class="bf17-header" (click)="zscoreExpanded = !zscoreExpanded">
+      <div class="bf17-header-left">
+        <span class="bf17-icon">📊</span>
+        <div>
+          <span class="bf17-title">Anomalies statistiques détectées</span>
+          <span class="bf17-subtitle">Z-Score vs historique des déclarations validées</span>
+        </div>
+        <span class="bf17-loading-dot" *ngIf="zscoreLoading"><span class="spin-xs"></span></span>
+        <span class="zscore-badge-crit" *ngIf="!zscoreLoading && zscoreCriticalCount > 0">
+          ⚠️ {{ zscoreCriticalCount }} critique(s)
+        </span>
+        <span class="bf17-badge-ok" *ngIf="!zscoreLoading && zscoreAlerts.length > 0 && zscoreCriticalCount === 0">
+          {{ zscoreAlerts.length }} alerte(s)
+        </span>
+      </div>
+      <svg class="bf17-chevron" [class.rotated]="zscoreExpanded"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </div>
+
+    <div class="bf17-body" *ngIf="zscoreExpanded && !zscoreLoading">
+      <div class="zscore-alert"
+           *ngFor="let a of zscoreAlerts"
+           [ngClass]="'zscore-' + a.severity">
+        <div class="zscore-alert-header">
+          <span class="zscore-sev-badge zscore-sev-{{ a.severity }}">{{ a.severity }}</span>
+          <span class="zscore-field">{{ a.field }}</span>
+          <span class="zscore-score">Z={{ a.z_score }}</span>
+        </div>
+        <p class="zscore-msg">{{ a.message }}</p>
       </div>
     </div>
   </div>

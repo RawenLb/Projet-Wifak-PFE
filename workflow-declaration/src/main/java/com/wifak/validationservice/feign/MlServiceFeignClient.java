@@ -81,4 +81,12 @@ public interface MlServiceFeignClient {
      */
     @PostMapping("/train-all")
     Map<String, Object> trainAll();
+
+    /**
+     * POST /bf17/analyze-content
+     * Analyse Z-Score du contenu XML/CSV d'une déclaration.
+     * Body : { "content": "...", "type_code": "BCT_05", "file_format": "XML" }
+     */
+    @PostMapping("/bf17/analyze-content")
+    Map<String, Object> analyzeContent(@RequestBody Map<String, Object> request);
 }

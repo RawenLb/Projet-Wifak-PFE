@@ -96,7 +96,7 @@
           <div class="n-header-row">
             <span class="n-dot" *ngIf="n.unread"></span>
             <span class="n-title">{{ n.title }}</span>
-            <span class="n-time">{{ n.time }}</span>
+            <span class="n-time">{{ n.rawDate ? formatRelativeTime(n.rawDate) : n.time }}</span>
           </div>
           <p class="n-msg">{{ n.msg }}</p>
 

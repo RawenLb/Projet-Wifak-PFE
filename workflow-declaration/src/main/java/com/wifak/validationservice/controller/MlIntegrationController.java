@@ -155,4 +155,16 @@ public class MlIntegrationController {
         try { return ResponseEntity.ok(mlClient.trainAll()); }
         catch (Exception e) { return ResponseEntity.internalServerError().body(Map.of(ERROR_KEY, e.getMessage())); }
     }
+
+    // ── BF17 — Analyse Z-Score du contenu d'une déclaration ──────────
+
+    @PostMapping("/bf17/analyze-content")
+    @PreAuthorize("hasAnyRole('AGENT', 'MANAGER', 'ADMIN')")
+    public ResponseEntity<?> analyzeContent(@RequestBody Map<String, Object> body) {
+        try {
+            return ResponseEntity.ok(mlClient.analyzeContent(body));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(ERROR_KEY, e.getMessage()));
+        }
+    }
 }

@@ -78,4 +78,18 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   onDocumentClick(): void { this.open = false; }
 
   stopPropagation($event: Event): void { $event.stopPropagation(); }
+
+  formatRelativeTime(date: string | Date | undefined): string {
+    if (!date) return '';
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (!d || isNaN(d.getTime())) return '';
+    const now  = new Date();
+    const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
+    if (diff < 0)      return 'à venir';
+    if (diff < 60)     return "à l'instant";
+    if (diff < 3600)   return `il y a ${Math.floor(diff / 60)} min`;
+    if (diff < 86400)  return `il y a ${Math.floor(diff / 3600)}h`;
+    if (diff < 172800) return 'hier';
+    return `il y a ${Math.floor(diff / 86400)}j`;
+  }
 }

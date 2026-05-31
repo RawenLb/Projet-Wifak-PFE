@@ -5,6 +5,7 @@ import { DeclarationTypeService } from '../../services/declaration-type.service'
 import { ValidationService } from '../../services/Validation.service';
 import { DeclarationService, FieldMapping, GenerateWithMappingRequest } from '../../services/Declaration.service';
 import { XmlCorrectionService, XmlCorrectionResult, ParsedXmlField } from '../../services/xml-correction.service';
+import { MlService, ErrorAnalysisResponse } from '../../services/ml.service';
 
 export type CorrectionMode = 'inline-xml' | 'mapping-view' | 'sql-xsd-view';
 
@@ -19,8 +20,20 @@ export class DeclarationCorrectionComponent implements OnInit, OnChanges {
   @Output() correctionCancelled = new EventEmitter<void>();
   @Output() correctionSaved = new EventEmitter<{ declaration: Declaration, comment: string }>();
 
+  // ── BF17 — Suggestions ML ───────────────────────────────────────
+  bf17Result:    ErrorAnalysisResponse | null = null;
+  bf17Loading    = false;
+  bf17Error      = '';
+  bf17Expanded   = true;   // panneau ouvert par défaut
+  bf17ActiveSugg = 0;      // suggestion ouverte
+
+  // ── Z-Score content analysis ─────────────────────────────────────
+  zscoreAlerts:   any[] = [];
+  zscoreLoading   = false;
+  zscoreExpanded  = true;
+
   // Ajoutez une propriété pour le commentaire
-correctionComment = '';
+  correctionComment = '';
   // ── Mode d'affichage ────────────────────────────────────────────
   activeMode: CorrectionMode = 'inline-xml';
 
@@ -64,16 +77,19 @@ correctionComment = '';
     private declarationService: DeclarationService,
     private declarationTypeService: DeclarationTypeService,
     private validationService: ValidationService,
-    private xmlCorrectionService: XmlCorrectionService
+    private xmlCorrectionService: XmlCorrectionService,
+    public  ml: MlService
   ) {}
 
   ngOnInit(): void {
     this.initFromDeclaration();
+    this.loadBf17Suggestions();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['declaration']?.currentValue) {
       this.initFromDeclaration();
+      this.loadBf17Suggestions();
     }
   }
 
@@ -323,6 +339,52 @@ correctionComment = '';
   }
 
   // ══════════════════════════════════════════════════════════════
+  // BF17 — Suggestions de correction intelligentes
+  // ══════════════════════════════════════════════════════════════
+
+  loadBf17Suggestions(): void {
+    if (!this.declaration?.id || !this.declaration?.commentaireRejet) return;
+    this.bf17Loading = true;
+    this.bf17Error   = '';
+    this.bf17Result  = null;
+
+    this.ml.analyzeRejectComment({
+      reject_comment:        this.declaration.commentaireRejet,
+      declaration_type_code: this.declaration.declarationType?.code,
+      top_k:                 5
+    }).subscribe({
+      next:  result => { this.bf17Result = result; this.bf17Loading = false; },
+      error: ()     => { this.bf17Error = 'ML Service indisponible'; this.bf17Loading = false; }
+    });
+
+    // Z-Score sur le contenu si XML
+    if (this.declaration.contenuFichier && this.declaration.declarationType?.code) {
+      this.zscoreLoading = true;
+      this.ml.analyzeContent(
+        this.declaration.contenuFichier,
+        this.declaration.declarationType.code,
+        this.declaration.declarationType.format || 'XML'
+      ).subscribe({
+        next:  r  => { this.zscoreAlerts = r.alerts || []; this.zscoreLoading = false; },
+        error: () => { this.zscoreLoading = false; }
+      });
+    }
+  }
+
+  applySuggestion(correction: string): void {
+    // Pré-remplir le commentaire de correction avec la suggestion
+    this.correctionComment = correction;
+  }
+
+  toggleBf17Suggestion(index: number): void {
+    this.bf17ActiveSugg = this.bf17ActiveSugg === index ? -1 : index;
+  }
+
+  get zscoreCriticalCount(): number {
+    return this.zscoreAlerts.filter(a => a.severity === 'critique').length;
+  }
+
+  // ══════════════════════════════════════════════════════════════
   // SAUVEGARDE
   // ══════════════════════════════════════════════════════════════
 
@@ -409,10 +471,8 @@ correctionComment = '';
   }
 
   private submitAndEmit(decl: Declaration): void {
-  this.success = '✅ Correction sauvegardée.';
-  // On émet l'événement pour que le parent soumette avec le commentaire
-  this.correctionSaved.emit({ declaration: decl, comment: this.correctionComment });
-  setTimeout(() => this.correctionSaved.emit({ declaration: decl, comment: this.correctionComment }), 100);
+    this.success = '✅ Correction sauvegardée.';
+    this.correctionSaved.emit({ declaration: decl, comment: this.correctionComment });
   }
 
   cancel(): void { this.correctionCancelled.emit(); }
