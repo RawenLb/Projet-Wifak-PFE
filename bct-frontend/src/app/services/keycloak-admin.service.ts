@@ -155,9 +155,14 @@ export class KeycloakAdminService {
   getCurrentUserRoles(): string[] {
     try {
       const tokenParsed = keycloak.tokenParsed;
-      const realmRoles = tokenParsed?.realm_access?.roles || [];
-      const resourceRoles = tokenParsed?.resource_access?.['bct-app']?.roles || [];
-      return [...realmRoles, ...resourceRoles];
+      // Keycloak stocke les rôles en minuscules dans realm_access.roles
+      // ex: ["admin", "manager", "offline_access", "uma_authorization"]
+      const realmRoles  = (tokenParsed?.realm_access?.roles || []) as string[];
+      const resourceRoles = (tokenParsed?.resource_access?.['bct-app']?.roles || []) as string[];
+
+      // Normaliser : ajouter ROLE_ si absent pour compatibilité Spring Security
+      const normalize = (r: string) => r.startsWith('ROLE_') ? r : `ROLE_${r.toUpperCase()}`;
+      return [...realmRoles, ...resourceRoles].map(normalize);
     } catch (error) {
       return [];
     }
@@ -165,7 +170,12 @@ export class KeycloakAdminService {
 
   hasRole(roleName: string): boolean {
     try {
-      return keycloak.hasRealmRole(roleName) || keycloak.hasResourceRole(roleName, 'bct-app');
+      // Vérification directe via Keycloak JS (sans préfixe ROLE_)
+      const roleWithoutPrefix = roleName.replace(/^ROLE_/i, '').toLowerCase();
+      return keycloak.hasRealmRole(roleWithoutPrefix) ||
+             keycloak.hasRealmRole(roleName) ||
+             keycloak.hasResourceRole(roleWithoutPrefix, 'bct-app') ||
+             keycloak.hasResourceRole(roleName, 'bct-app');
     } catch (error) {
       return false;
     }
@@ -173,9 +183,9 @@ export class KeycloakAdminService {
 
   getPrimaryRole(): string {
     const roles = this.getCurrentUserRoles();
-    if (roles.includes('ROLE_ADMIN')) return 'Administrateur';
+    if (roles.includes('ROLE_ADMIN'))   return 'Administrateur';
     if (roles.includes('ROLE_MANAGER')) return 'Manager';
-    if (roles.includes('ROLE_AGENT')) return 'Chargé de Déclaration';
+    if (roles.includes('ROLE_AGENT'))   return 'Chargé de Déclaration';
     if (roles.includes('ROLE_AUDITOR')) return 'Auditeur';
     return 'Utilisateur';
   }

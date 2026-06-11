@@ -25,32 +25,5 @@
         ]
       }
     }
-  ],
-  "dataGroups": [
-    {
-      "name": "api-declarations",
-      "urls": [
-        "http://localhost:8088/api/declarations/**",
-        "http://localhost:8088/api/admin/declaration-types/**"
-      ],
-      "cacheConfig": {
-        "strategy": "freshness",
-        "maxSize": 100,
-        "maxAge": "1h",
-        "timeout": "10s"
-      }
-    },
-    {
-      "name": "api-users",
-      "urls": [
-        "http://localhost:8088/api/admin/users/**"
-      ],
-      "cacheConfig": {
-        "strategy": "freshness",
-        "maxSize": 50,
-        "maxAge": "30m",
-        "timeout": "10s"
-      }
-    }
   ]
 }

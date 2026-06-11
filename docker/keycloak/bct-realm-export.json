@@ -4,6 +4,18 @@
   "enabled": true,
   "resetPasswordAllowed": true,
   "registrationAllowed": false,
+  "smtpServer": {
+    "host": "smtp.gmail.com",
+    "port": "587",
+    "from": "rawene.labaoui@gmail.com",
+    "fromDisplayName": "Banque Wifak BCT",
+    "auth": "true",
+    "user": "rawene.labaoui@gmail.com",
+    "password": "uybn doak nsnz mhku",
+    "ssl": "false",
+    "starttls": "true",
+    "replyTo": "rawene.labaoui@gmail.com"
+  },
   "users": [
     {
       "id": "f81fa3b7-73ed-48b0-bddb-3970c880ea4e",
