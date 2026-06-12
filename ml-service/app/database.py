@@ -38,6 +38,10 @@ def _engine(db_name: str):
         pool_recycle=3600,
         pool_timeout=30,
         max_overflow=5,
+        connect_args={
+            "charset": "utf8mb4",
+            "use_unicode": True,
+        }
     )
 
 
