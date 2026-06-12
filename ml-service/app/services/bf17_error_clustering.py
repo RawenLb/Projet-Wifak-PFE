@@ -60,7 +60,8 @@ DOMAIN_STOP = {
     "lignes", "ligne", "champ", "champs", "banque", "wifak", "veuillez",
     "vérifier", "erreur", "erreurs", "problème", "incorrect", "incorrecte",
     "données", "donnée", "enregistrement", "enregistrements", "svp",
-    "merci", "cordialement", "bonjour", "bien",
+    "merci", "cordialement", "bonjour", "bien", "selon", "pour", "avec",
+    "sur", "dans", "les", "des", "est", "sont", "une", "doit", "doivent",
 }
 STOP_WORDS = STOP_FR | STOP_EN | DOMAIN_STOP
 
@@ -76,7 +77,7 @@ HISTORY_PATH  = MODELS_DIR / "bf17_correction_history.json"
 METADATA_PATH = MODELS_DIR / "bf17_metadata.json"
 
 # ── Paramètres configurables via .env ─────────────────────────────────
-N_CLUSTERS_MAX = int(os.getenv("CLUSTER_N_CLUSTERS",  "8"))
+N_CLUSTERS_MAX = int(os.getenv("CLUSTER_N_CLUSTERS",  "10"))
 MIN_SAMPLES    = int(os.getenv("CLUSTER_MIN_SAMPLES", "3"))
 SIM_THRESHOLD  = float(os.getenv("CLUSTER_SIM_THRESHOLD", "0.05"))
 
@@ -541,37 +542,72 @@ class ErrorClusteringService:
         feature_names = self.vectorizer.get_feature_names_out()
         centers       = self.kmeans.cluster_centers_
 
-        # Mapping mots-clés → labels métier BCT
+        # Mapping mots-clés → labels métier BCT — enrichi avec termes réels
         LABEL_MAP = {
-            "montant":     "💰 Erreur de montant",
-            "negatif":     "💰 Montant négatif",
-            "nul":         "💰 Montant nul ou zéro",
-            "date":        "📅 Format de date invalide",
-            "echeance":    "📅 Date d'échéance incorrecte",
-            "format":      "📋 Format de données incorrect",
-            "rib":         "🏦 RIB / Compte bancaire invalide",
-            "compte":      "🏦 Compte bancaire invalide",
-            "classe":      "⚠️ Classe de risque incorrecte",
-            "risque":      "⚠️ Classe de risque incorrecte",
-            "provision":   "📊 Provision insuffisante",
-            "xml":         "🗂️ Structure XML invalide",
-            "xsd":         "🗂️ Non-conformité schéma XSD BCT",
-            "schema":      "🗂️ Non-conformité schéma XSD BCT",
-            "obligatoire": "❗ Champ obligatoire manquant",
-            "manquant":    "❗ Champ obligatoire manquant",
-            "absent":      "❗ Champ obligatoire manquant",
-            "vide":        "❗ Champ vide ou non renseigné",
-            "doublon":     "🔁 Doublons détectés",
-            "duplique":    "🔁 Doublons détectés",
-            "impaye":      "💰 Incohérence impayé / crédit",
-            "credit":      "💰 Incohérence montant crédit",
-            "limite":      "⚠️ Dépassement de limite réglementaire",
-            "nette":       "📐 Erreur calcul position nette",
-            "position":    "📐 Erreur calcul position nette",
-            "periode":     "📅 Période incorrecte",
-            "taux":        "📈 Taux incorrect",
-            "devise":      "💱 Code devise invalide",
-            "identifiant": "🔑 Identifiant client manquant",
+            # Montants
+            "montant":       "💰 Montant incorrect ou incohérent",
+            "negatif":       "💰 Montant négatif non autorisé",
+            "nul":           "💰 Montant nul ou zéro",
+            "montantexposition": "💰 MontantExposition invalide",
+            "montantimpaye": "💰 MontantImpaye > MontantCredit",
+            "montantcredit": "💰 MontantCredit incohérent",
+            "montantoperation": "💰 MontantOperation invalide",
+            "montantgarantie": "💰 MontantGarantie > MontantOperation",
+            "solde":         "💰 Solde débiteur non autorisé",
+            "encours":       "💰 Encours mal calculé",
+            # Taux
+            "taux":          "📈 Taux incorrect ou négatif",
+            "tauxapplique":  "📈 TauxApplique hors plage autorisée",
+            "interet":       "📈 Taux d'intérêt invalide",
+            # Provision / Classe de risque
+            "provision":     "📊 Provision insuffisante ou manquante",
+            "classe":        "⚠️ Classe de risque incorrecte",
+            "risque":        "⚠️ Classification de risque erronée",
+            "provisionnement": "📊 Taux de provisionnement non conforme",
+            "classement":    "⚠️ Déclassement non justifié",
+            "creance":       "⚠️ Créance mal classée",
+            # Devise
+            "devise":        "💱 Code devise invalide ou vide",
+            "codedevi":      "💱 Code devise manquant",
+            "iban":          "🏦 Format IBAN invalide",
+            # Dates
+            "date":          "📅 Date incorrecte ou hors période",
+            "ouverture":     "📅 Date d'ouverture de compte invalide",
+            "echeance":      "📅 Date d'échéance incorrecte",
+            "posterieure":   "📅 Date postérieure à la période déclarée",
+            "periode":       "📅 Période déclarée incohérente",
+            # Structure XML
+            "xml":           "🗂️ Structure XML non conforme au XSD BCT",
+            "xsd":           "🗂️ Non-conformité schéma XSD BCT",
+            "balise":        "🗂️ Balise XML manquante ou invalide",
+            "schema":        "🗂️ Structure du fichier non conforme",
+            "format":        "📋 Format du fichier non conforme BCT",
+            # Champs obligatoires
+            "obligatoire":   "❗ Champ obligatoire manquant",
+            "manquant":      "❗ Champ obligatoire absent",
+            "absent":        "❗ Champ requis non renseigné",
+            "vide":          "❗ Champ vide non autorisé",
+            "nomclient":     "❗ NomClient manquant",
+            "idclient":      "❗ IdClient manquant ou invalide",
+            # Doublons
+            "doublon":       "🔁 Doublons détectés",
+            "duplique":      "🔁 Données dupliquées",
+            "unique":        "🔁 Violation contrainte unicité",
+            # Position nette
+            "position":      "📐 PositionNette calculée incorrectement",
+            "nette":         "📐 Position nette BCT non conforme",
+            "positionachat": "📐 Position achat/vente incohérente",
+            # Types spécifiques BCT
+            "credit":        "🏛️ Crédit mal déclaré",
+            "impaye":        "💸 Impayé > Montant crédit",
+            "garantie":      "🛡️ Montant garantie dépassé",
+            "compte":        "🏦 Compte bancaire invalide",
+            "typecompte":    "🏦 Type de compte incorrect",
+            "codecredit":    "📋 Code type crédit invalide",
+            "limite":        "⚠️ Limite autorisée dépassée",
+            "depasse":       "⚠️ Dépassement de seuil réglementaire",
+            "incoheren":     "❌ Incohérence dans les données",
+            "correspond":    "❌ Non-correspondance des valeurs",
         }
 
         self.cluster_labels   = {}
