@@ -217,14 +217,15 @@ class ErrorClusteringService:
 
         cleaned = [self._preprocess(c) for c in comments]
 
-        # ── TF-IDF ────────────────────────────────────────────────────
+        # ── TF-IDF optimisé pour textes courts BCT ──────────────────
         self.vectorizer = TfidfVectorizer(
-            max_features = 800,
-            ngram_range  = (1, 2),
-            min_df       = 1,
-            max_df       = 0.90,
-            sublinear_tf = True,
-            analyzer     = "word",
+            max_features  = 1200,       # plus de features pour vocabulaire BCT riche
+            ngram_range   = (1, 3),     # trigrammes : "classe_d provision insuffisant"
+            min_df        = 1,
+            max_df        = 0.85,       # plus strict pour ignorer termes trop communs
+            sublinear_tf  = True,
+            analyzer      = "word",
+            token_pattern = r"[a-zàâäéèêëïîôùûüÿa-z0-9_\-]{2,}",  # inclut les termes normalisés
         )
         tfidf_matrix = self.vectorizer.fit_transform(cleaned)
 
@@ -485,13 +486,66 @@ class ErrorClusteringService:
     def _preprocess(self, text: str) -> str:
         """
         Nettoyage et normalisation d'un texte pour TF-IDF.
-        Conserve uniquement les tokens significatifs (≥3 chars, hors stopwords).
+        Optimisé pour les textes BCT courts avec termes techniques.
         """
-        text   = text.lower().strip()
+        text = text.lower().strip()
+
+        # Normalisation des termes BCT spécifiques (avant suppression ponctuation)
+        # Remplace les variantes orthographiques par un terme canonique
+        BCT_NORMALIZATIONS = {
+            r'montant[s]?\s+n[ée]gatif[s]?':          'montant_negatif',
+            r'montant[s]?\s+nul[s]?':                  'montant_nul',
+            r'valeur\s+absolue':                        'valeur_absolue',
+            r'taux\s+n[ée]gatif':                       'taux_negatif',
+            r'taux\s+nul':                              'taux_nul',
+            r'taux\s+de\s+provision':                   'taux_provisionnement',
+            r'taux\s+provisionne?ment':                 'taux_provisionnement',
+            r'classe\s+d':                              'classe_d',
+            r'classe\s+c':                              'classe_c',
+            r'classe\s+b':                              'classe_b',
+            r'classe\s+a':                              'classe_a',
+            r'classe\s+2':                              'classe_2',
+            r'classe\s+de\s+risque':                    'classe_risque',
+            r'position\s+nette':                        'position_nette',
+            r'position\s+achat':                        'position_achat',
+            r'position\s+vente':                        'position_vente',
+            r'code\s+devise':                           'code_devise',
+            r'montantimpay[ée]?':                       'montant_impaye',
+            r'montantcr[ée]dit':                        'montant_credit',
+            r'montantexposition':                       'montant_exposition',
+            r'montantgarantie':                         'montant_garantie',
+            r'montantbrut':                             'montant_brut',
+            r'montantoperation':                        'montant_operation',
+            r'tauxapplique':                            'taux_applique',
+            r'tauxchange':                              'taux_change',
+            r'limiteexposition':                        'limite_exposition',
+            r'idclient':                                'id_client',
+            r'nomclient':                               'nom_client',
+            r'codedevise':                              'code_devise',
+            r'codetypecredit':                          'code_type_credit',
+            r'dateouverture':                           'date_ouverture',
+            r'dateoperation':                           'date_operation',
+            r'dateclassement':                          'date_classement',
+            r'dureeretard':                             'duree_retard',
+            r'circulaire\s+bct':                        'circulaire_bct',
+            r'schema\s+xsd':                            'schema_xsd',
+            r'non\s+conforme':                          'non_conforme',
+            r'insuffisant[e]?':                         'insuffisant',
+            r'obligatoire':                             'champ_obligatoire',
+            r'100\s*%?\s*r[ée]glementaire[s]?':        '100_pourcent_reglementaire',
+            r'50\s*%?\s*minimum':                       '50_pourcent_minimum',
+            r'20\s*%?\s*minimum':                       '20_pourcent_minimum',
+        }
+
+        import re as _re
+        for pattern, replacement in BCT_NORMALIZATIONS.items():
+            text = _re.sub(pattern, replacement, text, flags=_re.IGNORECASE)
+
         # Supprimer les caractères non-alphabétiques sauf tirets/underscores
-        text   = re.sub(r"[^a-zàâäéèêëïîôùûüÿça-z0-9\s_\-]", " ", text)
-        # Normaliser les espaces multiples
-        text   = re.sub(r"\s+", " ", text)
+        text = _re.sub(r"[^a-zàâäéèêëïîôùûüÿça-z0-9\s_\-]", " ", text)
+        # Normaliser les espaces
+        text = _re.sub(r"\s+", " ", text).strip()
+
         tokens = [
             t for t in text.split()
             if len(t) >= 3 and t not in STOP_WORDS
