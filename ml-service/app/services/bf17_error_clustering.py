@@ -219,13 +219,13 @@ class ErrorClusteringService:
 
         # ── TF-IDF optimisé pour textes courts BCT ──────────────────
         self.vectorizer = TfidfVectorizer(
-            max_features  = 1200,       # plus de features pour vocabulaire BCT riche
-            ngram_range   = (1, 3),     # trigrammes : "classe_d provision insuffisant"
-            min_df        = 1,
-            max_df        = 0.85,       # plus strict pour ignorer termes trop communs
+            max_features  = 2000,       # plus de features pour vocabulaire BCT riche
+            ngram_range   = (1, 2),     # bigrammes suffisants avec normalisation
+            min_df        = 2,          # terme doit apparaître au moins 2 fois
+            max_df        = 0.70,       # ignorer termes dans > 70% des docs
             sublinear_tf  = True,
             analyzer      = "word",
-            token_pattern = r"[a-zàâäéèêëïîôùûüÿa-z0-9_\-]{2,}",  # inclut les termes normalisés
+            token_pattern = r"[a-zàâäéèêëïîôùûüÿa-z0-9_\-]{2,}",
         )
         tfidf_matrix = self.vectorizer.fit_transform(cleaned)
 
@@ -558,23 +558,39 @@ class ErrorClusteringService:
 
     def _find_optimal_k(self, matrix, n_comments: int) -> int:
         """
-        Trouve le nombre optimal de clusters par la méthode du coude.
-        Contrainte : k ∈ [2, min(N_CLUSTERS_MAX, n_comments//3)]
+        Trouve le nombre optimal de clusters.
+        Avec beaucoup de données structurées par type d'erreur BCT,
+        on force un k entre 5 et 8 pour une meilleure séparation.
         """
-        k_min = 2
-        k_max = min(N_CLUSTERS_MAX, max(2, n_comments // 3))
+        k_min = 5   # minimum 5 clusters pour couvrir les types BCT principaux
+        k_max = min(N_CLUSTERS_MAX, max(5, n_comments // 15))  # ratio plus agressif
 
         if k_max <= k_min:
             return k_min
 
         # Calculer l'inertie pour chaque k
         inertias = []
+        silhouettes = []
         for k in range(k_min, k_max + 1):
-            km = KMeans(n_clusters=k, random_state=42, n_init=5, max_iter=200)
-            km.fit(matrix)
+            km = KMeans(n_clusters=k, random_state=42, n_init=10, max_iter=300)
+            labels_k = km.fit_predict(matrix)
             inertias.append(km.inertia_)
+            # Calculer le silhouette pour choisir le meilleur k
+            try:
+                from sklearn.metrics import silhouette_score as ss
+                sil = ss(matrix, labels_k, sample_size=min(500, n_comments))
+                silhouettes.append(sil)
+            except Exception:
+                silhouettes.append(0.0)
 
-        # Méthode du coude : dérivée seconde de l'inertie
+        # Choisir k avec le meilleur score de silhouette
+        if silhouettes and max(silhouettes) > 0:
+            best_idx = silhouettes.index(max(silhouettes))
+            best_k = k_min + best_idx
+            logger.info(f"[BF17] k optimal par silhouette : {best_k} (score={max(silhouettes):.3f})")
+            return best_k
+
+        # Fallback : méthode du coude
         if len(inertias) >= 3:
             diffs  = [inertias[i] - inertias[i+1] for i in range(len(inertias)-1)]
             diffs2 = [diffs[i] - diffs[i+1] for i in range(len(diffs)-1)]
