@@ -33,6 +33,7 @@ from typing import Optional, List, Dict
 import nltk
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
+from sklearn.decomposition import TruncatedSVD
 from sklearn.metrics import silhouette_score
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
@@ -74,6 +75,7 @@ KMEANS_PATH   = MODELS_DIR / "bf17_kmeans.pkl"
 MATRIX_NPY    = MODELS_DIR / "bf17_tfidf_matrix.npy"
 CORPUS_PATH   = MODELS_DIR / "bf17_corpus.json"
 HISTORY_PATH  = MODELS_DIR / "bf17_correction_history.json"
+SVD_PATH      = MODELS_DIR / "bf17_svd.pkl"
 METADATA_PATH = MODELS_DIR / "bf17_metadata.json"
 
 # ── Paramètres configurables via .env ─────────────────────────────────
@@ -154,6 +156,7 @@ class ErrorClusteringService:
 
     def __init__(self):
         self.vectorizer:         Optional[TfidfVectorizer] = None
+        self.svd:                Optional[TruncatedSVD]    = None   # LSA réduction dimensionnelle
         self.kmeans:             Optional[KMeans]          = None
         self.tfidf_matrix:       Optional[np.ndarray]      = None
         self.corpus:             List[dict]                 = []
@@ -229,8 +232,19 @@ class ErrorClusteringService:
         )
         tfidf_matrix = self.vectorizer.fit_transform(cleaned)
 
+        # ── LSA : réduction dimensionnelle pour améliorer le clustering ─
+        # TruncatedSVD (Latent Semantic Analysis) compacte les 2000 features
+        # en 100 composantes latentes, révélant la sémantique cachée et
+        # améliorant significativement le silhouette score sur textes courts.
+        n_components = min(100, tfidf_matrix.shape[0] - 1, tfidf_matrix.shape[1] - 1)
+        n_components = max(10, n_components)
+        self.svd = TruncatedSVD(n_components=n_components, random_state=42)
+        lsa_matrix = self.svd.fit_transform(tfidf_matrix)
+        # Normalisation cosine après SVD (obligatoire pour KMeans sur LSA)
+        lsa_matrix_norm = normalize(lsa_matrix)
+
         # ── KMeans (k optimal) ────────────────────────────────────────
-        n_clusters = self._find_optimal_k(tfidf_matrix, len(comments))
+        n_clusters = self._find_optimal_k(lsa_matrix_norm, len(comments))
         logger.info(f"[BF17] k optimal sélectionné : {n_clusters}")
 
         self.kmeans = KMeans(
@@ -239,21 +253,23 @@ class ErrorClusteringService:
             n_init       = 15,
             max_iter     = 500,
         )
-        labels = self.kmeans.fit_predict(tfidf_matrix)
+        labels = self.kmeans.fit_predict(lsa_matrix_norm)
 
-        # Score de silhouette (qualité du clustering)
+        # Score de silhouette calculé sur l'espace LSA normalisé
         silhouette = 0.0
         if n_clusters > 1 and len(comments) > n_clusters:
             try:
                 silhouette = silhouette_score(
-                    tfidf_matrix, labels,
-                    sample_size=min(500, len(comments))
+                    lsa_matrix_norm, labels,
+                    sample_size=min(500, len(comments)),
+                    metric='cosine'
                 )
             except Exception:
                 pass
 
-        # ── Matrice normalisée (pour cosine similarity) ───────────────
-        self.tfidf_matrix = normalize(tfidf_matrix.toarray())
+        # ── Matrice normalisée (pour cosine similarity à l'inférence) ─
+        # On stocke la représentation LSA normalisée pour les suggestions
+        self.tfidf_matrix = lsa_matrix_norm
 
         # ── Construction du corpus ────────────────────────────────────
         self.corpus = []
@@ -357,10 +373,15 @@ class ErrorClusteringService:
         # ── Vectorisation de la requête ───────────────────────────────
         cleaned  = self._preprocess(reject_comment)
         vec      = self.vectorizer.transform([cleaned])
-        vec_norm = normalize(vec.toarray())
+        # Appliquer la même réduction LSA qu'à l'entraînement
+        if self.svd is not None:
+            vec_lsa  = self.svd.transform(vec)
+            vec_norm = normalize(vec_lsa)
+        else:
+            vec_norm = normalize(vec.toarray())
 
         # ── Assignation au cluster le plus proche ─────────────────────
-        cluster_id    = int(self.kmeans.predict(vec)[0])
+        cluster_id    = int(self.kmeans.predict(vec_norm)[0])
         cluster_label = self.cluster_labels.get(cluster_id, f"Cluster {cluster_id}")
         cluster_kw    = self.cluster_keywords.get(cluster_id, [])
 
@@ -606,13 +627,12 @@ class ErrorClusteringService:
 
     def _compute_cluster_labels(self, n_clusters: int):
         """
-        Labellise chaque cluster automatiquement via les mots-clés TF-IDF
-        des centroïdes, mappés à des labels métier compréhensibles.
+        Labellise chaque cluster automatiquement.
+        Avec LSA/SVD, les centroïdes sont dans l'espace latent, donc on
+        dérive les mots-clés depuis les membres du corpus (fréquence des
+        tokens dans chaque cluster) plutôt que depuis les centroïdes.
         """
-        feature_names = self.vectorizer.get_feature_names_out()
-        centers       = self.kmeans.cluster_centers_
-
-        # Mapping mots-clés → labels métier BCT — enrichi avec termes réels
+        # Mapping mots-clés → labels métier BCT
         LABEL_MAP = {
             # Montants
             "montant":       "💰 Montant incorrect ou incohérent",
@@ -684,9 +704,18 @@ class ErrorClusteringService:
         self.cluster_keywords = {}
 
         for i in range(n_clusters):
-            # Top 7 mots par centroïde
-            top_idx = centers[i].argsort()[::-1][:7]
-            words   = [feature_names[j] for j in top_idx if centers[i][j] > 0.0]
+            # Extraire les mots-clés depuis les membres du cluster
+            # (fonctionne avec LSA/SVD où les centroïdes sont dans l'espace latent)
+            members = [c for c in self.corpus if c["cluster_id"] == i]
+            if members:
+                from collections import Counter
+                all_tokens = []
+                for m in members:
+                    all_tokens.extend(m.get("cleaned", "").split())
+                most_common = Counter(all_tokens).most_common(7)
+                words = [w for w, _ in most_common if len(w) >= 3]
+            else:
+                words = []
             self.cluster_keywords[i] = words[:5]
 
             # Chercher un label dans le LABEL_MAP
@@ -868,6 +897,8 @@ class ErrorClusteringService:
         try:
             joblib.dump(self.vectorizer, TFIDF_PATH)
             joblib.dump(self.kmeans,     KMEANS_PATH)
+            if self.svd is not None:
+                joblib.dump(self.svd, SVD_PATH)
             np.save(str(MATRIX_NPY), self.tfidf_matrix)
 
             with open(CORPUS_PATH,   "w", encoding="utf-8") as f:
@@ -897,6 +928,8 @@ class ErrorClusteringService:
                 self.vectorizer   = joblib.load(TFIDF_PATH)
                 self.kmeans       = joblib.load(KMEANS_PATH)
                 self.tfidf_matrix = np.load(str(MATRIX_NPY))
+                if SVD_PATH.exists():
+                    self.svd = joblib.load(SVD_PATH)
 
                 with open(CORPUS_PATH,  encoding="utf-8") as f:
                     self.corpus = json.load(f)
